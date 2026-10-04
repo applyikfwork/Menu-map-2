@@ -1,0 +1,820 @@
+[
+  {
+    "name": "Chill Cafe",
+    "short_description": "A cozy, youth-centric hangout in Nilothi offering fresh handmade dough pizzas and cold brews.",
+    "long_description": "Chill Cafe features a trendy, low-lit modern interior with comfortable indoor booth seating ideal for couples and small friend gatherings. The cafe prides itself on preparing all dough and sauces in-house without pre-packaged bases. Specialty items include loaded Italian pizzas, chilled chocolate shakes, and handcrafted mocktails.",
+    "cuisine_types": ["Cafe", "Italian", "Fast Food", "Beverages"],
+    "meal_types": ["Breakfast", "Brunch", "Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "Shop No 1, Mod, Sh. Ishwar Vatika, Nilothi",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6658,
+    "longitude": 77.0572,
+    "phone": "+91 98181 34849",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 10:30 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Free Street Parking", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg", "Vegan Options"],
+    "rating_avg": 4.6,
+    "rating_count": 69,
+    "cover_image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Fresh Dough Pizza", "Kala Khatta Mocktail", "Berry Blast Mocktail", "Cold Coffee"],
+    "menu_categories": [
+      {
+        "category_name": "Beverages & Mocktails",
+        "items": [
+          { "name": "Kala Khatta Mocktail", "description": "Tangy and sweet jamun crush infused with black salt, cumin, fresh mint, and sparkling soda", "price": 175, "dietary_tag": "Vegan", "spice_level": 1, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Berry Blast Mocktail", "description": "Chilled sparkling cooler blending crushed strawberries, blueberries, lemon juice, and crushed ice", "price": 175, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Classic Hazelnut Cold Coffee", "description": "Double espresso blended with chilled dairy milk, vanilla ice cream, and roasted hazelnut syrup", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Virgin Mojito", "description": "Crushed mint leaves, lime slices, sugar syrup, and chilled club soda", "price": 120, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Chocolate Frappe", "description": "Thick blended iced espresso with dark chocolate syrup and whipped cream", "price": 150, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Tall Glass" }
+        ]
+      },
+      {
+        "category_name": "Pizzas & Pastas",
+        "items": [
+          { "name": "Fresh Dough Farmhouse Pizza", "description": "In-house stone-baked crust topped with bell peppers, sweet corn, mushrooms, black olives, and 100% mozzarella", "price": 220, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Medium (9 inch)" },
+          { "name": "Creamy Alfredo Penne", "description": "Penne pasta enveloped in a rich parmesan and butter cream sauce, sauteed mushrooms, and oregano", "price": 160, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular Bowl" },
+          { "name": "Paneer Tikka Pizza", "description": "Handmade dough layered with marinated spiced cottage cheese cubes, capsicum, and melted mozzarella", "price": 240, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (9 inch)" },
+          { "name": "Spicy Arrabbiata Pasta", "description": "Penne tossed in garlic-infused tomato pomodoro sauce with red chilli flakes and olives", "price": 150, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Regular Bowl" },
+          { "name": "Cheese Garlic Bread", "description": "Toasted herb baguette slices topped with molten mozzarella cheese", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "4 Pieces" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Crispy Crust",
+    "short_description": "Lively neighborhood cafe in Nangloi Extension known for crunchy baked bites and loaded pizzas.",
+    "long_description": "Crispy Crust offers a warm, air-conditioned dining lounge with intimate table seating designed for casual catch-ups and snack breaks. The menu emphasizes crunch and flavor with golden loaded sides, artisan Italian pizzas, and creamy thick shakes.",
+    "cuisine_types": ["Cafe", "Italian", "Fast Food", "Beverages"],
+    "meal_types": ["Lunch", "Evening Snacks", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 300,
+    "address_line1": "C-37A, Nangloi Extension 2, Block D, Extn. 1",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6791,
+    "longitude": 77.0624,
+    "phone": "+91 88609 59957",
+    "opening_hours": "Monday - Sunday: 2:00 PM - 11:00 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.7,
+    "rating_count": 20,
+    "cover_image_url": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Crispy Paneer Pizza", "Cheesy Garlic Toast", "Peri Peri Fries", "Oreo Thick Shake"],
+    "menu_categories": [
+      {
+        "category_name": "Artisan Pizzas",
+        "items": [
+          { "name": "Crispy Paneer Tikka Pizza", "description": "Baked thin-crust base laden with spiced marinated tandoori paneer, crisp capsicum, and mozzarella", "price": 230, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Regular (8 inch)" },
+          { "name": "Classic Margherita", "description": "Traditional Napoli tomato sauce topped with aromatic basil, fresh mozzarella, and olive oil drizzle", "price": 170, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (8 inch)" },
+          { "name": "Sweet Corn & Cheese Pizza", "description": "Loaded with juicy sweet corn kernels and extra mozzarella cheese", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (8 inch)" },
+          { "name": "Peppy Spicy Veggie Pizza", "description": "Red paprika, black olives, jalapenos, and onions over rich marinara", "price": 220, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Regular (8 inch)" }
+        ]
+      },
+      {
+        "category_name": "Crispy Appetizers & Shakes",
+        "items": [
+          { "name": "Peri Peri Loaded Fries", "description": "Golden fried French potatoes dusted with spicy African bird's eye chili seasoning and cheese sauce", "price": 110, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Large Basket" },
+          { "name": "Oreo Crunch Thick Shake", "description": "Blended vanilla cream and chocolate milk loaded with crushed Oreo cookies and chocolate drizzle", "price": 130, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Cheesy Garlic Toast", "description": "Crispy baked toast infused with garlic butter and topped with bubbling melted cheese", "price": 110, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "4 Pieces" },
+          { "name": "Cold Coffee Classic", "description": "Chilled sweet blended coffee with dairy milk and ice cream", "price": 95, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Tall Glass" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "EGGVERSE CAFE",
+    "short_description": "Casual theme cafe in Amar Colony specializing in protein-rich gourmet egg delicacies and burgers.",
+    "long_description": "EGGVERSE CAFE brings a modern twist to egg-centric dining with creative presentations, hygienic open-kitchen prep, and neat indoor seating. The vibe is energetic and sporty, catering to fitness enthusiasts and students craving wholesome meals.",
+    "cuisine_types": ["Cafe", "Fast Food", "Breakfast", "Beverages"],
+    "meal_types": ["Breakfast", "Brunch", "Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 250,
+    "address_line1": "Near Durga Mandir Road, Amar Colony, Nangloi Extension",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6804,
+    "longitude": 77.0638,
+    "phone": "+91 78274 84894",
+    "opening_hours": "Monday - Sunday: 10:00 AM - 10:30 PM",
+    "facilities": ["Indoor Seating", "Takeout", "Delivery", "Casual Dining"],
+    "dietary_options": ["Eggitarian", "Veg Options"],
+    "rating_avg": 4.9,
+    "rating_count": 18,
+    "cover_image_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Egg Keema Pav", "Cheese Burst Omelette", "Egg Masala Roll", "Cold Coffee"],
+    "menu_categories": [
+      {
+        "category_name": "Egg Special Plates",
+        "items": [
+          { "name": "Egg Keema Ghotala with Pav", "description": "Minced boiled eggs cooked in a spicy onion-tomato gravy with butter, served with 2 toasted pavs", "price": 150, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Regular Plate" },
+          { "name": "Fluffy Cheese Burst Omelette", "description": "Three-egg beaten fluffy omelette stuffed with gooey mozzarella, herbs, and bell peppers", "price": 120, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Single Omelette" },
+          { "name": "Boiled Egg Bhurji Special", "description": "Scrambled farm eggs sauteed with diced onions, tomatoes, green chillies, and butter", "price": 99, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Plate with 2 Pavs" },
+          { "name": "Egg Mayo Grilled Sandwich", "description": "Triple layer sandwich packed with spiced boiled egg slices and creamy pepper mayo", "price": 110, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "2 Triangles" }
+        ]
+      },
+      {
+        "category_name": "Wraps & Beverages",
+        "items": [
+          { "name": "Double Egg Mughlai Roll", "description": "Flaky paratha layered with double farm eggs, onions, green mint chutney, and chaat masala", "price": 80, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Wrap" },
+          { "name": "Frappe Cold Coffee", "description": "Chilled frothy blended coffee topped with cocoa powder", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Egg Cheese Burger", "description": "Pan-fried sunny side egg patty with melted cheese and fresh greens in a toasted bun", "price": 95, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Single Burger" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "LSD CAFE Club",
+    "short_description": "Vibrant youth club cafe in Kamruddin Nagar known for celebration parties, mocktails, and finger foods.",
+    "long_description": "LSD CAFE Club offers a moody, neon-lit lounge vibe with comfortable group seating, background music, and private celebration booths. It is widely booked for birthday bashes and evening hangouts, serving quick bites, Italian appetizers, and refreshing coolers.",
+    "cuisine_types": ["Cafe", "Fast Food", "Continental", "Beverages"],
+    "meal_types": ["Lunch", "Evening Snacks", "Dinner", "Late Night"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 400,
+    "address_line1": "Chaju Ram Colony, Kamruddin Nagar",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6819,
+    "longitude": 77.0558,
+    "phone": "+91 98110 54321",
+    "opening_hours": "Monday - Sunday: 11:30 AM - 11:30 PM",
+    "facilities": ["Air Conditioned", "Lounge Seating", "Party Booking", "Music System", "Takeout"],
+    "dietary_options": ["Pure Veg", "Vegan Options"],
+    "rating_avg": 4.6,
+    "rating_count": 28,
+    "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Virgin Mojito", "Crispy Chilli Paneer", "Club Special Pizza", "Loaded Nachos"],
+    "menu_categories": [
+      {
+        "category_name": "Lounge Starters",
+        "items": [
+          { "name": "Crispy Chilli Paneer Dry", "description": "Batter-fried paneer tossed in ginger garlic sauce with colorful bell peppers and spring onions", "price": 190, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Regular Plate" },
+          { "name": "Cheesy Mexican Nachos", "description": "Crunchy corn tortilla chips smothered in warm cheese sauce, tomato salsa, and pickled jalapenos", "price": 140, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Large Platter" },
+          { "name": "Club Special Veg Pizza", "description": "Double cheese pizza loaded with charred paneer tikka, sweet corn, and red paprika", "price": 260, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (9 inch)" },
+          { "name": "Crispy Honey Chilli Potato", "description": "Crispy fried potato strips wok-glazed with wild honey and red chilli paste", "price": 150, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Regular Plate" }
+        ]
+      },
+      {
+        "category_name": "Coolers & Mocktails",
+        "items": [
+          { "name": "Electric Blue Lagoon", "description": "Blue curacao syrup combined with lemon lime soda, fresh mint sprigs, and lemon rings", "price": 130, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Classic Fresh Mint Mojito", "description": "Muddled fresh mint leaves, brown sugar, lime juice, and chilled sparkling club soda", "price": 120, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Green Apple Fizz", "description": "Sweet tart green apple syrup shaken with crushed ice and aerated club soda", "price": 120, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Pizza House Cafe",
+    "short_description": "Clean, friendly pizza cafe in Nihal Vihar serving hot stone-baked pizzas and Italian snacks.",
+    "long_description": "Pizza House Cafe offers a welcoming neighborhood spot along Main Market Road in Nihal Vihar. It features neat indoor cafe tables, prompt order turnaround, and a comprehensive menu of cheese-burst pizzas, garlic breads, and chilled fizzy drinks.",
+    "cuisine_types": ["Cafe", "Pizza", "Fast Food", "Italian"],
+    "meal_types": ["Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 300,
+    "address_line1": "RZ-A-193, Main Market Road, Nihal Vihar",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6702,
+    "longitude": 77.0695,
+    "phone": "+91 96673 80385",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 11:00 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Delivery", "Free Street Parking"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.9,
+    "rating_count": 16,
+    "cover_image_url": "https://images.unsplash.com/photo-1579751626657-72bc17010498?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Double Cheese Margherita", "Stuffed Garlic Bread", "Paneer Tikka Pizza", "Cold Drink Combos"],
+    "menu_categories": [
+      {
+        "category_name": "Specialty Pizzas",
+        "items": [
+          { "name": "Double Cheese Margherita", "description": "Loaded with extra mozzarella layer over a savory seasoned herb tomato concasse", "price": 180, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Medium (9 inch)" },
+          { "name": "Spicy Paneer Supreme", "description": "Marinated paneer chunks, red paprika, sliced red onions, and crisp green capsicum", "price": 240, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (9 inch)" },
+          { "name": "Farm Fresh Veggie Delight", "description": "Onions, crisp capsicum, ripe tomatoes, and sweet corn on tomato basil sauce", "price": 210, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Medium (9 inch)" }
+        ]
+      },
+      {
+        "category_name": "Garlic Breads & Sides",
+        "items": [
+          { "name": "Cheese Stuffed Garlic Bread", "description": "Freshly baked baguette pocket filled with garlic butter, sweet corn, jalapenos, and mozzarella", "price": 120, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "4 Slices" },
+          { "name": "Spicy Peri Peri Fries", "description": "Crispy French fries tossed in piquant peri peri seasoning", "price": 95, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Regular Basket" },
+          { "name": "Choco Lava Cake", "description": "Warm chocolate cake with molten liquid center", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Piece" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Da Pizza Factory",
+    "short_description": "Artisan pizzeria on 50 Feet Road specializing in freshly kneaded dough bases and loaded toppings.",
+    "long_description": "Da Pizza Factory is a bustling pizza parlor featuring casual dine-in counters and high-speed delivery service across Nihal Vihar and Vandana Vihar. All pizzas are assembled using hand-stretched dough and freshly simmered Italian herb marinara.",
+    "cuisine_types": ["Cafe", "Pizza", "Fast Food", "Italian"],
+    "meal_types": ["Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "RZC-150, 50 Feet Road, Nihal Vihar, Vandana Vihar",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6723,
+    "longitude": 77.0671,
+    "phone": "+91 88825 55400",
+    "opening_hours": "Monday - Sunday: 12:00 PM - 11:00 PM",
+    "facilities": ["Air Conditioned", "Casual Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.9,
+    "rating_count": 41,
+    "cover_image_url": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Factory Special Pizza", "Red Sauce Arrabiata", "Cheese Garlic Breadsticks", "Chocolate Lava Cake"],
+    "menu_categories": [
+      {
+        "category_name": "Factory Handcrafted Pizzas",
+        "items": [
+          { "name": "Factory Special Veg Overload", "description": "Richly topped with grilled paneer, golden corn, black olives, red paprika, mushrooms, and double cheese", "price": 270, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (10 inch)" },
+          { "name": "Tandoori Paneer Makhani Pizza", "description": "Fusion pizza layered with rich makhani sauce, tandoori paneer cubes, and green bell peppers", "price": 250, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (10 inch)" },
+          { "name": "Cheese Burst Margherita", "description": "Hand-stretched crust with liquid cheese burst layer and mozzarella", "price": 230, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Medium (10 inch)" }
+        ]
+      },
+      {
+        "category_name": "Pastas & Desserts",
+        "items": [
+          { "name": "Red Sauce Penne Arrabiata", "description": "Al dente penne simmered in a spicy Italian tomato-garlic sauce with chilli flakes and black olives", "price": 150, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Regular Bowl" },
+          { "name": "Gooey Choco Lava Cake", "description": "Warm chocolate sponge cake with an oozing liquid dark chocolate center", "price": 85, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Piece" },
+          { "name": "Cheesy Baked Pasta", "description": "Penne baked under a thick golden layer of mozzarella with veggies", "price": 190, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Regular Bowl" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Pizza Coffee Cafe",
+    "short_description": "Conveniently located cafe on Najafgarh Road serving freshly brewed hot coffees and savory snacks.",
+    "long_description": "Pizza Coffee Cafe is situated right by the Nangloi bus stop near Chander Lok. It provides an air-conditioned retreat for commuters and college students seeking hot espresso beverages, cheesy snacks, and sandwiches on the go.",
+    "cuisine_types": ["Cafe", "Coffee", "Pizza", "Fast Food"],
+    "meal_types": ["Breakfast", "Brunch", "Lunch", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 220,
+    "address_line1": "Bus Stand, 10/5, Nangloi - Najafgarh Road, near Chander Lok",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6765,
+    "longitude": 77.0607,
+    "phone": "+91 95402 68286",
+    "opening_hours": "Monday - Sunday: 10:00 AM - 10:30 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Quick Service"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.0,
+    "rating_count": 46,
+    "cover_image_url": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Hot Cappuccino", "Veg Grilled Sandwich", "Sweet Corn Pizza", "Cold Coffee"],
+    "menu_categories": [
+      {
+        "category_name": "Hot & Iced Coffees",
+        "items": [
+          { "name": "Frothy Hot Cappuccino", "description": "Espresso base topped with thick frothed steamed milk and cocoa dusting", "price": 75, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Cup (200ml)" },
+          { "name": "Classic Sweet Cold Coffee", "description": "Blended chilled coffee, milk, sugar, and chocolate syrup", "price": 85, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" },
+          { "name": "Cafe Mocha", "description": "Rich espresso combined with hot chocolate and steamed milk foam", "price": 95, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Cup (200ml)" }
+        ]
+      },
+      {
+        "category_name": "Quick Snacks & Pizzas",
+        "items": [
+          { "name": "Grilled Cheese Corn Sandwich", "description": "Toasted bread stuffed with spiced sweet corn kernels, liquid cheese, and green bell peppers", "price": 80, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Triangles" },
+          { "name": "Sweet Corn & Onion Pizza", "description": "Crisp baked pizza base with sweet corn, onions, and melted mozzarella", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (7 inch)" },
+          { "name": "Veggie Crunch Burger", "description": "Crispy fried patty with herb mayo and lettuce in a soft bun", "price": 60, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Single Burger" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "The Pizzarian House",
+    "short_description": "Quality pizzeria in Nangloi featuring stone-fired dough pizzas and stuffed Italian pockets.",
+    "long_description": "The Pizzarian House provides a cozy, family-friendly ambiance right off Najafgarh Road. It is recognized for top hygiene standards, speedy order execution, and flavorful crust recipes paired with refreshing mocktails.",
+    "cuisine_types": ["Cafe", "Pizza", "Italian", "Fast Food"],
+    "meal_types": ["Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "Najafgarh Road, near Nangloi Stand",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6757,
+    "longitude": 77.0618,
+    "phone": "+91 80105 04565",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 11:00 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.9,
+    "rating_count": 25,
+    "cover_image_url": "https://images.unsplash.com/photo-1544982503-9f984c14501a?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Pizzarian Special", "Cheese Garlic Pocket", "Veggie Pasta Mix", "Green Apple Cooler"],
+    "menu_categories": [
+      {
+        "category_name": "Gourmet Pizzas",
+        "items": [
+          { "name": "The Pizzarian Special", "description": "Signature pie with charred paneer, sweet corn, mushrooms, olives, and premium cheese blend", "price": 260, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (9 inch)" },
+          { "name": "Barbeque Paneer Pizza", "description": "Smoky BBQ sauce base topped with caramelized onions and grilled paneer cubes", "price": 240, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (9 inch)" },
+          { "name": "Four Cheese Delight", "description": "Mozzarella, cheddar, gouda, and parmesan cheese on crispy herb crust", "price": 250, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Medium (9 inch)" }
+        ]
+      },
+      {
+        "category_name": "Pastas & Coolers",
+        "items": [
+          { "name": "Mix Sauce Creamy Pasta", "description": "Pink sauce fusion combining rich Alfredo and tangy Arrabiata with tender vegetables", "price": 160, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Regular Bowl" },
+          { "name": "Green Apple Soda Cooler", "description": "Crisp green apple syrup, fresh lime, mint, and effervescent club soda", "price": 110, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Cheese Garlic Bread Pocket", "description": "Oven baked bread filled with garlic butter, sweet corn, and mozzarella", "price": 120, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "4 Pieces" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "The Pizza Family",
+    "short_description": "Late-night pizza kitchen in Talab Wali Gali serving hot cheesy pies and party combo meals.",
+    "long_description": "The Pizza Family operates long into the night, making it an essential destination for late-night cravings in Nangloi. The venue features a clean dining room with multiple group-seating arrangements and an extensive menu of veg pizzas and garlic breads.",
+    "cuisine_types": ["Cafe", "Pizza", "Fast Food", "Italian"],
+    "meal_types": ["Dinner", "Late Night"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "H No. 126/114, Plot No. 25, Talab Wali Gali, Nangloi - Najafgarh Road",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6749,
+    "longitude": 77.0603,
+    "phone": "+91 85100 40096",
+    "opening_hours": "Monday - Sunday: 12:00 PM - 1:00 AM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Late Night Delivery", "Takeout"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.0,
+    "rating_count": 45,
+    "cover_image_url": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Paneer Makhani Pizza", "Capsicum Onion Pizza", "Garlic Bread with Dip", "Cold Drink Combos"],
+    "menu_categories": [
+      {
+        "category_name": "Classic Veg Pizzas",
+        "items": [
+          { "name": "Paneer Makhani Pizza (10 Inch)", "description": "Crispy capsicum, soft paneer, and rich makhani gravy baked with golden mozzarella cheese", "price": 499, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Large (10 inch)" },
+          { "name": "Country Feast Veg Pizza", "description": "Onions, crisp green capsicum, and fresh diced tomatoes over herb tomato sauce", "price": 280, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Medium (8 inch)" },
+          { "name": "Triple Cheese Loaded Pizza", "description": "Triple layer of molten mozzarella and cheddar on hand-tossed dough", "price": 320, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Medium (8 inch)" }
+        ]
+      },
+      {
+        "category_name": "Sides & Beverages",
+        "items": [
+          { "name": "Garlic Breadsticks with Jalapeno Dip", "description": "Freshly baked herb-buttered breadsticks served with creamy spicy jalapeno dipping sauce", "price": 99, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Pack of 4" },
+          { "name": "Chilled Thums Up 750ml", "description": "Chilled carbonated soft drink bottle", "price": 50, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Bottle (750ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Burger Resto",
+    "short_description": "Pocket-friendly fast food cafe on Main Rohtak Road celebrated for crispy budget burgers and fries.",
+    "long_description": "Burger Resto is an energetic youth hangout near Muthoot Finance in Nangloi Jat. It has earned widespread local acclaim for its signature crunch patties, loaded pizza fries, and thick cold coffee blends in a casual air-conditioned setting.",
+    "cuisine_types": ["Cafe", "Fast Food", "Burgers", "Beverages"],
+    "meal_types": ["Lunch", "Evening Snacks", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 200,
+    "address_line1": "Kh. No. 32, 19/1, Main Rohtak Road, near Muthoot Finance, Ashok Mohalla, Nangloi Jat",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6835,
+    "longitude": 77.0621,
+    "phone": "+91 95601 89798",
+    "opening_hours": "Monday - Sunday: 10:00 AM - 10:00 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg", "Vegan Options"],
+    "rating_avg": 4.3,
+    "rating_count": 21,
+    "cover_image_url": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Special 49 Rs Burger", "Pizza Fries", "Thick Cold Coffee", "Crispy Veg Wrap"],
+    "menu_categories": [
+      {
+        "category_name": "Crunchy Burgers",
+        "items": [
+          { "name": "Special Crunchy Burger", "description": "Golden-fried potato and herb patty layered with crunchy cabbage, onions, and signature house mayo", "price": 49, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Double Patty Cheese Burger", "description": "Double veggie patties stuffed with melted cheddar cheese slice, fresh lettuce, and tangy burger relish", "price": 99, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Large Burger" },
+          { "name": "Peri Peri Paneer Burger", "description": "Crisp paneer slab tossed in hot peri peri dust with chipotle mayo", "price": 120, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Single Burger" }
+        ]
+      },
+      {
+        "category_name": "Loaded Fries & Drinks",
+        "items": [
+          { "name": "Loaded Pizza Fries", "description": "Crispy French fries baked with pizza sauce, mozzarella cheese, sweet corn, and mixed herbs", "price": 120, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Regular Tray" },
+          { "name": "Classic Thick Cold Coffee", "description": "Creamy whipped cold coffee with chocolate drizzle and vanilla ice cream scoop", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" },
+          { "name": "Crispy Veggie Wrap", "description": "Flaky tortilla wrap with spiced veggie patty and mint mayo", "price": 75, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Wrap" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Burger resto01",
+    "short_description": "Cozy quick-service burger and sandwich cafe in Bhooton Wali Gali, Nangloi Jat.",
+    "long_description": "Burger resto01 serves fresh fast food favorites in a vibrant neighborhood setting. With compact indoor seating, it caters to school and college students looking for budget-friendly burgers, grilled sandwiches, and quick refreshments.",
+    "cuisine_types": ["Cafe", "Fast Food", "Burgers", "Snacks"],
+    "meal_types": ["Lunch", "Evening Snacks", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 180,
+    "address_line1": "KH No. 43, Plot No. 10, Bhooton Wali Gali, Ashok Mohalla, Nangloi Jat",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6822,
+    "longitude": 77.0615,
+    "phone": "+91 88104 36317",
+    "opening_hours": "Monday - Sunday: 11:30 AM - 9:30 PM",
+    "facilities": ["Indoor Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.7,
+    "rating_count": 12,
+    "cover_image_url": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Veggie Supreme Burger", "Cheesy Grilled Sandwich", "Masala French Fries", "Cold Coffee"],
+    "menu_categories": [
+      {
+        "category_name": "Signature Burgers",
+        "items": [
+          { "name": "Veggie Supreme Burger", "description": "Crunchy herb-spiced potato cutlet in a toasted sesame bun with tomato slices and creamy mayo", "price": 70, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Paneer Crunchy Burger", "description": "Crisp crumb-coated paneer slab topped with tandoori mayo and crunchy shredded lettuce", "price": 110, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Crispy Aloo Tikki Burger", "description": "Golden aloo tikki with sweet and tangy chutneys in a soft bun", "price": 50, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Single Burger" }
+        ]
+      },
+      {
+        "category_name": "Sandwiches & Beverages",
+        "items": [
+          { "name": "Grilled Bombay Veg Sandwich", "description": "Layered with sliced cucumber, tomato, potato, green mint chutney, and grated processed cheese", "price": 80, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Triangles" },
+          { "name": "Masala French Fries", "description": "Crispy golden potato fingers tossed with chatpata masala", "price": 70, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Regular Box" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "The Delightful Pizza",
+    "short_description": "Friendly pizza and burger kitchen nestled in Green View, Ashok Mohalla, Nangloi.",
+    "long_description": "The Delightful Pizza is known for its warm, family-style hospitality and affordable comfort food. Featuring comfortable dine-in seating, it offers varied pizza combinations, freshly grilled burgers, and snack platters.",
+    "cuisine_types": ["Cafe", "Pizza", "Fast Food", "Burgers"],
+    "meal_types": ["Lunch", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 220,
+    "address_line1": "3/10 Green View, Ashok Mohalla, Bhooton Wali Gali",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6816,
+    "longitude": 77.0609,
+    "phone": "+91 93131 45252",
+    "opening_hours": "Monday - Sunday: 10:30 AM - 10:00 PM",
+    "facilities": ["Indoor Seating", "Takeout", "Delivery", "Free Street Parking"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.0,
+    "rating_count": 85,
+    "cover_image_url": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Delightful Special Pizza", "Crispy Veg Burger", "Cheese French Fries", "Capsicum Onion Pizza"],
+    "menu_categories": [
+      {
+        "category_name": "Oven-Baked Pizzas",
+        "items": [
+          { "name": "Delightful Special Pizza", "description": "Oven-baked crust topped with capsicum, onion, sweet corn, paneer, and shredded mozzarella", "price": 210, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Regular (8 inch)" },
+          { "name": "Classic Golden Corn Pizza", "description": "Sweet golden corn kernels and generous mozzarella over spiced pizza sauce", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (8 inch)" },
+          { "name": "Onion & Capsicum Pizza", "description": "Crisp red onions and green bell peppers with herb tomato sauce", "price": 130, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Regular (8 inch)" }
+        ]
+      },
+      {
+        "category_name": "Burgers & Sides",
+        "items": [
+          { "name": "Crispy Delight Veg Burger", "description": "Vegetable patty with crisp lettuce, onion rings, and creamy burger mayo", "price": 55, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Cheese French Fries", "description": "French fries smothered in warm liquid cheddar cheese sauce", "price": 90, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Regular Box" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Gudluck Family Restaurant & Cafe",
+    "short_description": "Family-run cafe on Najafgarh Road known for pizza, wraps, sandwiches, and thick milkshakes.",
+    "long_description": "Gudluck Family Restaurant & Cafe offers a clean, hospitable environment suited for casual family dinners and birthday celebrations. Its menu features a diverse selection of Italian and continental cafe food, crispy finger snacks, and dessert shakes.",
+    "cuisine_types": ["Cafe", "Fast Food", "Italian", "Wraps", "Beverages"],
+    "meal_types": ["Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 300,
+    "address_line1": "Najafgarh Road, Ahir Mohalla, Nangloi Jat",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6775,
+    "longitude": 77.0610,
+    "phone": "+91 76691 73880",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 10:00 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Party Hosting", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.7,
+    "rating_count": 64,
+    "cover_image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Gudluck Special Pizza", "Crispy Veggie Wrap", "Aloo Tikki Burger", "Chocolate Milkshake"],
+    "menu_categories": [
+      {
+        "category_name": "Pizzas & Wraps",
+        "items": [
+          { "name": "Gudluck Special Pizza", "description": "Loaded with marinated cottage cheese, crunchy bell peppers, sweet corn, and molten mozzarella", "price": 220, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Regular (8 inch)" },
+          { "name": "Crispy Paneer Wrap", "description": "Toasted tortilla wrap stuffed with crispy fried paneer strips, coleslaw, and tangy sauce", "price": 110, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Wrap" },
+          { "name": "Cheese Corn Grilled Sandwich", "description": "Triple-decker sandwich with melted cheese, corn, and bell peppers", "price": 90, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Triangles" }
+        ]
+      },
+      {
+        "category_name": "Milkshakes",
+        "items": [
+          { "name": "Rich Chocolate Shake", "description": "Chilled full-cream milk blended with chocolate ganache and cocoa ice cream", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" },
+          { "name": "Strawberry Thick Shake", "description": "Sweet strawberry syrup blended into thick dairy cream and milk", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Chatkare Street Cafe",
+    "short_description": "Vibrant street food cafe in Laxmi Park serving Indo-Chinese appetizers, rolls, and cold coolers.",
+    "long_description": "Chatkare Street Cafe brings bold street flavors into a clean, seated cafe format in Vandana Vihar. Loved by neighborhood youth, it serves steaming momos, crispy spring rolls, spicy chowmein, and fruit shakes at very pocket-friendly prices.",
+    "cuisine_types": ["Cafe", "Chinese", "Fast Food", "Street Food"],
+    "meal_types": ["Lunch", "Evening Snacks", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 200,
+    "address_line1": "Shop No. A-158, Saini Mohalla, Laxmi Park, Block B, Vandana Vihar",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6732,
+    "longitude": 77.0652,
+    "phone": "+91 98997 88741",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 10:00 PM",
+    "facilities": ["Casual Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg", "Vegan Options"],
+    "rating_avg": 4.2,
+    "rating_count": 35,
+    "cover_image_url": "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Kurkure Momos", "Veg Hakka Chowmein", "Crispy Spring Rolls", "Cold Badam Shake"],
+    "menu_categories": [
+      {
+        "category_name": "Momos & Starters",
+        "items": [
+          { "name": "Fried Kurkure Momos", "description": "Crispy cornflake-coated vegetable dumplings fried golden and served with garlic chili dip", "price": 120, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "8 Pieces" },
+          { "name": "Crispy Veg Spring Rolls", "description": "Thin rolled wonton pastry stuffed with shredded cabbage, carrots, and sweet chili glaze", "price": 90, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Rolls (cut into 6)" },
+          { "name": "Steamed Veg Momos", "description": "Delicate steamed dumplings stuffed with finely minced vegetables and herbs", "price": 70, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "8 Pieces" }
+        ]
+      },
+      {
+        "category_name": "Noodles & Coolers",
+        "items": [
+          { "name": "Veg Desi Chowmein", "description": "Wok-fried noodles seasoned with dark soy, vinegar, crunchy vegetables, and green chillies", "price": 70, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Full Plate" },
+          { "name": "Chilled Badam Milk Shake", "description": "Traditional chilled milk infused with roasted almond flakes and saffron essence", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Chitox Cafe",
+    "short_description": "Modern fast-casual cafe in Aman Puri offering specialty burger boxes, loaded fries, and mojitos.",
+    "long_description": "Chitox Cafe is a neat, contemporary hangout spot on Peer Baba Road. It offers comfortable air-conditioned booth seating, welcoming staff, and an extensive menu of gourmet veg burgers, finger bites, pizzas, and mocktail coolers.",
+    "cuisine_types": ["Cafe", "Fast Food", "Burgers", "Beverages"],
+    "meal_types": ["Lunch", "Evening Snacks", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 300,
+    "address_line1": "Shop No. 4, C-32, Peer Baba Road, Aman Puri, Block B",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6741,
+    "longitude": 77.0631,
+    "phone": "+91 97169 17182",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 10:30 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.1,
+    "rating_count": 44,
+    "cover_image_url": "https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Chitox Jumbo Burger", "Cheese Volcano Fries", "Paneer Tikka Pizza", "Blue Curacao Cooler"],
+    "menu_categories": [
+      {
+        "category_name": "Signature Burgers",
+        "items": [
+          { "name": "Chitox Jumbo Veg Burger", "description": "Thick herb patty with melted cheese slice, sauteed onions, and signature spicy house mayo", "price": 95, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Crispy Tandoori Paneer Burger", "description": "Grilled marinated paneer block with tandoori mayo and lettuce", "price": 120, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" }
+        ]
+      },
+      {
+        "category_name": "Loaded Sides & Drinks",
+        "items": [
+          { "name": "Cheese Volcano Fries", "description": "Crispy French fries smothered with warm liquid cheddar, jalapenos, and oregano seasonings", "price": 120, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Large Box" },
+          { "name": "Blue Curacao Fizz", "description": "Sparkling citrus mocktail with blue curacao, lime, and crushed ice", "price": 110, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Paneer Tikka Pizza", "description": "Spiced cottage cheese cubes, capsicum, and mozzarella on crispy crust", "price": 220, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Medium (8 inch)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Yumfry Street Cafe",
+    "short_description": "Trendy quick-bite cafe on 50 Feet Road in Nihal Vihar specializing in crispy fried appetisers and shakes.",
+    "long_description": "Yumfry Street Cafe offers a vibrant, youthful setting near Reliance Smart Point in Nihal Vihar. Equipped with comfortable seating and music, it specializes in crispy snacks, loaded fries, cheesy burgers, and rich chocolate shakes.",
+    "cuisine_types": ["Cafe", "Fast Food", "Burgers", "Beverages"],
+    "meal_types": ["Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 280,
+    "address_line1": "G-77, 50 Feet Road, near Reliance Smart Point, Nihal Vihar",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6715,
+    "longitude": 77.0678,
+    "phone": "+91 98999 33439",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 10:30 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg", "Non-veg Options"],
+    "rating_avg": 4.3,
+    "rating_count": 24,
+    "cover_image_url": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Yumfry Crispy Burger", "Loaded Cheesy Fries", "Crispy Veg Nuggets", "KitKat Milkshake"],
+    "menu_categories": [
+      {
+        "category_name": "Crispy Mains & Snacks",
+        "items": [
+          { "name": "Yumfry Crispy Crunch Burger", "description": "Crunchy herb patty topped with spiced mayo, pickled gherkins, and iceberg lettuce", "price": 80, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Crispy Vegetable Nuggets", "description": "Bite-sized potato and mixed vegetable nuggets served with sweet mustard mayo", "price": 95, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "8 Pieces" },
+          { "name": "Loaded Cheesy Fries", "description": "French fries bathed in liquid cheddar cheese sauce and herbs", "price": 110, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Regular Tray" }
+        ]
+      },
+      {
+        "category_name": "Dessert Shakes",
+        "items": [
+          { "name": "KitKat Chocolate Shake", "description": "Full cream milk shake blended with chocolate ice cream and crunchy crushed KitKat wafer bars", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" },
+          { "name": "Cold Coffee Classic", "description": "Chilled blended coffee with rich dairy foam", "price": 85, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mahalaxmi Cafe & Resturant",
+    "short_description": "Relaxed family eatery and cafe in Shivram Park offering breakfast eggs, noodles, and cold beverages.",
+    "long_description": "Mahalaxmi Cafe & Resturant offers a friendly community dining hall near Nilothi More. It provides seated indoor dining with a diverse selection spanning morning egg specialties, Indo-Chinese noodles, fast food burgers, and iced coffees.",
+    "cuisine_types": ["Cafe", "North Indian", "Chinese", "Fast Food"],
+    "meal_types": ["Breakfast", "Brunch", "Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 300,
+    "address_line1": "A-9 Market, Mod, Shivram Park, Nilothi",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6681,
+    "longitude": 77.0583,
+    "phone": "+91 98965 29463",
+    "opening_hours": "Monday - Sunday: 10:00 AM - 10:30 PM",
+    "facilities": ["Indoor Seating", "Takeout", "Delivery", "Casual Dining"],
+    "dietary_options": ["Veg Options", "Eggitarian"],
+    "rating_avg": 4.7,
+    "rating_count": 24,
+    "cover_image_url": "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Hakka Egg Noodles", "Cheese Masala Omelette", "Veg Manchurian", "Cold Coffee"],
+    "menu_categories": [
+      {
+        "category_name": "Egg & Breakfast Specials",
+        "items": [
+          { "name": "Double Egg Masala Omelette", "description": "Pan-fried farm eggs with chopped onions, green chilies, coriander, and toasted buttered bread", "price": 70, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "2 Eggs + 2 Toasts" },
+          { "name": "Cheese Masala Omelette", "description": "Fluffy spiced omelette folded with melted cheese slice and butter toast", "price": 95, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Plate" }
+        ]
+      },
+      {
+        "category_name": "Chinese & Beverages",
+        "items": [
+          { "name": "Hakka Egg Chowmein", "description": "Wok-tossed noodles with scrambled egg ribbons, julienned cabbage, and light soya sauce", "price": 110, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Full Plate" },
+          { "name": "Veg Manchurian Gravy", "description": "Fried vegetable balls in savory garlic soy broth", "price": 120, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Bowl" },
+          { "name": "Chilled Cold Coffee", "description": "Refreshing blended coffee with chilled milk, sugar, and cocoa dusting", "price": 70, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Chaipaan Shala",
+    "short_description": "Traditional tea cafe in Nihal Vihar offering artisanal kulhad chais, bun maska, and hot snacks.",
+    "long_description": "Chaipaan Shala is a rustic and cozy tea cafe located in Ranjit Vihar, Nihal Vihar. It provides comfortable low wooden bench seating where guests can enjoy slow-brewed kulhad teas, spiced herbal concoctions, butter-toasted buns, and crispy evening pakoras.",
+    "cuisine_types": ["Cafe", "Tea Lounge", "Snacks", "Beverages"],
+    "meal_types": ["Breakfast", "Brunch", "Evening Snacks"],
+    "price_range": "₹",
+    "average_cost_for_two": 150,
+    "address_line1": "Plot No. 66, near Dealer Mehandi Gurudwara, Ranjit Vihar, Nihal Vihar",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6689,
+    "longitude": 77.0701,
+    "phone": "+91 70656 58076",
+    "opening_hours": "Monday - Sunday: 8:00 AM - 10:30 PM",
+    "facilities": ["Casual Seating", "Outdoor Covered Seating", "Takeout"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.3,
+    "rating_count": 10,
+    "cover_image_url": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Kulhad Masala Chai", "Bun Maska", "Elaichi Chai", "Bread Pakora"],
+    "menu_categories": [
+      {
+        "category_name": "Artisanal Chais",
+        "items": [
+          { "name": "Special Kulhad Masala Chai", "description": "Strong Assam tea brewed with crushed cardamom, cinnamon, clove, ginger, and served in earthen clay cup", "price": 30, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Kulhad (150ml)" },
+          { "name": "Shahi Elaichi Chai", "description": "Milk tea enriched with fragrant green cardamom pods and creamy boiled milk", "price": 25, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Kulhad (150ml)" },
+          { "name": "Adrak Tulsi Chai", "description": "Herbal immunity boosting tea brewed with fresh holy basil and crushed ginger root", "price": 30, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Kulhad (150ml)" }
+        ]
+      },
+      {
+        "category_name": "Bakery & Savory Snacks",
+        "items": [
+          { "name": "Classic Bun Maska", "description": "Soft sweet bun sliced and slathered with generous salted Amul dairy butter", "price": 40, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Bun" },
+          { "name": "Paneer Bread Pakora", "description": "Crisp spiced gram flour batter fried bread stuffed with paneer slice and mint chutney", "price": 35, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" },
+          { "name": "Bun Maska Jam", "description": "Toasted bun slathered with butter and mixed fruit jam", "price": 45, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Bun" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "NBC BAKERY",
+    "short_description": "Prominent bakery and dessert cafe in Nangloi Extension famous for designer cakes and pastries.",
+    "long_description": "NBC BAKERY operates a modern dessert parlor and bakehouse on Ahir Chowk Road. In addition to custom theme cakes, it features a refrigerated display of French pastries, choco lava cups, savory puff patties, and takeaway coffee beverages.",
+    "cuisine_types": ["Bakery", "Cafe", "Desserts", "Beverages"],
+    "meal_types": ["Breakfast", "Brunch", "Evening Snacks"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "Ahir Chowk Road, Saini Mohalla, Block G, Nangloi Extension",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6795,
+    "longitude": 77.0619,
+    "phone": "+91 93001 60032",
+    "opening_hours": "Monday - Sunday: 10:30 AM - 10:30 PM",
+    "facilities": ["Air Conditioned", "Takeout", "In-store Counter", "Delivery"],
+    "dietary_options": ["Pure Veg", "Eggless Bakes"],
+    "rating_avg": 4.2,
+    "rating_count": 417,
+    "cover_image_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Red Velvet Pastry", "Choco Lava Cake", "Pineapple Pastry", "Paneer Patty"],
+    "menu_categories": [
+      {
+        "category_name": "Pastries & Cakes",
+        "items": [
+          { "name": "Red Velvet Pastry", "description": "Layered crimson cocoa sponge cake frosted with tangy cream cheese frosting and red sponge crumb", "price": 70, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Slice" },
+          { "name": "Warm Choco Lava Cup", "description": "Rich baked chocolate cake filled with molten flowing dark chocolate ganache", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Cup" },
+          { "name": "Fresh Pineapple Pastry", "description": "Light vanilla sponge layered with whipped cream and juicy pineapple compote", "price": 50, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Slice" }
+        ]
+      },
+      {
+        "category_name": "Savory Bakery Items",
+        "items": [
+          { "name": "Crispy Tandoori Paneer Patty", "description": "Flaky golden puff pastry pocket stuffed with spiced cottage cheese and peas", "price": 35, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" },
+          { "name": "Aloo Masala Puff Patty", "description": "Crisp golden puff pastry with spiced potato filling", "price": 25, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "GYAN BAKERS Cake & Pizza",
+    "short_description": "Established bakery and fast-food cafe near Krishna Mandir serving pizza slices, pastries, and snacks.",
+    "long_description": "GYAN BAKERS Cake & Pizza is a popular everyday hub located along Najafgarh Road near Krishna Mandir. It offers walk-in cafe counters and quick tables, serving freshly prepared birthday cakes, budget pizzas, egg rolls, and savory snacks.",
+    "cuisine_types": ["Bakery", "Cafe", "Pizza", "Fast Food"],
+    "meal_types": ["Breakfast", "Brunch", "Lunch", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 200,
+    "address_line1": "Shop No. 10, near Krishna Mandir, Najafgarh Road",
+    "city": "Nangloi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110041",
+    "latitude": 28.6761,
+    "longitude": 77.0604,
+    "phone": "+91 98918 34834",
+    "opening_hours": "Monday - Sunday: 11:00 AM - 11:00 PM",
+    "facilities": ["Indoor Counter Seating", "Takeout", "Delivery"],
+    "dietary_options": ["Veg Options", "Eggitarian"],
+    "rating_avg": 4.3,
+    "rating_count": 104,
+    "cover_image_url": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Black Forest Pastry", "Kurkure Momos", "Double Egg Roll", "Farmhouse Pizza"],
+    "menu_categories": [
+      {
+        "category_name": "Desserts & Pastries",
+        "items": [
+          { "name": "Black Forest Pastry", "description": "Chocolate sponge layered with whipped cream, sour cherries, and shaved dark chocolate curls", "price": 40, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Slice" },
+          { "name": "Chocolate Truffle Slice", "description": "Dense chocolate cake coated in decadent dark chocolate glaze", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Slice" }
+        ]
+      },
+      {
+        "category_name": "Pizza & Rolls",
+        "items": [
+          { "name": "Golden Corn & Capsicum Pizza", "description": "Crisp baked pizza base topped with sweet corn, chopped capsicum, and melted mozzarella", "price": 130, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Regular (7 inch)" },
+          { "name": "Kathi Double Egg Roll", "description": "Layered flatbread roll cooked with double eggs, onions, green chillies, and chatpata seasoning", "price": 60, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Roll" },
+          { "name": "Veg Kurkure Momos", "description": "Crunchy deep-fried dumplings with hot garlic dip", "price": 90, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "8 Pieces" }
+        ]
+      }
+    ]
+  }
+]

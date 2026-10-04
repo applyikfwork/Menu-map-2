@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="logoPinGrad" x1="80" y1="40" x2="432" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#FF7A50" />
+      <stop offset="50%" stopColor="#FF5A36" />
+      <stop offset="100%" stopColor="#E63815" />
+    </linearGradient>
+    <linearGradient id="logoMenuTeal" x1="168" y1="144" x2="344" y2="272" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#2DD4BF" />
+      <stop offset="100%" stopColor="#0D9488" />
+    </linearGradient>
+    <filter id="logoDropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" floodColor="#FF5A36" floodOpacity="0.25" />
+    </filter>
+  </defs>
+
+  <g filter="url(#logoDropShadow)">
+    <!-- Main Location Pin Body -->
+    <path
+      d="M256 32C167.6 32 96 103.6 96 192c0 112 136 256 150 271.2a13.2 13.2 0 0020 0C280 448 416 304 416 192 416 103.6 344.4 32 256 32z"
+      fill="url(#logoPinGrad)"
+    />
+
+    <!-- Inner Circle Cutout Background -->
+    <circle cx="256" cy="192" r="92" fill="#FFFFFF" />
+
+    <!-- Open Menu Book in Center -->
+    <!-- Left Page -->
+    <path
+      d="M192 160c16 0 40 8 56 20v68c-16-12-40-20-56-20V160z"
+      fill="url(#logoMenuTeal)"
+    />
+    <!-- Right Page -->
+    <path
+      d="M320 160c-16 0-40 8-56 20v68c16-12 40-20 56-20V160z"
+      fill="#0F766E"
+    />
+    <!-- Menu Spine & Center Line -->
+    <line x1="256" y1="176" x2="256" y2="248" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" />
+
+    <!-- Stylized Chef/Food Dot Accent -->
+    <circle cx="256" cy="140" r="8" fill="#FF5A36" />
+  </g>
+</svg>

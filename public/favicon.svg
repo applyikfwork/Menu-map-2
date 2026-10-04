@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="faviconPinGrad" x1="20" y1="10" x2="108" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#FF6B4A" />
+      <stop offset="50%" stopColor="#FF5A36" />
+      <stop offset="100%" stopColor="#E63815" />
+    </linearGradient>
+    <linearGradient id="menuTealGrad" x1="42" y1="36" x2="86" y2="68" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#2DD4BF" />
+      <stop offset="100%" stopColor="#0D9488" />
+    </linearGradient>
+    <filter id="glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.2" />
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)">
+    <!-- Main Location Pin Body -->
+    <path
+      d="M64 8C41.9 8 24 25.9 24 48c0 28 34 64 37.5 67.8a3.3 3.3 0 005 0C70 112 104 76 104 48 104 25.9 86.1 8 64 8z"
+      fill="url(#faviconPinGrad)"
+    />
+
+    <!-- Inner Circle Cutout Background -->
+    <circle cx="64" cy="48" r="23" fill="#FFFFFF" />
+
+    <!-- Open Menu Book in Center -->
+    <!-- Left Page -->
+    <path
+      d="M48 40c4 0 10 2 14 5v17c-4-3-10-5-14-5V40z"
+      fill="url(#menuTealGrad)"
+    />
+    <!-- Right Page -->
+    <path
+      d="M80 40c-4 0-10 2-14 5v17c4-3 10-5 14-5V40z"
+      fill="#0F766E"
+    />
+    <!-- Menu Spine -->
+    <line x1="64" y1="44" x2="64" y2="62" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" />
+
+    <!-- Subtle Cutlery / Fork accent at the base of the book -->
+    <circle cx="64" cy="35" r="2" fill="#FF5A36" />
+  </g>
+</svg>

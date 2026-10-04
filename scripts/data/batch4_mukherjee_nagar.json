@@ -1,0 +1,507 @@
+{
+  "scouted_area": "Mukherjee Nagar",
+  "area_food_guide": {
+    "title": "Mukherjee Nagar Coaching Hub Food Map",
+    "zone": "North Delhi",
+    "vibe_badge": "High-octane aspirant energy, late-night library study breaks, piping-hot tandoors, and wholesome desi ghee pure-veg comfort.",
+    "famous_for_summary": "Charcoal-smoked Soya Malai Chaap, Slow-cooked Urad Dal Makhani, Desi Ghee Mysore Masala Dosa, and Homestyle Unlimited Student Thalis.",
+    "best_time_to_visit": "4:00 PM – 9:30 PM (Evening post-coaching tea sessions, chaap discussions, and late-night dinner rush)",
+    "nearest_metro": "GTB Nagar Metro Station, Yellow Line, Exit Gate 2 (Mukherjee Nagar Auto-rickshaw stand)",
+    "parking_tips": "Banda Bahadur Marg and Commercial Complex lanes are heavily congested with e-rickshaws and two-wheelers. Use the MCD Multi-Level Car Parking near Batra Cinema or park at GTB Nagar Metro Station.",
+    "avg_cost_for_two": 320,
+    "famous_dishes": [
+      {
+        "name": "Chadha Special Dal Makhani & Laccha Paratha",
+        "why_famous": "Black lentils simmered overnight over slow charcoal embers with dairy butter, paired with flaky multi-layered tandoori paratha.",
+        "restaurant_name": "Chadha Bhojnalaya",
+        "price": 165,
+        "is_veg": true
+      },
+      {
+        "name": "Special Udupi Mysore Masala Dosa",
+        "why_famous": "Golden fermented crepe coated with fiery roasted garlic-chili paste and stuffed with seasoned potato masala.",
+        "restaurant_name": "Udupi Krishna Restaurant",
+        "price": 180,
+        "is_veg": true
+      },
+      {
+        "name": "Amritsari Paneer Bhurji & Butter Naan",
+        "why_famous": "Fresh cottage cheese scrambled with juicy tomatoes, green chilies, and whole Punjabi spices on a smoking tawa.",
+        "restaurant_name": "Amritsari Dhaba",
+        "price": 190,
+        "is_veg": true
+      },
+      {
+        "name": "Stuffed Tandoori Malai Chaap",
+        "why_famous": "Charcoal roasted soya chaap stuffed with rich spiced paneer, marinated in clotted cream, green cardamom, and cashew paste.",
+        "restaurant_name": "Teekha Zaika - Pure Veg Restaurant",
+        "price": 220,
+        "is_veg": true
+      }
+    ],
+    "food_crawl_stops": [
+      {
+        "stop_number": 1,
+        "time": "4:30 PM",
+        "type": "Evening Chai & South Indian Tiffin",
+        "venue_name": "Udupi Krishna Restaurant",
+        "recommended_dish": "Crispy Medu Vada & Degree Filter Coffee",
+        "distance_to_next": "350 meters (4 min walk)",
+        "note": "Recharge after afternoon lecture hours before the coaching libraries empty out."
+      },
+      {
+        "stop_number": 2,
+        "time": "6:30 PM",
+        "type": "Mid-Evening Appetizer & Group Discussion",
+        "venue_name": "Benam Cafe",
+        "recommended_dish": "Grilled Paneer Tikka Sandwich & Cold Brew Frappe",
+        "distance_to_next": "200 meters (2 min walk)",
+        "note": "Aesthetic study cafe vibe inside Batra Complex with laptop power outlets."
+      },
+      {
+        "stop_number": 3,
+        "time": "8:15 PM",
+        "type": "Hearty Main Dinner / Iconic Punjabi Thali",
+        "venue_name": "Chadha Bhojnalaya",
+        "recommended_dish": "Chadha Special Veg Thali & Dal Makhani",
+        "distance_to_next": "End of Crawl",
+        "note": "Classic sit-down dinner with piping-hot tandoori rotis to wrap up the Mukherjee Nagar food trail."
+      }
+    ]
+  },
+  "venues": [
+    {
+      "name": "Chadha Bhojnalaya",
+      "short_description": "Legendary North Indian pure-veg dhaba and family bhojnalaya famed for rich paneer bhurji, dal makhani, and hot tandoori rotis.",
+      "long_description": "Established decades ago along the Kingsway Camp and Model Town corridor bordering Mukherjee Nagar, Chadha Bhojnalaya is a household name for civil service aspirants and local families alike. The expansive, air-conditioned dining hall accommodates over 60 guests with rapid table service and an energetic dining vibe.",
+      "cuisine_types": ["North Indian", "Punjabi", "Bhojnalaya", "Thali"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹",
+      "average_cost_for_two": 300,
+      "address_line1": "Princess Road, Block B, Model Town 1",
+      "address_line2": "Bordering Kingsway Camp & Mukherjee Nagar",
+      "landmark": "Near Model Town Metro Station & Tikona Park",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7018,
+      "longitude": 77.1935,
+      "phone": "+91 98112 63916",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Family Dining Hall", "Table Service", "Digital Payments", "Washroom"],
+      "ambiance_tags": ["Legendary Dhaba", "Bustling", "Value for Money", "Comfortable"],
+      "seating_capacity": 65,
+      "opening_time": "11:00 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Punjabi Gravies & Paneer",
+          "items": [
+            {"name": "Special Dal Makhani", "description": "Black urad lentils simmered overnight over slow charcoal heat with dairy butter and cream.", "price": 130, "dietary": "Veg", "spice_level": 1, "portion_size": "Full Handi", "is_featured": true, "is_must_try": true},
+            {"name": "Paneer Bhurji", "description": "Crumbled cottage cheese tossed with chopped onions, green chilies, and garam masala.", "price": 160, "dietary": "Veg", "spice_level": 2, "portion_size": "Full Plate", "is_featured": true, "is_must_try": false}
+          ]
+        },
+        {
+          "name": "Breads & Thalis",
+          "items": [
+            {"name": "Chadha Special Veg Thali", "description": "Generous platter of Shahi Paneer, Dal Makhani, 4 Tandoori Rotis, Rice & Salad.", "price": 160, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Thali", "is_featured": true, "is_must_try": true},
+            {"name": "Butter Naan", "description": "Tandoor baked leavened flatbread brushed with fresh butter.", "price": 45, "dietary": "Veg", "spice_level": 0, "portion_size": "1 Piece", "is_featured": false, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Benam Cafe",
+      "short_description": "Cozy, aesthetic pure-vegetarian cafe in Batra Complex offering gourmet grilled sandwiches, pizza, shakes, and study corners.",
+      "long_description": "Nestled on the ground floor of Batra Complex in Dr. Mukherjee Nagar, Benam Cafe is an oasis of calm amid the bustling coaching institute district. Designed with warm acoustic lighting, comfortable seating, and power outlets for laptops, it attracts serious aspirants looking to read, discuss UPSC test series, or enjoy quality coffee.",
+      "cuisine_types": ["Cafe", "Continental", "Italian", "Fast Food"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 350,
+      "address_line1": "Ground Floor, Batra Complex, Shop No. 10",
+      "address_line2": "Dr. Mukherjee Nagar",
+      "landmark": "Inside Batra Cinema Commercial Complex",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7068,
+      "longitude": 77.2088,
+      "phone": "+91 98711 23450",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Laptop Friendly", "Power Outlets", "Washroom", "Digital Payments"],
+      "ambiance_tags": ["Cozy", "Quiet Study Vibe", "Aesthetic", "Modern"],
+      "seating_capacity": 35,
+      "opening_time": "10:00 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Artisan Sandwiches & Burgers",
+          "items": [
+            {"name": "Grilled Paneer Tikka Sandwich", "description": "Toasted multigrain bread layered with spiced cottage cheese and mozzarella cheese.", "price": 140, "dietary": "Veg", "spice_level": 2, "portion_size": "2 Halves with Chips", "is_featured": true, "is_must_try": true},
+            {"name": "Cheese Corn Burst Burger", "description": "Golden vegetable and sweet corn patty topped with liquid cheddar cheese and lettuce.", "price": 120, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Burger", "is_featured": true, "is_must_try": false}
+          ]
+        },
+        {
+          "name": "Pizzas & Beverages",
+          "items": [
+            {"name": "Batra Special Farmhouse Pizza", "description": "9-inch thin crust topped with marinara, bell peppers, onions, and mozzarella.", "price": 220, "dietary": "Veg", "spice_level": 1, "portion_size": "6 Slices", "is_featured": true, "is_must_try": true},
+            {"name": "Signature Cold Brew Frappe", "description": "Chilled roasted espresso blended with vanilla cream and chocolate drizzle.", "price": 130, "dietary": "Veg", "spice_level": 0, "portion_size": "350 ml Jar", "is_featured": true, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Amritsari Dhaba",
+      "short_description": "Vibrant pure-veg North Indian dhaba in Batra Cinema complex famous for tawa paneer, buttery dal tadka, and stuffed kulchas.",
+      "long_description": "A bustling dining landmark in Mukherjee Nagar's Batra Cinema square, Amritsari Dhaba delivers genuine Punjabi dhaba flavors in a clean, air-conditioned dining setting. It is always filled with coaching aspirants arguing over polity and history while sharing hot tawa rotis and tandoori paranthas.",
+      "cuisine_types": ["North Indian", "Punjabi", "Dhaba"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹",
+      "average_cost_for_two": 300,
+      "address_line1": "Shop No. 18, Commercial Complex",
+      "address_line2": "Batra Cinema, Dr. Mukherjee Nagar",
+      "landmark": "Near Central Bank of India",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7066,
+      "longitude": 77.2084,
+      "phone": "+91 98112 34567",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Fast Table Service", "UPI Payments", "Drinking Water"],
+      "ambiance_tags": ["Energetic", "Student Adda", "Comfort Food", "Classic"],
+      "seating_capacity": 42,
+      "opening_time": "11:00 AM",
+      "closing_time": "11:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Dhaba Curries & Paneer",
+          "items": [
+            {"name": "Amritsari Paneer Bhurji", "description": "Fresh cottage cheese scrambled with juicy tomatoes, green chilies, and Punjabi spices.", "price": 150, "dietary": "Veg", "spice_level": 2, "portion_size": "Full Plate", "is_featured": true, "is_must_try": true},
+            {"name": "Amritsari Dal Tadka", "description": "Yellow lentils cooked with ginger, garlic, and dried red chili tadka in desi ghee.", "price": 110, "dietary": "Veg", "spice_level": 2, "portion_size": "Full Handi", "is_featured": true, "is_must_try": false}
+          ]
+        },
+        {
+          "name": "Breads & Kulchas",
+          "items": [
+            {"name": "Amritsari Stuffed Aloo Kulcha", "description": "Crisp tandoori bread stuffed with spiced potato mash, served with chole and dip.", "price": 90, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Plate (2 Pcs)", "is_featured": true, "is_must_try": true},
+            {"name": "Butter Tandoori Roti", "description": "Crispy charcoal-baked whole wheat roti brushed with butter.", "price": 12, "dietary": "Veg", "spice_level": 0, "portion_size": "1 Piece", "is_featured": false, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Teekha Zaika - Pure Veg Restaurant",
+      "short_description": "Vibrant, modern pure-vegetarian dine-in restaurant serving smoky tandoori chaaps, rich gravies, and sizzling Chinese starters.",
+      "long_description": "Situated on Banda Bahadur Marg near Batra Cinema, Teekha Zaika is a high-energy pure-vegetarian haven packed with UPSC and SSC aspirants taking well-deserved study breaks. The dining room offers comfortable air-conditioned booth seating, bright modern lighting, and prompt table service. Famous for its generous portions and authentic North Indian flavours, the kitchen excels at charcoal-grilled stuffed chaaps, velvety dal makhani, and piping-hot kurkure momos.",
+      "cuisine_types": ["North Indian", "Tandoori", "Chinese", "Fast Food"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 400,
+      "address_line1": "708, Ground Floor, Banda Bahadur Marg",
+      "address_line2": "Dr. Mukherjee Nagar, Commercial Hub",
+      "landmark": "Near Batra Cinema & Satija Building",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7065,
+      "longitude": 77.2085,
+      "phone": "+91 93119 11868",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg", "Jain Friendly"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Laptop Friendly", "Power Outlets", "Washroom", "Digital Payments"],
+      "ambiance_tags": ["Lively", "Comfortable", "Student Adda", "Family Friendly"],
+      "seating_capacity": 48,
+      "opening_time": "11:00 AM",
+      "closing_time": "11:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Tandoori Starters & Chaap",
+          "items": [
+            {"name": "Stuffed Tandoori Malai Chaap", "description": "Soya chaap filled with seasoned paneer mince, marinated in hung curd, cashew paste, and charcoal grilled.", "price": 220, "dietary": "Veg", "spice_level": 1, "portion_size": "Full Plate (8 Pcs)", "is_featured": true, "is_must_try": true},
+            {"name": "Afghani Soya Chaap", "description": "Succulent soya chunks bathed in clotted cream, mild spices, and roasted in clay tandoor.", "price": 200, "dietary": "Veg", "spice_level": 1, "portion_size": "Full Plate (8 Pcs)", "is_featured": true, "is_must_try": false}
+          ]
+        },
+        {
+          "name": "North Indian Gravies",
+          "items": [
+            {"name": "Special Dal Makhani", "description": "Black lentils slow-cooked overnight with ginger, garlic, tomatoes, and generous white butter.", "price": 210, "dietary": "Veg", "spice_level": 1, "portion_size": "500 ml Handi", "is_featured": true, "is_must_try": true},
+            {"name": "Shahi Paneer", "description": "Tender paneer cubes simmered in a silky, rich cashew and tomato gravy infused with green cardamom.", "price": 240, "dietary": "Veg", "spice_level": 1, "portion_size": "500 ml Handi", "is_featured": false, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Local House",
+      "short_description": "Trendy pure-veg cafe and casual bistro known for wood-fired pizzas, cheesy pastas, burgers, and study-friendly ambiance.",
+      "long_description": "Located on Ramlal Kapoor Marg in Bhai Parmanand Colony, The Local House offers an inviting haven for coaching students and young professionals seeking delicious multi-cuisine vegetarian food. The cafe features warm wooden textures, cozy booth seating, gentle background music, air conditioning, and convenient power outlets for laptops. Their menu is 100% vegetarian, spanning loaded peri-peri fries, artisanal thin-crust pizzas, wholesome lunch thalis, and thick handcrafted shakes.",
+      "cuisine_types": ["Cafe", "Italian", "Chinese", "North Indian", "Continental"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 450,
+      "address_line1": "Plot No. 264, Ground Floor, Main Market",
+      "address_line2": "Bhai Parmanand Colony, Mukherjee Nagar",
+      "landmark": "Near Parmanand Gurudwara & Aggarwal Plaza",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7092,
+      "longitude": 77.2144,
+      "phone": "+91 78278 80127",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg", "Vegan Options Available"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Laptop Friendly", "Power Outlets", "Washroom", "Digital Payments"],
+      "ambiance_tags": ["Cozy", "Aesthetic", "Work Friendly", "Youth Hangout"],
+      "seating_capacity": 42,
+      "opening_time": "10:30 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Cafe Bites & Appetizers",
+          "items": [
+            {"name": "Crispy Kurkure Paneer Momos", "description": "Panko-crusted crispy dumplings filled with spiced paneer, deep-fried to golden perfection.", "price": 169, "dietary": "Veg", "spice_level": 2, "portion_size": "8 Pieces", "is_featured": true, "is_must_try": true},
+            {"name": "Peri Peri French Fries", "description": "Crisp golden potato fries tossed in fiery African peri peri spice blend, served with garlic mayo dip.", "price": 99, "dietary": "Veg", "spice_level": 2, "portion_size": "Large Platter", "is_featured": true, "is_must_try": false}
+          ]
+        },
+        {
+          "name": "Pizzas & Pastas",
+          "items": [
+            {"name": "The Local Special Farmhouse Pizza", "description": "Hand-stretched 9-inch crust loaded with mozzarella, grilled paneer cubes, sweet corn, mushrooms, and black olives.", "price": 249, "dietary": "Veg", "spice_level": 1, "portion_size": "9 Inch (6 Slices)", "is_featured": true, "is_must_try": true},
+            {"name": "Creamy Alfredo Penne", "description": "Penne pasta tossed in silky white parmesan cream sauce with sauteed broccoli, bell peppers, and mushrooms.", "price": 219, "dietary": "Veg", "spice_level": 0, "portion_size": "Regular Bowl", "is_featured": true, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Chitarkut - The Family Restaurant",
+      "short_description": "Prominent multi-cuisine vegetarian family restaurant offering traditional Mughlai-style vegetarian dishes, sizzlers, and royal thalis.",
+      "long_description": "Situated right on the Main Road in Dr. Mukherjee Nagar opposite Giani's and 24By7, Chitarkut has earned a loyal following among serious aspirants, coaching faculty, and visiting families. The restaurant features a spacious, air-conditioned multi-table setup designed for comfortable group lunches and family celebrations.",
+      "cuisine_types": ["North Indian", "Chinese", "Mughlai", "Fast Food"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 400,
+      "address_line1": "Shop No. 1049, Ground Floor, Main Road",
+      "address_line2": "Dr. Mukherjee Nagar",
+      "landmark": "Opposite 24By7 Store & Giani's Ice Cream",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7072,
+      "longitude": 77.2104,
+      "phone": "+91 98996 88140",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg", "Jain Friendly Available"],
+      "facilities": ["Air Conditioned", "Family Seating", "Washroom", "Table Service", "Digital Payments"],
+      "ambiance_tags": ["Family Dining", "Comfortable", "Spacious", "Clean"],
+      "seating_capacity": 52,
+      "opening_time": "11:30 AM",
+      "closing_time": "11:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Tandoori Starters & Chaap",
+          "items": [
+            {"name": "Chitarkut Special Paneer Tikka", "description": "Thick cubes of fresh paneer marinated in Kashmiri chili, ajwain, hung curd, and roasted in tandoor.", "price": 220, "dietary": "Veg", "spice_level": 2, "portion_size": "6 Pieces", "is_featured": true, "is_must_try": true},
+            {"name": "Afghani Malai Chaap", "description": "Rich soya chaap skewers marinated in cashew cream, white pepper, and melted butter.", "price": 190, "dietary": "Veg", "spice_level": 1, "portion_size": "8 Pieces", "is_featured": true, "is_must_try": false}
+          ]
+        },
+        {
+          "name": "Curries & Royal Gravies",
+          "items": [
+            {"name": "Chitarkut Special Dal Makhani", "description": "Slow-simmered black urad lentils enriched with fresh dairy cream, tomatoes, and unsalted butter.", "price": 195, "dietary": "Veg", "spice_level": 1, "portion_size": "500 ml Bowl", "is_featured": true, "is_must_try": true},
+            {"name": "Chitarkut Deluxe Veg Thali", "description": "Complete meal including Shahi Paneer, Dal Makhani, Mix Veg, Jeera Rice, 2 Butter Naan, Boondi Raita, Salad & Gulab Jamun.", "price": 260, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Grand Thali", "is_featured": true, "is_must_try": true}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Madras Cafe",
+      "short_description": "Legendary pure-vegetarian South Indian institution renowned for paper-thin butter dosas, crispy vadas, and authentic filter coffee.",
+      "long_description": "A landmark vegetarian eatery operating in Bhai Parmanand Colony for years, Madras Cafe is a beloved community staple for morning breakfast routines and evening snacks. With its clean, fuss-free dine-in hall and rapid service, it is continuously filled with students seeking authentic, wholesome South Indian fare made with fresh coconut chutneys and tangy drumstick sambar.",
+      "cuisine_types": ["South Indian", "Fast Food", "Beverages"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹",
+      "average_cost_for_two": 350,
+      "address_line1": "Shop No. 11, Main Road, Market Area",
+      "address_line2": "Bhai Parmanand Colony, Mukherjee Nagar",
+      "landmark": "Near MCD Office & Bhai Parmanand Bus Stop",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110033",
+      "latitude": 28.7112,
+      "longitude": 77.2155,
+      "phone": "+91 81301 40396",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg", "Vegan Friendly"],
+      "facilities": ["Air Conditioned", "Clean Dining Space", "Quick Table Service", "UPI Payments", "Takeaway Counter"],
+      "ambiance_tags": ["Traditional", "Bustling", "Pocket Friendly", "Breakfast Spot"],
+      "seating_capacity": 45,
+      "opening_time": "09:00 AM",
+      "closing_time": "10:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Crispy Tiffin Dosas",
+          "items": [
+            {"name": "Special Butter Masala Dosa", "description": "Crispy golden fermented crepe smeared with pure butter, stuffed with spiced potato and onion mash, served with sambar and two chutneys.", "price": 180, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Large Dosa", "is_featured": true, "is_must_try": true},
+            {"name": "Onion Rawa Paneer Masala Dosa", "description": "Semolina-based lacy crisp dosa sprinkled with chopped onions, filled with seasoned paneer bhurji.", "price": 230, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Large Dosa", "is_featured": true, "is_must_try": true}
+          ]
+        },
+        {
+          "name": "Beverages & Tiffin",
+          "items": [
+            {"name": "Authentic South Indian Filter Coffee", "description": "Strong chicory-infused decoction frothed with boiling whole milk, served in traditional brass dabarah.", "price": 60, "dietary": "Veg", "spice_level": 0, "portion_size": "1 Cup Dabarah", "is_featured": true, "is_must_try": true},
+            {"name": "Sambar Vada", "description": "Two crispy golden urad dal fritters soaked in piping-hot aromatic drumstick sambar, topped with coriander.", "price": 95, "dietary": "Veg", "spice_level": 1, "portion_size": "2 Pieces with Sambar", "is_featured": true, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Narayanam",
+      "short_description": "Desi-ghee pure-vegetarian dining restaurant offering artisanal South Indian dosas, Thatte idlis, and wholesome parotta thalis.",
+      "long_description": "Located on Outram Lines adjacent to the Mukherjee Nagar student belt, The Narayanam is an upscale yet affordable pure-vegetarian restaurant dedicated to authentic South Indian culinary heritage. All offerings are prepared using genuine desi ghee and freshly stone-ground spices.",
+      "cuisine_types": ["South Indian", "North Indian", "Beverages"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 450,
+      "address_line1": "2227, Ground Floor, Outram Lines",
+      "address_line2": "Kingsway Camp, Mukherjee Nagar Extension",
+      "landmark": "Near Banda Bahadur Marg / Hakikat Nagar Crossing",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7025,
+      "longitude": 77.2078,
+      "phone": "+91 92054 57700",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg", "Desi Ghee Preparation"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Washroom", "Spacious Seating", "Cards & UPI Payments"],
+      "ambiance_tags": ["Upscale Casual", "Quiet", "Cultural", "Comfortable"],
+      "seating_capacity": 60,
+      "opening_time": "07:30 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Desi Ghee Dosa Specialties",
+          "items": [
+            {"name": "Special Ghee Podi Masala Dosa", "description": "Crisp fermented dosa smeared generously with pure desi ghee and roasted gunpowder podi, stuffed with aromatic aloo masala.", "price": 240, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Large Dosa", "is_featured": true, "is_must_try": true},
+            {"name": "Ghee Podi Thatte Idli", "description": "Large Bidadi-style plate idli steamed to spongy softness, soaked in molten desi ghee and fiery gun powder.", "price": 160, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Jumbo Thatte Idli", "is_featured": true, "is_must_try": true}
+          ]
+        },
+        {
+          "name": "Regional Meals & Beverages",
+          "items": [
+            {"name": "Chettinad Paneer & Kerala Parotta Thali", "description": "Spicy Chettinad-style paneer gravy served with two flaky layered Malabar parottas, curd, papad, and buttermilk.", "price": 270, "dietary": "Veg", "spice_level": 3, "portion_size": "1 Complete Meal", "is_featured": true, "is_must_try": true},
+            {"name": "Traditional South Indian Filter Coffee", "description": "Classic drip-brewed chicory coffee served in traditional stainless dabarah.", "price": 70, "dietary": "Veg", "spice_level": 0, "portion_size": "1 Cup", "is_featured": true, "is_must_try": false}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ravat Bhojnalya",
+      "short_description": "Unassuming, authentic pure-vegetarian bhojnalaya known for comforting laccha parathas, shahi paneer, and homestyle student thalis.",
+      "long_description": "Situated on Ramlal Kapoor Marg in Bhai Parmanand Colony, Ravat Bhojnalya is one of the most reliable and affordable vegetarian dining havens in the Mukherjee Nagar ecosystem. Operating with clean sit-down steel tables and welcoming hospitality, the eatery serves wholesome, low-oil homestyle cooking that students rely on for daily lunch and dinner.",
+      "cuisine_types": ["North Indian", "Bhojnalaya", "Thali"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹",
+      "average_cost_for_two": 250,
+      "address_line1": "Plot No. 252, Ramlal Kapoor Marg",
+      "address_line2": "Bhai Parmanand Colony, Mukherjee Nagar",
+      "landmark": "Near Post Office, Bhai Parmanand Colony",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110033",
+      "latitude": 28.7108,
+      "longitude": 77.2148,
+      "phone": "+91 95606 34148",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg", "Homestyle Less Oil"],
+      "facilities": ["Sit-Down Dining Tables", "Table Service", "UPI & Cash Accepted", "Purified Water"],
+      "ambiance_tags": ["Homely", "Unpretentious", "Pocket Friendly", "Daily Dining"],
+      "seating_capacity": 30,
+      "opening_time": "11:00 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1505253758473-96b3015f240a?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Ghar Jaisi Sabziyan & Paneer",
+          "items": [
+            {"name": "Ravat Special Shahi Paneer", "description": "Rich yet light homestyle paneer cooked in a delicately spiced cashew and tomato reduction.", "price": 140, "dietary": "Veg", "spice_level": 1, "portion_size": "Full Plate", "is_featured": true, "is_must_try": true},
+            {"name": "Dal Makhani Desi Style", "description": "Slow-simmered black lentils infused with garlic and ginger, finished with pure desi ghee.", "price": 100, "dietary": "Veg", "spice_level": 1, "portion_size": "Full Plate", "is_featured": true, "is_must_try": true}
+          ]
+        },
+        {
+          "name": "Breads & Thalis",
+          "items": [
+            {"name": "Tandoori Laccha Paratha", "description": "Flaky, multi-layered whole wheat paratha crisped on charcoal tandoor with brushed ghee.", "price": 35, "dietary": "Veg", "spice_level": 0, "portion_size": "1 Piece", "is_featured": true, "is_must_try": true},
+            {"name": "Ghar Ki Thali", "description": "Complete daily wholesome meal with Dal Tadka, Seasonal Sabzi, 4 Fresh Tawa Rotis, Rice & Salad.", "price": 110, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Standard Thali", "is_featured": true, "is_must_try": true}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bikanervala",
+      "short_description": "Renowned pure-vegetarian multi-cuisine fine-dine restaurant and sweet palace offering royal thalis, chaats, and dosas.",
+      "long_description": "Situated in Derawal Nagar right adjacent to Mukherjee Nagar and Model Town, Bikanervala is a spacious multi-floor vegetarian institution with luxurious seating for 80 guests. Ideal for family visits, faculty lunches, and student celebrations, the venue features pristine air-conditioned dining, spotless washrooms, and extensive counters.",
+      "cuisine_types": ["North Indian", "South Indian", "Fast Food", "Sweets"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹₹",
+      "average_cost_for_two": 550,
+      "address_line1": "G-1, Vardhman Central Mall, Derawal Nagar",
+      "address_line2": "Near Mukherjee Nagar / Model Town",
+      "landmark": "Near Gujranwala Town Crossing",
+      "city": "Mukherjee Nagar, North Delhi",
+      "state": "Delhi",
+      "pincode": "110009",
+      "latitude": 28.7052,
+      "longitude": 77.1985,
+      "phone": "+91 11 4700 8899",
+      "website_url": "",
+      "has_website": false,
+      "is_pure_veg": true,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Spacious Seating", "Washroom", "Cards & UPI", "Parking"],
+      "ambiance_tags": ["Fine Dine", "Clean & Elegant", "Family Favorite", "Premium Pure Veg"],
+      "seating_capacity": 80,
+      "opening_time": "08:30 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Royal North Indian & Thalis",
+          "items": [
+            {"name": "Bikanervala Royal Thali", "description": "Paneer Lababdar, Dal Makhani, Mix Veg, 2 Butter Naan, Pulao, Raita, Salad & Sweet.", "price": 260, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Royal Platter", "is_featured": true, "is_must_try": true},
+            {"name": "Special Raj Kachori", "description": "Crisp giant kachori stuffed with diced potatoes, sprouts, sweet curd, mint and saunth chutneys.", "price": 120, "dietary": "Veg", "spice_level": 1, "portion_size": "1 Plate", "is_featured": true, "is_must_try": true}
+          ]
+        }
+      ]
+    }
+  ]
+}

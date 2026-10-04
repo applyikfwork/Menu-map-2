@@ -1,0 +1,15 @@
+# robots.txt for Menu Map
+# Allows automated crawling and indexing of all restaurants and dishes
+User-agent: *
+Allow: /
+Allow: /restaurant/
+Allow: /restaurants
+Allow: /food/
+Allow: /collections
+Allow: /nearby
+
+# Protect administrative areas
+Disallow: /admin-secure-panel2010
+Disallow: /owner/dashboard
+
+Sitemap: https://menumap.in/sitemap.xml

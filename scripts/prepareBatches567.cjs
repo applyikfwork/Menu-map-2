@@ -1,0 +1,1050 @@
+const fs = require('fs');
+
+// We will construct the 3 filtered arrays
+// Batch 5 raw
+const batch5Raw = [
+  // 1: Pt. Babu Ram Paranthe Wala
+  {
+    name: "Pt. Babu Ram Paranthe Wala",
+    short_description: "Century-old 1889 paratha house in Paranthe Wali Gali serving crispy desi ghee fried stuffed parathas with unlimited subzis.",
+    long_description: "Established in 1889 in the world-famous Gali Paranthe Wali, Pt. Babu Ram Paranthe Wala is one of the three surviving heritage paratha institutions of Old Delhi. Operating from an authentic brick-and-mortar dining room with wooden bench tables, each paratha is rolled fresh with exotic fillings and pan-fried in bubbling pure desi ghee karahis. Every order includes unlimited servings of spicy hing-aloo subzi, sweet pumpkin (sitaphal) curry, tangy banana-mint chutney, and homemade pickle.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Heritage Parathas", "Street Food"],
+    meal_types: ["Breakfast", "Brunch", "Lunch", "Dinner"],
+    price_range: "₹₹",
+    average_cost_for_two: 300,
+    address_line1: "1984 - 1985, Gali Paranthe Wali, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6557,
+    longitude: 77.2315,
+    phone: "+91 93137 73576",
+    opening_hours: "Monday - Sunday: 9:00 AM - 11:00 PM",
+    facilities: ["Indoor Bench Seating", "Traditional Sit-down Dining", "Takeout", "Cash Only"],
+    dietary_options: ["Pure Veg"],
+    rating_avg: 3.5,
+    rating_count: 3270,
+    cover_image_url: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Rabri Paratha", "Mewa (Dry Fruit) Paratha", "Besan Aloo Dal Spl Paratha", "Papad Paratha", "The Undertaker Lassi"],
+    menu_categories: [
+      {
+        category_name: "Old Is Gold Savory Parathas",
+        items: [
+          { name: "Aloo (Potato) Paratha Plate", description: "Classic mashed spiced potato filling fried in pure desi ghee, served with unlimited aloo sabzi, sitaphal curry, and banana chutney", price: 120, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Besan Aloo Dal Special Paratha", description: "Signature combination of spiced gram flour, lentil paste, and potatoes fried crisp", price: 140, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Gobhi (Cauliflower) Paratha Plate", description: "Freshly grated spiced cauliflower with green chillies and ginger", price: 130, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Matar (Green Peas) Paratha Plate", description: "Coarsely ground sweet green peas tempered with cumin and garam masala", price: 130, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Papad Paratha Plate", description: "Crushed spicy black pepper urad dal papad folded into flaky dough", price: 130, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Parathas with Curries" },
+          { name: "Karela (Bitter Gourd) Paratha Plate", description: "Tangy dried bitter gourd seasoned with amchur and roasted spices", price: 140, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Paneer Paratha Plate", description: "Fresh crumbled cottage cheese with coriander and green chillies", price: 150, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Tamatar (Tomato) Paratha Plate", description: "Tangy spiced tomato and onion filling folded into flaky pastry", price: 130, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" },
+          { name: "Nimbu (Lemon) Paratha Plate", description: "Unique heritage paratha stuffed with tangy spiced whole lemon pickle filling", price: 140, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Parathas with Curries" }
+        ]
+      },
+      {
+        category_name: "Special Fusion & Cheese Parathas",
+        items: [
+          { name: "Cheese Burst Paratha", description: "Gooey mozzarella and cheddar cheese blend stuffed inside crisp fried paratha", price: 180, dietary_tag: "Veg", spice_level: 1, portion_size: "2 Parathas with Curries" },
+          { name: "Peri Peri Paneer Paratha", description: "Spicy African peri peri seasoned cottage cheese filling", price: 160, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Parathas with Curries" },
+          { name: "Momos Paratha Special", description: "Steamed vegetable momo filling seasoned with garlic and black pepper folded into dough", price: 150, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Parathas with Curries" }
+        ]
+      },
+      {
+        category_name: "Kuch Meetha Ho Jaye (Sweet Parathas)",
+        items: [
+          { name: "Rabdi Paratha Special", description: "Sweet, luscious paratha oozing rich condensed milk rabri upon biting", price: 170, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Parathas" },
+          { name: "Khurchan Paratha", description: "Filled with caramelized milk skin scrapings, cardamom, and sugar", price: 170, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Parathas" },
+          { name: "Meva (Dry Fruit) Paratha", description: "Crushed cashews, almonds, pistachios, and raisins fried crisp", price: 190, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Parathas" },
+          { name: "Kaju (Cashew Nut) Paratha", description: "Crushed roasted cashews, mawa, and cardamom sweet paratha", price: 180, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Parathas" },
+          { name: "Badam (Almond) Paratha", description: "Finely slivered almonds and sweet khoya filling", price: 180, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Parathas" },
+          { name: "Chocolate Paratha", description: "Melted chocolate and hazelnut spread oozing from crispy golden crust", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Parathas" }
+        ]
+      },
+      {
+        category_name: "Amrit Ras Beverages",
+        items: [
+          { name: "The Undertaker Lassi (Giant Kulhad)", description: "Massive 500ml churned curd lassi topped with thick malai, rabri, rooh afza, and dry fruits", price: 110, dietary_tag: "Veg", spice_level: 0, portion_size: "500ml Giant Kulhad" },
+          { name: "Kulhad Sweet Lassi", description: "Traditional sweet creamy lassi in clay kulhad topped with fresh cream", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "300ml Kulhad" },
+          { name: "Mango Lassi (Kulhad)", description: "Alphonso mango pulp whipped with rich curd in clay kulhad", price: 75, dietary_tag: "Veg", spice_level: 0, portion_size: "300ml Kulhad" }
+        ]
+      }
+    ]
+  },
+  // 2: Shabrati Nahari Centre
+  {
+    name: "Shabrati Nahari Centre (Chitli Qabar)",
+    short_description: "Historic 1957 pit-oven nihari institution in Haveli Azam Khan renowned for melting beef and mutton shank stew.",
+    long_description: "Operating since 1957 in Gali Haveli Azam Khan off Bazar Chitli Qabar, Shabrati Nahari Centre is heralded among the greatest nihari shrines of Old Delhi. Simmered overnight in subterranean clay cauldrons with over 25 fragrant spices and desi ghee, the shank meat collapses into fork-tender perfection. Morning and evening seatings draw loyal crowds who pair the rich meat broth with molten roasted bone marrow (nalli), brain (magaz), and warm khamiri rotis.",
+    cuisine_types: ["Mughlai", "Traditional Nihari", "Heritage", "Street Food"],
+    meal_types: ["Breakfast", "Dinner"],
+    price_range: "₹",
+    average_cost_for_two: 240,
+    address_line1: "722, Gali Haveli Azam Khan, Bazar Chitli Qabar, Jama Masjid, Daryaganj",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6503,
+    longitude: 77.2351,
+    phone: "+91 99990 45511",
+    opening_hours: "Monday - Sunday: 6:00 AM - 9:00 AM, 6:00 PM - 9:30 PM (Until Sold Out)",
+    facilities: ["Indoor Table & Bench Seating", "Traditional Pit Oven", "Takeout", "Cash Only"],
+    dietary_options: ["Halal"],
+    rating_avg: 4.2,
+    rating_count: 863,
+    cover_image_url: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Special Nalli Nihari", "Buff Nahari Full Plate", "Mutton Nahari", "Magaz (Brain Fry)", "Double Khamiri Roti"],
+    menu_categories: [
+      {
+        category_name: "Pit-Oven Slow Cooked Nihari",
+        items: [
+          { name: "Buff Nahari (Full Plate)", description: "Tender meat shank slow-simmered for 8+ hours in traditional deg with aromatic spiced rogan, julienned ginger, and green chillies", price: 140, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Full Plate (Serves 1-2)" },
+          { name: "Buff Nahari (Half Plate)", description: "Single portion of rich spiced shank broth with tender meat chunks", price: 80, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Half Plate" },
+          { name: "Buff Nahari (Quarter Plate)", description: "Budget tasting portion of authentic slow-cooked nihari", price: 50, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Quarter Plate" },
+          { name: "Mutton Nahari (Special Weekend Edition)", description: "Goat meat shank stewed in pure ghee rogan with cracked cloves and mace (available Saturday evening and Sunday)", price: 240, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Full Plate (Serves 1-2)" },
+          { name: "Nalli (Bone Marrow Extra Ladle)", description: "Rich molten bone marrow freshly tapped from roasted shank bone shafts over the nihari", price: 60, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Extra Marrow Portion" },
+          { name: "Magaz (Brain Topping)", description: "Tender boiled brain portion seasoned with black pepper and rogan", price: 80, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Portion" },
+          { name: "Extra Gravy Rogan", description: "Ladle of concentrated spiced clarified fat and broth reduction", price: 20, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Cup" }
+        ]
+      },
+      {
+        category_name: "Tandoori Khamiri Breads",
+        items: [
+          { name: "Khamiri Roti (Single)", description: "Sourdough leavened flatbread baked fresh inside clay tandoor", price: 10, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Double Khamiri Roti", description: "Thick, extra-large pillowy sourdough bread perfect for soaking rich nihari gravy", price: 15, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Large Piece" }
+        ]
+      }
+    ]
+  },
+  // 3: Al Gulzar Restaurant
+  {
+    name: "Al Gulzar Restaurant",
+    short_description: "Spacious multi-level Mughlai restaurant in Meena Bazar known for Mutton Raan, butter chicken, and AC family dining.",
+    long_description: "Situated close to Jama Masjid Metro Gate 1 near Meena Bazar, Al Gulzar Restaurant is a premier dining destination boasting over 3,300 reviews. Spanning a non-AC ground floor and a large, air-conditioned upper-deck dining hall with dedicated family seating, it offers an extensive Mughlai banquet menu including butter-drenched tandoori chicken, slow-cooked Mutton Raan, rich Mutton Jahangiri, and freshly baked garlic naans.",
+    cuisine_types: ["Mughlai", "North Indian", "Tandoori Starters", "Biryani"],
+    meal_types: ["Lunch", "Dinner", "Late Night"],
+    price_range: "₹₹",
+    average_cost_for_two: 550,
+    address_line1: "Meena Bazar, Old Delhi, Jama Masjid, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6512,
+    longitude: 77.2356,
+    phone: "+91 82872 59210",
+    opening_hours: "Monday - Sunday: 12:30 PM - 11:30 PM",
+    facilities: ["Air Conditioned Family Seating", "Upper Deck Dining Hall", "Table Service", "Takeout", "Delivery"],
+    dietary_options: ["Halal", "Vegan Options"],
+    rating_avg: 4.3,
+    rating_count: 3302,
+    cover_image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Mutton Raan in Butter Gravy", "Chicken Tandoori with Butter", "Mutton Jahangiri", "Butter Chicken Boneless", "Chicken Dum Biryani"],
+    menu_categories: [
+      {
+        category_name: "Shahi Tandoor & Starters",
+        items: [
+          { name: "Mutton Raan with Butter Gravy", description: "Whole slow-cooked mutton leg roasted on charcoal and smothered in rich makhani butter gravy (order 30 mins in advance)", price: 750, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Whole Leg (Serves 3-4)" },
+          { name: "Chicken Tandoori with Amul Butter (Half)", description: "Charcoal-grilled chicken drenched in foaming melted butter and chaat masala", price: 260, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Half Chicken (Serves 1-2)" },
+          { name: "Chicken Afghani with Cream (Half)", description: "Tender chicken marinated in cashew cream and black pepper, char-grilled and topped with thick fresh cream", price: 280, dietary_tag: "Non-veg", spice_level: 1, portion_size: "Half Chicken" },
+          { name: "Chicken Barra with Butter & Vegetables", description: "Crispy roasted chicken tossed in tandoori spices and served with grilled bell peppers and butter", price: 280, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Serves 1-2)" },
+          { name: "Chicken Malai Tikka Boneless (5 Pieces)", description: "Melt-in-mouth chicken breast cubes marinated in cream, cheese, and cardamom", price: 220, dietary_tag: "Non-veg", spice_level: 1, portion_size: "5 Pieces" },
+          { name: "Mutton Seekh Kabab with Butter (2 Pieces)", description: "Spicy minced mutton skewers roasted on open bhatti and brushed with butter", price: 90, dietary_tag: "Non-veg", spice_level: 3, portion_size: "2 Skewers" },
+          { name: "Chicken Lollipop (5 Pieces)", description: "Crispy fried frenched chicken winglets tossed with garlic and red chillies", price: 200, dietary_tag: "Non-veg", spice_level: 3, portion_size: "5 Pieces" },
+          { name: "Paneer Tikka with Butter (5 Pieces)", description: "Cottage cheese cubes marinated in tandoori spices and char-grilled with capsicum", price: 210, dietary_tag: "Veg", spice_level: 2, portion_size: "5 Pieces" }
+        ]
+      },
+      {
+        category_name: "Royal Mutton & Chicken Curries",
+        items: [
+          { name: "Mutton Jahangiri (Special)", description: "Royal Mughlai curry with succulent mutton pieces cooked in fried onion, dry fruit, and saffron sauce", price: 340, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Handi (Serves 2)" },
+          { name: "Mutton Nihari Special", description: "Slow-simmered tender meat in rich aromatic stew garnished with ginger and chillies", price: 320, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Bowl (Serves 1-2)" },
+          { name: "Boneless Butter Chicken Special", description: "Tandoori chicken tikka simmered in silky tomato, butter, and cashew makhani gravy", price: 320, dietary_tag: "Non-veg", spice_level: 1, portion_size: "Bowl (Serves 2)" },
+          { name: "Chicken Changezi (Old Delhi Style)", description: "Roasted chicken cooked in tangy curd, tomato, and milk gravy with slit green chillies", price: 290, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Handi (Serves 2)" },
+          { name: "Paneer Butter Masala (Veg Special)", description: "Fresh paneer simmered in creamy butter and cashew makhani gravy", price: 240, dietary_tag: "Veg", spice_level: 1, portion_size: "Bowl (Serves 2)" },
+          { name: "Dal Makhani (Slow Cooked)", description: "Black lentils cooked overnight with cream and butter", price: 180, dietary_tag: "Veg", spice_level: 1, portion_size: "Bowl" }
+        ]
+      },
+      {
+        category_name: "Dum Biryanis & Tandoori Breads",
+        items: [
+          { name: "Special Chicken Biryani", description: "Fragrant basmati rice layered with spiced chicken, mint, and saffron on dum", price: 220, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Full Handi (Serves 1-2)" },
+          { name: "Mutton Dum Biryani", description: "Aged basmati rice cooked with tender mutton chunks and royal spices", price: 310, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Full Handi" },
+          { name: "Butter Garlic Naan", description: "Refined flour bread topped with minced garlic and butter baked in tandoor", price: 45, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Khamiri Roti", description: "Traditional thick leavened sourdough bread", price: 15, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Shahi Badam Kheer (Bowl)", description: "Chilled slow-boiled milk and rice pudding with crushed almonds", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Bowl" }
+        ]
+      }
+    ]
+  },
+  // 4: Shahi Mehfil Restaurant
+  {
+    name: "Shahi Mehfil Restaurant",
+    short_description: "Regal Mughlai and Arabic dining restaurant on Matia Mahal celebrated for Butter Chicken, Mandi, and Turkish Footlong Kababs.",
+    long_description: "Adorned with royal blue interiors and majestic Mughal-inspired architectural arches, Shahi Mehfil Restaurant is situated at 1115 Matia Mahal Road near Jama Masjid. With nearly 900 reviews, it provides a refined, air-conditioned family dining haven featuring Arabic-style floor cushions and table dining. Signature specialties include Turkish Footlong Kababs, smokey Chicken Banjara, Butter Chicken, and aromatic Mandi rice platters.",
+    cuisine_types: ["Mughlai", "Arabic", "North Indian", "Tandoori Starters"],
+    meal_types: ["Lunch", "Dinner", "Late Night"],
+    price_range: "₹₹",
+    average_cost_for_two: 500,
+    address_line1: "1115, Matia Mahal Rd, Bazar Matia Mahal, Jama Masjid, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6508,
+    longitude: 77.2346,
+    phone: "+91 96505 15135",
+    opening_hours: "Monday - Sunday: 12:00 PM - 1:00 AM",
+    facilities: ["Air Conditioned Royal Ambience", "Private Dining Space", "Table & Floor Seating", "Takeout", "Late Night Dining"],
+    dietary_options: ["Halal", "Vegan Options"],
+    rating_avg: 4.2,
+    rating_count: 894,
+    cover_image_url: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Turkish Footlong Kabab", "Shahi Special Mandi", "Butter Chicken", "Chicken Banjara Kabab", "Kulhad Kheer"],
+    menu_categories: [
+      {
+        category_name: "Royal Starters & Turkish Kebabs",
+        items: [
+          { name: "Turkish Footlong Kabab (Special)", description: "One-foot-long skewered minced chicken kebab seasoned with sumac, bell peppers, and herbs, char-grilled and served on pita bread", price: 320, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Footlong Platter (Serves 2)" },
+          { name: "Chicken Banjara Kabab", description: "Chicken chunks marinated in roasted cumin, mint, coriander, and coarse spices, grilled over charcoal", price: 260, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Plate (Serves 1-2)" },
+          { name: "Chicken Laffa Starter", description: "Tender tandoori chicken shreds tossed in garlic yogurt sauce rolled in Middle Eastern laffa flatbread", price: 220, dietary_tag: "Non-veg", spice_level: 2, portion_size: "2 Rolls" },
+          { name: "Shahi Tandoori Platter (Mixed)", description: "Assortment of Chicken Tikka, Banjara Kabab, Malai Tikka, and Seekh Kababs served with dips", price: 450, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Grand Platter (Serves 2-3)" },
+          { name: "Long Kabab (Mutton)", description: "Traditional Old Delhi elongated minced mutton kebab roasted on iron skewers", price: 280, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Platter" },
+          { name: "Chicken Special Fried Rice", description: "Basmati rice wok-tossed with roasted shredded chicken and mild aromatics", price: 210, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Full Plate" }
+        ]
+      },
+      {
+        category_name: "Mughlai Gravies & Mandi",
+        items: [
+          { name: "Shahi Special Chicken Mandi", description: "Aromatic Arabian long-grain rice cooked with whole spices, topped with roasted half chicken, fried nuts, and spicy tomato daqoos", price: 420, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Large Platter (Serves 2-3)" },
+          { name: "Classic Butter Chicken", description: "Charcoal roasted chicken pieces simmered in sweet-tangy creamy butter tomato sauce", price: 320, dietary_tag: "Non-veg", spice_level: 1, portion_size: "Bowl (Serves 2)" },
+          { name: "Chicken Tikka Gravy Boneless", description: "Boneless chicken tandoori tikka simmered in spicy onion-tomato gravy", price: 300, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Bowl (Serves 2)" },
+          { name: "Shahi Kulhad Kheer", description: "Rich saffron and cardamom milk rice pudding in traditional earthen pot", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Kulhad" },
+          { name: "Butter Garlic Naan", description: "Clay-oven baked refined flour bread topped with minced garlic and butter", price: 40, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Khamiri Roti", description: "Traditional thick leavened sourdough flatbread", price: 15, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" }
+        ]
+      }
+    ]
+  },
+  // 5: Ram Parshad Makhan Lal
+  {
+    name: "Ram Parshad Makhan Lal",
+    short_description: "85-year-old heritage halwai established in 1940 in Khari Baoli renowned for pure desi ghee Bedmi Poori and Nagori Halwa.",
+    long_description: "Operating since 1940 along Naya Bans Road at the gateway of Khari Baoli spice market, Ram Parshad Makhan Lal is run by its 5th generation of master halwais. With over 1,200 reviews, it is celebrated as an essential morning breakfast institution for its pure desi ghee Bedmi Pooris served with spicy fenugreek-aloo sabzi, flaky Nagori pooris with aromatic sooji halwa, and crisp saffron-soaked imartis.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Breakfast & Sweets", "Heritage Halwai"],
+    meal_types: ["Breakfast", "Brunch", "Lunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 220,
+    address_line1: "453, Naya Bans Rd, Khari Baoli, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6579,
+    longitude: 77.2212,
+    phone: "+91 98188 16575",
+    opening_hours: "Monday - Sunday: 7:30 AM - 9:30 PM",
+    facilities: ["Indoor Counter", "Takeout", "Desi Ghee Workshop", "UPI & Digital Payments"],
+    dietary_options: ["Pure Veg"],
+    rating_avg: 4.0,
+    rating_count: 1201,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Desi Ghee Bedmi Poori", "Nagori Halwa Plate", "Crisp Shahi Imarti", "Chana Bhatura", "Matar Samosa"],
+    menu_categories: [
+      {
+        category_name: "Heritage Desi Ghee Breakfast",
+        items: [
+          { name: "Special Desi Ghee Bedmi Poori (Plate of 2)", description: "Coarse urad dal stuffed crispy pooris fried in pure desi ghee, served with spicy fenugreek-infused aloo sabzi, sweet pumpkin subzi, and mango pickle", price: 80, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Pooris + Sabzi Plate" },
+          { name: "Nagori Halwa Plate", description: "Three crispy bite-sized semolina pooris paired with hot ghee-roasted suji halwa and spiced potato curry", price: 85, dietary_tag: "Veg", spice_level: 0, portion_size: "3 Nagoris + Halwa + Sabzi" },
+          { name: "Desi Ghee Chana Bhatura", description: "Two golden puffed bhaturas served with robust Punjabi chickpeas, onions, and green chillies", price: 100, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Bhaturas with Chana" },
+          { name: "Dal Kachori with Aloo Sabzi (2 Pieces)", description: "Flaky crust kachoris stuffed with spiced yellow moong dal, drowned in steaming potato gravy", price: 50, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Kachoris with Gravy" },
+          { name: "Matar Samosa (Desi Ghee)", description: "Crisp pastry filled with green peas, potatoes, and cashews, served with sweet saunth chutney", price: 25, dietary_tag: "Veg", spice_level: 2, portion_size: "Single Piece" }
+        ]
+      },
+      {
+        category_name: "Traditional Desi Ghee Confections",
+        items: [
+          { name: "Shahi Imarti (Desi Ghee)", description: "Geometric floral urad dal fritter fried in pure clarified butter and soaked in saffron syrup", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece (100g)" },
+          { name: "Kesar Badam Kadhai Milk", description: "Full cream milk slow-boiled in large shallow iron kadhai, flavored with saffron and crushed almonds", price: 70, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (250ml)" },
+          { name: "Desi Ghee Malai Ghewar (Seasonal)", description: "Honeycomb disc sweet made with flour and ghee, drenched in sugar syrup and topped with mawa malai", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "Single Disc Piece" },
+          { name: "Moong Dal Halwa (Desi Ghee)", description: "Yellow moong dal slow-roasted in pure clarified butter with khoya and cardamom", price: 100, dietary_tag: "Veg", spice_level: 0, portion_size: "100g Bowl" },
+          { name: "Hot Gulab Jamun (2 Pieces)", description: "Mawa dumplings steeped in rose cardamom syrup", price: 40, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Pieces" }
+        ]
+      }
+    ]
+  },
+  // 6: Bismillah Kabab Point -> EXCLUDED!
+  // 7: Kedarnath Prem Chand Halwai
+  {
+    name: "Kedarnath Prem Chand Halwai",
+    short_description: "Century-old heritage halwai in Balli Maran renowned for morning Bedmi Poori, Nagori Halwa, and fresh desi ghee jalebis.",
+    long_description: "Situated at 4737 Main Balli Maran in Chandni Chowk, Kedarnath Prem Chand Halwai is a treasured neighborhood sweet and breakfast shop. Operating for over 100 years, it draws locals across Old Delhi for its spicy Bedmi Poori served with rich aloo sabzi and sweet pumpkin curry, accompanied by crisp desi ghee jalebis prepared fresh in giant iron kadhais.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Breakfast & Sweets", "Heritage Halwai"],
+    meal_types: ["Breakfast", "Brunch", "Lunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 160,
+    address_line1: "4737 Main, Balli Maran, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6538,
+    longitude: 77.2272,
+    phone: "+91 99535 39291",
+    opening_hours: "Monday - Sunday: 7:00 AM - 9:30 PM",
+    facilities: ["Indoor Counter", "Takeout", "Fresh Sweet Display", "Cash & Digital Payments"],
+    dietary_options: ["Pure Veg"],
+    rating_avg: 4.1,
+    rating_count: 121,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Bedmi Poori Aloo Sabzi", "Nagori Halwa", "Desi Ghee Jalebi", "Moong Dal Kachori", "Gulab Jamun"],
+    menu_categories: [
+      {
+        category_name: "Heritage Morning Breakfast",
+        items: [
+          { name: "Bedmi Poori with Aloo Ki Sabzi (2 Pieces)", description: "Crisp urad-dal stuffed pooris served with spicy cumin potato curry, sweet sitaphal subzi, and homemade pickle", price: 70, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Pooris + Curries" },
+          { name: "Nagori Halwa Plate", description: "Three crispy semolina pooris served with steaming desi ghee sooji halwa and spicy aloo curry", price: 75, dietary_tag: "Veg", spice_level: 0, portion_size: "3 Nagoris + Halwa" },
+          { name: "Moong Dal Khasta Kachori (2 Pieces)", description: "Flaky round pastries stuffed with spiced yellow lentils, served with tangy potato gravy and tamarind chutney", price: 40, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Pieces" },
+          { name: "Desi Ghee Samosa with Chole", description: "Crispy samosa crushed and topped with spicy chickpea curry and saunth", price: 35, dietary_tag: "Veg", spice_level: 3, portion_size: "1 Samosa with Chole" }
+        ]
+      },
+      {
+        category_name: "Traditional Desi Ghee Sweets",
+        items: [
+          { name: "Desi Ghee Jalebi (Per 100g)", description: "Crispy golden spirals fried in pure clarified butter and steeped in saffron cardamom syrup", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "100g Portion" },
+          { name: "Hot Gulab Jamun (2 Pieces)", description: "Soft fried milk mawa dumplings soaked in cardamom rose syrup", price: 40, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Pieces" },
+          { name: "Thick Malai Lassi (Kulhad)", description: "Churned sweet yogurt beverage topped with thick cream in earthen kulhad", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "Kulhad (250ml)" },
+          { name: "Paneer Pakora (Desi Ghee)", description: "Cottage cheese slice coated with seasoned chickpea batter and fried golden", price: 35, dietary_tag: "Veg", spice_level: 1, portion_size: "Single Large Piece" }
+        ]
+      }
+    ]
+  },
+  // 8: Ram Swaroop Halwai
+  {
+    name: "Ram Swaroop Halwai",
+    short_description: "Decades-old heritage breakfast confectioner in Sita Ram Bazar famed for authentic Nagori Halwa and spicy Bedmi Poori.",
+    long_description: "Situated at 2040 Sitaram Bazar Road in Hauz Qazi, Ram Swaroop Halwai is an unpretentious, historic institution that has preserved traditional Old Delhi breakfast recipes for over half a century. Loved by street food walkers and heritage lovers, it serves piping-hot Nagori Halwa—mini semolina pooris filled with warm sooji halwa and spicy potato curry—alongside crisp urad-dal bedmi pooris and mawa samosas.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Breakfast & Sweets", "Heritage Street Food"],
+    meal_types: ["Breakfast", "Brunch", "Lunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 140,
+    address_line1: "2040, Sitaram Bazar Rd, Hauz Qazi, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6508,
+    longitude: 77.2289,
+    phone: "+91 92100 40054",
+    opening_hours: "Monday - Sunday: 7:00 AM - 9:00 PM",
+    facilities: ["Indoor Standing & Bench Counter", "Takeout", "Fresh Breakfast Counter", "Cash Only"],
+    dietary_options: ["Pure Veg"],
+    rating_avg: 4.1,
+    rating_count: 155,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Special Nagori Halwa", "Bedmi Poori with Aloo Sabzi", "Dal Ki Kachori", "Desi Ghee Samosa", "Hot Jalebi"],
+    menu_categories: [
+      {
+        category_name: "Heritage Sita Ram Bazar Breakfast",
+        items: [
+          { name: "Special Nagori Halwa Plate", description: "Three miniature crisp hollow puris stuffed with aromatic desi ghee semolina halwa and spicy potato curry", price: 70, dietary_tag: "Veg", spice_level: 0, portion_size: "3 Nagoris + Halwa + Aloo Sabzi" },
+          { name: "Bedmi Poori with Spicy Aloo Sabzi (Plate of 2)", description: "Coarse spiced urad dal pooris fried golden, served with rustic skin-on spicy potato curry and pickled chillies", price: 60, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Pooris + Sabzi Plate" },
+          { name: "Khasta Dal Kachori with Sabzi", description: "Crisp flaky kachori stuffed with seasoned lentils, served drenched in steaming aloo subzi", price: 35, dietary_tag: "Veg", spice_level: 3, portion_size: "Single Piece with Gravy" },
+          { name: "Desi Ghee Aloo Samosa (2 Pieces)", description: "Crispy golden triangle pastry with whole coriander and potato filling, served with saunth chutney", price: 30, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Pieces" },
+          { name: "Hot Crispy Jalebi (Per 100g)", description: "Thin crispy coils soaked in saffron sugar syrup fresh from the kadhai", price: 40, dietary_tag: "Veg", spice_level: 0, portion_size: "100g" },
+          { name: "Paneer Bread Pakora with Aloo Sabzi", description: "Bread sandwich stuffed with paneer and herbs, deep fried and served with hot aloo curry", price: 40, dietary_tag: "Veg", spice_level: 2, portion_size: "Single Piece with Gravy" },
+          { name: "Desi Ghee Suji Halwa (100g)", description: "Semolina slow-roasted in pure ghee with cardamom and roasted nuts", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "100g Bowl" }
+        ]
+      }
+    ]
+  },
+  // 9: Nawab Qureshi’s Watermelon Shake -> EXCLUDED!
+  // 10: Jain Pavitra Chhachh Bhandar
+  {
+    name: "Jain Pavitra Chhachh Bhandar",
+    short_description: "Decades-old heritage breakfast shop in Dharam Pura celebrated for white butter bread sandwiches and spiced masala chaach.",
+    long_description: "Situated at Masjid Khajoor on Dharam Pura Road near Kinari Bazar, Jain Pavitra Chhachh Bhandar is a beloved Old Delhi morning ritual. For decades, locals and heritage enthusiasts have visited this simple brick-and-mortar storefront for breakfast: thick slices of white bread generously slathered with freshly churned homemade white butter (safed makkhan) sprinkled with signature roasted cumin-black pepper chaat masala, paired with refreshing glasses of cold masala buttermilk.",
+    cuisine_types: ["Dairy & Breakfast", "Beverages", "Healthy Snacks", "Pure Vegetarian"],
+    meal_types: ["Breakfast", "Brunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 100,
+    address_line1: "Masjid Khajhoor, 3019/1, Dharam Pura Rd, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6534,
+    longitude: 77.2329,
+    phone: "+91 79824 10050",
+    opening_hours: "Monday - Sunday: 7:00 AM - 1:00 PM (Breakfast Specialty)",
+    facilities: ["Indoor Counter", "Takeout", "Quick Service"],
+    dietary_options: ["Pure Veg"],
+    rating_avg: 4.2,
+    rating_count: 85,
+    cover_image_url: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Safed Makkhan Bread (White Butter Toast)", "Masala Chhachh (Spiced Buttermilk)", "Sweet Malai Lassi", "Bun Makkhan", "Plain Salted Chaach"],
+    menu_categories: [
+      {
+        category_name: "Traditional Breakfast & Buttermilk",
+        items: [
+          { name: "Special Safed Makkhan Bread (White Butter Bread)", description: "Two soft white bread slices layered with thick, freshly hand-churned white butter and seasoned with roasted cumin and secret rock-salt chaat masala", price: 40, dietary_tag: "Veg", spice_level: 1, portion_size: "2 Slices Sandwich" },
+          { name: "Masala Chhachh (Spiced Buttermilk Glass)", description: "Cold churned buttermilk seasoned with roasted cumin powder, black salt, fresh mint, and hing", price: 25, dietary_tag: "Veg", spice_level: 1, portion_size: "Glass (250ml)" },
+          { name: "Bun Makkhan Special", description: "Soft sweet round bakery bun split and stuffed with a generous slab of freshly churned homemade butter", price: 35, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Stuffed Bun" },
+          { name: "Special Sweet Malai Lassi", description: "Richly churned sweet curd topped with a thick dollop of fresh cream", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (300ml)" },
+          { name: "Combo: Safed Makkhan Bread + Masala Chhachh", description: "The quintessential Old Delhi breakfast combo of white butter spiced bread with a chilled glass of masala chaach", price: 60, dietary_tag: "Veg", spice_level: 1, portion_size: "1 Sandwich + 1 Glass Chaach" },
+          { name: "White Butter Toast with Mixed Fruit Jam", description: "Toasted bread with a thick layer of fresh white butter and sweet fruit jam", price: 45, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Slices" }
+        ]
+      }
+    ]
+  }
+];
+
+// Batch 6 raw
+const batch6Raw = [
+  // 1: Jain Coffee House
+  {
+    name: "Jain Coffee House",
+    short_description: "Hidden 1948 heritage cafe in a quiet Raghu Ganj courtyard celebrated for inventive fruit sandwiches and cold coffee.",
+    long_description: "Established in 1948 tucked inside a tranquil grain merchant courtyard in Raghu Ganj off Chawri Bazar, Jain Coffee House is one of Old Delhi's most iconic secret retreats. Featuring cozy rustic seating with vintage decor, it is famous for inventing fresh fruit sandwiches layered with soft paneer, seasonal fruits (mango, apple, chiku, strawberry, pineapple), pomegranate seeds, and mild spices, paired with frothy blended cold coffee.",
+    cuisine_types: ["Cafe", "Sandwiches", "Beverages", "Pure Vegetarian"],
+    meal_types: ["Breakfast", "Brunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 220,
+    address_line1: "4013, Ballimaran Rd, near PNB ATM, Raghu Ganj, Dai Wara, Chawri Bazar",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6502,
+    longitude: 77.2281,
+    phone: "+91 93153 71200",
+    opening_hours: "Monday - Saturday: 10:00 AM - 9:00 PM (Sunday Closed)",
+    facilities: ["Indoor Courtyard Seating", "Rustic Heritage Vibe", "Takeout", "UPI & Digital Payments"],
+    dietary_options: ["Pure Veg", "Vegan Options"],
+    rating_avg: 4.1,
+    rating_count: 538,
+    cover_image_url: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Signature Mix Fruit Sandwich", "Saffron Paneer Sandwich", "Mango Fruit Sandwich", "Samosa Sandwich", "Signature Blended Cold Coffee"],
+    menu_categories: [
+      {
+        category_name: "Signature Fruit Sandwiches",
+        items: [
+          { name: "Signature Mix Fruit Sandwich", description: "Crisp white bread layered with fresh apple, banana, chikoo, pomegranate seeds, paneer, and a dash of house masala", price: 90, dietary_tag: "Veg", spice_level: 1, portion_size: "4 Cut Quarters" },
+          { name: "Mango Fruit Sandwich (Seasonal)", description: "Sliced ripe Alphonso mangoes and malai paneer with mild spice sprinkle in soft buttered bread", price: 100, dietary_tag: "Veg", spice_level: 0, portion_size: "Full Sandwich" },
+          { name: "Saffron Paneer Sandwich", description: "Fresh cottage cheese slabs infused with saffron syrup and dry fruits inside crustless bread", price: 95, dietary_tag: "Veg", spice_level: 0, portion_size: "Full Sandwich" },
+          { name: "Chiku (Sapodilla) Sandwich", description: "Sweet sliced chiku paired with thin butter spread and rock salt seasoning", price: 80, dietary_tag: "Veg", spice_level: 0, portion_size: "Full Sandwich" },
+          { name: "Pineapple Sandwich (Sweet & Sour)", description: "Juicy pineapple rings seasoned with black salt and sweet butter in white bread", price: 85, dietary_tag: "Veg", spice_level: 1, portion_size: "Full Sandwich" },
+          { name: "Strawberry Sandwich (Seasonal)", description: "Fresh sliced winter strawberries with sweet cream and paneer", price: 100, dietary_tag: "Veg", spice_level: 0, portion_size: "Full Sandwich" },
+          { name: "Banana Sweet Butter Sandwich", description: "Sliced bananas layered with butter, pomegranate, and light cardamom sugar", price: 75, dietary_tag: "Veg", spice_level: 0, portion_size: "Full Sandwich" }
+        ]
+      },
+      {
+        category_name: "Hot & Savory Sandwiches",
+        items: [
+          { name: "Special Samosa Sandwich", description: "Crisp potato samosa crushed between toasted buttered bread with green mint chutney and saunth", price: 70, dietary_tag: "Veg", spice_level: 2, portion_size: "Full Sandwich" },
+          { name: "Classic Vegetable Paneer Sandwich", description: "Sliced cucumbers, tomatoes, and seasoned paneer slab with green herb dip", price: 75, dietary_tag: "Veg", spice_level: 1, portion_size: "Full Sandwich" }
+        ]
+      },
+      {
+        category_name: "Cold Coffees & Fresh Shakes",
+        items: [
+          { name: "Signature Blended Cold Coffee", description: "Thick chilled milk churned with dark roast coffee extract, sugar, and chocolate drizzle", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Tall Glass (300ml)" },
+          { name: "Fresh Mango Shake (Seasonal)", description: "Thick mango puree blended with chilled milk and ice cream", price: 70, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (300ml)" },
+          { name: "Fresh Chiku Shake", description: "Sweet sapodilla fruit blended with whole milk and crushed ice", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (300ml)" },
+          { name: "Fresh Strawberry Shake", description: "Real strawberry puree shaken with full-cream milk", price: 70, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (300ml)" },
+          { name: "Fresh Apple Shake", description: "Crisp sweet apples blended with creamy milk and honey", price: 70, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (300ml)" },
+          { name: "Fresh Pineapple Shake", description: "Real pineapple crushed and shaken with milk", price: 70, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (300ml)" }
+        ]
+      }
+    ]
+  },
+  // 2: TAUFIQ DILPASAND BIRYANI POINT -> EXCLUDED!
+  // 3: Madan Lal Halwai
+  {
+    name: "Madan Lal Halwai",
+    short_description: "Historic 50-year-old sweet shop in Sadar Bazar celebrated for pure desi ghee Poori Sabzi, paneer pakoras, and Sohan Halwa.",
+    long_description: "Located at 5285 Sadar Thana Road in Sadar Bazar (Delhi 110006), Madan Lal Halwai is an iconic culinary landmark operating for over five decades. With more than 1,600 reviews, it is famous for its morning breakfast of crisp, pure desi ghee pooris served with spicy chickpea and potato curry, alongside deep-fried golden paneer pakoras, traditional Sohan Halwa, and seasonal sweet confections.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Breakfast & Sweets", "Heritage Halwai"],
+    meal_types: ["Breakfast", "Brunch", "Lunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 200,
+    address_line1: "5285, Sadar Thana Rd, Basti Harphool Singh, Ahata Kidara, Sadar Bazar",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6589,
+    longitude: 77.2115,
+    phone: "+91 70426 46437",
+    opening_hours: "Monday - Sunday: 7:30 AM - 10:00 PM",
+    facilities: ["Indoor Counter", "Takeout", "Desi Ghee Kitchen", "UPI & Digital Payments"],
+    dietary_options: ["Pure Veg"],
+    rating_avg: 4.0,
+    rating_count: 1603,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Desi Ghee Poori Sabzi with Suji Halwa", "Stuffed Paneer Pakoda", "Shahi Sohan Halwa", "Karachi Halwa", "Khasta Kachori"],
+    menu_categories: [
+      {
+        category_name: "Heritage Desi Ghee Breakfast",
+        items: [
+          { name: "Desi Ghee Poori Sabzi with Suji Halwa (Plate)", description: "Two crisp puffed pooris fried in pure clarified butter, served with spicy Punjabi chole, aloo curry, sweet suji halwa, and mixed pickle", price: 85, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Pooris + Halwa + Curries" },
+          { name: "Stuffed Paneer Pakoda (Desi Ghee)", description: "Thick slice of fresh dairy cottage cheese layered with mint chutney, battered in spiced gram flour and fried crisp", price: 45, dietary_tag: "Veg", spice_level: 1, portion_size: "Single Large Piece" },
+          { name: "Khasta Kachori with Aloo Sabzi (2 Pieces)", description: "Crisp flaky round kachoris stuffed with spiced dal pithi, drenched in steaming potato gravy", price: 50, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Pieces with Gravy" },
+          { name: "Desi Ghee Aloo Samosa (2 Pieces)", description: "Crisp golden triangle pastry with whole coriander and potato filling, served with saunth chutney", price: 35, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Pieces" },
+          { name: "Bread Pakora with Aloo Chole", description: "Spiced potato stuffed bread fritter served with hot chana curry", price: 35, dietary_tag: "Veg", spice_level: 2, portion_size: "Single Piece with Gravy" }
+        ]
+      },
+      {
+        category_name: "Traditional Desi Ghee Sweets",
+        items: [
+          { name: "Shahi Sohan Halwa (Special Disc)", description: "Dense, crisp brittle caramelised disc confection loaded with almonds, pistachios, and saffron", price: 150, dietary_tag: "Veg", spice_level: 0, portion_size: "100g Disc" },
+          { name: "Karachi Halwa (Cornflour)", description: "Translucent chewy jelly sweet made with pure ghee, sugar, and toasted cashews", price: 100, dietary_tag: "Veg", spice_level: 0, portion_size: "100g" },
+          { name: "Parwal Ki Mithai (Stuffed Pointed Gourd)", description: "Tender pointed gourd cooked in light sugar syrup and stuffed with rich sweetened mawa and pistachios", price: 120, dietary_tag: "Veg", spice_level: 0, portion_size: "100g (2 Pieces)" },
+          { name: "Sweet Malai Lassi (Glass)", description: "Thick churned sweet yogurt drink topped with a thick dollop of fresh cream", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (250ml)" },
+          { name: "Desi Ghee Besan Laddu (250g)", description: "Roasted gram flour laddu with bura sugar, almonds, and pure ghee", price: 110, dietary_tag: "Veg", spice_level: 0, portion_size: "250g Box" },
+          { name: "Moong Dal Halwa (Desi Ghee)", description: "Rich golden yellow lentil halwa with mawa and cardamom", price: 120, dietary_tag: "Veg", spice_level: 0, portion_size: "100g Bowl" }
+        ]
+      }
+    ]
+  },
+  // 4: Lalu Kababee Caters
+  {
+    name: "Lalu Kababee Caters",
+    short_description: "Revered kebab stall on Urdu Bazar Road opposite Gate 1 Jama Masjid famed for juicy, melting Mutton and Beef Seekh Kebabs.",
+    long_description: "Situated directly on Urdu Bazar Road facing Gate 1 of Jama Masjid, Lalu Kababee Caters has satisfied kebab lovers for decades. Operating from a bustling counter with roadside standing and indoor seating, minced mutton and beef are infused with raw papaya, roasted garam masala, and fat, skewered over glowing charcoal embers, and served sizzling with soft rumali roti, sliced red onions, and hot green curd chutney.",
+    cuisine_types: ["Mughlai", "Kebabs", "Street Food", "Heritage"],
+    meal_types: ["Snacks", "Dinner", "Late Night"],
+    price_range: "₹",
+    average_cost_for_two: 160,
+    address_line1: "Urdu Bazar Rd, Old Delhi, Jama Masjid, Daryaganj",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6509,
+    longitude: 77.2341,
+    phone: "+91 99909 08010",
+    opening_hours: "Monday - Sunday: 12:30 PM - 1:00 AM",
+    facilities: ["Indoor Bench Seating", "Roadside Counter", "Takeout", "Late Night Service"],
+    dietary_options: ["Halal"],
+    rating_avg: 4.0,
+    rating_count: 210,
+    cover_image_url: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Mutton Seekh Kababee", "Beef Seekh Kebab", "Chicken Seekh Kebab", "Spicy Mint Curd Chutney", "Tawa Rumali Roti"],
+    menu_categories: [
+      {
+        category_name: "Charcoal Skewered Kebabs",
+        items: [
+          { name: "Special Mutton Seekh Kababee (Single Skewer)", description: "Tender minced goat meat seasoned with coriander, black pepper, and nutmeg, roasted over charcoal and brushed with butter", price: 40, dietary_tag: "Non-veg", spice_level: 3, portion_size: "1 Skewer" },
+          { name: "Special Beef Seekh Kebab (Single Skewer)", description: "Melt-in-mouth spiced minced buff meat grilled on iron skewers over open coals", price: 25, dietary_tag: "Non-veg", spice_level: 3, portion_size: "1 Skewer" },
+          { name: "Chicken Seekh Kebab (Single Skewer)", description: "Juicy minced chicken skewer seasoned with green chillies, garlic, and fresh mint", price: 30, dietary_tag: "Non-veg", spice_level: 2, portion_size: "1 Skewer" },
+          { name: "Kebab Roll (Mutton Seekh in Rumali Roti)", description: "Two mutton seekh kebabs rolled in warm rumali roti with onions, lime juice, and green chutney", price: 90, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Full Roll" },
+          { name: "Tawa Rumali Roti", description: "Paper-thin soft flatbread cooked over inverted dome iron tawa", price: 10, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Beef Kebab Roll (2 Seekhs in Rumali Roti)", description: "Two spiced buff seekhs wrapped in rumali roti with green chutney and onions", price: 60, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Full Roll" },
+          { name: "Extra Butter Mint Chutney Portion", description: "Signature spicy green mint curd dip with melted butter", price: 10, dietary_tag: "Veg", spice_level: 2, portion_size: "Cup" }
+        ]
+      }
+    ]
+  },
+  // 5: Al Zehra -> EXCLUDED!
+  // 6: Siya Ram Nannumal Kulfiwale
+  {
+    name: "Siya Ram Nannumal Kulfiwale",
+    short_description: "Century-old artisan kulfi shop in Sitaram Bazar famed for natural stuffed fruit kulfis, kesar rabri, and faluda.",
+    long_description: "Located at Kundewalan Chowk in Sitaram Bazar near Ajmeri Gate, Siya Ram Nannumal Kulfiwale is a legendary dessert establishment that has hand-churned traditional Indian ice creams for generations. It is famous for whole seasonal fruits hollowed out, filled with condensed milk kulfi, frozen in salt-ice pots, and carved into luscious slices—from mango and orange to pomegranate, apple, and paan.",
+    cuisine_types: ["Desserts", "Artisan Kulfi", "Pure Vegetarian", "Heritage"],
+    meal_types: ["Snacks", "Late Night"],
+    price_range: "₹",
+    average_cost_for_two: 180,
+    address_line1: "629, Kundewalan Chowk, Gali London, Sitaram Bazar, Ajmeri Gate",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6488,
+    longitude: 77.2285,
+    phone: "+91 98111 87634",
+    opening_hours: "Monday - Sunday: 11:00 AM - 11:30 PM",
+    facilities: ["Indoor Counter", "Takeout", "Ice Packing for Travel", "UPI Payments"],
+    dietary_options: ["Pure Veg", "Gluten-Free Options"],
+    rating_avg: 4.1,
+    rating_count: 180,
+    cover_image_url: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Stuffed Mango Kulfi", "Stuffed Orange Kulfi", "Paan Kulfi", "Kesar Pista Rabri Faluda", "Falsa Kulfi (Seasonal)"],
+    menu_categories: [
+      {
+        category_name: "Artisan Stuffed Fruit Kulfis",
+        items: [
+          { name: "Whole Stuffed Mango Kulfi", description: "Whole Alphonso mango stuffed with thick rabri kulfi, deep-frozen and cut into rounds upon order", price: 180, dietary_tag: "Veg", spice_level: 0, portion_size: "Whole Fruit Slices" },
+          { name: "Whole Stuffed Orange (Santra) Kulfi", description: "Hollowed Nagpur orange packed with tangy-sweet creamy orange kulfi", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "Whole Orange Slices" },
+          { name: "Stuffed Apple Kulfi", description: "Crisp red apple cored and filled with cinnamon-spiced creamy milk kulfi", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "Whole Apple Slices" },
+          { name: "Stuffed Pomegranate (Anar) Kulfi", description: "Ruby pomegranate seeds infused into rich frozen rabri kulfi", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "Portion" },
+          { name: "Whole Stuffed Chikoo Kulfi", description: "Hollowed sweet sapodilla stuffed with creamy condensed milk kulfi", price: 150, dietary_tag: "Veg", spice_level: 0, portion_size: "Portion" }
+        ]
+      },
+      {
+        category_name: "Traditional Stick & Faluda Kulfis",
+        items: [
+          { name: "Royal Paan Kulfi", description: "Infused with real betel leaf, gulkand, fennel seeds, and cardamom", price: 80, dietary_tag: "Veg", spice_level: 0, portion_size: "Stick / Slab" },
+          { name: "Classic Kesar Pista Rabri Faluda", description: "Thick saffron rabri kulfi served over cornstarch faluda strands with rose syrup", price: 90, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass Plate" },
+          { name: "Seasonal Falsa Kulfi", description: "Tangy purple sweet-sour wild berry sorbet kulfi", price: 75, dietary_tag: "Vegan", spice_level: 0, portion_size: "Stick" },
+          { name: "Matka Kulfi Special (Clay Cup)", description: "Traditional slow-churned malai kulfi set in earthen matki with almonds", price: 80, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Matki" },
+          { name: "Sugar Free Kesar Rabri Kulfi", description: "Naturally sweetened saffron kulfi crafted without refined sugar", price: 85, dietary_tag: "Veg", spice_level: 0, portion_size: "Stick" }
+        ]
+      }
+    ]
+  },
+  // 7: Ameer Sweet House
+  {
+    name: "Ameer Sweet House",
+    short_description: "Prominent heritage sweet and snack landmark in Haveli Azam Khan famous for Keema Samosa, Khoya Jalebi, and Habshi Halwa.",
+    long_description: "Operating along Gali Haveli Azam Khan in Matia Mahal near Jama Masjid, Ameer Sweet House is a legendary confectionery and hot snack shop. Revered during morning hours and especially festive Ramadan evenings, it is famous for its crisp, deep-fried Keema Samosas filled with minced spiced meat, alongside royal Old Delhi sweets like dark Khoya Jalebi, rich Habshi Halwa, and morning Nagori Halwa.",
+    cuisine_types: ["Mughlai Snacks", "Sweets & Halwas", "Heritage Halwai", "Breakfast"],
+    meal_types: ["Breakfast", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 160,
+    address_line1: "Gali Haveli Azam Khan, Matia Mahal, Jama Masjid, Daryaganj",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6503,
+    longitude: 77.2349,
+    phone: "+91 99103 54969",
+    opening_hours: "Monday - Sunday: 7:00 AM - 11:30 PM",
+    facilities: ["Indoor Counter", "Takeout", "Fresh Frying Kadhai", "Cash & Digital Payments"],
+    dietary_options: ["Halal", "Vegan Options"],
+    rating_avg: 3.7,
+    rating_count: 17,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Special Keema Samosa", "Khoya Jalebi (Mawa Jalebi)", "Asli Habshi Halwa", "Nagori Halwa", "Desi Ghee Balushahi"],
+    menu_categories: [
+      {
+        category_name: "Hot Savory Snacks",
+        items: [
+          { name: "Special Keema Samosa (Plate of 2)", description: "Crispy golden pastry stuffed with spicy minced buffalo meat, onions, and green chillies, served with tangy green chutney", price: 50, dietary_tag: "Non-veg", spice_level: 3, portion_size: "2 Pieces" },
+          { name: "Dal Ki Kachori with Aloo Sabzi", description: "Flaky urad dal pastry served with spicy potato gravy", price: 30, dietary_tag: "Veg", spice_level: 2, portion_size: "Single Piece with Gravy" },
+          { name: "Nagori Halwa Plate (Morning)", description: "Three crispy puffed nagoris served with sweet suji halwa and potato curry", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "3 Nagoris + Halwa" },
+          { name: "Mutton Keema Samosa (Special)", description: "Crisp triangle pastry stuffed with seasoned minced goat meat and herbs", price: 35, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Single Piece" }
+        ]
+      },
+      {
+        category_name: "Royal Mughlai Sweets",
+        items: [
+          { name: "Khoya Jalebi (Mawa Jalebi - 100g)", description: "Dark brown succulent jalebi spirals made with pure reduced milk mawa and soaked in cardamom syrup", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "100g Portion" },
+          { name: "Asli Habshi Halwa", description: "Rich dark winter halwa made of sprouted wheat, condensed milk, pure ghee, and dry fruits", price: 120, dietary_tag: "Veg", spice_level: 0, portion_size: "100g" },
+          { name: "Desi Ghee Balushahi", description: "Flaky glazed disc pastry with rich layered interior", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Pieces" },
+          { name: "Shahi Tukda with Rabri", description: "Ghee-fried bread steeped in cardamom syrup and crowned with rabri", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Plate" },
+          { name: "Special Sweet Lassi (Glass)", description: "Thick curd whipped with sugar and topped with fresh cream", price: 45, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  // 8: Afsar Al-Karam Restaurant -> EXCLUDED!
+  // 9: Jain Snacks Corner
+  {
+    name: "Jain Snacks Corner",
+    short_description: "Prominent vegetarian snack and dessert counter near Sis Ganj Gurudwara fountain famous for thick rabri and chole bhature.",
+    long_description: "Situated at 1472 Fountain near Sis Ganj Gurudwara on main Chandni Chowk road, Jain Snacks Corner (popularly known as Jain Rabri Wale) is an unmissable culinary stop. For decades, it has catered to shoppers, pilgrims, and tourists looking for authentic Chole Bhature, comforting Rajma Chawal, refreshing shikanji, and its crown offering: thick, creamy, slow-simmered rabri served chilled in bowls.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Chaat & Snacks", "Desserts"],
+    meal_types: ["Breakfast", "Lunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 200,
+    address_line1: "1472, Fountain Near Gurudwara, Chhippy Wada, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6568,
+    longitude: 77.2321,
+    phone: "+91 98113 59042",
+    opening_hours: "Monday - Sunday: 9:00 AM - 10:00 PM",
+    facilities: ["Indoor Seating", "Counter Service", "Takeout", "Quick Dining"],
+    dietary_options: ["Pure Veg", "Jain Friendly"],
+    rating_avg: 3.3,
+    rating_count: 229,
+    cover_image_url: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Special Royal Rabri", "Chole Bhature Special", "Rajma Chawal Platter", "Pista Milk", "Faluda Ice Cream"],
+    menu_categories: [
+      {
+        category_name: "Signature Rabri & Dairy Treats",
+        items: [
+          { name: "Special Royal Rabri (Bowl)", description: "Slow-simmered, thick buffalo milk skin layers sweetened with cardamom and topped with crushed pistachios", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Bowl (100g)" },
+          { name: "Rabri Faluda Ice Cream", description: "Thick creamy rabri served over vermicelli faluda, vanilla ice cream scoop, and rooh afza", price: 80, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass Plate" },
+          { name: "Kesar Pista Badam Milk", description: "Chilled boiled milk enriched with saffron and crushed nuts", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (250ml)" },
+          { name: "Sweet Matka Lassi", description: "Chilled whipped curd served in earthen matka topped with malai", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "Matka (250ml)" }
+        ]
+      },
+      {
+        category_name: "Hot Snacks & Rice Meals",
+        items: [
+          { name: "Special Chole Bhature", description: "Two golden bhaturas served with spicy dark chickpeas, onions, and pickle", price: 90, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Bhaturas with Chole" },
+          { name: "Rajma Chawal Combo Platter", description: "Rich red kidney bean curry cooked homestyle, served over steamed basmati rice", price: 85, dietary_tag: "Veg", spice_level: 2, portion_size: "Full Plate" },
+          { name: "Desi Ghee Samosa (2 Pieces)", description: "Crisp potato pastries served with sweet saunth chutney", price: 30, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Pieces" },
+          { name: "Paneer Bhature Special (2 Pieces)", description: "Paneer-stuffed golden bhaturas served with spicy dark chole", price: 110, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Bhaturas with Chole" },
+          { name: "Fresh Masala Nimbu Shikanji", description: "Chilled lemonade seasoned with roasted cumin and rock salt", price: 30, dietary_tag: "Vegan", spice_level: 1, portion_size: "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  // 10: Kishan Lal Halwai
+  {
+    name: "Kishan Lal Halwai",
+    short_description: "Century-old hidden confectionery in Shankar Gali celebrated for artisan Sev Badam, Karachi Halwa, and Moong Dal Halwa.",
+    long_description: "Located at Shop 2856 in Shankar Gali off Sita Ram Bazaar in Old Delhi, Kishan Lal Halwai is a venerated hidden jewel known to old-timers and connoisseurs of traditional mithai. With ratings up to 4.6, this historic shop produces limited batches of exquisite confections made strictly with pure desi ghee and dry fruits, notably its celebrated Sev Badam—crisp fried gram-flour sev infused with almonds and sweet syrup—and translucent Karachi Halwa.",
+    cuisine_types: ["Traditional Confectionery", "Pure Vegetarian", "Heritage Mithai"],
+    meal_types: ["Snacks"],
+    price_range: "₹₹",
+    average_cost_for_two: 220,
+    address_line1: "2856, Shankar Gali, Sita Ram Bazaar, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6501,
+    longitude: 77.2282,
+    phone: "+91 98101 49843",
+    opening_hours: "Monday - Sunday: 10:00 AM - 8:30 PM",
+    facilities: ["Indoor Counter", "Takeout", "Artisan Batch Sweetmaking", "Cash & Digital Payments"],
+    dietary_options: ["Pure Veg", "Gluten-Free Options"],
+    rating_avg: 4.6,
+    rating_count: 18,
+    cover_image_url: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Artisan Sev Badam", "Pure Ghee Karachi Halwa", "Moong Dal Halwa", "Kaju Barfi", "Atta Ladoo"],
+    menu_categories: [
+      {
+        category_name: "Signature Heritage Confections",
+        items: [
+          { name: "Special Sev Badam (Signature Sweet)", description: "Crisp fried gram flour noodles tossed in sweet syrup and loaded with whole roasted almonds and pistachios", price: 190, dietary_tag: "Veg", spice_level: 0, portion_size: "250g Box" },
+          { name: "Pure Desi Ghee Karachi Halwa", description: "Translucent chewy cornstarch halwa simmered in pure ghee and topped with cashews", price: 150, dietary_tag: "Veg", spice_level: 0, portion_size: "250g Box" },
+          { name: "Desi Ghee Moong Dal Halwa (Winter)", description: "Slow-roasted split yellow moong dal with mawa, ghee, and green cardamom", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "250g Box" },
+          { name: "Traditional Atta Dry Fruit Ladoo", description: "Whole wheat flour roasted in desi ghee with gond, almonds, and jaggery", price: 150, dietary_tag: "Veg", spice_level: 0, portion_size: "250g (4 Pieces)" },
+          { name: "Kaju Barfi Special", description: "Delicate diamond fudge made of powdered cashews and sugar with silver foil", price: 220, dietary_tag: "Veg", spice_level: 0, portion_size: "250g Box" },
+          { name: "Special Desi Ghee Pinni (Urad Dal)", description: "Rich Punjabi winter confection made of roasted urad dal, mawa, and mixed dry fruits", price: 160, dietary_tag: "Veg", spice_level: 0, portion_size: "250g (4 Pieces)" },
+          { name: "Khasta Dal Biji Namkeen (200g)", description: "Crisp gram flour strands with melon seeds tossed in special Old Delhi spices", price: 80, dietary_tag: "Veg", spice_level: 2, portion_size: "200g Pack" }
+        ]
+      }
+    ]
+  }
+];
+
+// Batch 7 raw
+const batch7Raw = [
+  // 1: Ashok Chaat Corner
+  {
+    name: "Ashok Chaat Corner",
+    short_description: "79-year-old iconic chaat shop at Hauz Qazi Chowk world-famous for Kalmi Vada, spicy Golgappe, and Kachaalu Chaat.",
+    long_description: "Perched right at the bustling Hauz Qazi Chowk adjacent to Chawri Bazar Metro Station Gate 3, Ashok Chaat Corner (also known as Ashok Chaat Bhandar) has been an Old Delhi street-food pilgrimage site since 1948. Operated by the family for four generations, it is renowned for its double-fried crisp Kalmi Vada chopped and dressed with spicy-sour chutneys, crunchy suji and atta golgappe with spiced mint and hing water, and seasonal boiled kachaalu chaat.",
+    cuisine_types: ["Street Food", "Chaat", "Pure Vegetarian", "Heritage"],
+    meal_types: ["Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 150,
+    address_line1: "3488, Hauz Qazi Chowk, Bazar Sirkiwalan, Chawri Bazar",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.65,
+    longitude: 77.2268,
+    phone: "+91 84479 36593",
+    opening_hours: "Monday - Saturday: 10:00 AM - 10:00 PM, Sunday: 12:00 PM - 10:00 PM",
+    facilities: ["Counter Service", "Standing Street Dining", "Takeout", "UPI & Digital Payments"],
+    dietary_options: ["Pure Veg", "Vegan Options"],
+    rating_avg: 3.8,
+    rating_count: 975,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Special Kalmi Vada Chaat", "Suji Golgappe (Pani Puri)", "Papdi Chaat", "Dahi Bhalla Gujiya", "Kachaalu Chaat"],
+    menu_categories: [
+      {
+        category_name: "Old Delhi Chaats & Savories",
+        items: [
+          { name: "Special Kalmi Vada Chaat (Plate)", description: "Double-fried crunchy chana dal patties chopped and tossed with spiced curd, sweet tamarind saunth, spicy coriander chutney, and shredded radish", price: 60, dietary_tag: "Veg", spice_level: 2, portion_size: "Full Plate" },
+          { name: "Suji Golgappe with 5 Flavoured Water (5 Pieces)", description: "Crisp semolina hollow puris stuffed with boiled spiced potatoes, served with chilled mint, hing, and sweet tamarind waters", price: 40, dietary_tag: "Vegan", spice_level: 3, portion_size: "5 Pieces" },
+          { name: "Atta Golgappe with Hing Water (5 Pieces)", description: "Traditional whole wheat flour crisp puris filled with spiced chickpeas and tangy asafoetida herb water", price: 40, dietary_tag: "Vegan", spice_level: 3, portion_size: "5 Pieces" },
+          { name: "Special Papdi Chaat", description: "Crispy flour wafers layered with boiled chickpeas, spiced potatoes, thick churned curd, roasted cumin, and saunth", price: 60, dietary_tag: "Veg", spice_level: 2, portion_size: "Full Plate" },
+          { name: "Dahi Bhalla Gujiya Special", description: "Lentil dumpling stuffed with dry fruits and cashews, soaked in chilled sweetened yogurt with pomegranate jewels", price: 70, dietary_tag: "Veg", spice_level: 1, portion_size: "Plate (2 Dumplings)" },
+          { name: "Chatpati Kachaalu Chaat (Seasonal)", description: "Boiled taro root slices tossed in fiery lemon juice, rock salt, and yellow chilli spice powder", price: 50, dietary_tag: "Vegan", spice_level: 3, portion_size: "Plate" },
+          { name: "Aloo Tikki Chaat (Desi Ghee Crisp)", description: "Shallow-fried crisp potato patties crowned with curd, sweet sonth, and green mint chutney", price: 60, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Tikkis" },
+          { name: "Mixed Bhalla Papdi Combo", description: "Combination of soft dahi bhalla and crispy papdi with dual chutneys and beetroot garnish", price: 70, dietary_tag: "Veg", spice_level: 1, portion_size: "Full Plate" },
+          { name: "Dahi Golgappe (5 Pieces)", description: "Crispy hollow puris filled with potatoes and chickpeas, filled to brim with sweetened curd and saunth", price: 50, dietary_tag: "Veg", spice_level: 1, portion_size: "5 Pieces" },
+          { name: "Masala Nimbu Soda Shikanji", description: "Fizzy carbonated soda with fresh lime juice, black salt, and roasted cumin", price: 30, dietary_tag: "Vegan", spice_level: 1, portion_size: "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  // 2: Jung Bahadur Kachori Wala
+  {
+    name: "Jung Bahadur Kachori Wala",
+    short_description: "1971 heritage kachori destination in Maliwara famous for fiery Urad Dal Khasta Kachoris drenched in Aloo-Kachalu gravy.",
+    long_description: "Established in 1971 by the late Jung Bahadur at the entry corner of Gali Paranthe Wali in Maliwara, Jung Bahadur Kachori Wala (fondly known as JB Kachori Wala) is considered Old Delhi's gold standard for spicy kachoris. Two ultra-crisp, deep-fried urad dal pithi kachoris are crushed in a leaf bowl, submerged in scorching spicy potato and yam gravy seasoned with hing, black pepper, and amchoor, and topped with diced onions and green chillies.",
+    cuisine_types: ["Street Food", "Kachori & Chaat", "Pure Vegetarian", "Heritage"],
+    meal_types: ["Breakfast", "Brunch", "Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 120,
+    address_line1: "1104, Gali Bhojpura Rd, Maliwara Tiraha Bazar, Katra Shahanshai, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6554,
+    longitude: 77.2307,
+    phone: "+91 98116 85272",
+    opening_hours: "Monday - Sunday: 10:30 AM - 8:30 PM",
+    facilities: ["Counter Service", "Leaf Dona Dining", "Takeout", "UPI & Digital Payments"],
+    dietary_options: ["Pure Veg", "Vegan Options"],
+    rating_avg: 4.1,
+    rating_count: 2180,
+    cover_image_url: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Khasta Urad Dal Kachori with Aloo Sabzi", "Dry Pithi Kachori", "Spicy Kachalu Aloo Gravy", "Sweet Saunth Kachori", "Special Masala Lassi"],
+    menu_categories: [
+      {
+        category_name: "Signature Heritage Kachoris",
+        items: [
+          { name: "Special Khasta Kachori with Aloo Sabzi (Full Plate)", description: "Two flaky urad-dal stuffed fried kachoris crushed and soaked in fiery, spicy potato and kachalu gravy, garnished with green chillies, ginger juliennes, and coriander", price: 50, dietary_tag: "Vegan", spice_level: 3, portion_size: "2 Kachoris with Gravy" },
+          { name: "Special Khasta Kachori (Single Piece)", description: "Single crisp kachori drenched in steaming potato gravy", price: 30, dietary_tag: "Vegan", spice_level: 3, portion_size: "1 Kachori with Gravy" },
+          { name: "Sweet & Spicy Mix Kachori (Meethi Kachori)", description: "Crushed dal kachori topped with both spicy aloo sabzi and thick sweet dry ginger saunth chutney", price: 55, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Kachoris with Chutneys" },
+          { name: "Dry Khasta Kachori (Without Gravy - Pack of 4)", description: "Crisp spiced dal stuffed pastries ideal for taking home or travel with long shelf life", price: 80, dietary_tag: "Vegan", spice_level: 1, portion_size: "Pack of 4" },
+          { name: "Extra Spicy Aloo Kachalu Gravy Bowl", description: "Additional portion of signature steaming hot peppery potato-taro gravy", price: 25, dietary_tag: "Vegan", spice_level: 3, portion_size: "Bowl (150ml)" },
+          { name: "Chilled Sweet Curd Lassi", description: "Cooling sweet whipped yogurt drink served in earthen kulhad to balance the spicy kachoris", price: 40, dietary_tag: "Veg", spice_level: 0, portion_size: "Kulhad (200ml)" },
+          { name: "Dal Samosa with Spicy Aloo Sabzi (2 Pieces)", description: "Crisp triangle samosas stuffed with spiced lentils and topped with peppery aloo gravy", price: 50, dietary_tag: "Vegan", spice_level: 3, portion_size: "2 Samosas with Gravy" },
+          { name: "Spiced Buttermilk (Masala Chaas)", description: "Cooling spiced salted buttermilk with roasted cumin and coriander", price: 25, dietary_tag: "Veg", spice_level: 1, portion_size: "Glass (200ml)" }
+        ]
+      }
+    ]
+  },
+  // 3: Apni Chaupaal
+  {
+    name: "Apni Chaupaal",
+    short_description: "First modern vegetarian fine-dining restaurant in Sita Ram Bazar renowned for Tandoori Momos, Soya Chaap, and Shahi Thali.",
+    long_description: "Located at 587 Kucha Pati Ram Road in Sita Ram Bazar (Delhi 110006), Apni Chaupaal is a celebrated culinary oasis offering air-conditioned dining and traditional chaupaal warmth in the historic lanes of Old Delhi. Operating with an extensive pure-vegetarian menu, it specializes in North Indian tandoori specialties like Tandoori Malai Paneer Momos, Masala Soya Chaap, Dal Makhani, Paneer Lababdar, and comprehensive Maharaja Thalis.",
+    cuisine_types: ["North Indian", "Tandoori & Mughlai Veg", "Chinese", "Pure Vegetarian"],
+    meal_types: ["Lunch", "Dinner"],
+    price_range: "₹₹",
+    average_cost_for_two: 350,
+    address_line1: "587, Kucha Pati Ram Rd, Bazar Sita Ram, Sita Ram Bazar, Chandni Chowk",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6492,
+    longitude: 77.2274,
+    phone: "+91 11 4102 0402",
+    opening_hours: "Monday - Sunday: 11:30 AM - 11:00 PM",
+    facilities: ["Air Conditioned Dining", "Indoor Table Seating", "Takeout", "Family Friendly", "Digital Payments"],
+    dietary_options: ["Pure Veg", "Jain Friendly"],
+    rating_avg: 4.5,
+    rating_count: 385,
+    cover_image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Tandoori Paneer Momos", "Special Masala Soya Chaap", "Dal Makhani Chaupaal", "Paneer Lababdar", "Special Shahi Thali"],
+    menu_categories: [
+      {
+        category_name: "Tandoori Starters & Chaap",
+        items: [
+          { name: "Tandoori Paneer Momos (8 Pieces)", description: "Steamed dumplings stuffed with spiced cottage cheese, marinated in tandoori yogurt marinade and charred in clay oven", price: 140, dietary_tag: "Veg", spice_level: 2, portion_size: "8 Pieces" },
+          { name: "Special Masala Soya Chaap Tikka", description: "Tender soya chaap skewered and roasted with Punjabi spices, served with mint chutney and onion rings", price: 160, dietary_tag: "Veg", spice_level: 2, portion_size: "Platter" },
+          { name: "Afghani Malai Chaap", description: "Soya fillets coated in rich cashew cream, cheese, and crushed black pepper", price: 180, dietary_tag: "Veg", spice_level: 1, portion_size: "Platter" },
+          { name: "Paneer Tikka Shashlik", description: "Fresh paneer cubes, capsicum, and onions grilled with spicy tandoori red masala", price: 190, dietary_tag: "Veg", spice_level: 2, portion_size: "6 Pieces" }
+        ]
+      },
+      {
+        category_name: "Main Course & Royal Thalis",
+        items: [
+          { name: "Chaupaal Special Dal Makhani", description: "Whole black lentils slow-cooked overnight with tomatoes, butter, and cream", price: 170, dietary_tag: "Veg", spice_level: 1, portion_size: "Handi (Serves 2)" },
+          { name: "Paneer Lababdar", description: "Cottage cheese chunks tossed in creamy onion-tomato gravy with grated paneer garnish", price: 190, dietary_tag: "Veg", spice_level: 2, portion_size: "Handi (Serves 2)" },
+          { name: "Special Shahi Thali Platter", description: "Complete meal including Shahi Paneer, Dal Makhani, Mixed Vegetable, Jeera Rice, 2 Butter Roti, 1 Butter Naan, Raita, Salad, and Gulab Jamun", price: 240, dietary_tag: "Veg", spice_level: 2, portion_size: "Full Thali Platter" },
+          { name: "Chinese Platter Combo", description: "Veg Fried Rice, Hakka Noodles, Crispy Manchurian Gravy, and Spring Rolls", price: 210, dietary_tag: "Veg", spice_level: 2, portion_size: "Combo Platter" },
+          { name: "Butter Garlic Naan", description: "Crisp tandoori flatbread topped with minced garlic and melted amul butter", price: 45, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Kadhai Paneer Special", description: "Cottage cheese and bell peppers cooked in freshly ground coriander-red chilli kadhai masala", price: 180, dietary_tag: "Veg", spice_level: 2, portion_size: "Handi (Serves 2)" },
+          { name: "Hyderabadi Dum Veg Biryani with Raita", description: "Fragrant basmati rice layered with vegetables, saffron, and fried onions", price: 170, dietary_tag: "Veg", spice_level: 2, portion_size: "Bowl (Serves 1-2)" },
+          { name: "Hot Gulab Jamun (2 Pieces)", description: "Warm reduced-milk mawa dumplings soaked in cardamom and rose sugar syrup", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Pieces" }
+        ]
+      }
+    ]
+  },
+  // 4: Lotan Chole Kulche Wala
+  {
+    name: "Lotan Chole Kulche Wala",
+    short_description: "Century-old 1923 culinary institution in Manohar Market famous for fiery butter-soaked Chole Kulche with spiced amchoor soup.",
+    long_description: "Founded in 1923 by the late Lotan Ram, this iconic century-old breakfast eatery is tucked in Chatta Shahji Road inside Manohar Market off Nai Sarak. Boasting nearly 2,000 reviews, it is celebrated for serving the most distinct chole kulche in Delhi: soft boiled white peas submerged in a vibrant red chilli paste, topped with boiled potato chunks, melted butter, fresh coriander, ginger juliennes, and a ladle of tangy, spicy amchoor soup, eaten with feather-soft tawa-warmed kulchas.",
+    cuisine_types: ["Street Food", "Chole Kulche", "Pure Vegetarian", "Heritage Breakfast"],
+    meal_types: ["Breakfast", "Brunch"],
+    price_range: "₹",
+    average_cost_for_two: 130,
+    address_line1: "2353, Chatta Shahji Road, Old Delhi, Manohar Market, Nai Wala",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6515,
+    longitude: 77.2295,
+    phone: "+91 92124 76146",
+    opening_hours: "Monday - Sunday: 7:00 AM - 2:00 PM",
+    facilities: ["Morning Breakfast Counter", "Indoor & Street Bench Seating", "Takeout", "UPI Payments"],
+    dietary_options: ["Pure Veg", "Vegan Options"],
+    rating_avg: 3.7,
+    rating_count: 1885,
+    cover_image_url: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Fiery Red Chole Kulche", "Amchoor Ka Teekha Paani (Soup)", "Butter Spiced Chole Plate", "Alu Chana Kulcha", "Tawa Butter Kulcha"],
+    menu_categories: [
+      {
+        category_name: "Historic 1923 Chole Kulche",
+        items: [
+          { name: "Special Chole Kulche (Full Plate - 3 Kulchas)", description: "Signature spicy boiled white peas cooked with fiery red chilli tadka, boiled potato cubes, and sour amchoor soup, served with 3 fluffy butter-warmed kulchas, pickled green chillies, and ginger", price: 60, dietary_tag: "Veg", spice_level: 3, portion_size: "1 Dona Chole + 3 Kulchas" },
+          { name: "Butter Special Chole Kulche", description: "Classic fiery chole enriched with a generous slab of melted Amul butter to mellow the fiery spice", price: 75, dietary_tag: "Veg", spice_level: 2, portion_size: "Full Plate with Butter" },
+          { name: "Single Portion Chole with 2 Kulchas", description: "Standard portion of spicy white peas curry paired with two soft kulchas", price: 45, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Kulchas with Chole" },
+          { name: "Extra Tawa Butter Kulcha (Pair of 2)", description: "Soft leavened flatbreads warmed on iron tawa with butter", price: 20, dietary_tag: "Veg", spice_level: 0, portion_size: "2 Kulchas" },
+          { name: "Amchoor Ka Garam Soup (Spicy Broth Bowl)", description: "Tangy, hot spiced dry-mango soup with garam masala and coriander", price: 15, dietary_tag: "Vegan", spice_level: 3, portion_size: "Soup Bowl (100ml)" },
+          { name: "Desi Ghee Tadka Chole Kulche (Special)", description: "Signature spicy white peas topped with sizzling hot pure desi ghee and roasted cumin", price: 80, dietary_tag: "Veg", spice_level: 3, portion_size: "Full Plate with Ghee" },
+          { name: "Chatpata Aloo Chana Dona (Without Kulcha)", description: "Spicy bowl of white peas and boiled potatoes in dry mango soup for snacking", price: 40, dietary_tag: "Vegan", spice_level: 3, portion_size: "Single Dona" }
+        ]
+      }
+    ]
+  },
+  // 5: Kaley Baba Kabab Waley
+  {
+    name: "Kaley Baba Kabab Waley",
+    short_description: "Century-old kebab landmark in Sui Walan world-renowned for thread-tied melting 'Sutli Kebabs' (Dhagedar Seekh).",
+    long_description: "Situated at 789 Gali Sui Walan in Chitli Qabar near Jama Masjid, Kaley Baba Kabab Waley is a legendary institution that has operated for over 100 years. It is celebrated worldwide for inventing and perfecting 'Sutli Kebab' (thread kebab)—finely ground buffalo meat marinated with raw papaya and secret spices, so delicate and soft that it must be tied with thin cotton string around skewers to keep from falling into charcoal coals, served unspooled onto paper with onions and spicy green chutney.",
+    cuisine_types: ["Mughlai", "Street Food", "Heritage Kebabs"],
+    meal_types: ["Snacks", "Dinner", "Late Night"],
+    price_range: "₹",
+    average_cost_for_two: 160,
+    address_line1: "789, Sui Walan, Chitli Kabar, Daryaganj, Old Delhi, Chandni Mahal",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6499,
+    longitude: 77.2361,
+    phone: "+91 70118 69828",
+    opening_hours: "Monday - Sunday: 5:30 PM - 11:30 PM",
+    facilities: ["Counter Service", "Street Side Seating", "Charcoal Grill Live Counter", "Takeout"],
+    dietary_options: ["Halal"],
+    rating_avg: 4.2,
+    rating_count: 633,
+    cover_image_url: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Legendary Sutli Kebab (Dhagedar Seekh)", "Buff Boti Kebab", "Buff Seekh Kebab", "Butter Glazed Kebabs", "Tawa Rumali Roti"],
+    menu_categories: [
+      {
+        category_name: "Historic Charcoal Kebabs",
+        items: [
+          { name: "Legendary Sutli Kebab (Dhagedar Seekh - Single)", description: "Ultra-fine minced meat seasoned with papaya, brown onions, and royal spices, tied with thread on skewers and grilled over coals until meltingly tender", price: 25, dietary_tag: "Non-veg", spice_level: 3, portion_size: "1 Skewer (Thread Unwrapped)" },
+          { name: "Legendary Sutli Kebab (Plate of 4)", description: "Four skewers of melt-in-mouth sutli kebabs served with onion rings, lime, and spicy green chutney", price: 100, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Plate of 4 Kebabs" },
+          { name: "Buff Boti Kebab (Plate)", description: "Tender boneless meat chunks marinated in thick curd and pepper masala, grilled over charcoal", price: 120, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Full Plate" },
+          { name: "Classic Buff Seekh Kebab", description: "Spiced minced meat skewered on iron rods and grilled crisp on the outside", price: 20, dietary_tag: "Non-veg", spice_level: 2, portion_size: "1 Skewer" },
+          { name: "Sutli Kebab Roll in Rumali Roti", description: "Two sutli kebabs wrapped in warm rumali roti with green mint dip and onions", price: 60, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Full Roll" },
+          { name: "Tawa Rumali Roti", description: "Thin, soft handkerchief flatbread baked over domed tawa", price: 10, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Mutton Seekh Kebab (Single Skewer)", description: "Tender minced goat meat seasoned with royal herbs and skewered over coals", price: 40, dietary_tag: "Non-veg", spice_level: 3, portion_size: "1 Skewer" },
+          { name: "Buff Shammi Kebab (Plate of 2)", description: "Pan-fried fine minced meat and chana dal patty seasoned with cardamom", price: 40, dietary_tag: "Non-veg", spice_level: 2, portion_size: "2 Pieces" }
+        ]
+      }
+    ]
+  },
+  // 6: Bhaijaan Kabab Ghar -> EXCLUDED!
+  // 7: Nand Di Hatti
+  {
+    name: "Nand Di Hatti",
+    short_description: "Legendary 1940s desi ghee Chole Bhature institution in Pan Mandi famed for spicy black chickpeas and fermented amla pickle.",
+    long_description: "Located at 829 Pan Mandi in Sadar Bazar near Chandni Chowk, Nand Di Hatti is a nationally famous culinary shrine founded in the 1940s by Shri Nand Lal after Partition. Revered with almost 2,000 reviews, it serves authentic Rawalpindi-style Chole Bhature made strictly without onion or garlic: soft, puffy bhaturas made with pure desi ghee and semolina, paired with slow-simmered dark spiced chickpeas and their signature spicy fermented amla (gooseberry) pickle.",
+    cuisine_types: ["North Indian", "Pure Vegetarian", "Punjabi Breakfast", "Heritage"],
+    meal_types: ["Breakfast", "Lunch"],
+    price_range: "₹",
+    average_cost_for_two: 220,
+    address_line1: "Pan Mandi, 829, Pan Mandi Old Delhi, Chandni Chowk, near Gulati Sports, Sadar Bazar",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6565,
+    longitude: 77.214,
+    phone: "+91 99587 17192",
+    opening_hours: "Monday - Saturday: 10:30 AM - 5:00 PM (Sunday Closed)",
+    facilities: ["Indoor Seating", "Counter Service", "Takeout", "Desi Ghee Cooking Only", "Digital Payments"],
+    dietary_options: ["Pure Veg", "Jain Friendly"],
+    rating_avg: 4.1,
+    rating_count: 1948,
+    cover_image_url: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Desi Ghee Rawalpindi Chole Bhature", "Spicy Amla Pickle (Gooseberry)", "Chilled Desi Ghee Lassi", "Khasta Bhatura", "Special Dark Chana Sabzi"],
+    menu_categories: [
+      {
+        category_name: "Heritage Desi Ghee Chole Bhature",
+        items: [
+          { name: "Special Desi Ghee Chole Bhature (Plate)", description: "Two golden crisp bhaturas kneaded with suji and fried in pure desi ghee, served with dark spiced Rawalpindi chickpeas (cooked without onion/garlic), spicy whole amla pickle, and green chillies", price: 130, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Bhaturas + Chole Bowl + Amla" },
+          { name: "Single Bhatura with Chole Portion", description: "Single desi ghee bhatura paired with dark chickpea curry and amla pickle", price: 75, dietary_tag: "Veg", spice_level: 3, portion_size: "1 Bhatura with Chole" },
+          { name: "Extra Desi Ghee Bhatura (1 Piece)", description: "Puffed golden bhatura fried in pure clarified butter", price: 45, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Signature Amla Achar (Extra Bowl)", description: "Whole Indian gooseberries pickled in mustard oil, fenugreek, and crushed black pepper", price: 20, dietary_tag: "Vegan", spice_level: 3, portion_size: "Side Bowl" },
+          { name: "Chilled Sweet Malai Lassi (Glass)", description: "Rich creamy churned sweet yogurt drink served chilled in a glass", price: 60, dietary_tag: "Veg", spice_level: 0, portion_size: "Glass (250ml)" },
+          { name: "Desi Ghee Sooji Ka Halwa", description: "Semolina pudding cooked in pure clarified butter, sweetened with sugar and garnished with almonds", price: 50, dietary_tag: "Veg", spice_level: 0, portion_size: "Bowl (100g)" },
+          { name: "Paneer Stuffed Desi Ghee Bhature Plate", description: "Two bhaturas stuffed with grated fresh cottage cheese, served with dark chole and amla achar", price: 160, dietary_tag: "Veg", spice_level: 3, portion_size: "2 Paneer Bhaturas with Chole" }
+        ]
+      }
+    ]
+  },
+  // 8: Shree Balaji Chaat Bhandar
+  {
+    name: "Shree Balaji Chaat Bhandar",
+    short_description: "Century-old chaat parlor in Kucha Mahajani celebrated for Kachaalu Chaat, Hing Golgappe, and Khasta Dahi Bhalla.",
+    long_description: "Located at 1462 Chandni Chowk Road near Kucha Mahajani, Shree Balaji Chaat Bhandar (popularly known as Radha Swamy / Balaji Chaat) has served mouthwatering Old Delhi street delicacies for over eight decades. Renowned for maintaining ancient spice recipes, it is famous for its signature Kachaalu Chaat (boiled spiced colocasia / yam), crisp papdi chaat drizzled with sweet ginger sonth, and hollow crispy puris filled with digestive asafoetida (hing) herb water.",
+    cuisine_types: ["Street Food", "Chaat", "Pure Vegetarian", "Heritage"],
+    meal_types: ["Snacks"],
+    price_range: "₹",
+    average_cost_for_two: 160,
+    address_line1: "1462, Chandni Chowk Rd, Kucha Mahajani, Old Delhi",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6562,
+    longitude: 77.2312,
+    phone: "+91 98105 84890",
+    opening_hours: "Monday - Sunday: 11:30 AM - 9:30 PM",
+    facilities: ["Counter Service", "Indoor Standing & Benches", "Takeout", "UPI Payments"],
+    dietary_options: ["Pure Veg", "Vegan Options"],
+    rating_avg: 4.0,
+    rating_count: 780,
+    cover_image_url: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Signature Kachaalu Chaat", "Hing Golgappe (Pani Puri)", "Khasta Papdi Chaat", "Dahi Bhalla Special", "Aloo Kachaalu Tikki"],
+    menu_categories: [
+      {
+        category_name: "Authentic Chandni Chowk Chaats",
+        items: [
+          { name: "Special Kachaalu Chaat (Signature Dish)", description: "Sliced boiled taro root tossed in crushed red and black pepper, roasted cumin, lime juice, and rock salt", price: 60, dietary_tag: "Vegan", spice_level: 3, portion_size: "Plate" },
+          { name: "Hing Golgappe (5 Pieces)", description: "Crisp flour and semolina puris stuffed with chickpeas and served with aromatic digestive asafoetida-mint water", price: 40, dietary_tag: "Vegan", spice_level: 3, portion_size: "5 Puris" },
+          { name: "Special Dahi Bhalla Gujiya", description: "Soft lentil dumplings stuffed with nuts, steeped in sweet creamy curd and topped with tamarind saunth", price: 70, dietary_tag: "Veg", spice_level: 1, portion_size: "Plate" },
+          { name: "Khasta Papdi Chaat Platter", description: "Crisp fried round papdis layered with potatoes, boiled chickpeas, thick curd, and dual chutneys", price: 60, dietary_tag: "Veg", spice_level: 2, portion_size: "Plate" },
+          { name: "Crispy Desi Ghee Aloo Tikki", description: "Golden griddled potato patty served with spiced chana gravy and chutneys", price: 65, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Tikkis" },
+          { name: "Matar Kulcha Chaat Plate", description: "Tangy dried white pea curry seasoned with ginger and lime, served with 2 soft kulchas", price: 60, dietary_tag: "Veg", spice_level: 2, portion_size: "2 Kulchas with Matar" },
+          { name: "Chilled Sweet Lassi in Kulhad", description: "Rich creamy sweet yogurt churned and served in an earthen clay cup", price: 45, dietary_tag: "Veg", spice_level: 0, portion_size: "Kulhad (200ml)" }
+        ]
+      }
+    ]
+  },
+  // 9: Anmol Chicken Corner
+  {
+    name: "Anmol Chicken Corner",
+    short_description: "Famous chicken specialty destination in Urdu Bazar celebrated for butter-drenched Tandoori Chicken and crispy Chicken Fry.",
+    long_description: "Situated at 4120 Urdu Bazar Road facing Gate 1 of Jama Masjid, Anmol Chicken Corner has been a pilgrimage spot for poultry lovers for decades. Boasting a 4.2 rating, it is famous for its show-stopping Butter Tandoori Chicken: skewered chicken charred in clay tandoors, cut into juicy pieces, and drowned in sizzling, melted Amul butter and chaat masala, alongside golden battered chicken fry and silky rumali rotis.",
+    cuisine_types: ["Mughlai", "Tandoori Chicken", "Street Food", "Barbecue"],
+    meal_types: ["Dinner", "Late Night"],
+    price_range: "₹₹",
+    average_cost_for_two: 350,
+    address_line1: "4120, Urdu Bazar Rd, opposite Gate 1, Jama Masjid, Daryaganj",
+    city: "Old Delhi, New Delhi",
+    state: "Delhi",
+    pincode: "110006",
+    latitude: 28.6508,
+    longitude: 77.2343,
+    phone: "+91 98118 78621",
+    opening_hours: "Monday - Sunday: 1:00 PM - 12:30 AM",
+    facilities: ["Indoor Table Seating", "Live Tandoor Counter", "Takeout", "Late Night Service", "Digital Payments"],
+    dietary_options: ["Halal", "Non-veg Only"],
+    rating_avg: 4.2,
+    rating_count: 680,
+    cover_image_url: "https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&auto=format&fit=crop&q=80",
+    known_for_dishes: ["Signature Butter Tandoori Chicken", "Crispy Chicken Fry", "Chicken Afghani Tikka", "Chicken Tangdi Kabab", "Hot Rumali Roti"],
+    menu_categories: [
+      {
+        category_name: "Signature Tandoor & Butter Chicken",
+        items: [
+          { name: "Signature Butter Tandoori Chicken (Half)", description: "Charcoal grilled half chicken chopped and drenched in bubbling hot Amul butter, fresh cream, and zesty secret spice blend", price: 260, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Half Chicken (Serves 1-2)" },
+          { name: "Signature Butter Tandoori Chicken (Full)", description: "Whole charcoal roasted chicken swimming in melted butter and curd marinade", price: 480, dietary_tag: "Non-veg", spice_level: 2, portion_size: "Whole Chicken (Serves 3-4)" },
+          { name: "Crispy Chicken Fry (Quarter)", description: "Tender chicken pieces coated in spiced batter and deep-fried crisp, served with onion and green dip", price: 140, dietary_tag: "Non-veg", spice_level: 3, portion_size: "Quarter (250g)" },
+          { name: "Chicken Afghani Tikka (6 Pieces)", description: "Boneless chicken cubes marinated in cashew paste, curd, and mild spices, roasted over charcoal", price: 220, dietary_tag: "Non-veg", spice_level: 1, portion_size: "6 Pieces" },
+          { name: "Chicken Tangdi Kabab (4 Drumsticks)", description: "Juicy chicken drumsticks marinated in red tandoori masala and roasted tender", price: 240, dietary_tag: "Non-veg", spice_level: 2, portion_size: "4 Drumsticks" },
+          { name: "Fresh Tawa Rumali Roti", description: "Soft thin leavened bread cooked over dome tawa", price: 10, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" },
+          { name: "Chicken Seekh Kabab (2 Skewers)", description: "Spiced minced chicken roasted over iron skewers and served with onions and mint dip", price: 90, dietary_tag: "Non-veg", spice_level: 2, portion_size: "2 Skewers" },
+          { name: "Butter Tandoori Garlic Naan", description: "Clay oven flatbread baked with chopped garlic and brushed with amul butter", price: 35, dietary_tag: "Veg", spice_level: 0, portion_size: "1 Piece" }
+        ]
+      }
+    ]
+  }
+  // 10: Ustad Moinuddin Kebab -> EXCLUDED!
+];
+
+console.log('Batch 5 filtered count (expected 8):', batch5Raw.length);
+console.log('Batch 6 filtered count (expected 7):', batch6Raw.length);
+console.log('Batch 7 filtered count (expected 8):', batch7Raw.length);
+
+const combined = [...batch5Raw, ...batch6Raw, ...batch7Raw];
+console.log('Total combined new restaurants (expected 23):', combined.length);
+
+fs.writeFileSync('scripts/batches567_23Cafes.json', JSON.stringify(combined, null, 2), 'utf8');

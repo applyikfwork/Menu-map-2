@@ -1,0 +1,744 @@
+[
+  {
+    "name": "Gumbad Cafe",
+    "short_description": "Scenic rooftop cafe overlooking the historic domes of Jama Masjid, serving Mughlai, Italian, and mocktails.",
+    "long_description": "Gumbad Cafe offers an atmospheric open-air and glass-encased rooftop dining experience with unobstructed panoramic views of the Jama Masjid. The vibrant lounge is known for evening sunset hangouts, couple dates, and gatherings over fusion continental food, artisan thin-crust pizzas, and rich Old Delhi Mughlai curries. Seating options include casual low couches and high-top terrace railings.",
+    "cuisine_types": ["Cafe", "Continental", "Italian", "Mughlai", "Beverages"],
+    "meal_types": ["Breakfast", "Lunch", "Dinner", "Late Night"],
+    "price_range": "₹₹₹",
+    "average_cost_for_two": 900,
+    "address_line1": "Jama Masjid, Roof Top, 1061, opposite Gate No. 3, Dariba Kalan",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6508,
+    "longitude": 77.2341,
+    "phone": "+91 90888 18883",
+    "opening_hours": "Monday - Sunday: 12:30 PM - 1:00 AM",
+    "facilities": ["Air Conditioned", "Rooftop Seating", "Scenic Jama Masjid View", "Free Street Parking", "Takeout", "Table Service"],
+    "dietary_options": ["Halal", "Vegan Options"],
+    "rating_avg": 3.6,
+    "rating_count": 2288,
+    "cover_image_url": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Butter Chicken", "Seneorita Mocktail", "Mutton Nihari with Naan", "Alfredo Chicken Pasta", "Chilli Garlic Pizza"],
+    "menu_categories": [
+      {
+        "category_name": "Signature & Classic Mocktails",
+        "items": [
+          { "name": "Seneorita", "description": "Cranberry nectar, strawberry, and fresh lime served in a salt-rimmed glass topped with sparkling soda", "price": 240, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Lavender Mystery", "description": "Lavender syrup with muddled mixed berries and crushed ice, topped with Sprite and soda", "price": 250, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Spooky Orange", "description": "Orange shake infused with vanilla and finished with spooky foam topping", "price": 230, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Popcorn Martini", "description": "Gourmet sweet and salty popcorn syrup blended with vanilla and served ice-chilled", "price": 240, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Martini Glass" },
+          { "name": "Cucumbertino", "description": "Chunks of crisp fresh cucumber and chaat masala topped with tart cranberry juice", "price": 220, "dietary_tag": "Vegan", "spice_level": 1, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Coconut Fizz", "description": "Creamy coconut and blue curacao with pineapple juice and toasted coconut flakes", "price": 230, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Paan India", "description": "Rich traditional betel leaf paan flavor infused with sweet lychee nectar and crushed ice", "price": 230, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Black Magic", "description": "Activated charcoal with muddled blackberries, touch of blue curacao, and rosemary infusion", "price": 250, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Virgin Mojito", "description": "Classic blend of fresh mint leaves, lemon juice, sugar, and sparkling soda", "price": 210, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass (350ml)" },
+          { "name": "Virgin Sangria", "description": "Rich mixed grape and fruit juices infused with diced seasonal fresh fruits", "price": 240, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Goblet Glass" },
+          { "name": "Spicy Guava Blast", "description": "Fresh guava juice muddled with lemon, chaat masala, and a touch of red chilli powder", "price": 210, "dietary_tag": "Vegan", "spice_level": 2, "portion_size": "Tall Glass (350ml)" }
+        ]
+      },
+      {
+        "category_name": "Specialty Shakes & Cold Brews",
+        "items": [
+          { "name": "Belgium Chocolate Shake", "description": "Decadent dark Belgian cocoa blended with dairy cream and chocolate drizzle", "price": 210, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Vanilla Cold Brew", "description": "Steeped cold brew coffee with Madagascar vanilla syrup topped with creamy vanilla float", "price": 200, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Oreo Shake", "description": "Thick milkshake blended with crunchy Oreo cookies and chocolate ganache", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "KitKat Shake", "description": "Crisp KitKat chocolate wafer bars blended with chilled milk and ice cream", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Date Shake", "description": "Wholesome Arabian dates blended with creamy milk and roasted nuts", "price": 220, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Cold Coffee (Classic)", "description": "Frothy espresso whipped with chilled milk and sugar syrup", "price": 170, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" }
+        ]
+      },
+      {
+        "category_name": "Artisanal Thin Crust Pizzas & Turkish Pides",
+        "items": [
+          { "name": "Bbq Chicken Pizza", "description": "Thin-crust dough topped with shredded barbecue chicken, onions, and melted mozzarella", "price": 420, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "10 Inch" },
+          { "name": "Spice Chicken Pizza", "description": "Spiced creamed chicken, pecorino cheese, and aromatic basil pesto drizzle", "price": 440, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "10 Inch" },
+          { "name": "All Green Pizza", "description": "Tomato concasse, fresh mozzarella, roasted bell peppers, black olives, arugula, and feta cheese", "price": 380, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "10 Inch" },
+          { "name": "Paneer Tikka Pizza", "description": "Spiced cottage cheese, pecorino cheese, bell peppers, and fresh torn basil", "price": 380, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "10 Inch" },
+          { "name": "Classic Margherita", "description": "Fresh tomato sauce, buffalo mozzarella, oregano, fresh basil, and extra virgin olive oil", "price": 320, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "10 Inch" },
+          { "name": "Lahmacun Pide", "description": "Traditional Turkish boat-shaped thin flatbread topped with spiced ground minced lamb, herbs, and lemon", "price": 480, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Turkish Pide" },
+          { "name": "Tavuklu Pide", "description": "Turkish flatbread stuffed with grilled chicken, bell peppers, chillies, basil, and mozzarella cheese", "price": 460, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Turkish Pide" },
+          { "name": "Otluve Peynir Pide", "description": "Fresh thyme, herbs, and Turkish mozzarella cheese baked inside a crispy boat crust", "price": 390, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Turkish Pide" }
+        ]
+      },
+      {
+        "category_name": "Pastas & Continental Small Plates",
+        "items": [
+          { "name": "Aglio Olio Spaghetti", "description": "Al dente spaghetti tossed in extra virgin olive oil, sliced golden garlic, chili flakes, and parsley", "price": 340, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Full Plate" },
+          { "name": "Classic Alfredo Penne (Chicken)", "description": "Penne pasta enveloped in a rich garlic parmesan cream sauce with sauteed chicken chunks", "price": 380, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Full Bowl" },
+          { "name": "Penne Arrabbiata (Veg)", "description": "Spicy Italian tomato marinara with garlic, crushed red peppers, and sliced black olives", "price": 320, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Full Bowl" },
+          { "name": "Peri Peri Pasta", "description": "Penne pasta prepared with fiery African peri peri spices and roasted vegetables", "price": 330, "dietary_tag": "Veg", "spice_level": 4, "portion_size": "Full Bowl" },
+          { "name": "Baked Nachos Grande", "description": "Corn tortilla chips baked with warm cheese sauce, diced veggies, and zesty tomato salsa", "price": 260, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Platter" },
+          { "name": "Classic Fish & Chips", "description": "Crispy batter-fried fish fillets served with salted French fries and house tartar aioli", "price": 390, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Platter" },
+          { "name": "Parmesan Truffle Fries", "description": "Golden fries dusted with truffle mushroom seasoning and grated parmesan cheese", "price": 210, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Large Basket" },
+          { "name": "Chicken Cheese Garlic Bread", "description": "Turkish baked bread stuffed with garlic butter, diced chicken, and bubbling mozzarella", "price": 220, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "4 Pieces" }
+        ]
+      },
+      {
+        "category_name": "Kebabs & Small Bites",
+        "items": [
+          { "name": "Dahi Ke Kebab", "description": "Crispy hung curd patties served with mint chutney and masala onion rings", "price": 310, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "6 Pieces" },
+          { "name": "Badami Broccoli", "description": "Char-grilled tandoori broccoli florets marinated in rich cream and roasted almond paste", "price": 330, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Platter" },
+          { "name": "Chutney Chicken Seekh Kebab", "description": "Spiced minced chicken skewers stuffed with mint coriander chutney and grilled on coals", "price": 360, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "4 Skewers" },
+          { "name": "Mutton Seekh Kebab", "description": "Ground mutton skewers infused with ginger, garlic, and aromatic Old Delhi spices", "price": 420, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "4 Skewers" },
+          { "name": "Kakori Kebab", "description": "Velvety melt-in-mouth mutton kebabs served with mini Malabar paratha", "price": 450, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "4 Pieces" },
+          { "name": "Shami Kebab", "description": "Pan-fried fine minced mutton and chana dal patties with whole Indian spices", "price": 390, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "4 Pieces" },
+          { "name": "Chicken Burra", "description": "Bone-in chicken marinated in special Mughlai spices and roasted over charcoal", "price": 390, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "4 Pieces" },
+          { "name": "Mutton Burra Chops", "description": "Tender mutton ribs and chops steeped in rich tandoori spices and charred to perfection", "price": 480, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "4 Chops" },
+          { "name": "Chicken Kalmi Kebab", "description": "Chicken drumsticks marinated in hung curd, cashew paste, and warm Mughlai spices", "price": 380, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "3 Drumsticks" },
+          { "name": "Keema Pav (Mumbaiya Style)", "description": "Spiced minced mutton gravy served with butter-toasted baby maska pav and pickled sirka onion", "price": 320, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Keema Bowl + 2 Pav" }
+        ]
+      },
+      {
+        "category_name": "Old Delhi Mughlai Curries & Biryani",
+        "items": [
+          { "name": "Smoked Butter Chicken", "description": "Charcoal-smoked chicken simmered in rich creamy makhani gravy, served with masala onions", "price": 450, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Serves 2 (400g)" },
+          { "name": "Slow Cooked Mutton Nihari", "description": "Tender mutton shank stewed overnight in traditional broth with bone marrow essence", "price": 490, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Serves 2 (400g)" },
+          { "name": "Mutton Rogan Josh", "description": "Kashmiri style aromatic mutton curry flavored with alkanet root (ratanjot) and fennel", "price": 480, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Serves 2" },
+          { "name": "Chicken Changezi", "description": "Roasted chicken cooked in a rich, tangy tomato, milk, and onion gravy with green chillies", "price": 430, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Serves 2" },
+          { "name": "Chicken Biryani", "description": "Long-grain fragrant basmati rice layered with spiced marinated chicken and saffron", "price": 380, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Full Handi (Serves 1-2)" },
+          { "name": "Mutton Biryani", "description": "Traditional dum biryani with succulent mutton pieces and caramelised onions", "price": 440, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Full Handi (Serves 1-2)" },
+          { "name": "Dal Makhani (Slow Simmered)", "description": "Black lentils cooked overnight with butter, tomato puree, and fresh dairy cream", "price": 290, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Bowl (Serves 2)" },
+          { "name": "Paneer Changezi", "description": "Soft cottage cheese chunks cooked in rich yogurt-tomato gravy with chopped coriander", "price": 340, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Bowl (Serves 2)" },
+          { "name": "Khamiri Roti", "description": "Traditional thick leavened sourdough bread baked in the clay tandoor", "price": 35, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" },
+          { "name": "Butter Garlic Naan", "description": "Tandoor baked flatbread brushed with garlic butter and parsley", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" }
+        ]
+      },
+      {
+        "category_name": "Decadent Desserts",
+        "items": [
+          { "name": "Matilda Cake", "description": "Multi-layered ultra moist chocolate fudge cake topped with warm chocolate ganache", "price": 260, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Slice" },
+          { "name": "Pistachio Baklava", "description": "Crisp flaky filo pastry layers stuffed with crushed pistachios and drenched in sweet syrup", "price": 220, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces" },
+          { "name": "Shahi Tukda (Gumbad Special)", "description": "Fried bread steeped in saffron cardamom syrup, topped with thick condensed rabri and silver vark", "price": 180, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Platter" },
+          { "name": "Chocolate Lava Cake", "description": "Warm chocolate sponge cake with an oozing liquid dark chocolate center", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Piece" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Burj Cafe",
+    "short_description": "Upscale rooftop dining lounge offering dazzling architectural views of Jama Masjid, gourmet pizzas, and kebabs.",
+    "long_description": "Burj Cafe stands out as one of Old Delhi's most opulent rooftop venues, situated directly opposite Gate No. 3 of Jama Masjid. With private cabana-style dining booths, ambient warm pendant lighting, and an expansive terrace, the cafe serves Middle Eastern appetizers, continental Italian plates, and rich Mughlai dinners well past midnight.",
+    "cuisine_types": ["Cafe", "Continental", "Italian", "Middle Eastern", "Beverages"],
+    "meal_types": ["Dinner", "Late Night"],
+    "price_range": "₹₹₹",
+    "average_cost_for_two": 1000,
+    "address_line1": "Gate No. 3, Roof Top, 1056-1059, Meena Bazar, Pai Walan, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6512,
+    "longitude": 77.2338,
+    "phone": "+91 98118 78622",
+    "opening_hours": "Monday - Sunday: 5:00 PM - 2:00 AM",
+    "facilities": ["Air Conditioned", "Rooftop Terrace", "Romantic Ambience", "Private Dining Seating", "Takeout", "Table Service"],
+    "dietary_options": ["Halal", "Vegan Options"],
+    "rating_avg": 4.4,
+    "rating_count": 1271,
+    "cover_image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Mutton Nihari", "Peri Peri Chicken Pizza", "Blue Lagoon Cooler", "Grilled Chicken Steak", "Ferrero Rocher Shake"],
+    "menu_categories": [
+      {
+        "category_name": "Signature Mocktails & Coolers",
+        "items": [
+          { "name": "Burj Cafe Special Platinum Berries", "description": "Burst of mixed berries with a hint of zesty lemon, all in a fizzy delight", "price": 270, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Mint Mojito", "description": "Fresh muddled garden mint, lemon wedges, and club soda over crushed ice", "price": 210, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Blue Fish", "description": "Citrus blue curacao infused with sparkling soda and maraschino cherries", "price": 220, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Green Apple Spritzer", "description": "Crisp green apple syrup, fresh mint, and sparkling soda", "price": 210, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Passionato", "description": "Tropical passion fruit blend with lemon juice and fizzy sprite", "price": 230, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Watermelon Daiquiri", "description": "Fresh pressed sweet watermelon juice shaken with lime and ice", "price": 230, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" },
+          { "name": "Red Heart Rose", "description": "Fragrant rose syrup infused with pomegranate nectar and sparkling water", "price": 220, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Tall Glass" }
+        ]
+      },
+      {
+        "category_name": "Specialty Shakes & Coffees",
+        "items": [
+          { "name": "Strawberry Shakedown", "description": "Fresh strawberry puree blended with creamy dairy milk and vanilla gelato", "price": 220, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Blueberry Shakedown", "description": "Wild blueberry compote blended with thick dairy cream", "price": 230, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Blackberry Shakedown", "description": "Rich dark blackberry fruit blend with ice cream float", "price": 230, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Virgin Pina Colada", "description": "Coconut cream, pineapple nectar, and crushed ice", "price": 210, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Hurricane Glass" },
+          { "name": "Oreo Shakedown", "description": "Chocolate milk blended with crushed Oreo cookies and chocolate drizzle", "price": 210, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "Cold Coffee (Espresso)", "description": "Double espresso shot whipped with chilled milk and chocolate syrup", "price": 180, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Regular (300ml)" },
+          { "name": "24 Carat Gold Coffee", "description": "Luxury cappuccino garnished with edible 24-carat gold leaf flakes", "price": 350, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Cup (200ml)" }
+        ]
+      },
+      {
+        "category_name": "Pizzas, Pastas & Fast Food",
+        "items": [
+          { "name": "Chicken Peri Peri Pizza", "description": "Fiery peri peri spiced chicken, capsicum, red paprika, and melted mozzarella", "price": 440, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "10 Inch" },
+          { "name": "Chicken Tandoori Pizza", "description": "Tandoori chicken tikka, onions, green bell peppers, and rich cheese", "price": 430, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "10 Inch" },
+          { "name": "Margherita Cheese Pizza", "description": "Traditional Napoli tomato sauce topped with 100% mozzarella and basil", "price": 340, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "10 Inch" },
+          { "name": "Italian Farm House Pizza", "description": "Mushrooms, sweet corn, black olives, onions, and bell peppers", "price": 380, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "10 Inch" },
+          { "name": "Pasta White Sauce", "description": "Penne in creamy cheese Alfredo sauce with herbs, served with toasted garlic bread", "price": 320, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Bowl + 2 Garlic Breads" },
+          { "name": "Pasta Red Sauce", "description": "Penne in zesty Arrabiata tomato sauce, served with toasted garlic bread", "price": 310, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Bowl + 2 Garlic Breads" },
+          { "name": "Arabic Chicken Shawarma", "description": "Spit-roasted chicken wrapped in soft pita with pickled veggies and toum garlic sauce", "price": 220, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Single Wrap with Fries" },
+          { "name": "Chicken Hakka Noodles", "description": "Wok-fried noodles tossed with shredded chicken, crunchy vegetables, and soy garlic", "price": 240, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Full Platter" },
+          { "name": "Veg Hakka Noodles", "description": "Eggless noodles stir-fried with julienned bell peppers, cabbage, and light soya sauce", "price": 190, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Full Platter" }
+        ]
+      },
+      {
+        "category_name": "Continental Starters & Kebabs",
+        "items": [
+          { "name": "Mexican Chicken Wings", "description": "Zesty skin-on chicken wings seasoned with red chili and glazed in fresh orange reduction", "price": 320, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "6 Wings" },
+          { "name": "Fish N Chips", "description": "Uniquely cut fish fillets coated in crunchy cornflakes and served with salted fries and tartar sauce", "price": 420, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Platter" },
+          { "name": "Thai Sesame Chicken", "description": "Signature crispy chicken tossed in sweet-savory Thai glaze infused with toasted sesame seeds", "price": 340, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Platter" },
+          { "name": "Mughlai Mutton Seekh Kebab", "description": "Charcoal-roasted minced mutton infused with aromatic herbs and Old Delhi spices", "price": 440, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "4 Skewers" },
+          { "name": "Mughlai Chicken Seekh Kebab", "description": "Charcoal-roasted minced chicken infused with green herbs and spices", "price": 360, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "4 Skewers" },
+          { "name": "Bosnian Mutton Kebab", "description": "Mini kebabs prepared according to a unique Ottoman empire recipe with warm spices", "price": 460, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "6 Mini Kebabs" },
+          { "name": "Bosnian Chicken Kebab", "description": "Tender chicken mini kebabs prepared with Ottoman seasonings", "price": 380, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "6 Mini Kebabs" },
+          { "name": "Kolawadi Fish", "description": "Maharashtrian-spiced coastal style crispy fried fish fillets", "price": 440, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "6 Pieces" },
+          { "name": "Paneer Tikka (Tandoori)", "description": "Cottage cheese marinated in thick spiced yogurt and roasted in clay tandoor", "price": 320, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "6 Pieces" }
+        ]
+      },
+      {
+        "category_name": "Royal Mughlai Main Course & Rice",
+        "items": [
+          { "name": "Butter Chicken", "description": "Tandoori chicken cooked in mild special tomato and cream makhani sauce", "price": 460, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Serves 2" },
+          { "name": "Mutton Nihari", "description": "Overnight slow-cooked tender mutton shank in deeply flavored marrow gravy", "price": 490, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Serves 2" },
+          { "name": "Chicken Nihari", "description": "Slow-cooked tender chicken in spiced aromatic Nihari gravy", "price": 420, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Serves 2" },
+          { "name": "Mutton Korma", "description": "Old Delhi's famous mutton gravy simmered with fried onions, curd, and aromatic spices", "price": 480, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Serves 2" },
+          { "name": "Charsi Chicken", "description": "Peshawari style chicken gravy cooked in pure butter with green chillies and fresh tomatoes", "price": 440, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Serves 2" },
+          { "name": "Smokey Chicken Gravy", "description": "Charcoal and clarified butter flavored chicken in rich spiced gravy", "price": 440, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Serves 2" },
+          { "name": "Dal Makhani", "description": "Creamy black lentils simmered in butter and assorted spices", "price": 290, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Serves 2" },
+          { "name": "Shahi Paneer", "description": "Marinated cottage cheese tossed in smooth cashew and tomato cream gravy", "price": 330, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Serves 2" },
+          { "name": "Mutton Mandi", "description": "Famous Middle Eastern slow-cooked rice preparation served with tender spiced mutton shank", "price": 540, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Large Platter" },
+          { "name": "Chicken Mandi", "description": "Aromatic Arabian basmati rice served with roasted tender half chicken", "price": 460, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Large Platter" },
+          { "name": "Mutton Biryani", "description": "Layers of spiced tender mutton pieces and fragrant basmati rice cooked on dum", "price": 440, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Handi Serves 1-2" },
+          { "name": "Chicken Biryani", "description": "Layers of spiced chicken and basmati rice with caramelised onions", "price": 380, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Handi Serves 1-2" },
+          { "name": "Khamiri Roti", "description": "Traditional fluffy leavened bread from the clay oven", "price": 35, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" },
+          { "name": "Garlic Naan", "description": "Tandoori naan topped with roasted garlic and butter", "price": 65, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" }
+        ]
+      },
+      {
+        "category_name": "Desserts",
+        "items": [
+          { "name": "Burj Special Milk Cake", "description": "Signature rich caramelised milk confection garnished with chopped pistachios", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces" },
+          { "name": "Tiramisu", "description": "Italian espresso-soaked ladyfingers layered with mascarpone cream and cocoa dusting", "price": 240, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Cup" },
+          { "name": "Chocolate Strawberry Punch", "description": "Warm chocolate pudding served with fresh strawberry glaze and vanilla ice cream", "price": 210, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Platter" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Ebony Cafe",
+    "short_description": "Chic European-style cafe in Pai Walan serving artisanal waffles, gourmet sandwiches, pasta, and coffees.",
+    "long_description": "Ebony Cafe delivers an intimate, warm European bistro atmosphere nestled near Jama Masjid. Featuring modern minimalist interiors, cozy wooden table settings, and relaxing ambient music, it serves as an inviting sanctuary after exploring the vibrant bazaars of Old Delhi. Signature offerings include Belgian waffles, cheese-loaded pastas, and hand-brewed specialty coffees.",
+    "cuisine_types": ["Cafe", "Italian", "Continental", "Desserts", "Beverages"],
+    "meal_types": ["Breakfast", "Lunch", "Dinner", "Late Night"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 450,
+    "address_line1": "Shop No. 1052a, Chah Rahat, Pai Walan, Jama Masjid, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6505,
+    "longitude": 77.2335,
+    "phone": "+91 11 4168 2412",
+    "opening_hours": "Monday - Sunday: 2:00 PM - 2:00 AM",
+    "facilities": ["Air Conditioned", "Cozy European Interior", "Takeout", "Delivery", "Laptop Friendly Seating"],
+    "dietary_options": ["Halal", "Vegan Options"],
+    "rating_avg": 4.3,
+    "rating_count": 270,
+    "cover_image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Ebony and Ivory Waffle", "Peri Peri Chicken Sandwich", "Alfredo White Sauce Pasta", "Chicken Pops", "Caramel Cold Coffee"],
+    "menu_categories": [
+      {
+        "category_name": "Artisanal Pizzas",
+        "items": [
+          { "name": "Margherita Pizza", "description": "Classic delight with 100% real mozzarella cheese on fresh herb tomato base", "price": 280, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "8 Inch" },
+          { "name": "Green Garden Pizza", "description": "Exotic in-house tomato sauce topped with onions, capsicum, tomato, mushroom, black olives, and red paprika", "price": 340, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "8 Inch" },
+          { "name": "Four Season Pizza", "description": "Sweet corn, black olives, crisp capsicum, and onions with mozzarella", "price": 320, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "8 Inch" },
+          { "name": "Paneer Tikka Pizza", "description": "Bite-sized pieces of spiced paneer tikka, capsicum, and onions on a crisp crust", "price": 350, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "8 Inch" },
+          { "name": "Tandoori Chicken Pizza", "description": "Special tandoori sauce topped with tandoori chicken tikka, onion, capsicum, and tomato", "price": 380, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "8 Inch" },
+          { "name": "Chicken Tikka Pizza", "description": "Multigrain base, delicious chicken tikka, onion rings, and a drizzle of coriander leaves", "price": 390, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "8 Inch" },
+          { "name": "Chicken Hawaiian Pizza", "description": "House tomato sauce topped with chicken tikka, chicken salami, and grilled sweet pineapple", "price": 410, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "8 Inch" },
+          { "name": "Chipotle Chicken Pizza", "description": "Chicken pizza with a smoky and flavorful chipotle pepper twist and melted cheese", "price": 410, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "8 Inch" }
+        ]
+      },
+      {
+        "category_name": "Gourmet Burgers & Sandwiches",
+        "items": [
+          { "name": "Ebony Special Burger", "description": "House signature double patty burger with special secret sauce and cheese slice", "price": 220, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Burger with Fries" },
+          { "name": "Tandoori Chicken Crunch Burger", "description": "Grilled tandoori chicken breast topped with cheese and sauteed onions in brown buns", "price": 190, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Double Decker Chicken Crunch Burger", "description": "Stacked double crunchy fried chicken fillets with twin cheese slices and garlic mayo", "price": 260, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Large Burger" },
+          { "name": "Fish Fillet Burger", "description": "Golden crumb-fried fish fillet with caper tartar sauce and lettuce in a brioche bun", "price": 230, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Single Burger" },
+          { "name": "Veg Burger", "description": "Flavorful vegetable patty between brown buns complemented by onions and chipotle mayo", "price": 130, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Tandoori Crispy Paneer Burger", "description": "Crisp spiced cottage cheese patty topped with tandoori mayo and crunchy greens", "price": 170, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Grilled Cheese Sandwich", "description": "Classic toasted sandwich stuffed with melted cheddar and mozzarella, served with potato chips", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Triangles + Chips" },
+          { "name": "Mexican Spiced Cottage Cheese Sandwich", "description": "Spiced cottage cheese, zesty tomato salsa, crunchy veggies, and melted cheese in toasted bread", "price": 160, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Triangles" },
+          { "name": "Peri Peri Chicken Sandwich", "description": "Fresh artisanal bread stuffed with spicy peri peri pulled chicken breast and herb mayo", "price": 180, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "2 Halves with Fries" }
+        ]
+      },
+      {
+        "category_name": "Pastas & Mac N Cheese",
+        "items": [
+          { "name": "Penne Arrabiata Red Sauce Pasta", "description": "Penne tossed in spicy and tangy tomato concasse garnished with fresh basil leaves", "price": 240, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Full Bowl" },
+          { "name": "Alfredo White Sauce Pasta", "description": "Penne pasta tossed with black olives and Italian herbs in cheddar and parmesan cheese sauce", "price": 260, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Full Bowl" },
+          { "name": "Paprika Pink Sauce Pasta", "description": "Harmonious fusion of Arrabiata and Alfredo sauce with bell peppers and paprika", "price": 260, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Full Bowl" },
+          { "name": "Chicken Penne Alfredo", "description": "Rich creamy pasta packed with roasted garlic, parmesan flavor, and grilled chicken breast", "price": 310, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Full Bowl" },
+          { "name": "Chicken Spaghetti Arrabiata", "description": "Spicy tomato sauce embracing al dente spaghetti and herbed chicken", "price": 310, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Full Bowl" },
+          { "name": "Chicken Mac N Cheese", "description": "Tender chicken pieces nestled in a creamy blend of gooey cheese and perfectly cooked macaroni", "price": 330, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Full Bowl" }
+        ]
+      },
+      {
+        "category_name": "Crispies, Bites & Wraps",
+        "items": [
+          { "name": "Classic French Fries", "description": "Deep fried golden potato wedges served with tangy tomato ketchup", "price": 110, "dietary_tag": "Vegan", "spice_level": 0, "portion_size": "Basket" },
+          { "name": "Peri Peri Fries", "description": "French fries sprinkled generously with in-house punchy chilli garlic seasoning", "price": 130, "dietary_tag": "Vegan", "spice_level": 3, "portion_size": "Basket" },
+          { "name": "Cheesy French Fries", "description": "Golden fries generously smothered in warm melted cheese sauce", "price": 160, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Basket" },
+          { "name": "Cheese Garlic Bread", "description": "Toasted baguette slices layered with garlic butter and bubbling mozzarella cheese", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "4 Slices" },
+          { "name": "Chicken Pops", "description": "Crisp fried bite-sized chicken balls served with house dip", "price": 180, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "12 Pieces" },
+          { "name": "Chicken N Chips", "description": "Crispy fried southern-spiced chicken served alongside golden French fries", "price": 240, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Platter" },
+          { "name": "Ebony Special Fried Chicken", "description": "Crispy seasoned fried chicken fillet filled with melted cheese core", "price": 260, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "2 Fillets" },
+          { "name": "Tandoori Paneer Wrap", "description": "Diced paneer layered with tandoori sauce, shredded lettuce, onions, and tomato in tortilla", "price": 160, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Wrap" },
+          { "name": "Chicken Tikka Wrap", "description": "Grilled chicken tikka chunks wrapped in tortilla bread with mint mayo", "price": 190, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Wrap" }
+        ]
+      },
+      {
+        "category_name": "Gourmet Waffles & Salads",
+        "items": [
+          { "name": "Ebony And Ivory Waffle", "description": "Crisp waffle drizzled with contrasting rich dark chocolate and white chocolate, served with vanilla ice cream", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Waffle Plate" },
+          { "name": "Choco Hazelnut Waffle", "description": "Warm Belgian waffle smothered in hazelnut chocolate spread and roasted nuts", "price": 210, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Waffle Plate" },
+          { "name": "Blueberry Cream Waffle", "description": "Classic crispy waffle layered with creamy cheesecake filling, fresh blueberry compote, and Biscoff crumble", "price": 220, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Waffle Plate" },
+          { "name": "Classic Waffle with Maple Syrup", "description": "Freshly baked golden waffle served with salted dairy butter and pure maple syrup", "price": 150, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Single Waffle Plate" },
+          { "name": "Grilled Chicken Salad", "description": "Herb-grilled chicken breast tossed with iceberg lettuce, cherry tomatoes, cucumbers, and olive vinaigrette", "price": 220, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Salad Bowl" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "The Chowk Cafe",
+    "short_description": "Vibrant first-floor lounge cafe in Ballimaran serving pizzas, wings, Indo-Chinese bites, and late-night meals.",
+    "long_description": "The Chowk Cafe is a modern and spacious hangout located on the first floor along Ballimaran Main Road. Decorated with colorful wall murals, comfortable group sofa seating, and private booth corners, it is a bustling hub for friends and families looking to enjoy late-night fast food, loaded fries, and refreshing coolers right in Chandni Chowk.",
+    "cuisine_types": ["Cafe", "North Indian", "Chinese", "Fast Food", "Beverages"],
+    "meal_types": ["Lunch", "Dinner", "Late Night"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 500,
+    "address_line1": "709, 1st Floor, Ballimaran Main Road, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6531,
+    "longitude": 77.2289,
+    "phone": "+91 70651 60648",
+    "opening_hours": "Monday - Sunday: 12:00 PM - 6:00 AM, 5:00 PM - 12:00 AM",
+    "facilities": ["Air Conditioned", "Lounge Seating", "Family Dining Section", "Takeout", "Delivery"],
+    "dietary_options": ["Halal", "Vegan Options"],
+    "rating_avg": 3.9,
+    "rating_count": 150,
+    "cover_image_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Chowk Special Pizza", "Crispy Chicken Wings", "Hakka Noodles", "Virgin Mojito", "Brownie with Ice Cream"],
+    "menu_categories": [
+      {
+        "category_name": "Indo-Chinese Noodles & Rice",
+        "items": [
+          { "name": "Egg + Chicken Fried Rice", "description": "Protein-packed mix of eggs, tender chicken, and fragrant wok-tossed fried rice", "price": 220, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Full Platter" },
+          { "name": "Chicken Schezwan Noodles", "description": "Spicy Schezwan sauce infused noodles tossed with shredded chicken and bell peppers", "price": 230, "dietary_tag": "Non-veg", "spice_level": 4, "portion_size": "Full Platter" },
+          { "name": "Chilly Potato", "description": "Crispy fried potato fingers coated in a spicy and sweet honey chilli garlic glaze", "price": 140, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Platter" },
+          { "name": "Chicken Spring Roll", "description": "Crisp golden wonton wrapper filled with seasoned chicken and shredded vegetables", "price": 180, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "2 Rolls" },
+          { "name": "Paneer Manchurian Gravy", "description": "Crispy fried cottage cheese cubes tossed in spicy and tangy Indo-Chinese Manchurian sauce", "price": 210, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Bowl" },
+          { "name": "Chicken Momos (Steamed)", "description": "Hand-folded dumplings stuffed with spiced minced chicken, served with spicy red chutney", "price": 120, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "8 Pieces" },
+          { "name": "Chicken Kurkure Momos", "description": "Chicken dumplings coated in a crunchy cornflake crust, fried golden and crisp", "price": 160, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "8 Pieces" },
+          { "name": "Chilly Chicken Dry", "description": "Crispy boneless chicken tossed with diced onions, capsicum, green chillies, and dark soya", "price": 260, "dietary_tag": "Non-veg", "spice_level": 3, "portion_size": "Platter" },
+          { "name": "Veg Hakka Noodles", "description": "Classic stir-fried eggless noodles with fresh garden vegetables and mild seasoning", "price": 150, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Full Platter" }
+        ]
+      },
+      {
+        "category_name": "Burgers, Sandwiches & Wraps",
+        "items": [
+          { "name": "Chicken Cheezy Burger", "description": "Juicy grilled chicken patty topped with melted cheese slice and house burger relish", "price": 160, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Burger" },
+          { "name": "Chicken Tandoori Sandwich", "description": "Double-layered toasted sandwich packed with shredded tandoori chicken and mint mayo", "price": 180, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "2 Triangles" },
+          { "name": "Paneer Tandoori Sandwich", "description": "Spiced tandoori paneer slices and cheese between butter-toasted bread", "price": 150, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Triangles" },
+          { "name": "Chicken Wrap", "description": "Juicy spiced chicken rolled in a warm flatbread with shredded iceberg and garlic mayo", "price": 160, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Single Wrap" },
+          { "name": "Aloo Tikki Burger", "description": "Crunchy spiced potato cutlet in a toasted sesame bun with tomato and onion", "price": 80, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Burger" }
+        ]
+      },
+      {
+        "category_name": "Pizzas, Pastas & Fries",
+        "items": [
+          { "name": "Tandoori Chicken Pizza", "description": "Classic tandoori flavors infused in juicy chicken on a crispy oven-baked crust", "price": 360, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "9 Inch" },
+          { "name": "Paneer Makhani Pizza", "description": "Rich creamy paneer in a buttery tomato sauce with mozzarella cheese", "price": 320, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "9 Inch" },
+          { "name": "Double Cheese Margherita Pizza", "description": "Double layer of melted mozzarella over aromatic Italian tomato sauce", "price": 280, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "9 Inch" },
+          { "name": "Chicken White Sauce Pasta", "description": "Juicy chicken and penne tossed in rich parmesan cream sauce, served with garlic bread", "price": 260, "dietary_tag": "Non-veg", "spice_level": 1, "portion_size": "Full Bowl" },
+          { "name": "Pizza Fries", "description": "Crispy French fries smothered in pizza sauce, mozzarella cheese, and herbs", "price": 160, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Tray" },
+          { "name": "Broast Chicken (Without Bone)", "description": "Tender and juicy boneless chicken fillets broasted to golden crisp perfection", "price": 240, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "4 Fillets" }
+        ]
+      },
+      {
+        "category_name": "Mughlai Gravies & Tandoori Breads",
+        "items": [
+          { "name": "Chicken Korma", "description": "Mild and creamy Old Delhi style chicken gravy cooked in onion and yogurt paste", "price": 340, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Serves 2" },
+          { "name": "Dal Makhni", "description": "Creamy slow-simmered black lentils cooked in rich butter and cream", "price": 240, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Serves 2" },
+          { "name": "Shaahi Paneer", "description": "Soft cottage cheese chunks cooked in rich creamy royal cashew and tomato gravy", "price": 280, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Serves 2" },
+          { "name": "Chicken Biryani", "description": "Flavorful seasoned basmati rice layered with juicy marinated chicken pieces", "price": 290, "dietary_tag": "Non-veg", "spice_level": 2, "portion_size": "Handi Serves 1-2" },
+          { "name": "Butter Naan", "description": "Soft fluffy tandoori naan smothered with melted dairy butter", "price": 50, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" },
+          { "name": "Garlic Naan", "description": "Leavened bread studded with chopped garlic and coriander", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Pt. Gaya Prasad Shiv Charan Paranthe Wale",
+    "short_description": "Legendary 150-year-old vegetarian dining institution in Paranthe Wali Gali serving deep-fried stuffed parathas.",
+    "long_description": "Established in 1872, Pt. Gaya Prasad Shiv Charan is one of the foundational culinary landmarks of Gali Paranthe Wali in Chandni Chowk. The cozy indoor dining room features traditional heritage seating and wall portraits of visiting dignitaries. Every paratha is prepared fresh in pure clarified butter (desi ghee) on low flat cast-iron pans and served alongside an unlimited spread of spicy aloo-tamatar curry, sweet sitaphal (pumpkin mash), methi banana chutney, and mint dip.",
+    "cuisine_types": ["North Indian", "Pure Vegetarian", "Traditional Parathas", "Street Heritage"],
+    "meal_types": ["Breakfast", "Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "Shop No. 34, Gali Paranthe Wali, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6561,
+    "longitude": 77.2312,
+    "phone": "+91 98736 82978",
+    "opening_hours": "Monday - Sunday: 7:00 AM - 11:00 PM",
+    "facilities": ["Indoor Seating", "Traditional Sit-down Dining", "Takeout", "Cash & Digital Payments"],
+    "dietary_options": ["Pure Veg", "Jain Friendly"],
+    "rating_avg": 3.8,
+    "rating_count": 3113,
+    "cover_image_url": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Kaju Paratha", "Rabri Paratha", "Paneer Paratha", "Mixed Veg Paratha", "Kulhad Sweet Lassi"],
+    "menu_categories": [
+      {
+        "category_name": "Vegetable & Herb Parathas (Served with 3 Subzis & Chutneys)",
+        "items": [
+          { "name": "Aloo Paratha (2 Pcs)", "description": "Spiced potato stuffed paratha fried crisp in pure desi ghee, served with aloo-tamatar subzi, sitaphal pumpkin mash, and methi chutney", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Gobhi Paratha (2 Pcs)", "description": "Grated spiced cauliflower filling shallow fried to a golden hue", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Matar Paratha (2 Pcs)", "description": "Crushed green peas blended with ginger and roasted garam masala", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Mooli Paratha (2 Pcs)", "description": "Spiced grated winter radish with carom seeds and fresh herbs", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Besan Methi Paratha (2 Pcs)", "description": "Gram flour roasted with fresh fenugreek leaves and asafoetida", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Mix Veg Paratha (2 Pcs)", "description": "Medley of potato, peas, cauliflower, and carrots", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Papad Paratha (2 Pcs)", "description": "Crushed spiced urad dal papad folded into dough and deep fried", "price": 180, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Karela Paratha (2 Pcs)", "description": "Finely diced bitter gourd sauteed with fennel and dried mango powder", "price": 200, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Tamatar Paratha (2 Pcs)", "description": "Spicy tomato pulp reduction with green chillies", "price": 200, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Bhindi Paratha (2 Pcs)", "description": "Finely chopped ladyfingers seasoned with carom seeds and coriander", "price": 200, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Pudina Paratha (2 Pcs)", "description": "Fresh mint leaves and roasted cumin stuffing", "price": 200, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Nimbu Paratha (2 Pcs)", "description": "Tangy spiced lemon pickle and zest stuffing", "price": 200, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Mirchi Paratha (2 Pcs)", "description": "Fiery green chilli and ajwain stuffing", "price": 200, "dietary_tag": "Veg", "spice_level": 5, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Hing Jeera Paratha (2 Pcs)", "description": "Heavily tempered with pure asafoetida and roasted cumin seeds", "price": 200, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Parathas with Subzis" }
+        ]
+      },
+      {
+        "category_name": "Special Cheese & Paneer Parathas",
+        "items": [
+          { "name": "Paneer Paratha (2 Pcs)", "description": "Crumbled dairy paneer with black pepper and ginger in crisp wheat crust", "price": 220, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Cheese Burst Paratha (2 Pcs)", "description": "Molten cheese core that oozes when cut, shallow fried in desi ghee", "price": 250, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Cheese Corn Paratha (2 Pcs)", "description": "Sweet golden corn kernels and processed cheese filling", "price": 240, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Cheese Paneer Paratha (2 Pcs)", "description": "Rich blend of grated cottage cheese and melted processed cheese", "price": 250, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Peri Peri Paneer Paratha (2 Pcs)", "description": "Paneer seasoned with spicy African peri peri chili rub", "price": 240, "dietary_tag": "Veg", "spice_level": 4, "portion_size": "2 Parathas with Subzis" }
+        ]
+      },
+      {
+        "category_name": "Mewa, Sweet & Dessert Parathas",
+        "items": [
+          { "name": "Kaju (Cashew) Paratha (2 Pcs)", "description": "Roasted cashew paste and dry fruits fried in pure clarified butter", "price": 260, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Badam (Almond) Paratha (2 Pcs)", "description": "Ground sweet and savory almonds with cardamom", "price": 260, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Parathas with Subzis" },
+          { "name": "Kishmish Paratha (2 Pcs)", "description": "Sweet golden raisins infused with saffron syrup", "price": 220, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Parathas" },
+          { "name": "Rabri Paratha (2 Pcs)", "description": "Signature heritage sweet paratha stuffed with thick reduced milk rabri", "price": 250, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Parathas" },
+          { "name": "Khoya Paratha (2 Pcs)", "description": "Solidified sweetened milk mawa with crushed pistachios", "price": 240, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Parathas" },
+          { "name": "Khurchan Paratha (2 Pcs)", "description": "Scraped caramelized milk solids stuffed in a flaky fried crust", "price": 250, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Parathas" },
+          { "name": "Kela (Banana) Paratha (2 Pcs)", "description": "Sweet mashed ripe bananas with cardamom and mawa", "price": 200, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Parathas" }
+        ]
+      },
+      {
+        "category_name": "Amrit Lassi & Desserts",
+        "items": [
+          { "name": "Sweet Lassi (Kulhad)", "description": "Thick curd whipped with sugar, rose essence, and malai layer in earthen cup", "price": 70, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (300ml)" },
+          { "name": "Salted Lassi", "description": "Savory whipped buttermilk with roasted cumin and rock salt", "price": 60, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Kulhad (300ml)" },
+          { "name": "Mango Lassi", "description": "Fresh mango pulp blended with sweet churned curd", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (300ml)" },
+          { "name": "Rabri (Per 100gm)", "description": "Pure reduced full-cream milk layers flavored with cardamom", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" },
+          { "name": "Khurchan (Per 100gm)", "description": "Rich scraped milk crust sweetened with natural sugar", "price": 100, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Pt. Babu Ram Paranthe Wala",
+    "short_description": "Historic eatery dating back to 1886 in Paranthe Wali Gali famed for papad, khurchan, and dry fruit parathas.",
+    "long_description": "Pt. Babu Ram Paranthe Wala has maintained unyielding culinary traditions since 1886. Located at the crossroads of Gali Paranthe Wali, the shop offers indoor bench seating where guests watch artisans knead, stuff, and shallow-fry parathas in bubbling brass vats of pure ghee. Accompaniments include potato curry, sweet pumpkin vegetable, and tangy homemade fruit chutney.",
+    "cuisine_types": ["North Indian", "Pure Vegetarian", "Heritage Parathas"],
+    "meal_types": ["Breakfast", "Lunch", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 350,
+    "address_line1": "Shop No. 1984-1985, Gali Paranthe Wali, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6562,
+    "longitude": 77.2314,
+    "phone": "+91 93137 73576",
+    "opening_hours": "Monday - Sunday: 8:30 AM - 10:30 PM",
+    "facilities": ["Indoor Seating", "Traditional Wooden Benches", "Takeout", "Family Seating"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 3.5,
+    "rating_count": 3269,
+    "cover_image_url": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Papad Paratha", "Khurchan Paratha", "Matar Paratha", "Aloo Pyaz Paratha", "Special Malai Lassi"],
+    "menu_categories": [
+      {
+        "category_name": "Classic & Savory Parathas (Served with Subzi & Achaar)",
+        "items": [
+          { "name": "Aloo Paratha (Plate of 2)", "description": "Spiced potato stuffed paratha fried golden in desi ghee, served with potato curry and sweet pumpkin", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Matar Paratha (Plate of 2)", "description": "Crushed green peas and coriander stuffing", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Mooli Paratha (Plate of 2)", "description": "Grated white radish seasoned with ajwain and salt", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Gobhi Paratha (Plate of 2)", "description": "Cauliflower florets spiced with green chillies", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Gaajar (Carrot) Paratha", "description": "Grated red carrots with ginger and cumin", "price": 180, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Methi Paratha", "description": "Fresh fenugreek leaves finely chopped with roasted spices", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Papad Paratha", "description": "Crushed urad dal papad seasoned with chaat masala", "price": 180, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Besan Aloo Dal Special Paratha", "description": "Unique heritage triple mix of roasted gram flour, potato, and spiced lentil paste", "price": 180, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Chana Jor Garam Paratha", "description": "Spicy roasted flat chickpeas crushed with lemon juice and chaat masala", "price": 200, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Momos Paratha", "description": "Innovative fusion paratha stuffed with spicy vegetable momo stuffing and garlic sauce", "price": 200, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Hing Jeera Paratha", "description": "Aromatic stuffing of roasted cumin seeds and pungent hing", "price": 200, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Peri Peri Paratha", "description": "Spicy peri peri chilli spiced stuffing", "price": 200, "dietary_tag": "Veg", "spice_level": 4, "portion_size": "2 Pieces with Subzis" },
+          { "name": "Tona Totka Paratha", "description": "Famous quirky secret blend of seven heritage spices and fiery chilies", "price": 200, "dietary_tag": "Veg", "spice_level": 5, "portion_size": "2 Pieces with Subzis" }
+        ]
+      },
+      {
+        "category_name": "Tandoori, Cheese & Sweet Parathas",
+        "items": [
+          { "name": "Chaap Tandoori Paratha", "description": "Minced soya chaap marinated in tandoori spices and baked/fried crisp", "price": 120, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "1 Piece" },
+          { "name": "Paneer Tandoori Paratha", "description": "Cottage cheese cubes tossed in spicy red tandoori marinade", "price": 130, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "1 Piece" },
+          { "name": "Paneer Cheese Paratha", "description": "Grated paneer and processed cheese melted together inside wheat crust", "price": 140, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "1 Piece" },
+          { "name": "Corn Cheese Paratha", "description": "Sweet corn and gooey cheddar cheese stuffing", "price": 130, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "1 Piece" },
+          { "name": "Rabdi Paratha", "description": "Rich sweet paratha filled with condensed creamy rabri", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" },
+          { "name": "Khurchan Paratha", "description": "Caramelized milk solids stuffed into crisp fried flatbread", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" },
+          { "name": "Chocolate Paratha", "description": "Melted dark chocolate ganache sealed in crispy sweet paratha", "price": 140, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "1 Piece" }
+        ]
+      },
+      {
+        "category_name": "Amrit Ras Beverages & Chawal Thalis",
+        "items": [
+          { "name": "Kulhad Lassi", "description": "Sweet whipped thick yogurt with rose syrup in an earthen cup", "price": 70, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (300ml)" },
+          { "name": "The Undertaker Lassi", "description": "Giant double-sized lassi glass packed with rabri, dry fruits, and malai", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Giant Glass (500ml)" },
+          { "name": "Bombay Banta", "description": "Tangy marble soda flavored with lemon and black salt masala", "price": 80, "dietary_tag": "Vegan", "spice_level": 1, "portion_size": "Banta Bottle" },
+          { "name": "Basanti Ke Rajma Chawal", "description": "Spicy red kidney bean curry served over aromatic steamed basmati rice with onions and pickle", "price": 150, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Full Thali" },
+          { "name": "Ram Gadh Ke Chole Chawal", "description": "Piquant chickpea curry over basmati rice with mint chutney", "price": 150, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Full Thali" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Shiv Mishthan Bhandar",
+    "short_description": "Century-old breakfast and sweets parlor in Kucha Ghasi Ram famed for Bedmi Poori, Nagori Halwa, and Jalebi.",
+    "long_description": "Founded in 1910, Shiv Mishthan Bhandar is an iconic North Indian breakfast and confectionary parlor on Katra Bariyan Road. Featuring an air-conditioned seated dining area on the ground floor, it draws generations of food lovers each morning for crisp desi ghee fried bedmi pooris served with spicy aloo-methi sabzi, followed by delicate semolina nagori puris filled with warm sooji halwa.",
+    "cuisine_types": ["North Indian", "Sweets", "Pure Vegetarian", "Breakfast", "Street Food"],
+    "meal_types": ["Breakfast", "Lunch", "Snacks"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 300,
+    "address_line1": "375, Katra Bariyan, Kucha Ghasiram, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6579,
+    "longitude": 77.2248,
+    "phone": "+91 11 4912 1406",
+    "opening_hours": "Monday - Saturday: 8:00 AM - 9:00 PM, Sunday: 7:00 AM - 9:00 PM",
+    "facilities": ["Air Conditioned", "Indoor Seating", "Takeout", "Bulk Sweet Packing", "Catering Service"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.0,
+    "rating_count": 937,
+    "cover_image_url": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Bedmi Poori with Aloo Subzi", "Nagori Halwa", "Desi Ghee Jalebi", "Samosa with Chole", "Malpua"],
+    "menu_categories": [
+      {
+        "category_name": "Heritage Morning Breakfast",
+        "items": [
+          { "name": "Bedmi Poori with Aloo Sabzi (Plate)", "description": "Two crispy, puffed coarse-flour pooris stuffed with spiced urad dal pitthi, served with spicy potato curry, methi ki chutney, and pickled green chillies", "price": 110, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Pooris + Unlimited Gravy" },
+          { "name": "Nagori Halwa (Plate)", "description": "Four tiny, fragile, crispy semolina puris paired with fragrant golden semolina (sooji) halwa cooked in pure desi ghee and cardamom", "price": 100, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "4 Nagoris + Halwa Bowl" },
+          { "name": "Chole Bhature (Special Desi Ghee)", "description": "Two golden paneer-stuffed bhaturas fried in pure ghee, served with dark piquant Amritsari chickpeas, raw onion, and amla pickle", "price": 160, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Bhatures + Chole" },
+          { "name": "Single Extra Bedmi Poori", "description": "Single fresh hot desi ghee fried bedmi poori", "price": 40, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "1 Piece" },
+          { "name": "Extra Nagori (Set of 4)", "description": "Crisp bite-sized semolina shells", "price": 40, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "4 Pieces" }
+        ]
+      },
+      {
+        "category_name": "Street Savories & Chaat",
+        "items": [
+          { "name": "Special Desi Ghee Samosa with Chole", "description": "Crisp flaky pastry stuffed with whole coriander-spiced potatoes and green peas, topped with spicy chickpeas and saunth chutney", "price": 60, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces" },
+          { "name": "Plain Desi Ghee Samosa", "description": "Flaky potato samosa served with mint and tamarind chutneys", "price": 30, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" },
+          { "name": "Khasta Dal Kachori with Aloo Sabzi", "description": "Flaky round pastry stuffed with spiced moong dal paste, served with zesty aloo gravy", "price": 50, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces" },
+          { "name": "Paneer Bread Pakora", "description": "Bread sandwich stuffed with thick paneer slice and mint chutney, battered in gram flour", "price": 45, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Single Large Piece" }
+        ]
+      },
+      {
+        "category_name": "Traditional Desi Ghee Sweets",
+        "items": [
+          { "name": "Desi Ghee Crisp Jalebi (100g)", "description": "Spiral funnel cakes fried crisp in clarified butter and steeped in saffron-scented sugar syrup", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Plate" },
+          { "name": "Shahi Malpua with Rabri", "description": "Warm fried pancake dipped in sweet syrup, generously garnished with pistachio slivers and thick reduced rabri", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces with Rabri" },
+          { "name": "Moong Dal Halwa (100g)", "description": "Coarse yellow moong lentils roasted slowly in pure desi ghee with milk, sugar, and cashews", "price": 110, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" },
+          { "name": "Gajar Ka Halwa (Seasonal 100g)", "description": "Winter red carrots simmered in milk, khoya, and clarified butter", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" },
+          { "name": "Rasmalai (2 Pieces)", "description": "Spongy cottage cheese patties steeped in thickened sweetened saffron milk, topped with pistachios", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces with Milk" },
+          { "name": "Hot Gulab Jamun (2 Pieces)", "description": "Soft khoya dumplings deep fried and soaked in warm rosewater and saffron sugar syrup", "price": 50, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces" },
+          { "name": "Thick Malai Rabri (100g)", "description": "Slowly simmered full-cream milk layers sweetened with cardamom and saffron", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" }
+        ]
+      },
+      {
+        "category_name": "Traditional Beverages",
+        "items": [
+          { "name": "Kulhad Kesar Badam Lassi", "description": "Sweet churned whole milk yogurt infused with saffron strands, crushed almonds, and cardamom", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (300ml)" },
+          { "name": "Salted Jeera Chaach", "description": "Spiced buttermilk tempered with roasted cumin powder, black salt, and fresh mint", "price": 40, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Glass (250ml)" },
+          { "name": "Hot Kesar Badam Milk", "description": "Slowly boiled full-cream milk flavored with Kashmiri saffron, crushed almonds, and cardamom", "price": 85, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (250ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Shyam Sweets",
+    "short_description": "Legendary breakfast spot since 1910 at Chawri Bazar Chowk famous for Bedmi Poori, Nagori Halwa, and Matar Kachori.",
+    "long_description": "Operating since 1910 at the vibrant Barshahbulla Chowk in Chawri Bazar, Shyam Sweets is an essential early-morning stop for authentic Shahjahanabad breakfast delicacies. Patrons fill its sit-down dining hall for golden bedmi pooris accompanied by tangy methi chutney, piping hot matar kachoris, and seasonal specialties such as gajar ka halwa and rich rabri.",
+    "cuisine_types": ["North Indian", "Breakfast", "Pure Vegetarian", "Sweets", "Street Food"],
+    "meal_types": ["Breakfast", "Lunch", "Snacks"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 250,
+    "address_line1": "H.No. 112, Chawri Bazar Road, near Chowk Barshahbulla, Hauz Qazi",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6498,
+    "longitude": 77.2281,
+    "phone": "+91 11 2326 8087",
+    "opening_hours": "Monday - Sunday: 8:00 AM - 9:30 PM",
+    "facilities": ["Indoor Seating", "Counter Service", "Takeout", "Delivery"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.1,
+    "rating_count": 1850,
+    "cover_image_url": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Bedmi Poori with Methi Chutney", "Nagori Halwa", "Matar Kachori", "Paneer Pakora", "Gulab Jamun"],
+    "menu_categories": [
+      {
+        "category_name": "Heritage Morning Breakfast",
+        "items": [
+          { "name": "Bedmi Poori Thali (2 Pooris)", "description": "Two deep-fried, crisp, lentil-stuffed pooris served with spicy hing-infused aloo curry, signature sweet and tangy methi-banana chutney, and amla pickle", "price": 100, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Pooris + Subzi + Chutney" },
+          { "name": "Nagori Halwa Combo (4 Nagoris)", "description": "Puffed bite-sized semolina crisp nagoris filled with rich, ghee-laden sooji halwa", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "4 Nagoris + Halwa" },
+          { "name": "Matar (Green Pea) Kachori with Aloo Sabzi", "description": "Flaky fried kachoris stuffed with crushed spicy green peas, topped with steaming potato gravy", "price": 60, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Pieces + Sabzi" },
+          { "name": "Dal Kachori with Aloo Sabzi", "description": "Crisp moong dal stuffed round kachori served with spicy hing aloo gravy", "price": 50, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Pieces + Sabzi" },
+          { "name": "Extra Bedmi Poori (Single)", "description": "Single fresh hot puffed bedmi poori", "price": 35, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "1 Piece" }
+        ]
+      },
+      {
+        "category_name": "Savory Snacks & Pakoras",
+        "items": [
+          { "name": "Stuffed Paneer Pakora", "description": "Thick slice of soft cottage cheese layered with mint chutney, coated in gram flour batter, and fried golden", "price": 40, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Single Large Piece" },
+          { "name": "Aloo Bread Pakora", "description": "Triangular bread slice stuffed with spicy potato mixture, dipped in gram flour batter, and deep fried", "price": 35, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" },
+          { "name": "Crispy Dal Samosa", "description": "Traditional triangle pastry with a spicy split gram filling and whole spices", "price": 25, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" },
+          { "name": "Khasta Dal Moong Kachori", "description": "Puffed flaky crust filled with spiced split moong dal, served with tangy tamarind chutney", "price": 30, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" }
+        ]
+      },
+      {
+        "category_name": "Halwas & Traditional Sweets",
+        "items": [
+          { "name": "Gajar Ka Halwa (Desi Ghee 100g)", "description": "Seasonal red carrots slow cooked in milk, khoya, cardamom, and ghee, topped with roasted cashews", "price": 130, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" },
+          { "name": "Moong Dal Halwa (100g)", "description": "Slowly roasted yellow moong lentils with milk, cardamom, and ghee", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" },
+          { "name": "Hot Gulab Jamun (2 Pieces)", "description": "Soft khoya dumplings deep fried and soaked in warm rosewater and saffron sugar syrup", "price": 50, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces" },
+          { "name": "Spongy Bengali Rasgulla (2 Pieces)", "description": "Tender chhena spheres cooked in light cardamom sugar syrup", "price": 40, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces" },
+          { "name": "Kesari Jalebi with Rabri Platter", "description": "Golden saffron jalebi spirals served alongside thick clotted cream rabri", "price": 120, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "150g Plate" },
+          { "name": "Thick Malai Rabri (100g)", "description": "Slowly simmered full-cream milk layers sweetened with cardamom and saffron", "price": 90, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" }
+        ]
+      },
+      {
+        "category_name": "Chilled Beverages",
+        "items": [
+          { "name": "Creamy Sweet Lassi", "description": "Traditional hand-churned yogurt beverage topped with dense malai crust", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (300ml)" },
+          { "name": "Salted Jeera Chaach", "description": "Spiced buttermilk tempered with roasted cumin powder, black salt, and fresh mint", "price": 35, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Old Famous Jalebi Wala",
+    "short_description": "Historic corner eatery established in 1884 at Dariba Kalan junction renowned for giant desi ghee jalebis and rabri.",
+    "long_description": "Established in 1884, Old Famous Jalebi Wala anchors the busy intersection where Dariba Kalan meets main Chandni Chowk road. It features a historic seated dining counter where guests observe jalebis being piped into boiling desi ghee over coal fires. In addition to its famous thick jalebis soaked in khandsari (unrefined sugar) syrup, the eatery serves hot savory samosas with spicy potato gravy and thick kulhad lassis.",
+    "cuisine_types": ["Desserts", "North Indian Sweets", "Street Food", "Beverages"],
+    "meal_types": ["Breakfast", "Snacks", "Dinner"],
+    "price_range": "₹₹",
+    "average_cost_for_two": 200,
+    "address_line1": "Shop No. 1795, Dariba Corner, opp. Bank of Maharashtra, Dariba Kalan, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6565,
+    "longitude": 77.2345,
+    "phone": "+91 98110 20546",
+    "opening_hours": "Monday - Sunday: 8:00 AM - 9:30 PM",
+    "facilities": ["Indoor Seated Dining Counter", "Takeout", "Quick Service", "Iconic Live Cooking View"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 4.0,
+    "rating_count": 8955,
+    "cover_image_url": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Desi Ghee Jalebi", "Thick Rabri", "Jalebi with Rabri Platter", "Khasta Aloo Samosa with Chole", "Kulhad Lassi"],
+    "menu_categories": [
+      {
+        "category_name": "Iconic Jalebi & Rabri",
+        "items": [
+          { "name": "Old Famous Desi Ghee Jalebi (100g)", "description": "Thick, soft yet crispy spirals fried in pure clarified butter and submerged in naturally clarified khandsari cane syrup", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Portion" },
+          { "name": "Desi Ghee Jalebi (250g Box)", "description": "A quarter kilogram box of thick, juicy, freshly fried desi ghee jalebis soaked in khandsari syrup", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "250g Box" },
+          { "name": "Desi Ghee Jalebi (500g Box)", "description": "Half kilogram pack of hot jalebis fried fresh in pure clarified butter", "price": 380, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "500g Box" },
+          { "name": "Thick Malai Rabri (100g)", "description": "Slow-simmered, unsweetened condensed milk layers infused with natural green cardamom", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "100g Bowl" },
+          { "name": "Thick Malai Rabri (250g Container)", "description": "Freshly scooped whole milk rabri flavored with green cardamom pods in a takeaway container", "price": 190, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "250g Container" },
+          { "name": "Jalebi with Rabri Combo Platter", "description": "Piping hot desi ghee jalebi served smothered under a generous ladle of chilled, creamy thick rabri", "price": 150, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Full Serving (150g)" }
+        ]
+      },
+      {
+        "category_name": "Hot Savory Snacks",
+        "items": [
+          { "name": "Khasta Aloo Samosa with Chole & Aloo Subzi", "description": "Crisp thick-crust pastry stuffed with coriander and cumin potatoes, crushed and served with spicy aloo-chole curry and chutney", "price": 40, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "Single Samosa with Gravy" },
+          { "name": "Plain Desi Ghee Samosa with Chutney", "description": "Deep-fried golden samosa served with tangy tamarind saunth and mint chutney", "price": 30, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" },
+          { "name": "Paneer Stuffed Khasta Samosa", "description": "Signature crispy pastry filled with chunks of fresh paneer, green peas, and whole spices", "price": 45, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "Single Piece" }
+        ]
+      },
+      {
+        "category_name": "Traditional Beverages",
+        "items": [
+          { "name": "Chilled Kulhad Sweet Lassi", "description": "Hand-whipped fresh curd sweetened with sugar syrup and topped with a thick clotted cream dollop in an earthen cup", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (300ml)" },
+          { "name": "Mango Kulhad Lassi", "description": "Fresh Alphonso mango pulp blended with sweet churned yogurt and malai", "price": 80, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Kulhad (300ml)" },
+          { "name": "Masala Buttermilk Chaach", "description": "Savory churned curd with black salt, crushed mint, and roasted cumin", "price": 35, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Glass (250ml)" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Natraj Dahi Bhalla Corner",
+    "short_description": "Pioneering chaat counter since 1940 near Sis Ganj Gurudwara serving Delhi's most celebrated Dahi Bhalla and Aloo Tikki.",
+    "long_description": "Operating since 1940 next to Bhai Mati Das Chowk in Chandni Chowk, Natraj Dahi Bhalla Corner is a household name across India. It features a cozy ground-floor seated ordering counter where patrons savor just two legendary, perfectly executed specialties: ultra-soft lentil dahi bhallas soaked in creamy yogurt and sweet saunth, and crisp pan-fried aloo tikkis stuffed with spiced dal and drenched in tangy chutney.",
+    "cuisine_types": ["North Indian Street Food", "Chaat", "Fast Food"],
+    "meal_types": ["Lunch", "Snacks", "Dinner"],
+    "price_range": "₹",
+    "average_cost_for_two": 150,
+    "address_line1": "1396, Main Road, beside Central Bank of India, Kucha Mahajani, Chandni Chowk",
+    "city": "Old Delhi, New Delhi",
+    "state": "Delhi",
+    "pincode": "110006",
+    "latitude": 28.6568,
+    "longitude": 77.2307,
+    "phone": "+91 98112 74867",
+    "opening_hours": "Monday - Sunday: 10:30 AM - 9:30 PM",
+    "facilities": ["Indoor Counter Seating", "Quick Dining", "Takeout"],
+    "dietary_options": ["Pure Veg"],
+    "rating_avg": 3.7,
+    "rating_count": 12853,
+    "cover_image_url": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1000&auto=format&fit=crop&q=80",
+    "known_for_dishes": ["Special Dahi Bhalla", "Crispy Aloo Tikki with Chole", "Dahi Aloo Tikki", "Kesar Badam Lassi", "Hot Gulab Jamun"],
+    "menu_categories": [
+      {
+        "category_name": "Iconic Chaat Delicacies",
+        "items": [
+          { "name": "Natraj Special Dahi Bhalla Plate", "description": "Two velvety soft urad dal dumplings soaked in chilled whipped sweetened curd, crowned with homemade roasted cumin, black salt, and thick sweet tamarind saunth", "price": 70, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "2 Bhallas (Full Plate)" },
+          { "name": "Crispy Aloo Tikki with Chole & Chutney", "description": "Two shallow-fried, golden, crispy potato croquettes stuffed with spiced chana dal filling, bathed in hot spicy chole, green coriander chutney, and saunth", "price": 70, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Tikkis (Full Plate)" },
+          { "name": "Dahi Aloo Tikki Special", "description": "Hot crunchy potato patties drizzled with cold sweetened yogurt, spicy mint chutney, and tamarind glaze", "price": 80, "dietary_tag": "Veg", "spice_level": 2, "portion_size": "2 Tikkis with Curd" },
+          { "name": "Dry Masala Aloo Tikki (No Curd)", "description": "Crisp shallow fried aloo tikkis served simply with spicy chole, sliced onions, and green chillies", "price": 70, "dietary_tag": "Veg", "spice_level": 3, "portion_size": "2 Tikkis" },
+          { "name": "Extra Dahi & Saunth Topping", "description": "Extra portion of thick whipped sweetened curd and sweet tamarind chutney", "price": 20, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Topping Portion" }
+        ]
+      },
+      {
+        "category_name": "Sweets & Traditional Beverages",
+        "items": [
+          { "name": "Hot Desi Ghee Gulab Jamun (2 Pieces)", "description": "Deep-fried mawa spheres steeped in warm green cardamom and rose sugar syrup", "price": 50, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "2 Pieces" },
+          { "name": "Kesar Badam Sweet Lassi", "description": "Chilled sweetened churned yogurt flavored with saffron essence and sliced almonds in a glass", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (250ml)" },
+          { "name": "Rooh Afza Rose Sweet Lassi", "description": "Sweet creamy yogurt drink scented with historic Old Delhi Rooh Afza herbal rose syrup", "price": 60, "dietary_tag": "Veg", "spice_level": 0, "portion_size": "Glass (250ml)" },
+          { "name": "Spiced Mattha / Buttermilk", "description": "Savory churned curd with black salt, crushed mint, and roasted cumin", "price": 30, "dietary_tag": "Veg", "spice_level": 1, "portion_size": "Glass (250ml)" }
+        ]
+      }
+    ]
+  }
+]

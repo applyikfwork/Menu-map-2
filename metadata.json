@@ -1,0 +1,10 @@
+{
+  "name": "Menu Map",
+  "description": "Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

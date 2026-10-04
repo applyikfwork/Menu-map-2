@@ -1,0 +1,421 @@
+# Rajendra Nagar & Karol Bagh Data
+AREA_FOOD_GUIDE = {
+    "title": "Rajendra Nagar & Karol Bagh Food Map & Living Neighborhood Guide",
+    "slug": "rajendra-nagar-karol-bagh-food-guide",
+    "description": "High-octane civil services study hub meets heritage Punjabi food culture, packed with budget student thalis and late-night cutting chai addas.",
+    "cover_image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1200&auto=format&fit=crop&q=80",
+    "zone": "Central Delhi",
+    "latitude": 28.6441,
+    "longitude": 77.1865,
+    "vibe_badge": "Coaching corridor life meets hidden regional messes, satvik dining rooms, and budget tandoori feast addas.",
+    "famous_for_summary": "Signature Desi Ghee Chole Bhature, Unlimited Regional Vegetarian Thalis (Rajasthani, Gujarati & Punjabi), Crisp South Indian Dosas & Filter Coffee, and Piping-Hot Tandoori Kulhad Chai.",
+    "best_time_to_visit": "1:00 PM – 3:30 PM (Peak student thali lunch hour) & 6:00 PM – 10:30 PM (Evening street eats, tea discussions & dinner buzz)",
+    "nearest_metro": "Karol Bagh Metro Station (Blue Line, Gate 4) & Rajendra Place Metro Station (Blue Line, Gate 2)",
+    "parking_tips": "Bada Bazar Road and Ajmal Khan Road are heavily congested pedestrian zones with zero curbside parking; park strictly at the Karol Bagh Multilevel Car Parking on Gurudwara Road or use Delhi Metro.",
+    "avg_cost_for_two": 350,
+    "sub_guide_filters": [
+        "Regional Student Messes",
+        "Heritage Punjabi Dhabas",
+        "Udupi Dosas & Kaapi",
+        "Late-Night Study Lounges"
+    ],
+    "famous_dishes": [
+      {
+        "name": "Kesar Pista Kulfi Falooda",
+        "why_famous": "Hand-churned dense malai kulfi infused with saffron and pistachios, topped with silky hand-pressed cornstarch falooda and fragrant rose syrup since 1956.",
+        "restaurant_name": "Roshan Di Kulfi",
+        "price": 180,
+        "is_veg": True
+      },
+      {
+        "name": "Unlimited Royal Gujarati & Rajasthani Thali",
+        "why_famous": "Grand brass plate feast featuring 4 seasonal sabzis, Dal Baati Churma, sweet Gujarati Kadhi, steamed Dhokla, Phulkas with white butter, and Malpua.",
+        "restaurant_name": "Suruchi Restaurant",
+        "price": 499,
+        "is_veg": True
+      },
+      {
+        "name": "Ghee Podi Masala Dosa",
+        "why_famous": "Stone-ground fermented crepe roasted crisp in pure A2 ghee, generously dusted with fiery Gunpowder chutney podi, served with three fresh chutneys.",
+        "restaurant_name": "Padmanabham",
+        "price": 210,
+        "is_veg": True
+      },
+      {
+        "name": "Special Amritsari Paneer Chur Chur Naan Thali",
+        "why_famous": "Tandoor-blistered, heavily butter-crushed paneer kulcha served with slow-cooked pindi chole, boondi raita, and pickled onions.",
+        "restaurant_name": "Amritsari Kulcha King",
+        "price": 140,
+        "is_veg": True
+      },
+      {
+        "name": "Special Methi Chole Bhature",
+        "why_famous": "Spiced chickpeas slow-simmered in an iron kadhai with whole dried gooseberries (amla) and topped with tangy fenugreek chutney and paneer-stuffed bhature.",
+        "restaurant_name": "Om Corner",
+        "price": 140,
+        "is_veg": True
+      }
+    ],
+    "food_crawl_stops": [
+      {
+        "stop_number": 1,
+        "time": "4:30 PM",
+        "type": "Evening Chai & Savory Tiffin",
+        "venue_name": "M. Gopinath South Indian Cafe",
+        "recommended_dish": "Ghee Butter Masala Dosa & Degree Filter Coffee",
+        "distance_to_next": "250 meters (3 min walk)",
+        "note": "Fuel up before study breaks end and evening crowds take over Bada Bazar Road."
+      },
+      {
+        "stop_number": 2,
+        "time": "7:30 PM",
+        "type": "Hearty Main Dinner / Royal Vegetarian Thali",
+        "venue_name": "Temple Street – South Indian & Multi Cuisine Restaurant",
+        "recommended_dish": "Special Maharaja North Indian Thali with Dal Makhani & Shahi Paneer",
+        "distance_to_next": "450 meters (6 min walk / e-rickshaw)",
+        "note": "Spacious fully air-conditioned dine-in hall with fast service and comfortable seating."
+      },
+      {
+        "stop_number": 3,
+        "time": "9:30 PM",
+        "type": "Iconic Heritage Dessert & Nightcap",
+        "venue_name": "Roshan Di Kulfi",
+        "recommended_dish": "Special Kesar Pista Falooda Kulfi",
+        "distance_to_next": "End of Crawl (Adjacent to Karol Bagh Metro Gate 1)",
+        "note": "The quintessential post-dinner sweet ritual of Central Delhi since 1956."
+      }
+    ]
+}
+
+VENUES = [
+    {
+      "name": "Temple Street – South Indian & Multi Cuisine Restaurant",
+      "short_description": "Vibrant, pure vegetarian culinary anchor of Old Rajinder Nagar known for authentic dosas and student thalis.",
+      "long_description": "Spanning a spacious, fully air-conditioned dining hall on Bada Bazar Road, Temple Street is the undisputed gathering ground for civil services aspirants and visiting families. The kitchen operates with strict satvik purity, churning out crisp ghee-roasted dosas, rich paneer curries, and generous multi-course student thalis. Fast table turnover, clean booth seating, and power-equipped corners make it ideal for quick lunch breaks between coaching sessions.",
+      "cuisine_types": ["South Indian", "North Indian", "Chinese", "Fast Food"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 400,
+      "address_line1": "16-B, Ground Floor, National Trust Building, Bada Bazar Road",
+      "address_line2": "Old Rajinder Nagar",
+      "landmark": "Near Vajiram & Ravi Institute",
+      "city": "Old Rajinder Nagar, New Delhi",
+      "state": "Delhi",
+      "pincode": "110060",
+      "latitude": 28.6415,
+      "longitude": 77.1812,
+      "phone": "+91 11 6137 8738",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Power Outlets", "Washroom", "UPI & Card Payments", "Indoor Seating"],
+      "ambiance_tags": ["Bustling", "Student Friendly", "Spacious", "Casual Dining"],
+      "seating_capacity": 65,
+      "opening_time": "08:00 AM",
+      "closing_time": "11:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "South Indian Specialties",
+          "items": [
+            {"name": "Mysore Masala Dosa", "description": "Crisp golden rice crepe layered with spicy red garlic-chili paste and stuffed with seasoned potato mash, served with sambar and fresh coconut chutneys.", "price": 140, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Large Dosa", "is_featured": True, "is_must_try": True},
+            {"name": "Steamed Idli Platter (2 Pcs)", "description": "Fluffy, fermented rice cakes dipped in piping hot vegetable sambar with coconut and tomato-onion chutneys.", "price": 90, "dietary": "Veg", "spice_level": 1, "portion_size": "2 Pieces", "is_featured": False, "is_must_try": False}
+          ]
+        },
+        {
+          "name": "Special Thalis & North Indian",
+          "items": [
+            {"name": "Temple Street Executive Thali", "description": "Dal Makhani, Shahi Paneer, Mix Veg, Steamed Rice, 2 Butter Roti, 1 Laccha Paratha, Boondi Raita, Salad, and Gulab Jamun.", "price": 220, "dietary": "Veg", "spice_level": 2, "portion_size": "Complete Meal Platter", "is_featured": True, "is_must_try": True},
+            {"name": "Paneer Lababdar", "description": "Cubes of fresh cottage cheese simmered in a luscious onion-tomato gravy with cream and grated paneer.", "price": 240, "dietary": "Veg", "spice_level": 2, "portion_size": "Serves 2 (400 ml)", "is_featured": False, "is_must_try": False}
+          ]
+        },
+        {
+          "name": "Beverages & Filter Coffee",
+          "items": [
+            {"name": "Traditional Kumbakonam Filter Coffee", "description": "Freshly brewed chicory-blended decoction frothed with boiling whole milk, served in traditional brass dabarah and tumbler.", "price": 60, "dietary": "Veg", "spice_level": 0, "portion_size": "150 ml Tumbler", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Suruchi Restaurant",
+      "short_description": "Legendary destination in Karol Bagh celebrated for its unlimited traditional Gujarati and Rajasthani royal thalis.",
+      "long_description": "Stepping into Suruchi on Saraswati Marg feels like arriving at a festive royal banquet. Renowned for decades as Karol Bagh's premier pure vegetarian haven, the restaurant features attentive hospitality where servers continuously replenish brass platters. Families and students rewarding themselves after grueling exams flock here for genuine regional flavors, warm phulkas served with homemade white butter, and rotating festive sweets.",
+      "cuisine_types": ["Gujarati", "Rajasthani", "North Indian"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 800,
+      "address_line1": "15A/56, Saraswati Marg, Block 15A, WEA",
+      "address_line2": "Karol Bagh",
+      "landmark": "Opposite Westside Showroom",
+      "city": "Karol Bagh, New Delhi",
+      "state": "Delhi",
+      "pincode": "110005",
+      "latitude": 28.6521,
+      "longitude": 77.1904,
+      "phone": "+91 11 4500 0255",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "High-Chairs Available", "Family Seating", "Washroom", "UPI & Card Payments"],
+      "ambiance_tags": ["Heritage", "Traditional", "Family Friendly", "Fine Casual"],
+      "seating_capacity": 90,
+      "opening_time": "11:30 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Royal Feast Thalis",
+          "items": [
+            {"name": "Unlimited Gujarati & Rajasthani Grand Thali", "description": "Unlimited feast with 4 vegetables, Dal Baati Churma, sweet Gujarati Kadhi, Rajasthani Panchmel Dal, Farsan, Phulkas, Puri, Khichdi, Rice, and Sweets.", "price": 499, "dietary": "Veg", "spice_level": 2, "portion_size": "Unlimited Serving / Person", "is_featured": True, "is_must_try": True}
+          ]
+        },
+        {
+          "name": "Traditional Farsan & Sweets",
+          "items": [
+            {"name": "Steamed Nylon Khaman Dhokla", "description": "Spongy, juicy gram flour cakes tempered with mustard seeds, green chilies, curry leaves, and fresh grated coconut.", "price": 120, "dietary": "Veg", "spice_level": 1, "portion_size": "4 Pieces", "is_featured": False, "is_must_try": False},
+            {"name": "Kesar Rabdi Malpua (2 Pcs)", "description": "Deep-fried traditional sweet pancakes soaked in saffron sugar syrup and smothered in thick chilled cardamom rabdi.", "price": 150, "dietary": "Veg", "spice_level": 0, "portion_size": "2 Pieces with Rabdi", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Roshan Di Kulfi",
+      "short_description": "Legendary 1950s Ajmal Khan Road institution renowned for iconic Chole Bhature and rich Kesar Pista Kulfi Falooda.",
+      "long_description": "No gastronomic expedition to Karol Bagh is complete without visiting Roshan Di Kulfi. Established in the post-partition era, this multi-floor air-conditioned eatery boasts a vibrant Punjabi spirit. Patrons wait patiently for their golden, puffed bhatures served with dark, spiced pindi chole and tangy carrot pickles, followed universally by their world-famous falooda-draped kulfi.",
+      "cuisine_types": ["North Indian", "Fast Food", "Desserts", "Street Food"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 400,
+      "address_line1": "2816, Ajmal Khan Road, Block 34P, Beadonpura",
+      "address_line2": "Karol Bagh",
+      "landmark": "Near Karol Bagh Metro Station Gate 1",
+      "city": "Karol Bagh, New Delhi",
+      "state": "Delhi",
+      "pincode": "110005",
+      "latitude": 28.6534,
+      "longitude": 77.1915,
+      "phone": "+91 11 2872 4230",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Two-Floor Seating", "Washroom", "UPI & Digital Payments"],
+      "ambiance_tags": ["Historic Landmark", "Iconic Adda", "Bustling", "Heritage Dining"],
+      "seating_capacity": 80,
+      "opening_time": "08:00 AM",
+      "closing_time": "10:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Legendary Chole Bhature & Snacks",
+          "items": [
+            {"name": "Special Desi Ghee Chole Bhature", "description": "Two crispy, fluffy bhature served with signature dark masala pindi chole, mint-coriander chutney, and house pickled carrots and green chilies.", "price": 180, "dietary": "Veg", "spice_level": 2, "portion_size": "2 Bhature + Chole Bowl", "is_featured": True, "is_must_try": True}
+          ]
+        },
+        {
+          "name": "Iconic Kulfi & Desserts",
+          "items": [
+            {"name": "Special Kesar Pista Kulfi Falooda", "description": "Dense hand-churned saffron and pistachio kulfi slab served on a bed of chilled starch falooda noodles and drizzled with rose roohafza.", "price": 180, "dietary": "Veg", "spice_level": 0, "portion_size": "1 Full Plate", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Padmanabham",
+      "short_description": "Regal pure vegetarian temple-inspired fine casual dining at Rajendra Place celebrating the cuisines of Andhra, Tamil Nadu, Kerala, and Karnataka.",
+      "long_description": "Adorned with hand-painted temple murals, brass bell chandeliers, and traditional Chettinad wooden woodwork, Padmanabham offers a royal South Indian dining sanctuary right at Rajendra Place. UPSC toppers and office executives alike occupy its plush booths to relish multi-course banana leaf thalis and artisan ghee dosas prepared by native coastal chefs with stone-ground batters.",
+      "cuisine_types": ["South Indian", "Kerala", "Andhra", "Karnataka"],
+      "meal_types": ["Breakfast", "Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 600,
+      "address_line1": "Upper Ground Floor, District Centre, HOG Market, T Sohanlal Marg",
+      "address_line2": "Rajendra Place",
+      "landmark": "Near BLK-Max Super Speciality Hospital",
+      "city": "Karol Bagh, New Delhi",
+      "state": "Delhi",
+      "pincode": "110008",
+      "latitude": 28.6441,
+      "longitude": 77.1788,
+      "phone": "+91 88829 00900",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Free Wi-Fi", "Elevator Access", "Washroom", "Card Payments"],
+      "ambiance_tags": ["Regal", "Serene", "Spacious", "Fine Dining"],
+      "seating_capacity": 85,
+      "opening_time": "11:00 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Signature Dosas & Tiffin",
+          "items": [
+            {"name": "Ghee Podi Masala Dosa", "description": "Paper-crisp dosa roasted in pure desi ghee, layered with spicy roasted lentil podi and stuffed with turmeric potato bhaji.", "price": 210, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Large Dosa", "is_featured": True, "is_must_try": True}
+          ]
+        },
+        {
+          "name": "Bhojanam & Traditional Curries",
+          "items": [
+            {"name": "Dakshin Royal Bhojanam Thali", "description": "Elaborate multi-course platter with Rice, Poori, Sambar, Rasam, Avial, Kootu, Poriyal, Curd, Appalam, Pickle, and Payasam.", "price": 380, "dietary": "Veg", "spice_level": 2, "portion_size": "Full Feast Platter", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "New Frontier Hotel",
+      "short_description": "Historic 1958 Punjabi dining institution in Ghaffar Market famous for buttery paneer bhurji, dal fry, and tandoori rotis.",
+      "long_description": "Founded in 1958 near Ghaffar Market on Arya Samaj Road, New Frontier Hotel is a legendary temple of rustic Punjabi vegetarian cooking. With long community tables and efficient air conditioning, it has fed generations of Delhi traders and civil services aspirants. Patrons flock here for their signature sizzling paneer bhurji, rich chana masala, and hot buttered tandoori rotis straight off the coals.",
+      "cuisine_types": ["North Indian", "Punjabi", "Dhaba Style"],
+      "meal_types": ["Lunch", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 300,
+      "address_line1": "Shop No. 2, Ghaffar Market, Arya Samaj Road",
+      "address_line2": "Karol Bagh",
+      "landmark": "Near Arya Samaj Mandir",
+      "city": "Karol Bagh, New Delhi",
+      "state": "Delhi",
+      "pincode": "110005",
+      "latitude": 28.6539,
+      "longitude": 77.1903,
+      "phone": "+91 93102 02777",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Fast Table Turnover", "Washroom", "UPI Payments", "Takeaway Counter"],
+      "ambiance_tags": ["Historic Adda", "Bustling", "Authentic Punjabi", "Foodie Icon"],
+      "seating_capacity": 45,
+      "opening_time": "11:00 AM",
+      "closing_time": "11:00 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Frontier Classics",
+          "items": [
+            {"name": "Signature Tawa Paneer Bhurji", "description": "Crumbled malai paneer scrambled with onions, tomatoes, ginger, and green chilies, topped with generous home-churned butter.", "price": 180, "dietary": "Veg", "spice_level": 2, "portion_size": "Plate (350 gm)", "is_featured": True, "is_must_try": True},
+            {"name": "Frontier Dal Fry Tadka", "description": "Yellow arhar dal tempered in desi ghee with whole red chilies, garlic, and cumin seeds.", "price": 130, "dietary": "Veg", "spice_level": 2, "portion_size": "Bowl (350 ml)", "is_featured": False, "is_must_try": False}
+          ]
+        },
+        {
+          "name": "Thalis & Breads",
+          "items": [
+            {"name": "Frontier Deluxe Punjabi Thali", "description": "Shahi Paneer, Dal Makhani, Pindi Chole, 2 Butter Naan or 4 Tandoori Rotis, Jeera Rice, and Salad.", "price": 190, "dietary": "Veg", "spice_level": 2, "portion_size": "Complete Thali", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Om Corner",
+      "short_description": "World-famous Sant Nagar Chole Bhature institution featuring sit-down dining hall, signature methi chutney, and sweet lassi.",
+      "long_description": "Operating since 1974 at Sant Nagar Chowk on DB Gupta Road in Karol Bagh, Om Corner is one of Delhi's most celebrated vegetarian culinary landmarks. Unlike street stalls, it provides an organized, air-conditioned indoor dining area where thousands enjoy their unique Chole Bhature. The chole are simmered with whole spices and topped with a distinctive, tangy fenugreek seed (methi) chutney.",
+      "cuisine_types": ["North Indian", "Breakfast", "Fast Food"],
+      "meal_types": ["Breakfast", "Lunch", "Snacks"],
+      "price_range": "₹",
+      "average_cost_for_two": 250,
+      "address_line1": "5049/1, Sant Nagar, DB Gupta Road",
+      "address_line2": "Karol Bagh",
+      "landmark": "Near Dev Nagar Chowk / DB Gupta Road",
+      "city": "Karol Bagh, New Delhi",
+      "state": "Delhi",
+      "pincode": "110005",
+      "latitude": 28.6548,
+      "longitude": 77.1932,
+      "phone": "+91 99109 50531",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Indoor Sit-Down Seating", "Washroom", "UPI Payments", "Fast Queue Service"],
+      "ambiance_tags": ["Legendary", "High Energy", "Historic Adda", "Must Visit"],
+      "seating_capacity": 50,
+      "opening_time": "07:00 AM",
+      "closing_time": "05:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Signature Chole Bhature",
+          "items": [
+            {"name": "Om Corner Special Chole Bhature", "description": "Two freshly fried golden bhature stuffed with paneer slivers, served with dark spiced chole, signature tangy methi chutney, and pickled amla.", "price": 140, "dietary": "Veg", "spice_level": 2, "portion_size": "2 Bhature + Chole Bowl", "is_featured": True, "is_must_try": True}
+          ]
+        },
+        {
+          "name": "Accompaniments & Lassi",
+          "items": [
+            {"name": "Special Kesar Pista Sweet Lassi", "description": "Creamy thick yogurt drink topped with clotted malai, saffron syrup, and slivered pistachios.", "price": 60, "dietary": "Veg", "spice_level": 0, "portion_size": "350 ml Tall Glass", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Amritsari Kulcha King",
+      "short_description": "Authentic Punjabi dining restaurant in Old Rajinder Nagar Market famed for crisp chur-chur stuffed kulchas and creamy lassi.",
+      "long_description": "Bringing the true culinary traditions of Amritsar to Central Delhi, Amritsari Kulcha King in Old Rajinder Nagar Market is famous for its crisp, multilayered tandoori kulchas. Each kulcha is baked golden in a fiery clay tandoor, crushed aggressively with Amul butter, and served alongside slow-simmered pindi chole and tangy onion chutney in an air-conditioned dining setup.",
+      "cuisine_types": ["Punjabi", "North Indian", "Breakfast", "Street Food"],
+      "meal_types": ["Breakfast", "Lunch", "Snacks", "Dinner"],
+      "price_range": "₹",
+      "average_cost_for_two": 200,
+      "address_line1": "19/3, Old Rajinder Nagar Market",
+      "address_line2": "Old Rajinder Nagar",
+      "landmark": "Near Syndicate Bank Chowk",
+      "city": "Old Rajinder Nagar, New Delhi",
+      "state": "Delhi",
+      "pincode": "110060",
+      "latitude": 28.6416,
+      "longitude": 77.1822,
+      "phone": "+91 98119 87654",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "Fast Service", "Washroom", "UPI Payments"],
+      "ambiance_tags": ["Crispy", "Punjabi Flavors", "Comfort Food", "Student Hotspot"],
+      "seating_capacity": 35,
+      "opening_time": "08:30 AM",
+      "closing_time": "10:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Stuffed Amritsari Kulchas",
+          "items": [
+            {"name": "Special Amritsari Paneer Pyaaz Kulcha Thali", "description": "Multi-layered tandoori kulcha stuffed with spiced cottage cheese and onions, crushed with Amul butter, served with pindi chole, boondi raita, and onion chutney.", "price": 140, "dietary": "Veg", "spice_level": 2, "portion_size": "2 Kulchas + Chole + Raita", "is_featured": True, "is_must_try": True}
+          ]
+        },
+        {
+          "name": "Beverages & Sides",
+          "items": [
+            {"name": "Special Amritsari Sweet Pedha Lassi", "description": "Thick curd lassi churned with traditional pedha sweet and topped with a heavy layer of malai.", "price": 60, "dietary": "Veg", "spice_level": 0, "portion_size": "350 ml Glass", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Corner Cafe & Study Lounge",
+      "short_description": "Peaceful, air-conditioned study lounge on Bada Bazar Road serving artisanal cold coffee, grilled wraps, and pastas.",
+      "long_description": "Situated on Bada Bazar Road in Old Rajinder Nagar, The Corner Cafe & Study Lounge was established to provide civil services aspirants a quiet sanctuary. With ergonomic chairs, charging sockets at every table, air conditioning, and high-speed Wi-Fi, it allows students to read newspapers and review study material while enjoying fresh gourmet grilled sandwiches, cold coffees, and pastas.",
+      "cuisine_types": ["Cafe", "Italian", "Fast Food", "Continental"],
+      "meal_types": ["Breakfast", "Snacks", "Dinner"],
+      "price_range": "₹₹",
+      "average_cost_for_two": 280,
+      "address_line1": "19/2, Bada Bazar Road",
+      "address_line2": "Old Rajinder Nagar",
+      "landmark": "Near Vajiram & Ravi Library",
+      "city": "Old Rajinder Nagar, New Delhi",
+      "state": "Delhi",
+      "pincode": "110060",
+      "latitude": 28.6417,
+      "longitude": 77.1815,
+      "phone": "+91 98118 12345",
+      "is_pure_veg": True,
+      "dietary_options": ["Pure Veg"],
+      "facilities": ["Air Conditioned", "High-Speed Wi-Fi", "Laptop Friendly", "Power Sockets at Every Table", "Washroom", "UPI Payments"],
+      "ambiance_tags": ["Quiet", "Work Friendly", "Student Study Lounge", "Cozy"],
+      "seating_capacity": 35,
+      "opening_time": "09:00 AM",
+      "closing_time": "11:30 PM",
+      "cover_image_url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&auto=format&fit=crop&q=80",
+      "menu_categories": [
+        {
+          "name": "Gourmet Sandwiches & Pastas",
+          "items": [
+            {"name": "Smoked Tandoori Paneer Panini", "description": "Panini bread grilled with spiced cottage cheese cubes, bell peppers, chipotle dressing, and mozzarella cheese.", "price": 120, "dietary": "Veg", "spice_level": 2, "portion_size": "1 Jumbo Panini", "is_featured": True, "is_must_try": True}
+          ]
+        },
+        {
+          "name": "Beverages & Frappes",
+          "items": [
+            {"name": "Signature Caramel Iced Frappe", "description": "Espresso shot blended thick with cold milk, salted caramel drizzle, and vanilla ice cream.", "price": 110, "dietary": "Veg", "spice_level": 0, "portion_size": "350 ml Glass", "is_featured": True, "is_must_try": True}
+          ]
+        }
+      ]
+    }
+]
