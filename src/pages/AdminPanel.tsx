@@ -44,7 +44,6 @@ import {
   Globe,
   Image as ImageIcon
 } from 'lucide-react';
-import { applyBrowserFavicon } from '../lib/favicon';
 import { 
   Restaurant, 
   MenuCategory, 
@@ -1134,33 +1133,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
     if (!settings) return;
     await api.saveSettings(settings);
     saveSupabaseConfig({ url: supabaseUrl, anonKey: supabaseAnonKey });
-    if (settings.custom_favicon_url) {
-      applyBrowserFavicon(settings.custom_favicon_url);
-    } else {
-      applyBrowserFavicon('/favicon.svg');
-    }
-    showToast('Admin settings & Chrome Tab Logo updated!', 'success');
-  };
-
-  const handleFaviconFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      showToast('Favicon file must be under 2MB', 'error');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl && settings) {
-        setSettings({ ...settings, custom_favicon_url: dataUrl });
-        applyBrowserFavicon(dataUrl);
-        showToast('Chrome tab icon applied in browser! Remember to click Save Settings.', 'success');
-      }
-    };
-    reader.readAsDataURL(file);
+    showToast('Admin settings saved successfully!', 'success');
   };
 
   const [syncingCloud, setSyncingCloud] = useState(false);
@@ -3176,138 +3149,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                 </div>
               </div>
 
-              {/* Browser Tab Favicon (Chrome Tab Logo) */}
-              <div className="pt-6 border-t border-stone-100 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-orange-600" />
-                      <h4 className="font-heading font-extrabold text-base text-slate-900">
-                        Browser Tab Favicon (Chrome Tab Logo)
-                      </h4>
-                      <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-bold">
-                        Browser Tab Only
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Upload or configure the exact icon shown in Google Chrome & browser tabs without changing your website's header/footer brand logo.
-                    </p>
-                  </div>
-                </div>
 
-                {/* Live Chrome Tab Simulator */}
-                <div className="bg-stone-900 rounded-2xl p-4 text-white shadow-inner space-y-3">
-                  <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>Live Google Chrome Tab Preview</span>
-                    <span className="text-emerald-400 text-[10px] font-semibold">● Real-Time Simulation</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 max-w-sm bg-stone-800/90 rounded-t-xl px-3.5 py-2 border-t border-x border-stone-700/60 shadow-xs">
-                    <div className="w-4 h-4 rounded-sm overflow-hidden flex items-center justify-center bg-white/10 shrink-0">
-                      <img
-                        src={settings.custom_favicon_url || '/favicon.svg'}
-                        alt="Tab Icon"
-                        className="w-4 h-4 object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/favicon.svg';
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-semibold text-stone-200 truncate flex-1">
-                      Menu Map – Real Menus, Cafes & Restaurant Discovery
-                    </span>
-                    <span className="text-stone-500 hover:text-white text-xs cursor-pointer ml-1">✕</span>
-                  </div>
-                </div>
-
-                {/* Upload & Input Controls */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Upload Image / SVG File
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-50 hover:bg-orange-50/50 border border-dashed border-stone-300 hover:border-orange-300 rounded-xl text-xs font-bold text-slate-700 cursor-pointer transition-colors">
-                        <Upload className="w-4 h-4 text-orange-600" />
-                        <span>Choose File (SVG, PNG, ICO)</span>
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon"
-                          onChange={handleFaviconFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                    <p className="text-[11px] text-slate-400">
-                      Supports SVG, PNG, WebP, ICO (recommended: 32×32 or 64×64 SVG).
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Or Custom Favicon URL
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="url"
-                        placeholder="https://example.com/custom-icon.png or /favicon.svg"
-                        value={settings.custom_favicon_url || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setSettings({ ...settings, custom_favicon_url: val });
-                          if (val) applyBrowserFavicon(val);
-                        }}
-                        className="flex-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSettings({ ...settings, custom_favicon_url: '' });
-                          applyBrowserFavicon('/favicon.svg');
-                          showToast('Reset tab icon to default MenuMap favicon!', 'success');
-                        }}
-                        className="text-[11px] font-bold text-slate-500 hover:text-rose-600 transition-colors"
-                      >
-                        Reset to Default Icon
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick 1-Click Presets */}
-                <div className="space-y-2 pt-2">
-                  <div className="text-xs font-bold text-slate-600">Quick 1-Click Tab Icon Presets:</div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {[
-                      { name: '🔥 Default MenuMap Coral Pin', url: '/favicon.svg' },
-                      { name: '📍 Full Brand Logo', url: '/logo.svg' },
-                      { name: '🍔 Gourmet Burger', url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=64&auto=format&fit=crop&q=80' },
-                      { name: '☕ Hot Espresso Cafe', url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=64&auto=format&fit=crop&q=80' },
-                      { name: '🍕 Wood-Fired Pizza', url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=64&auto=format&fit=crop&q=80' },
-                    ].map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setSettings({ ...settings, custom_favicon_url: preset.url });
-                          applyBrowserFavicon(preset.url);
-                          showToast(`Applied preset: ${preset.name}!`, 'success');
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                          settings.custom_favicon_url === preset.url
-                            ? 'bg-orange-50 border-orange-300 text-orange-700 shadow-2xs'
-                            : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-slate-600'
-                        }`}
-                      >
-                        <img src={preset.url} alt="" className="w-3.5 h-3.5 object-cover rounded-full" />
-                        <span>{preset.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
 
               {/* Feature Flags */}
               <div className="pt-4 border-t border-stone-100 space-y-3">

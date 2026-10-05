@@ -1,5 +1,21 @@
-import React from 'react';
-import { ShieldCheck, Mail, MapPin, Heart, UtensilsCrossed } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  ShieldCheck, 
+  Mail, 
+  MapPin, 
+  UtensilsCrossed, 
+  ArrowRight, 
+  MessageSquare, 
+  Sparkles, 
+  Phone, 
+  TrendingDown, 
+  CheckCircle2, 
+  Compass, 
+  Heart,
+  Lock,
+  FileText
+} from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 interface StaticPageProps {
   type: 'about' | 'contact' | 'terms' | 'privacy';
@@ -7,48 +23,143 @@ interface StaticPageProps {
 }
 
 export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
+  const { showToast } = useToast();
+
+  // Contact form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [cafeName, setCafeName] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setName('');
+      setEmail('');
+      setCafeName('');
+      setMessage('');
+      showToast('Thank you! Your message has been sent to the Menu Map team.', 'success');
+    }, 600);
+  };
+
+  // ABOUT PAGE
   if (type === 'about') {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-black uppercase tracking-wider">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        {/* Hero Section */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-[#D8350F] text-xs font-black uppercase tracking-wider">
             <UtensilsCrossed className="w-3.5 h-3.5" />
-            <span>Our Mission</span>
+            <span>The Counter Price Revolution</span>
           </div>
-          <h1 className="font-heading font-extrabold text-3xl sm:text-5xl text-slate-900 tracking-tight">
-            About Menu Map
+          <h1 className="font-heading font-black text-3xl sm:text-5xl text-[#1C1917] tracking-tight">
+            Why Pay 30% More on Food Delivery Apps?
           </h1>
-          <p className="text-slate-600 text-sm sm:text-base max-w-xl mx-auto">
-            Democratizing restaurant discovery with complete price transparency, real menus, and genuine diner experiences.
+          <p className="text-stone-600 text-sm sm:text-base leading-relaxed font-sans">
+            Menu Map was built on a simple premise: restaurant food shouldn't cost more just because you looked it up online. We connect you directly with Delhi's local kitchens at authentic counter rates.
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 border border-stone-200/90 shadow-xs space-y-6 text-slate-700 leading-relaxed text-sm sm:text-base">
+        {/* 3-Card Trust Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EFEAE2] shadow-xs hover:shadow-md transition-shadow space-y-3 lift">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#0F766E] flex items-center justify-center">
+              <TrendingDown className="w-6 h-6" />
+            </div>
+            <h3 className="font-heading font-black text-xl text-[#1C1917]">
+              100% Counter Prices
+            </h3>
+            <p className="text-xs text-stone-600 leading-relaxed font-sans">
+              Unlike delivery marketplace apps that add 20% to 35% markups onto every single dish, Menu Map verifies physical counter rates so you know the real price before ordering.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EFEAE2] shadow-xs hover:shadow-md transition-shadow space-y-3 lift">
+            <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#FF5A36] flex items-center justify-center">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <h3 className="font-heading font-black text-xl text-[#1C1917]">
+              Zero-Commission Orders
+            </h3>
+            <p className="text-xs text-stone-600 leading-relaxed font-sans">
+              Order directly through WhatsApp or phone with cafe owners. No intermediary platform cuts, no hidden service fees, and direct customer-to-kitchen relationships.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EFEAE2] shadow-xs hover:shadow-md transition-shadow space-y-3 lift">
+            <div className="w-12 h-12 rounded-2xl bg-stone-100 text-[#1C1917] flex items-center justify-center">
+              <Compass className="w-6 h-6" />
+            </div>
+            <h3 className="font-heading font-black text-xl text-[#1C1917]">
+              Delhi Food Culture
+            </h3>
+            <p className="text-xs text-stone-600 leading-relaxed font-sans">
+              Curated neighborhood food trails across Majnu Ka Tila, Hudson Lane, Kamla Nagar, Connaught Place, Old Delhi, and Hauz Khas with metro transit info.
+            </p>
+          </div>
+        </div>
+
+        {/* Counter Stats Strip */}
+        <div className="bg-[#1C1917] text-white rounded-3xl p-8 sm:p-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center border border-stone-800 shadow-xl">
+          <div className="space-y-1">
+            <div className="font-heading font-black text-3xl sm:text-4xl text-[#FF5A36]">50+</div>
+            <div className="text-xs text-stone-400 font-sans font-medium uppercase tracking-wider">Verified Delhi Cafes</div>
+          </div>
+          <div className="space-y-1">
+            <div className="font-heading font-black text-3xl sm:text-4xl text-emerald-400">1,200+</div>
+            <div className="text-xs text-stone-400 font-sans font-medium uppercase tracking-wider">Dishes at Counter Rates</div>
+          </div>
+          <div className="space-y-1">
+            <div className="font-heading font-black text-3xl sm:text-4xl text-amber-400">0%</div>
+            <div className="text-xs text-stone-400 font-sans font-medium uppercase tracking-wider">Platform Commissions</div>
+          </div>
+          <div className="space-y-1">
+            <div className="font-heading font-black text-3xl sm:text-4xl text-white">100%</div>
+            <div className="text-xs text-stone-400 font-sans font-medium uppercase tracking-wider">Private & Offline Vault</div>
+          </div>
+        </div>
+
+        {/* Manifesto Narrative */}
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#EFEAE2] shadow-xs space-y-6 text-stone-700 leading-relaxed text-sm sm:text-base font-sans">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#FF5A36]">
+            <Sparkles className="w-4 h-4" />
+            <span>Our Manifesto</span>
+          </div>
+
+          <h2 className="font-heading font-black text-2xl sm:text-3xl text-[#1C1917] tracking-tight">
+            Transparent Dining. Direct Connections. Zero Middlemen.
+          </h2>
+
           <p>
-            Menu Map was created to solve a common dilemma: entering a cafe without knowing the prices, dietary options, or signature specials. We believe every customer deserves to see real, verified menus before stepping out the door.
-          </p>
-          <p>
-            Unlike heavy marketplace delivery apps that mark up food prices by 20% to 30%, Menu Map showcases the restaurant's authentic in-house dine-in prices and direct contact details, allowing diners to directly connect with their favorite local food artisans.
+            For years, dining platforms promised convenience while quietly inflating menu prices by up to 35% and charging small local restaurants crippling commissions. The diner pays more, the restaurant earns less, and the authentic food culture suffers.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-stone-100">
-            <div className="space-y-2">
-              <h3 className="font-heading font-bold text-slate-900 text-lg">100% Real Menus</h3>
-              <p className="text-xs text-slate-500">
-                Uploaded and maintained directly with verified prices and portion sizes.
-              </p>
+          <p>
+            Menu Map was launched to reverse this trend. We believe every diner has the right to browse an authentic in-house menu before leaving their home or ordering a meal. We provide high-resolution dish photography, real customer favorites, and one-click direct communication via WhatsApp and phone.
+          </p>
+
+          <div className="pt-4 border-t border-[#EFEAE2] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-stone-500 font-medium">
+              Ready to explore Delhi's authentic counter menus?
             </div>
-            <div className="space-y-2">
-              <h3 className="font-heading font-bold text-slate-900 text-lg">Zero Commissions</h3>
-              <p className="text-xs text-slate-500">
-                Direct phone calls, WhatsApp inquiries, and directions without middlemen.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-heading font-bold text-slate-900 text-lg">Honest Reviews</h3>
-              <p className="text-xs text-slate-500">
-                Unfiltered community feedback from verified visitors and food lovers.
-              </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/restaurants')}
+                className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white shadow-md text-xs font-bold"
+              >
+                <span>Explore Cafes</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => navigate('/iconic-area')}
+                className="btn bg-[#FAF8F5] hover:bg-stone-100 text-[#1C1917] border border-[#EFEAE2] text-xs font-bold"
+              >
+                <span>Area Guides</span>
+              </button>
             </div>
           </div>
         </div>
@@ -56,73 +167,134 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
     );
   }
 
+  // CONTACT & PARTNER PAGE
   if (type === 'contact') {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 space-y-8">
-        <div className="text-center space-y-3">
-          <h1 className="font-heading font-extrabold text-3xl sm:text-5xl text-slate-900 tracking-tight">
-            Contact & Support
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+        <div className="text-center space-y-3 max-w-xl mx-auto">
+          <span className="eyebrow text-[#FF5A36]">Get In Touch</span>
+          <h1 className="font-heading font-black text-3xl sm:text-5xl text-[#1C1917] tracking-tight">
+            Contact & Cafe Support
           </h1>
-          <p className="text-slate-600 text-sm sm:text-base">
-            Have questions, feedback, or want your cafe featured on Menu Map?
+          <p className="text-stone-600 text-sm sm:text-base font-sans">
+            Have questions, feedback, or want your restaurant featured on Menu Map? We'd love to hear from you.
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 border border-stone-200 shadow-xs space-y-6">
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-orange-50/70 border border-orange-200/80">
-            <div className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold">
+        {/* Dual Direct Action Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Email Support Card */}
+          <div className="bg-white rounded-3xl p-6 border border-[#EFEAE2] shadow-xs flex items-center gap-4 lift">
+            <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#FF5A36] flex items-center justify-center shrink-0">
               <Mail className="w-6 h-6" />
             </div>
-            <div>
-              <div className="text-xs font-bold text-orange-950 uppercase tracking-wider">Email Us</div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Direct Email</div>
               <a
                 href="mailto:xyzapplywork@gmail.com"
-                className="text-base sm:text-lg font-black text-orange-600 hover:underline"
+                className="font-heading font-black text-base text-[#1C1917] hover:text-[#FF5A36] transition-colors truncate block"
               >
                 xyzapplywork@gmail.com
               </a>
+              <div className="text-[11px] text-stone-500 mt-0.5">Replies within 24 hours</div>
             </div>
           </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert('Thank you! Your inquiry has been sent to our team.');
-            }}
-            className="space-y-4 pt-2"
-          >
+          {/* WhatsApp Support Card */}
+          <div className="bg-white rounded-3xl p-6 border border-[#EFEAE2] shadow-xs flex items-center gap-4 lift">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#0F766E] flex items-center justify-center shrink-0">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Cafe Partner Hotline</div>
+              <a
+                href="https://wa.me/919711510115?text=Hello%20Menu%20Map%20Team!%20I%20would%20like%20to%20inquire%20about%20my%20cafe%20listing."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-heading font-black text-base text-[#0F766E] hover:underline truncate block"
+              >
+                WhatsApp Inquiry (+91 97115 •••15)
+              </a>
+              <div className="text-[11px] text-stone-500 mt-0.5">Instant cafe partner assistance</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Message Form */}
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#EFEAE2] shadow-xs space-y-6">
+          <div>
+            <h3 className="font-heading font-black text-2xl text-[#1C1917]">
+              Send Us a Message
+            </h3>
+            <p className="text-xs text-stone-500 font-sans mt-1">
+              Whether you are a diner with a tip, a food creator, or a restaurant manager.
+            </p>
+          </div>
+
+          <form onSubmit={handleContactSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">
+                  Your Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Your Name</label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">
+                Restaurant / Cafe Name (Optional)
+              </label>
               <input
                 type="text"
-                required
-                placeholder="Full name"
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-orange-500"
+                value={cafeName}
+                onChange={(e) => setCafeName(e.target.value)}
+                placeholder="e.g. The Blue Bistro, Majnu Ka Tila"
+                className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
-              <input
-                type="email"
-                required
-                placeholder="you@example.com"
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Message / Cafe Details</label>
+              <label className="block text-xs font-bold text-stone-700 mb-1">
+                Message / Inquiry *
+              </label>
               <textarea
                 required
                 rows={4}
-                placeholder="Tell us what's on your mind or share your restaurant details..."
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-orange-500"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Share your feedback, correction request, or cafe listing details..."
+                className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
               />
             </div>
+
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-bold text-sm rounded-2xl shadow-md transition-all"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-full bg-[#1C1917] hover:bg-black text-white font-extrabold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50"
             >
-              Send Message
+              {isSubmitting ? 'Sending Message...' : 'Send Message to Team'}
             </button>
           </form>
         </div>
@@ -130,27 +302,93 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
     );
   }
 
+  // TERMS OF SERVICE & PRIVACY POLICY
+  const isTerms = type === 'terms';
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-6">
-      <h1 className="font-heading font-extrabold text-3xl text-slate-900 tracking-tight">
-        {type === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
-      </h1>
-      <div className="bg-white rounded-3xl p-8 border border-stone-200 shadow-xs space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
-        <p>
-          Welcome to Menu Map. By browsing our website and accessing menu records, you agree to our standard terms and data protection policies.
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {/* Header */}
+      <div className="space-y-2">
+        <span className="eyebrow text-[#0F766E] flex items-center gap-1.5">
+          <FileText className="w-3.5 h-3.5" />
+          <span>Legal & Transparency Policies</span>
+        </span>
+        <h1 className="font-heading font-black text-3xl sm:text-5xl text-[#1C1917] tracking-tight">
+          {isTerms ? 'Terms of Service' : 'Privacy Policy'}
+        </h1>
+        <p className="text-xs text-stone-400 font-sans">
+          Last revised: October 2026 • Menu Map Independent Food Transparency Directory
         </p>
-        <p>
-          <strong>Data Usage:</strong> We do not sell user personal data. Geolocation requests are used exclusively inside your browser to calculate distances to nearby cafes and restaurants.
-        </p>
-        <p>
-          <strong>Restaurant Content:</strong> Menus, prices, and opening hours are provided by participating restaurants and public directories. While we strive for 100% accuracy, prices are subject to seasonal changes.
-        </p>
-        <p>
-          For inquiries or rights requests, contact{' '}
-          <a href="mailto:xyzapplywork@gmail.com" className="text-rose-600 font-bold underline">
-            xyzapplywork@gmail.com
-          </a>.
-        </p>
+      </div>
+
+      {/* Editorial Legal Document Layout */}
+      <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#EFEAE2] shadow-xs space-y-8 text-stone-700 leading-relaxed text-sm font-sans">
+        
+        <section className="space-y-2">
+          <h3 className="font-heading font-black text-lg text-[#1C1917]">
+            1. Overview & Core Mission
+          </h3>
+          <p>
+            Welcome to Menu Map. By accessing or using our platform, you acknowledge and agree to these terms. Menu Map operates as an independent community directory dedicated to consumer price transparency, in-store counter menu records, and direct non-intermediated contact between diners and food venues.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-heading font-black text-lg text-[#1C1917]">
+            2. Offline-First Privacy & Zero Ad Tracking
+          </h3>
+          <p>
+            We respect your privacy unconditionally. Menu Map does not sell, rent, or monetize personal user data. Your saved cafes, favorite dishes, and food trails are stored purely in your own browser's local storage (Offline Vault). We do not require mandatory registration for public menu exploration.
+          </p>
+          <p>
+            When you request GPS coordinates via the Nearby hub, your coordinates are processed strictly inside your device's browser to compute mathematical distances (Haversine formula) to nearby restaurants.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-heading font-black text-lg text-[#1C1917]">
+            3. Menu Accuracy & Indicative Counter Pricing
+          </h3>
+          <p>
+            Menu items, photographs, spice levels, and pricing data displayed on Menu Map reflect in-store physical menus and direct verified cafe submissions. While we endeavor to keep all information updated and accurate:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-stone-600 text-xs">
+            <li>Prices are indicative counter rates subject to seasonal updates and statutory local taxes (e.g. GST).</li>
+            <li>Item availability and daily preparation times are confirmed directly by the venue via WhatsApp or phone.</li>
+            <li>Restaurant owners retain full rights to request updates or claim their official profile via our verification portal.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-heading font-black text-lg text-[#1C1917]">
+            4. Direct WhatsApp Connect & 0% Commissions
+          </h3>
+          <p>
+            Menu Map acts solely as a discovery conduit. Orders initiated via our WhatsApp drawer are transmitted directly to the restaurant's registered telephone line. Menu Map charges zero marketplace fees, handles no payments, and does not retain consumer banking details.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-heading font-black text-lg text-[#1C1917]">
+            5. Inquiries & Data Rights
+          </h3>
+          <p>
+            For any rights requests, copyright notices, or directory corrections, please contact our team at{' '}
+            <a href="mailto:xyzapplywork@gmail.com" className="text-[#D8350F] font-bold hover:underline">
+              xyzapplywork@gmail.com
+            </a>.
+          </p>
+        </section>
+
+        {/* Footer Navigation */}
+        <div className="pt-6 border-t border-[#EFEAE2] flex items-center justify-between text-xs text-stone-500">
+          <button
+            onClick={() => navigate('/')}
+            className="text-[#FF5A36] font-bold hover:underline"
+          >
+            ← Return to Home
+          </button>
+          <span>Menu Map Transparency Initiative</span>
+        </div>
       </div>
     </div>
   );

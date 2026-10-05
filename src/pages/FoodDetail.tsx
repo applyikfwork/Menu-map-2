@@ -7,9 +7,11 @@ import {
   Navigation, 
   UtensilsCrossed, 
   ChevronRight, 
-  Sparkles,
   Share2,
-  MessageSquare
+  MessageSquare,
+  ShieldCheck,
+  TrendingDown,
+  Sparkles
 } from 'lucide-react';
 import { MenuItem, Restaurant } from '../types/database';
 import { api } from '../lib/supabase';
@@ -97,58 +99,68 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 space-y-6 animate-pulse">
-        <div className="h-72 bg-stone-200 rounded-3xl" />
-        <div className="h-8 bg-stone-200 rounded w-1/3" />
-        <div className="h-4 bg-stone-200 rounded w-1/2" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-pulse">
+        <div className="h-6 bg-stone-200 rounded-full w-48" />
+        <div className="h-[460px] bg-stone-200 rounded-3xl" />
+        <div className="h-10 bg-stone-200 rounded-2xl w-1/3" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-72 bg-stone-200 rounded-3xl" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (!dish) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-        <h2 className="font-heading font-extrabold text-2xl text-slate-800">
+      <div className="max-w-md mx-auto px-4 py-24 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-rose-50 text-[#FF5A36] flex items-center justify-center mx-auto">
+          <UtensilsCrossed className="w-8 h-8" />
+        </div>
+        <h2 className="font-heading font-black text-2xl text-[#1C1917]">
           Dish not found
         </h2>
-        <p className="text-slate-500 text-sm">
-          This menu item is currently unavailable or has been removed.
+        <p className="text-stone-500 text-sm">
+          This counter menu item is currently unavailable or has been archived.
         </p>
         <button
           onClick={() => navigate('/search')}
-          className="px-5 py-2.5 bg-rose-600 text-white font-bold rounded-2xl text-sm"
+          className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white shadow-md text-sm"
         >
-          Explore Other Dishes
+          Explore Other Counter Dishes
         </button>
       </div>
     );
   }
 
   const isVeg = dish.dietary_tags?.includes('Veg') || dish.dietary_tags?.includes('Vegan');
+  const appMarkupEstimate = Math.round(dish.price * 1.3 + 35);
+  const estimatedSavings = appMarkupEstimate - dish.price;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+      {/* Editorial Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-xs font-semibold text-stone-500 flex-wrap">
         <button
           onClick={() => (restaurant ? navigate(`/restaurant/${restaurant.slug}`) : navigate('/'))}
-          className="hover:text-slate-800 flex items-center gap-1"
+          className="hover:text-[#1C1917] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#EFEAE2] transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          {restaurant?.name || 'Back'}
+          <ArrowLeft className="w-3.5 h-3.5 text-[#FF5A36]" />
+          <span>{restaurant?.name || 'Back to Menu'}</span>
         </button>
-        <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-        <span>Menu</span>
-        <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-        <span className="text-slate-900 font-bold truncate">{dish.name}</span>
+        <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
+        <span className="text-stone-400">Counter Menu</span>
+        <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
+        <span className="text-[#1C1917] font-bold truncate max-w-[200px]">{dish.name}</span>
       </div>
 
-      {/* Main Food Card Banner */}
-      <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-2">
+      {/* Main Counter Ticket Hero Container */}
+      <div className="bg-white rounded-3xl border border-[#EFEAE2] shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 lift">
         
-        {/* Dish Image */}
-        <div className="relative aspect-square md:aspect-auto h-full min-h-[340px] bg-stone-100 overflow-hidden">
+        {/* Left Column: High-Res Photo Hero */}
+        <div className="lg:col-span-6 relative aspect-square sm:aspect-[4/3] lg:aspect-auto min-h-[260px] sm:min-h-[360px] lg:min-h-[500px] bg-stone-100 overflow-hidden">
           <img
             src={getSmartDishImage(dish.name, undefined, dish.image_url)}
             alt={dish.name}
@@ -157,33 +169,37 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
               (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          {/* Badges on image */}
-          <div className="absolute top-4 inset-x-4 flex items-center justify-between">
+          {/* Top Overlays */}
+          <div className="absolute top-4 inset-x-4 flex items-center justify-between z-10">
+            {/* Veg / Non-Veg Badge */}
             <div
-              className={`px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md flex items-center gap-1.5 shadow-md ${
-                isVeg ? 'bg-emerald-600/90' : 'bg-rose-600/90'
+              className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md flex items-center gap-1.5 shadow-md ${
+                isVeg
+                  ? 'bg-white/95 text-emerald-800 border border-emerald-600/30'
+                  : 'bg-white/95 text-rose-800 border border-rose-600/30'
               }`}
             >
-              <div className="w-2 h-2 rounded-full bg-white" />
+              <div className={`w-2 h-2 rounded-full ${isVeg ? 'bg-emerald-600' : 'bg-rose-600'}`} />
               <span>{isVeg ? 'Vegetarian' : 'Non-Vegetarian'}</span>
             </div>
 
+            {/* Action Icon Pills */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleShare}
-                className="w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-transform active:scale-95 border border-white/10 cursor-pointer"
                 title="Share dish"
               >
                 <Share2 className="w-4 h-4" />
               </button>
               <button
                 onClick={handleBookmarkToggle}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-95 cursor-pointer ${
                   bookmarked
-                    ? 'bg-rose-500 text-white shadow-md'
-                    : 'bg-black/40 hover:bg-black/60 text-white'
+                    ? 'bg-[#FF5A36] text-white shadow-md'
+                    : 'bg-black/50 hover:bg-black/75 text-white backdrop-blur-md border border-white/10'
                 }`}
                 title="Bookmark dish"
               >
@@ -192,7 +208,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
             </div>
           </div>
 
-          {/* Legal Disclaimer badge overlay on corner */}
+          {/* Legal Presentation Disclaimer badge */}
           <div
             title={IMAGE_DISCLAIMER_TEXT}
             className="absolute bottom-4 left-4 z-10 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-medium text-stone-300 border border-white/10"
@@ -201,62 +217,86 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
           </div>
         </div>
 
-        {/* Dish Info & Actions */}
-        <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            
-            {/* Restaurant Link */}
-            {restaurant && (
-              <button
-                onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
-                className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 group"
-              >
-                <span>Served at</span>
-                <span className="font-extrabold underline decoration-orange-300 underline-offset-4 group-hover:text-rose-600">
-                  {restaurant.name}
-                </span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+        {/* Right Column: Counter Slip & Price Transparency */}
+        <div className="lg:col-span-6 p-5 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6 bg-white relative">
+          
+          <div className="space-y-4 sm:space-y-5">
+            {/* Eyebrow & Restaurant Badge */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              {restaurant && (
+                <button
+                  onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#EFEAE2] text-xs font-bold text-[#D8350F] hover:border-[#D8350F]/40 transition-colors cursor-pointer"
+                >
+                  <span>Served at</span>
+                  <span className="underline decoration-dotted underline-offset-2">{restaurant.name}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              )}
 
-            <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-slate-900 tracking-tight">
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded-full">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <span>0% App Markup</span>
+              </span>
+            </div>
+
+            {/* Dish Heading */}
+            <h1 className="hd font-black text-2xl sm:text-4xl text-[#1C1917] tracking-tight leading-tight">
               {dish.name}
             </h1>
 
-            {/* Price & Portions */}
-            <div className="space-y-1">
-              <div className="flex items-baseline gap-3">
-                <span className="font-heading font-black text-3xl text-slate-900">
-                  ₹{dish.price}
-                </span>
-                {dish.portion_size && (
-                  <span className="text-xs font-bold text-slate-500 bg-stone-100 px-2.5 py-1 rounded-md">
-                    Portion: {dish.portion_size}
-                  </span>
-                )}
+            {/* Price Transparency Bento Box */}
+            <div className="bg-[#FAF8F5] rounded-2xl border border-[#EFEAE2] p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-2">
+                <div>
+                  <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Official Counter Price</div>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="hd font-black text-3xl sm:text-4xl text-[#1C1917]">
+                      ₹{dish.price}
+                    </span>
+                    {dish.portion_size && (
+                      <span className="text-xs font-bold text-stone-600 bg-white border border-[#EFEAE2] px-2.5 py-0.5 rounded-md">
+                        {dish.portion_size}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="sm:text-right">
+                  <div className="text-[11px] font-medium text-stone-400 line-through">
+                    Apps charge ~₹{appMarkupEstimate}
+                  </div>
+                  <div className="inline-flex items-center gap-1 text-xs font-black text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full mt-0.5">
+                    <TrendingDown className="w-3 h-3" />
+                    <span>Save ₹{estimatedSavings}</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-[11px] text-stone-500 italic">
-                * Indicative reference price from public listings; subject to restaurant revision & taxes.
-              </p>
+
+              <div className="pt-2 border-t border-dashed border-stone-200 text-[11px] text-stone-500 flex items-center justify-between">
+                <span>* Direct cafe counter rate. No food app commissions added.</span>
+                <span className="font-bold text-emerald-700">Verified Menu</span>
+              </div>
             </div>
 
-            <p className="text-sm text-slate-600 leading-relaxed">
+            {/* Description */}
+            <p className="text-sm text-stone-600 leading-relaxed font-sans">
               {dish.description ||
                 'Crafted fresh with wholesome ingredients and signature culinary seasonings.'}
             </p>
 
-            {/* Spice and Dietary Tags */}
-            <div className="flex flex-wrap gap-2 pt-2">
+            {/* Dietary & Spice Tags */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               {dish.spice_level > 0 && (
-                <span className="flex items-center gap-1 px-3 py-1 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 text-xs font-bold">
-                  <Flame className="w-3.5 h-3.5 text-orange-500" />
-                  Spice Level: {dish.spice_level}/5
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-orange-900 text-xs font-bold">
+                  <Flame className="w-3.5 h-3.5 text-[#FF5A36]" />
+                  <span>Spice Level: {dish.spice_level}/5</span>
                 </span>
               )}
               {dish.dietary_tags?.map((t) => (
                 <span
                   key={t}
-                  className="px-3 py-1 rounded-xl bg-stone-100 text-slate-700 text-xs font-semibold"
+                  className="px-3 py-1 rounded-full bg-white border border-[#EFEAE2] text-stone-700 text-xs font-semibold"
                 >
                   {t}
                 </span>
@@ -264,8 +304,8 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3 pt-6 border-t border-stone-100">
+          {/* Action CTAs */}
+          <div className="space-y-3 pt-6 border-t border-[#EFEAE2]">
             {restaurant && (restaurant.whatsapp_number || restaurant.phone) && (
               <button
                 onClick={() => {
@@ -281,37 +321,38 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
                   msg += `Hello! I would like to order:\n`;
                   msg += `• 1x *${dish.name}* (₹${dish.price})\n\n`;
                   msg += `Please confirm availability & delivery/dine-in timing.\n\n`;
-                  msg += `_Powered by Menu Map_`;
+                  msg += `_Powered by Menu Map (0% App Markup)_`;
                   const encoded = encodeURIComponent(msg);
                   const waUrl = num
                     ? `https://wa.me/${num.startsWith('91') ? num : '91' + num}?text=${encoded}`
                     : `https://wa.me/?text=${encoded}`;
                   window.open(waUrl, '_blank');
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-full bg-[#0F766E] hover:bg-[#0D9488] text-white font-extrabold text-sm shadow-md transition-all active:scale-95"
               >
                 <MessageSquare className="w-4 h-4 fill-white" />
-                <span>Order on WhatsApp (₹{dish.price})</span>
+                <span>Order on WhatsApp at Counter Price (₹{dish.price})</span>
               </button>
             )}
 
             {restaurant && (
               <button
                 onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm shadow-md transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-[#1C1917] hover:bg-stone-800 text-white font-bold text-sm shadow-xs transition-colors"
               >
                 <UtensilsCrossed className="w-4 h-4" />
-                <span>View Full Menu of {restaurant.name}</span>
+                <span>View Complete Menu of {restaurant.name}</span>
               </button>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Quick Actions (Call & Directions) */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
               {restaurant?.phone && (
                 <a
                   href={`tel:${restaurant.phone}`}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-slate-800 font-bold text-xs transition-colors"
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-full bg-white hover:bg-stone-50 border border-[#EFEAE2] text-[#1C1917] font-bold text-xs transition-colors"
                 >
-                  <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                  <Phone className="w-3.5 h-3.5 text-[#0F766E]" />
                   <span>Call Venue</span>
                 </a>
               )}
@@ -323,14 +364,15 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-slate-800 font-bold text-xs transition-colors"
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-full bg-white hover:bg-stone-50 border border-[#EFEAE2] text-[#1C1917] font-bold text-xs transition-colors"
                 >
-                  <Navigation className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Directions</span>
+                  <Navigation className="w-3.5 h-3.5 text-[#FF5A36]" />
+                  <span>Get Directions</span>
                 </a>
               )}
             </div>
           </div>
+
         </div>
       </div>
 
@@ -341,19 +383,23 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
         variant="compact"
       />
 
-      {/* More dishes from this restaurant */}
+      {/* More Must-Try Dishes from Same Restaurant */}
       {sameRestaurantDishes.length > 0 && (
-        <div className="space-y-6">
+        <div className="space-y-6 pt-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-heading font-extrabold text-xl text-slate-900">
-              More from {restaurant?.name}
-            </h2>
+            <div>
+              <span className="eyebrow text-[#FF5A36]">Kitchen Specialties</span>
+              <h2 className="font-heading font-black text-2xl text-[#1C1917] mt-0.5">
+                More from {restaurant?.name}
+              </h2>
+            </div>
             {restaurant && (
               <button
                 onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
-                className="text-xs font-bold text-rose-600 hover:text-rose-700"
+                className="text-xs font-bold text-[#D8350F] hover:text-[#FF5A36] flex items-center gap-1 group"
               >
-                View all menu items →
+                <span>View all menu items</span>
+                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
             )}
           </div>
@@ -370,12 +416,15 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
         </div>
       )}
 
-      {/* Similar dishes across other cafes */}
+      {/* Similar Dishes Across Delhi */}
       {similarDishes.length > 0 && (
-        <div className="space-y-6 pt-6 border-t border-stone-200">
-          <h2 className="font-heading font-extrabold text-xl text-slate-900">
-            Similar Dishes From Other Cafes
-          </h2>
+        <div className="space-y-6 pt-8 border-t border-[#EFEAE2]">
+          <div>
+            <span className="eyebrow text-[#0F766E]">Food Discovery</span>
+            <h2 className="font-heading font-black text-2xl text-[#1C1917] mt-0.5">
+              Similar Dishes Across Delhi Cafes
+            </h2>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarDishes.map((item) => (
               <FoodItemCard

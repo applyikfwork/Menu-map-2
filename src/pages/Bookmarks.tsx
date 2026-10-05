@@ -65,74 +65,64 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-200">
+      {/* Header with Editorial Branding */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#EFEAE2]">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-rose-600">
-            <Bookmark className="w-4 h-4 fill-rose-600" />
-            <span>Saved Offline & Private</span>
-          </div>
-          <h1 className="font-heading font-extrabold text-3xl sm:text-4xl text-slate-900 tracking-tight mt-1">
-            My Bookmarks
+          <span className="eyebrow text-[#FF5A36] flex items-center gap-1.5">
+            <Bookmark className="w-3.5 h-3.5 fill-[#FF5A36]" />
+            <span>Private & Offline Vault • Zero Tracking</span>
+          </span>
+          <h1 className="font-heading font-black text-3xl sm:text-4xl text-[#1C1917] tracking-tight mt-1">
+            My Saved Counter Menus
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Easily access your favorite cafes, curated collections, and must-try dishes.
+          <p className="text-xs sm:text-sm text-stone-500 font-sans mt-0.5">
+            Easily access your favorite cafes, signature dishes, and iconic neighborhood guides.
           </p>
         </div>
 
         {totalCount > 0 && (
           <button
             onClick={handleClear}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-stone-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-bold transition-colors self-start sm:self-center"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-rose-50 text-stone-600 hover:text-rose-600 border border-[#EFEAE2] hover:border-rose-200 text-xs font-bold transition-all self-start sm:self-center"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>Clear All</span>
+            <span>Clear Vault</span>
           </button>
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-3">
+      {/* Segmented Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
         <button
           onClick={() => setActiveTab('restaurants')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === 'restaurants'
-              ? 'bg-rose-500 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-stone-100'
-          }`}
+          className={`chipl ${activeTab === 'restaurants' ? 'on' : ''}`}
         >
-          <Compass className="w-4 h-4" />
+          <Compass className="w-4 h-4 text-[#FF5A36]" />
           <span>Places ({bookmarkedRestaurants.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('dishes')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === 'dishes'
-              ? 'bg-rose-500 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-stone-100'
-          }`}
+          className={`chipl ${activeTab === 'dishes' ? 'on' : ''}`}
         >
-          <Utensils className="w-4 h-4" />
+          <Utensils className="w-4 h-4 text-[#0F766E]" />
           <span>Dishes ({bookmarkedDishes.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('collections')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === 'collections'
-              ? 'bg-rose-500 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-stone-100'
-          }`}
+          className={`chipl ${activeTab === 'collections' ? 'on' : ''}`}
         >
-          <Sparkles className="w-4 h-4" />
-          <span>Collections ({bookmarkedCollections.length})</span>
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <span>Area Guides ({bookmarkedCollections.length})</span>
         </button>
       </div>
 
       {/* Tab Content */}
       {loading ? (
-        <div className="p-12 text-center text-sm text-slate-400">Loading your saved items...</div>
+        <div className="py-20 text-center text-sm font-semibold text-stone-400">
+          Loading your saved vault items...
+        </div>
       ) : activeTab === 'restaurants' ? (
         bookmarkedRestaurants.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -141,19 +131,22 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
             ))}
           </div>
         ) : (
-          <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl p-16 text-center space-y-4">
-            <Compass className="w-12 h-12 text-stone-400 mx-auto" />
-            <h3 className="font-heading font-extrabold text-xl text-slate-800">
+          <div className="bg-white border-2 border-dashed border-[#EFEAE2] rounded-3xl p-14 sm:p-18 text-center space-y-4 shadow-2xs">
+            <div className="w-16 h-16 rounded-full bg-[#FAF8F5] text-stone-400 border border-[#EFEAE2] flex items-center justify-center mx-auto">
+              <Compass className="w-8 h-8" />
+            </div>
+            <h3 className="font-heading font-black text-2xl text-[#1C1917]">
               No saved restaurants
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-              Tap the bookmark icon on any cafe or restaurant card to save it here for quick access.
+            <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto font-sans">
+              Tap the bookmark icon on any cafe card across Delhi to save it here for quick counter access.
             </p>
             <button
               onClick={() => navigate('/restaurants')}
-              className="px-5 py-2.5 bg-rose-500 text-white font-bold rounded-2xl text-xs shadow-md"
+              className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white shadow-md text-xs font-bold"
             >
-              Explore Cafes
+              <span>Explore Delhi Cafes</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )
@@ -170,19 +163,22 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
             ))}
           </div>
         ) : (
-          <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl p-16 text-center space-y-4">
-            <Utensils className="w-12 h-12 text-stone-400 mx-auto" />
-            <h3 className="font-heading font-extrabold text-xl text-slate-800">
+          <div className="bg-white border-2 border-dashed border-[#EFEAE2] rounded-3xl p-14 sm:p-18 text-center space-y-4 shadow-2xs">
+            <div className="w-16 h-16 rounded-full bg-[#FAF8F5] text-stone-400 border border-[#EFEAE2] flex items-center justify-center mx-auto">
+              <Utensils className="w-8 h-8" />
+            </div>
+            <h3 className="font-heading font-black text-2xl text-[#1C1917]">
               No saved dishes
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-              Save trending pastas, desserts, coffees, or pizzas to plan your next order.
+            <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto font-sans">
+              Save trending pizzas, momos, rolls, coffees, or shakes to view their direct counter prices anytime.
             </p>
             <button
               onClick={() => navigate('/search')}
-              className="px-5 py-2.5 bg-rose-500 text-white font-bold rounded-2xl text-xs shadow-md"
+              className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white shadow-md text-xs font-bold"
             >
-              Discover Dishes
+              <span>Discover Dishes</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )
@@ -193,19 +189,22 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
           ))}
         </div>
       ) : (
-        <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl p-16 text-center space-y-4">
-          <Sparkles className="w-12 h-12 text-stone-400 mx-auto" />
-          <h3 className="font-heading font-extrabold text-xl text-slate-800">
-            No saved iconic area guides
+        <div className="bg-white border-2 border-dashed border-[#EFEAE2] rounded-3xl p-14 sm:p-18 text-center space-y-4 shadow-2xs">
+          <div className="w-16 h-16 rounded-full bg-[#FAF8F5] text-stone-400 border border-[#EFEAE2] flex items-center justify-center mx-auto">
+            <Sparkles className="w-8 h-8 text-amber-500" />
+          </div>
+          <h3 className="font-heading font-black text-2xl text-[#1C1917]">
+            No saved neighborhood guides
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-            Browse our living neighborhood food guides and bookmark entire areas with one click.
+          <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto font-sans">
+            Bookmark entire foodie hubs like Majnu Ka Tila, Hudson Lane, or Connaught Place with one click.
           </p>
           <button
             onClick={() => navigate('/iconic-area')}
-            className="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl text-xs shadow-md transition-colors cursor-pointer"
+            className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white shadow-md text-xs font-bold"
           >
-            Browse Iconic Areas
+            <span>Browse Iconic Areas</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       )}

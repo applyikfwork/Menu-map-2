@@ -7,21 +7,24 @@ import React, { useState, useEffect } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { Home } from './pages/Home';
-import { Search } from './pages/Search';
-import { RestaurantsList } from './pages/RestaurantsList';
-import { RestaurantDetail } from './pages/RestaurantDetail';
-import { FoodDetail } from './pages/FoodDetail';
-import { CollectionsList } from './pages/CollectionsList';
-import { CollectionDetail } from './pages/CollectionDetail';
-import { Nearby } from './pages/Nearby';
-import { Bookmarks } from './pages/Bookmarks';
-import { StaticPage } from './pages/StaticPages';
-import { AdminPanel } from './pages/AdminPanel';
-import { OwnerLogin } from './pages/OwnerLogin';
-import { OwnerDashboard } from './pages/OwnerDashboard';
+
+// Lazy-loaded routes for optimal bundle splitting and fast mobile FCP
+const Search = React.lazy(() => import('./pages/Search').then((m) => ({ default: m.Search })));
+const RestaurantsList = React.lazy(() => import('./pages/RestaurantsList').then((m) => ({ default: m.RestaurantsList })));
+const RestaurantDetail = React.lazy(() => import('./pages/RestaurantDetail').then((m) => ({ default: m.RestaurantDetail })));
+const FoodDetail = React.lazy(() => import('./pages/FoodDetail').then((m) => ({ default: m.FoodDetail })));
+const CollectionsList = React.lazy(() => import('./pages/CollectionsList').then((m) => ({ default: m.CollectionsList })));
+const CollectionDetail = React.lazy(() => import('./pages/CollectionDetail').then((m) => ({ default: m.CollectionDetail })));
+const Bookmarks = React.lazy(() => import('./pages/Bookmarks').then((m) => ({ default: m.Bookmarks })));
+const StaticPage = React.lazy(() => import('./pages/StaticPages').then((m) => ({ default: m.StaticPage })));
+const AdminPanel = React.lazy(() => import('./pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
+const OwnerLogin = React.lazy(() => import('./pages/OwnerLogin').then((m) => ({ default: m.OwnerLogin })));
+const OwnerDashboard = React.lazy(() => import('./pages/OwnerDashboard').then((m) => ({ default: m.OwnerDashboard })));
+
 import { ADMIN_EMAIL, getCurrentAdminSession, api } from './lib/supabase';
-import { applyBrowserFavicon } from './lib/favicon';
+import { getCachedUserCoordinates, detectAreaContext, GeoCoordinates } from './lib/location';
 
 // Local stub for platform analytics
 const Analytics = () => null;
@@ -34,14 +37,33 @@ function AppContent() {
   const [searchParams, setSearchParams] = useState<URLSearchParams>(() => {
     return new URLSearchParams(window.location.search);
   });
+  const [detectedCity, setDetectedCity] = useState<string>('Delhi NCR');
 
-  // Dynamic Browser Tab Favicon Sync
+  // Dynamic Neighborhood sync from cached or live GPS
   useEffect(() => {
-    api.getSettings().then((settings) => {
-      if (settings.custom_favicon_url) {
-        applyBrowserFavicon(settings.custom_favicon_url);
+    const updateLocationContext = async (coords?: GeoCoordinates) => {
+      try {
+        const active = coords || getCachedUserCoordinates();
+        if (!active) return;
+        const rests = await api.getRestaurants(true);
+        const ctx = detectAreaContext(active, rests);
+        if (ctx?.areaName) {
+          setDetectedCity(ctx.areaName);
+        }
+      } catch (err) {
+        // Fallback to Delhi NCR
       }
-    });
+    };
+
+    updateLocationContext();
+
+    const handleLocUpdate = (e: any) => {
+      if (e.detail) {
+        updateLocationContext(e.detail);
+      }
+    };
+    window.addEventListener('menumap_location_updated', handleLocUpdate);
+    return () => window.removeEventListener('menumap_location_updated', handleLocUpdate);
   }, []);
 
   // Client-side router navigation
@@ -187,20 +209,29 @@ function AppContent() {
   const isAdminPage = currentPath === '/admin-secure-panel2010';
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50/70 text-slate-800">
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917]">
       {!isAdminPage && (
         <Navbar
           currentPath={currentPath}
           navigate={navigate}
-          city="Delhi NCR"
+          city={detectedCity}
         />
       )}
       
-      <main className="flex-1">
-        {renderRoute()}
+      <main className="flex-1 pb-28 md:pb-0">
+        <React.Suspense
+          fallback={
+            <div className="min-h-[50vh] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border-2 border-[#FF5A36] border-t-transparent animate-spin" />
+            </div>
+          }
+        >
+          {renderRoute()}
+        </React.Suspense>
       </main>
 
       {!isAdminPage && <Footer navigate={navigate} />}
+      {!isAdminPage && <MobileBottomNav currentPath={currentPath} navigate={navigate} />}
     </div>
   );
 }

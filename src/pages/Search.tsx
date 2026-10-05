@@ -230,22 +230,191 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
     onlyOpenNow ||
     onlyDelivery;
 
+  const renderFilterContent = () => (
+    <>
+      {/* Quick Toggles */}
+      <div className="space-y-2.5">
+        <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-stone-700 py-1">
+          <span>Open Right Now</span>
+          <input
+            type="checkbox"
+            checked={onlyOpenNow}
+            onChange={(e) => setOnlyOpenNow(e.target.checked)}
+            className="w-4 h-4 text-[#FF5A36] rounded-md focus:ring-[#FF5A36] accent-[#FF5A36]"
+          />
+        </label>
+        <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-stone-700 py-1">
+          <span>Delivery Available</span>
+          <input
+            type="checkbox"
+            checked={onlyDelivery}
+            onChange={(e) => setOnlyDelivery(e.target.checked)}
+            className="w-4 h-4 text-[#FF5A36] rounded-md focus:ring-[#FF5A36] accent-[#FF5A36]"
+          />
+        </label>
+      </div>
+
+      {/* Rating Filter */}
+      <div className="space-y-2.5 pt-4 border-t border-stone-100">
+        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-wider">
+          Minimum Rating
+        </h4>
+        <div className="flex items-center gap-2">
+          {[0, 3.5, 4.0, 4.5].map((val) => (
+            <button
+              key={val}
+              onClick={() => setMinRating(val)}
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                minRating === val
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-[#E7E2DA]'
+              }`}
+            >
+              {val === 0 ? 'Any' : `${val}+ ★`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div className="space-y-2.5 pt-4 border-t border-stone-100">
+        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-wider">
+          Price Range
+        </h4>
+        <div className="flex gap-2">
+          {(['₹', '₹₹', '₹₹₹'] as PriceRange[]).map((p) => {
+            const active = selectedPriceRanges.includes(p);
+            return (
+              <button
+                key={p}
+                onClick={() => {
+                  setSelectedPriceRanges((prev) =>
+                    active ? prev.filter((item) => item !== p) : [...prev, p]
+                  );
+                }}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-extrabold border transition-all ${
+                  active
+                    ? 'bg-[#14110F] text-white border-[#14110F]'
+                    : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-[#E7E2DA]'
+                }`}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Cuisines multi-select */}
+      {allCuisines.length > 0 && (
+        <div className="space-y-2.5 pt-4 border-t border-stone-100">
+          <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-wider">
+            Cuisine Types
+          </h4>
+          <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+            {allCuisines.map((cuisine) => {
+              const checked = selectedCuisines.includes(cuisine);
+              return (
+                <label
+                  key={cuisine}
+                  className="flex items-center gap-2 text-xs font-medium text-stone-700 hover:text-stone-950 cursor-pointer py-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      setSelectedCuisines((prev) =>
+                        checked ? prev.filter((c) => c !== cuisine) : [...prev, cuisine]
+                      );
+                    }}
+                    className="w-3.5 h-3.5 text-[#FF5A36] rounded-sm accent-[#FF5A36]"
+                  />
+                  <span>{cuisine}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Dietary options */}
+      <div className="space-y-2.5 pt-4 border-t border-stone-100">
+        <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-wider">
+          Dietary Options
+        </h4>
+        {(['Pure Veg', 'Vegan Options', 'Gluten-Free Options'] as DietaryOption[]).map((diet) => {
+          const checked = selectedDietary.includes(diet);
+          return (
+            <label
+              key={diet}
+              className="flex items-center gap-2 text-xs font-medium text-stone-700 hover:text-stone-950 cursor-pointer py-1"
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => {
+                  setSelectedDietary((prev) =>
+                    checked ? prev.filter((d) => d !== diet) : [...prev, diet]
+                  );
+                }}
+                className="w-3.5 h-3.5 text-[#FF5A36] rounded-sm accent-[#FF5A36]"
+              />
+              <span>{diet}</span>
+            </label>
+          );
+        })}
+      </div>
+
+      {/* Facilities */}
+      {allFacilities.length > 0 && (
+        <div className="space-y-2.5 pt-4 border-t border-stone-100">
+          <h4 className="text-xs font-extrabold text-stone-500 uppercase tracking-wider">
+            Facilities & Vibes
+          </h4>
+          <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+            {allFacilities.map((fac) => {
+              const checked = selectedFacilities.includes(fac);
+              return (
+                <label
+                  key={fac}
+                  className="flex items-center gap-2 text-xs font-medium text-stone-700 hover:text-stone-950 cursor-pointer py-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      setSelectedFacilities((prev) =>
+                        checked ? prev.filter((f) => f !== fac) : [...prev, fac]
+                      );
+                    }}
+                    className="w-3.5 h-3.5 text-[#FF5A36] rounded-sm accent-[#FF5A36]"
+                  />
+                  <span>{fac}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
       {/* Top Search Bar */}
-      <div className="bg-white rounded-3xl p-3 sm:p-4 border border-stone-200 shadow-md flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-white rounded-[28px] p-3 sm:p-4 border border-[#E7E2DA] shadow-xs flex flex-col md:flex-row items-center gap-3">
         <div className="flex-1 flex items-center gap-3 px-3 w-full">
-          <SearchIcon className="w-5 h-5 text-orange-500 shrink-0" />
+          <SearchIcon className="w-5 h-5 text-[#78716C] shrink-0" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search cafes, restaurants, pastas, thalis, coffee..."
-            className="w-full bg-transparent text-slate-900 placeholder-slate-400 text-base font-medium focus:outline-hidden"
+            className="w-full bg-transparent text-[#1C1917] placeholder-stone-400 text-base font-medium outline-none"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="p-1 hover:bg-stone-100 rounded-full text-slate-400">
+            <button onClick={() => setQuery('')} className="p-1 hover:bg-stone-100 rounded-full text-stone-400">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -254,27 +423,27 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
         {/* Filter Trigger on Mobile & Tabs on Desktop */}
         <div className="flex items-center justify-between w-full md:w-auto gap-2 border-t md:border-t-0 pt-2 md:pt-0 border-stone-100">
           {/* Tab Selector */}
-          <div className="flex items-center bg-stone-100 p-1 rounded-2xl text-xs font-bold text-slate-600">
+          <div className="flex items-center bg-[#F5F1EB] p-1 rounded-2xl text-xs font-bold text-[#57534E]">
             <button
               onClick={() => setTabMode('all')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                tabMode === 'all' ? 'bg-white text-rose-600 shadow-xs' : 'hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                tabMode === 'all' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
               }`}
             >
               All ({filteredRestaurants.length + filteredItems.length})
             </button>
             <button
               onClick={() => setTabMode('restaurants')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                tabMode === 'restaurants' ? 'bg-white text-rose-600 shadow-xs' : 'hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                tabMode === 'restaurants' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
               }`}
             >
               Places ({filteredRestaurants.length})
             </button>
             <button
               onClick={() => setTabMode('dishes')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                tabMode === 'dishes' ? 'bg-white text-rose-600 shadow-xs' : 'hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                tabMode === 'dishes' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
               }`}
             >
               Dishes ({filteredItems.length})
@@ -285,8 +454,8 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             onClick={() => setShowFiltersMobile(!showFiltersMobile)}
             className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold border transition-colors ${
               hasActiveFilters
-                ? 'bg-rose-50 text-rose-600 border-rose-200'
-                : 'bg-white text-slate-700 border-stone-200'
+                ? 'bg-[#FF5A36]/10 text-[#FF5A36] border-[#FF5A36]/30'
+                : 'bg-white text-stone-700 border-[#E7E2DA]'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -298,213 +467,66 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
       {/* Main Layout: Filters sidebar + Results */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         
-        {/* Filters Sidebar (Desktop & Mobile Drawer) */}
-        <aside
-          className={`${
-            showFiltersMobile
-              ? 'fixed inset-0 z-50 bg-white p-6 overflow-y-auto'
-              : 'hidden lg:block'
-          } bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs space-y-6`}
-        >
+        {/* Filters Sidebar (Desktop) */}
+        <aside className="hidden lg:block bg-white rounded-3xl p-6 border border-[#E7E2DA] shadow-xs space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-stone-100">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-orange-500" />
-              <h3 className="font-heading font-extrabold text-base text-slate-900">Filters</h3>
+              <SlidersHorizontal className="w-4 h-4 text-[#FF5A36]" />
+              <h3 className="font-heading font-extrabold text-base text-[#1C1917]">Filters</h3>
             </div>
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="text-xs font-bold text-rose-600 hover:text-rose-700"
-                >
-                  Reset all
-                </button>
-              )}
-              {showFiltersMobile && (
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs font-bold text-[#FF5A36] hover:underline"
+              >
+                Reset all
+              </button>
+            )}
+          </div>
+          {renderFilterContent()}
+        </aside>
+
+        {/* Mobile Filters Drawer Modal */}
+        {showFiltersMobile && (
+          <div className="fixed inset-0 z-50 lg:hidden flex flex-col bg-white animate-fade-in">
+            <div className="flex items-center justify-between p-4 border-b border-stone-200 bg-[#FAF8F5]">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-[#FF5A36]" />
+                <h3 className="font-heading font-extrabold text-lg text-[#1C1917]">Filters</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-xs font-bold text-[#FF5A36] hover:underline"
+                  >
+                    Reset all
+                  </button>
+                )}
                 <button
                   onClick={() => setShowFiltersMobile(false)}
-                  className="p-1 hover:bg-stone-100 rounded-full lg:hidden"
+                  className="p-2 hover:bg-stone-200/60 rounded-full text-stone-600 transition-colors"
+                  aria-label="Close filters"
                 >
                   <X className="w-5 h-5" />
                 </button>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Toggles */}
-          <div className="space-y-2.5">
-            <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700">
-              <span>Open Right Now</span>
-              <input
-                type="checkbox"
-                checked={onlyOpenNow}
-                onChange={(e) => setOnlyOpenNow(e.target.checked)}
-                className="w-4 h-4 text-rose-600 rounded-md focus:ring-rose-500"
-              />
-            </label>
-            <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700">
-              <span>Delivery Available</span>
-              <input
-                type="checkbox"
-                checked={onlyDelivery}
-                onChange={(e) => setOnlyDelivery(e.target.checked)}
-                className="w-4 h-4 text-rose-600 rounded-md focus:ring-rose-500"
-              />
-            </label>
-          </div>
-
-          {/* Rating Filter */}
-          <div className="space-y-2.5 pt-4 border-t border-stone-100">
-            <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-              Minimum Rating
-            </h4>
-            <div className="flex items-center gap-2">
-              {[0, 3.5, 4.0, 4.5].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setMinRating(val)}
-                  className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                    minRating === val
-                      ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                      : 'bg-stone-50 hover:bg-stone-100 text-slate-700 border-stone-200'
-                  }`}
-                >
-                  {val === 0 ? 'Any' : `${val}+ ★`}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Price Range */}
-          <div className="space-y-2.5 pt-4 border-t border-stone-100">
-            <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-              Price Range
-            </h4>
-            <div className="flex gap-2">
-              {(['₹', '₹₹', '₹₹₹'] as PriceRange[]).map((p) => {
-                const active = selectedPriceRanges.includes(p);
-                return (
-                  <button
-                    key={p}
-                    onClick={() => {
-                      setSelectedPriceRanges((prev) =>
-                        active ? prev.filter((item) => item !== p) : [...prev, p]
-                      );
-                    }}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-extrabold border transition-all ${
-                      active
-                        ? 'bg-rose-500 text-white border-rose-500'
-                        : 'bg-stone-50 hover:bg-stone-100 text-slate-700 border-stone-200'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Cuisines multi-select */}
-          {allCuisines.length > 0 && (
-            <div className="space-y-2.5 pt-4 border-t border-stone-100">
-              <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                Cuisine Types
-              </h4>
-              <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                {allCuisines.map((cuisine) => {
-                  const checked = selectedCuisines.includes(cuisine);
-                  return (
-                    <label
-                      key={cuisine}
-                      className="flex items-center gap-2 text-xs font-medium text-slate-700 hover:text-slate-900 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          setSelectedCuisines((prev) =>
-                            checked ? prev.filter((c) => c !== cuisine) : [...prev, cuisine]
-                          );
-                        }}
-                        className="w-3.5 h-3.5 text-rose-600 rounded-sm"
-                      />
-                      <span>{cuisine}</span>
-                    </label>
-                  );
-                })}
               </div>
             </div>
-          )}
 
-          {/* Dietary options */}
-          <div className="space-y-2.5 pt-4 border-t border-stone-100">
-            <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-              Dietary Options
-            </h4>
-            {(['Pure Veg', 'Vegan Options', 'Gluten-Free Options'] as DietaryOption[]).map((diet) => {
-              const checked = selectedDietary.includes(diet);
-              return (
-                <label
-                  key={diet}
-                  className="flex items-center gap-2 text-xs font-medium text-slate-700 hover:text-slate-900 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => {
-                      setSelectedDietary((prev) =>
-                        checked ? prev.filter((d) => d !== diet) : [...prev, diet]
-                      );
-                    }}
-                    className="w-3.5 h-3.5 text-rose-600 rounded-sm"
-                  />
-                  <span>{diet}</span>
-                </label>
-              );
-            })}
-          </div>
-
-          {/* Facilities */}
-          {allFacilities.length > 0 && (
-            <div className="space-y-2.5 pt-4 border-t border-stone-100">
-              <h4 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                Facilities & Vibes
-              </h4>
-              <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
-                {allFacilities.map((fac) => {
-                  const checked = selectedFacilities.includes(fac);
-                  return (
-                    <label
-                      key={fac}
-                      className="flex items-center gap-2 text-xs font-medium text-slate-700 hover:text-slate-900 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          setSelectedFacilities((prev) =>
-                            checked ? prev.filter((f) => f !== fac) : [...prev, fac]
-                          );
-                        }}
-                        className="w-3.5 h-3.5 text-rose-600 rounded-sm"
-                      />
-                      <span>{fac}</span>
-                    </label>
-                  );
-                })}
-              </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {renderFilterContent()}
             </div>
-          )}
 
-          {showFiltersMobile && (
-            <button
-              onClick={() => setShowFiltersMobile(false)}
-              className="w-full py-3 bg-rose-600 text-white font-bold rounded-2xl shadow-md"
-            >
-              Apply Filters
-            </button>
-          )}
-        </aside>
+            <div className="p-4 border-t border-stone-200 bg-white sticky bottom-0 shadow-lg">
+              <button
+                onClick={() => setShowFiltersMobile(false)}
+                className="w-full py-3.5 bg-[#14110F] hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <span>Show {filteredRestaurants.length + filteredItems.length} Results</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Results Area */}
         <main className="lg:col-span-3 space-y-6">
@@ -619,7 +641,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
                       {hasActiveFilters && (
                         <button
                           onClick={clearAllFilters}
-                          className="px-4 py-2 bg-rose-50 text-rose-600 font-bold rounded-xl text-xs hover:bg-rose-100 transition-colors"
+                          className="px-4 py-2 bg-[#FF5A36]/10 text-[#FF5A36] font-bold rounded-xl text-xs hover:bg-[#FF5A36]/20 transition-colors"
                         >
                           Clear Filters
                         </button>
@@ -682,7 +704,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
                   {hasActiveFilters && (
                     <button
                       onClick={clearAllFilters}
-                      className="px-5 py-2.5 bg-rose-500 text-white font-bold rounded-2xl text-xs shadow-md shadow-rose-500/20"
+                      className="px-5 py-2.5 bg-[#FF5A36] hover:bg-[#E84E2A] text-white font-bold rounded-2xl text-xs shadow-md shadow-[#FF5A36]/20 transition-colors"
                     >
                       Reset All Filters
                     </button>

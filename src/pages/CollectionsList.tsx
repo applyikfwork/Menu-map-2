@@ -305,17 +305,16 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
       <div className="text-center max-w-3xl mx-auto space-y-4">
         
         {/* Navigation Breadcrumb / Tagline */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500/10 to-rose-500/10 border border-orange-200 text-xs font-black uppercase tracking-wider text-rose-700 shadow-2xs">
-          <Flame className="w-4 h-4 text-orange-600 fill-orange-600" />
-          <span>Iconic Area Food Guides & What’s Famous</span>
+        <div className="eyebrow text-[#D8350F]">
+          Living Area Guides
         </div>
 
-        <h1 className="font-heading font-black text-3xl sm:text-5xl lg:text-6xl text-slate-900 tracking-tight leading-tight">
-          Explore Delhi NCR’s Legendary Food Neighborhoods
+        <h1 className="hd text-4xl sm:text-6xl font-black text-[#1C1917] tracking-tight leading-tight">
+          Iconic foodie neighbourhoods &amp; trails
         </h1>
 
-        <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
-          No need to manually enter your location — our systematic live GPS automatically senses where you are and highlights the nearest authentic food street with real counter prices and famous signature dishes.
+        <p className="text-base sm:text-lg text-[#57534E] leading-relaxed font-normal max-w-2xl mx-auto">
+          Pick a neighbourhood. We plan the whole evening. Real counter menus, verified prices, landmark signature dishes and walking trails.
         </p>
 
         {/* ========================================================================= */}
@@ -323,24 +322,24 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
         {/* ========================================================================= */}
         <div className="pt-2">
           {nearestGuide && typeof nearestGuide.distanceKm === 'number' ? (
-            <div className="bg-gradient-to-r from-emerald-500/10 via-orange-500/10 to-amber-500/10 border border-emerald-300/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+            <div className="bg-white border border-[#EFEAE2] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-[#E6F4F1] text-[#0F766E] flex items-center justify-center shrink-0 shadow-xs">
                   <MapPin className="w-5 h-5 animate-bounce" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                      Live GPS Auto-Detected
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#0F766E] bg-[#E6F4F1] px-2 py-0.5 rounded-md">
+                      Live GPS Nearest
                     </span>
-                    <span className="text-xs font-bold text-slate-600">
-                      {formatDistance(nearestGuide.distanceKm)} from you
+                    <span className="text-xs font-bold text-[#57534E]">
+                      {formatDistance(nearestGuide.distanceKm)} from your location
                     </span>
                   </div>
-                  <h3 className="font-heading font-extrabold text-base sm:text-lg text-slate-900">
-                    Closest Iconic Food Area: <span className="text-orange-600">{nearestGuide.area_metadata?.area_name || nearestGuide.title}</span>
+                  <h3 className="hd font-bold text-base sm:text-lg text-[#14110F]">
+                    Closest Food District: <span className="text-[#D8350F]">{nearestGuide.area_metadata?.area_name || nearestGuide.title}</span>
                   </h3>
-                  <p className="text-xs text-slate-600 line-clamp-1 italic">
+                  <p className="text-xs text-[#57534E] line-clamp-1 italic">
                     "{nearestGuide.area_metadata?.vibe_badge}"
                   </p>
                 </div>
@@ -349,30 +348,30 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
               <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                 <button
                   onClick={() => navigate(`/iconic-area/${nearestGuide.slug}`)}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer whitespace-nowrap"
                 >
-                  <span>Explore Nearest Guide</span>
+                  <span>Explore Guide</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleManualLiveGpsTrigger}
                   disabled={isDetectingLocation}
                   title="Refresh live GPS"
-                  className="p-2.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-slate-600 transition-colors cursor-pointer"
+                  className="p-2.5 rounded-xl bg-[#FAF8F5] hover:bg-stone-100 border border-[#E7E2DA] text-[#57534E] transition-colors cursor-pointer"
                 >
-                  <Crosshair className={`w-4 h-4 ${isDetectingLocation ? 'animate-spin text-orange-600' : ''}`} />
+                  <Crosshair className={`w-4 h-4 ${isDetectingLocation ? 'animate-spin text-[#FF5A36]' : ''}`} />
                 </button>
               </div>
             </div>
           ) : (
-            <div className="bg-stone-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between text-xs text-slate-600 border border-stone-200">
+            <div className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between text-xs text-[#57534E] border border-[#EFEAE2]">
               <div className="flex items-center gap-2">
-                <Crosshair className="w-4 h-4 text-orange-600 shrink-0" />
+                <Crosshair className="w-4 h-4 text-[#FF5A36] shrink-0" />
                 <span>Automatic live GPS is detecting your nearest Delhi NCR food district...</span>
               </div>
               <button
                 onClick={handleManualLiveGpsTrigger}
-                className="text-orange-600 font-bold hover:underline cursor-pointer shrink-0"
+                className="text-[#D8350F] font-bold hover:underline cursor-pointer shrink-0"
               >
                 Detect Now
               </button>
@@ -387,38 +386,38 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
           
           {/* Main Search Input */}
           <div className="relative max-w-xl mx-auto">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search what's famous (e.g. Monster Shake, Chur Chur Naan, Dal Bukhara, Jalebi, Chaap)..."
-              className="w-full pl-11 pr-20 py-3.5 bg-white border border-stone-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-800 shadow-xs focus:outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
+              placeholder="Search what's famous (e.g. Monster Shake, Chur Chur Naan, Dal Bukhara)..."
+              className="w-full pl-11 pr-20 py-3.5 bg-white border border-[#E7E2DA] rounded-2xl text-xs sm:text-sm font-medium text-[#14110F] shadow-xs focus:outline-hidden focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
               >
                 Clear
               </button>
             )}
           </div>
 
-          {/* Quick Craving Filters / Famous Foods in Places */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-3xl mx-auto">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
-              What's Famous:
+          {/* Quick Craving Filters (Horizontal swipe on mobile) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-3xl mx-auto">
+            <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider shrink-0 mr-1">
+              Famous:
             </span>
             {[
-              { id: null, label: 'All Famous Foods' },
+              { id: null, label: 'All Specialties' },
               { id: 'shakes', label: '🥤 Monster Shakes' },
-              { id: 'naan', label: '🫓 Amritsari Chur Chur Naan' },
-              { id: 'dal', label: '🥘 Slow Dal Bukhara' },
+              { id: 'naan', label: '🫓 Amritsari Naan' },
+              { id: 'dal', label: '🥘 Dal Bukhara' },
               { id: 'momos', label: '🥟 Kurkure Momos' },
               { id: 'jalebi', label: '🍯 Desi Ghee Jalebi' },
-              { id: 'chaap', label: '🍢 Tandoori Malai Chaap' },
-              { id: 'nonveg', label: '🍖 Heritage Mutton Rogan' },
+              { id: 'chaap', label: '🍢 Tandoori Chaap' },
+              { id: 'nonveg', label: '🍖 Heritage Mutton' },
             ].map((chip) => (
               <button
                 key={chip.label}
@@ -426,10 +425,10 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                   setSelectedCraving(chip.id);
                   if (chip.id) setActiveTab('famous_dishes');
                 }}
-                className={`text-xs px-3 py-1 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`text-xs px-3 py-1.5 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   selectedCraving === chip.id
-                    ? 'bg-orange-500 text-white shadow-2xs'
-                    : 'bg-stone-100 hover:bg-stone-200 text-slate-700'
+                    ? 'bg-[#FF5A36] text-white shadow-xs'
+                    : 'bg-white hover:bg-stone-100 text-[#44403C] border border-[#E7E2DA]'
                 }`}
               >
                 {chip.label}
@@ -437,30 +436,30 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             ))}
           </div>
 
-          {/* Toggle between "Neighborhood Guides" and "What's Famous Directory" */}
-          <div className="flex items-center justify-center gap-2 pt-2">
-            <div className="bg-stone-100 p-1 rounded-2xl border border-stone-200 inline-flex">
+          {/* Toggle between "Neighborhood Guides" and "Famous Foods" */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] inline-flex">
               <button
                 onClick={() => setActiveTab('areas')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'areas'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-[#14110F] shadow-xs'
+                    : 'text-[#57534E] hover:text-[#14110F]'
                 }`}
               >
-                <Compass className="w-3.5 h-3.5 text-orange-500" />
-                <span>Iconic Neighborhoods ({filteredGuides.length})</span>
+                <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
+                <span>Neighborhoods ({filteredGuides.length})</span>
               </button>
               <button
                 onClick={() => setActiveTab('famous_dishes')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'famous_dishes'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-[#14110F] shadow-xs'
+                    : 'text-[#57534E] hover:text-[#14110F]'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-rose-500" />
-                <span>What’s Famous in These Places ({filteredFamousDishes.length})</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#D8350F]" />
+                <span>Famous Dishes ({filteredFamousDishes.length})</span>
               </button>
             </div>
 
@@ -470,13 +469,13 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                 onClick={() => setSortByDistance(!sortByDistance)}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
                   sortByDistance
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                    : 'bg-white text-slate-600 border-stone-200 hover:bg-stone-50'
+                    ? 'bg-[#E6F4F1] text-[#0F766E] border-[#2DD4BF]/40'
+                    : 'bg-white text-[#57534E] border-[#E7E2DA] hover:bg-stone-50'
                 }`}
                 title="Toggle Live GPS distance sorting"
               >
-                <ArrowUpDown className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{sortByDistance ? 'Sorted by Live GPS Distance' : 'Default Order'}</span>
+                <ArrowUpDown className="w-3.5 h-3.5 text-[#0F766E]" />
+                <span>{sortByDistance ? 'GPS Distance Sort' : 'Default Order'}</span>
               </button>
             )}
           </div>
@@ -491,23 +490,21 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
       {activeTab === 'areas' && (
         <div className="space-y-6">
           
-          {/* Delhi Zones Quick Filter Pills */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 pb-4">
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* Delhi Zones Quick Filter Pills (Horizontal swipe on mobile) */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-4">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-1">
               {[
                 { id: 'all', label: 'All Delhi NCR' },
-                { id: 'north', label: '🎓 North Campus & Hudson Lane' },
-                { id: 'west', label: '🥘 West Delhi & Nangloi' },
-                { id: 'central', label: '🏛️ Central & CP' },
-                { id: 'south', label: '🌿 South Delhi & HKV' },
+                { id: 'north', label: 'North Campus' },
+                { id: 'west', label: 'West Delhi' },
+                { id: 'central', label: 'Central & CP' },
+                { id: 'south', label: 'South Delhi' },
               ].map((zone) => (
                 <button
                   key={zone.id}
                   onClick={() => setSelectedZone(zone.id)}
-                  className={`text-xs px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
-                    selectedZone === zone.id
-                      ? 'bg-rose-500 text-white shadow-2xs'
-                      : 'bg-stone-100 hover:bg-stone-200 text-slate-600'
+                  className={`chipl text-xs min-h-[36px] px-3.5 font-bold shrink-0 ${
+                    selectedZone === zone.id ? 'on' : ''
                   }`}
                 >
                   {zone.label}
@@ -516,18 +513,19 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             </div>
 
             {userCoords && (
-              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-bold text-[#0F766E] flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse" />
                 <span>Live GPS Active</span>
               </span>
             )}
           </div>
 
+
           {/* Grid of Iconic Area Guides */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
               {[1, 2, 3, 4, 5, 6].map((n) => (
-                <div key={n} className="h-96 bg-stone-200 rounded-3xl" />
+                <div key={n} className="h-96 bg-stone-200 rounded-[28px]" />
               ))}
             </div>
           ) : filteredGuides.length > 0 ? (
@@ -540,7 +538,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                   <div
                     key={col.id}
                     onClick={() => navigate(`/iconic-area/${col.slug}`)}
-                    className="group bg-white rounded-3xl overflow-hidden border border-stone-200/90 shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between cursor-pointer"
+                    className="lift bg-white rounded-[28px] overflow-hidden border border-[#EFEAE2] flex flex-col justify-between cursor-pointer"
                   >
                     <div>
                       {/* Image Banner */}
@@ -596,10 +594,10 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                       {/* Content Body */}
                       <div className="p-5 space-y-3">
                         <div>
-                          <h3 className="font-heading font-extrabold text-lg sm:text-xl text-slate-900 group-hover:text-rose-600 transition-colors">
+                          <h3 className="hd text-lg sm:text-xl font-bold text-[#14110F] group-hover:text-[#FF5A36] transition-colors">
                             {col.title}
                           </h3>
-                          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mt-1">
+                          <p className="text-xs text-[#57534E] line-clamp-2 leading-relaxed mt-1">
                             {col.description}
                           </p>
                         </div>
@@ -607,20 +605,20 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                         {/* Famous Dishes Spotlight pills */}
                         {meta?.famous_dishes && meta.famous_dishes.length > 0 && (
                           <div className="space-y-1.5 pt-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
                               Famous In This Place:
                             </span>
                             <div className="flex flex-wrap gap-1">
                               {meta.famous_dishes.slice(0, 3).map((dish, idx) => (
                                 <span
                                   key={idx}
-                                  className="text-[11px] font-semibold bg-stone-100 text-slate-800 px-2 py-0.5 rounded-lg border border-stone-200"
+                                  className="text-[11px] font-semibold bg-[#FAF8F5] text-[#14110F] px-2.5 py-0.5 rounded-lg border border-[#EFEAE2]"
                                 >
                                   {dish.name}
                                 </span>
                               ))}
                               {meta.famous_dishes.length > 3 && (
-                                <span className="text-[10px] font-bold text-orange-600 px-1.5 py-0.5">
+                                <span className="text-[10px] font-bold text-[#D8350F] px-1.5 py-0.5">
                                   +{meta.famous_dishes.length - 3} more
                                 </span>
                               )}
@@ -629,16 +627,16 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                         )}
 
                         {/* Transit & Cost Details */}
-                        <div className="pt-2 border-t border-stone-100 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                        <div className="pt-2 border-t border-[#EFEAE2] grid grid-cols-2 gap-2 text-[11px] text-[#57534E]">
                           {meta?.nearest_metro && (
                             <div className="flex items-center gap-1.5 truncate" title={meta.nearest_metro}>
-                              <Navigation className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                              <Navigation className="w-3.5 h-3.5 text-[#D8350F] shrink-0" />
                               <span className="truncate">{meta.nearest_metro.split(',')[0]}</span>
                             </div>
                           )}
                           {meta?.avg_cost_for_two && (
                             <div className="flex items-center gap-1.5">
-                              <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <DollarSign className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
                               <span>~₹{meta.avg_cost_for_two} for two</span>
                             </div>
                           )}
@@ -648,12 +646,12 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
 
                     {/* Footer CTA */}
                     <div className="p-5 pt-0">
-                      <div className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl bg-stone-50 group-hover:bg-orange-50 border border-stone-200 group-hover:border-orange-200 text-xs font-bold text-slate-700 group-hover:text-orange-600 transition-colors">
+                      <div className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl bg-[#FAF8F5] group-hover:bg-[#FFE9E2] border border-[#EFEAE2] group-hover:border-[#FF5A36]/30 text-xs font-bold text-[#14110F] group-hover:text-[#D8350F] transition-colors">
                         <span className="flex items-center gap-1.5">
                           <Compass className="w-3.5 h-3.5" />
                           <span>{counts[col.id] || 4} Verified Dining Cafes</span>
                         </span>
-                        <span className="flex items-center gap-1 text-orange-600">
+                        <span className="flex items-center gap-1 text-[#D8350F]">
                           <span>Explore Area</span>
                           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                         </span>
@@ -748,14 +746,14 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
 
                     {/* Dish Info */}
                     <div className="p-5 space-y-2">
-                      <div className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-rose-600">
+                      <div className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-[#D8350F]">
                         <MapPin className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{areaName}</span>
                       </div>
-                      <h3 className="font-heading font-extrabold text-base sm:text-lg text-slate-900 group-hover:text-orange-600 transition-colors">
+                      <h3 className="hd text-base sm:text-lg font-bold text-[#14110F] group-hover:text-[#FF5A36] transition-colors">
                         {dish.name}
                       </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                      <p className="text-xs text-[#57534E] leading-relaxed line-clamp-2">
                         {dish.why_famous}
                       </p>
                     </div>
@@ -767,7 +765,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                         e.stopPropagation();
                         navigate(`/iconic-area/${areaSlug}`);
                       }}
-                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-stone-100 hover:bg-orange-50 text-slate-800 hover:text-orange-600 text-xs font-bold border border-stone-200 hover:border-orange-200 transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FAF8F5] hover:bg-[#FFE9E2] text-[#14110F] hover:text-[#D8350F] text-xs font-bold border border-[#EFEAE2] hover:border-[#FF5A36]/30 transition-all cursor-pointer"
                     >
                       <span>Explore in {areaName} Guide</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -777,12 +775,12 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
               ))}
             </div>
           ) : (
-            <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl p-16 text-center space-y-3">
-              <Sparkles className="w-12 h-12 text-stone-400 mx-auto" />
-              <h3 className="font-heading font-extrabold text-xl text-slate-800">
+            <div className="bg-white border-2 border-dashed border-[#E7E2DA] rounded-3xl p-10 sm:p-16 text-center space-y-3">
+              <Sparkles className="w-12 h-12 text-stone-300 mx-auto" />
+              <h3 className="hd font-bold text-xl text-[#14110F]">
                 No Famous Dishes Match "{searchQuery}"
               </h3>
-              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-[#57534E] max-w-md mx-auto">
                 Try searching for "Monster Shake", "Chur Chur Naan", "Dal Bukhara", "Jalebi", or "Chaap".
               </p>
               <button
@@ -790,7 +788,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                   setSearchQuery('');
                   setSelectedCraving(null);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-xs cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#D8350F] hover:bg-[#FF5A36] text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
               >
                 Reset Search
               </button>
@@ -800,13 +798,13 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
       )}
 
       {/* ========================================================================= */}
-      {/* 4. DISH SPOTLIGHT PREVIEW MODAL */}
+      {/* 4. DISH SPOTLIGHT PREVIEW MODAL (Mobile Bottom-Sheet Compatible) */}
       {/* ========================================================================= */}
       {selectedSpotlightDish && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl overflow-hidden max-w-lg w-full shadow-2xl border border-stone-200 space-y-0 relative animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[32px] sm:rounded-3xl overflow-hidden max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-[#EFEAE2] space-y-0 relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             {/* Modal Image */}
-            <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden">
+            <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden shrink-0">
               <img
                 src={selectedSpotlightDish.dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80'}
                 alt={selectedSpotlightDish.dish.name}
@@ -836,7 +834,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                   <span className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block">
                     Counter Price
                   </span>
-                  <span className="font-heading font-black text-2xl sm:text-3xl text-amber-300">
+                  <span className="hd font-black text-2xl sm:text-3xl text-amber-300">
                     ₹{selectedSpotlightDish.dish.price}
                   </span>
                 </div>
@@ -852,26 +850,26 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             {/* Modal Body */}
             <div className="p-6 space-y-4">
               <div>
-                <h3 className="font-heading font-black text-xl sm:text-2xl text-slate-900">
+                <h3 className="hd font-black text-xl sm:text-2xl text-[#14110F]">
                   {selectedSpotlightDish.dish.name}
                 </h3>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 mt-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0F766E] mt-1">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Located in {selectedSpotlightDish.areaName}</span>
                   {typeof selectedSpotlightDish.distanceKm === 'number' && (
-                    <span className="text-slate-500 font-normal">
+                    <span className="text-[#57534E] font-normal">
                       • {formatDistance(selectedSpotlightDish.distanceKm)} from your live GPS
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200 space-y-1.5">
-                <div className="text-[11px] font-black uppercase tracking-wider text-rose-600 flex items-center gap-1">
+              <div className="bg-[#FAF8F5] rounded-2xl p-4 border border-[#EFEAE2] space-y-1.5">
+                <div className="text-[11px] font-black uppercase tracking-wider text-[#D8350F] flex items-center gap-1">
                   <Flame className="w-3.5 h-3.5" />
                   <span>Why This Dish is Famous</span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed font-normal">
                   {selectedSpotlightDish.dish.why_famous}
                 </p>
               </div>
@@ -884,7 +882,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                     setSelectedSpotlightDish(null);
                     navigate(`/iconic-area/${slug}`);
                   }}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-orange-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                  className="flex-1 py-3 px-4 rounded-2xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                 >
                   <Utensils className="w-4 h-4" />
                   <span>View Full {selectedSpotlightDish.areaName} Guide & Menus</span>
@@ -894,7 +892,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this famous ${selectedSpotlightDish.dish.name} at ${selectedSpotlightDish.dish.restaurant_name} in ${selectedSpotlightDish.areaName} for ₹${selectedSpotlightDish.dish.price} on MenuMap: ${window.location.origin}/iconic-area/${selectedSpotlightDish.areaSlug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Share</span>

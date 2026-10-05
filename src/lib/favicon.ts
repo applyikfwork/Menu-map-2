@@ -6,7 +6,7 @@
 
 export function applyBrowserFavicon(iconUrl?: string) {
   if (typeof document === 'undefined') return;
-  const targetUrl = iconUrl && iconUrl.trim().length > 0 ? iconUrl.trim() : '/favicon.svg';
+  const targetUrl = '/logo.jpg';
 
   // 1. Target all existing icon tags
   const existingIcons = document.querySelectorAll("link[rel*='icon']");
@@ -19,7 +19,7 @@ export function applyBrowserFavicon(iconUrl?: string) {
     // 2. If no icon tag exists, create a new one
     const newIcon = document.createElement('link');
     newIcon.rel = 'icon';
-    newIcon.type = targetUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/x-icon';
+    newIcon.type = 'image/jpeg';
     newIcon.href = targetUrl;
     document.head.appendChild(newIcon);
   }
