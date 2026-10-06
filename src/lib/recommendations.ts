@@ -156,20 +156,20 @@ export function getRecommendedVenues(
     // 2. Meal context match
     const haystack = [
       r.name,
-      r.description || '',
+      r.short_description || r.long_description || '',
       ...(r.cuisine_types || []),
       ...(r.known_for_dishes || []),
-      r.vibe || '',
+      ...(r.ambience_tags || []),
     ].join(' ');
 
     const matchesMeal = mealRegex.test(haystack);
     const sMeal = matchesMeal ? 1.0 : 0.45;
 
     // 3. Bayesian rating score
-    const sRating = computeBayesianRating(r.rating_avg || 4.2, r.reviews_count || 12);
+    const sRating = computeBayesianRating(r.rating_avg || 4.2, r.rating_count || 12);
 
     // 4. Feature & Verification boosts
-    const sVerified = r.is_verified ? 0.2 : 0.0;
+    const sVerified = (r.map_profile_done || r.is_active) ? 0.2 : 0.0;
     const sFeatured = r.is_featured ? 0.15 : 0.0;
 
     // Weights: Proximity 0.35, Meal Match 0.25, Rating 0.25, Verified/Featured 0.15
@@ -249,7 +249,7 @@ export function getRecommendedDishes(
       // Quality / Popularity
       const sMustTry = item.is_must_try ? 0.2 : 0.0;
       const sFeatured = item.is_featured ? 0.15 : 0.0;
-      const sRating = computeBayesianRating(rest?.rating_avg || 4.3, rest?.reviews_count || 15);
+      const sRating = computeBayesianRating(rest?.rating_avg || 4.3, rest?.rating_count || 15);
 
       const finalScore =
         0.30 * sDist +

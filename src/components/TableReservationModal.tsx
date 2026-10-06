@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, Users, Sparkles, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, Clock, Users, Sparkles, MessageSquare, CheckCircle2, ExternalLink } from 'lucide-react';
 import { Restaurant } from '../types/database';
 
 interface TableReservationModalProps {
@@ -27,17 +27,19 @@ export const TableReservationModal: React.FC<TableReservationModalProps> = ({
 
   if (!isOpen) return null;
 
+  const rawPhone = (restaurant.whatsapp_number || restaurant.phone || '').replace(/\D/g, '');
+  const hasDirectContact = Boolean(rawPhone && rawPhone.length >= 7);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!guestName.trim() || !guestPhone.trim()) return;
+    if (!guestName.trim() || !guestPhone.trim() || !hasDirectContact) return;
 
     // Target phone/WhatsApp number
-    const targetPhone = (restaurant.whatsapp_number || restaurant.phone || '919711510115').replace(/\D/g, '');
-    const formattedTarget = targetPhone.startsWith('91') ? targetPhone : `91${targetPhone.slice(-10)}`;
+    const formattedTarget = rawPhone.startsWith('91') ? rawPhone : (rawPhone.length === 10 ? `91${rawPhone}` : rawPhone);
 
     const messageLines = [
       `👋 *Hello ${restaurant.name}!*`,
-      `I would like to reserve a table via *Menu Map*:`,
+      `I would like to reserve a table via *Menu Maps*:`,
       ``,
       `📅 *Date:* ${date}`,
       `⏰ *Time:* ${time}`,
@@ -86,7 +88,39 @@ export const TableReservationModal: React.FC<TableReservationModalProps> = ({
           </button>
         </div>
 
-        {submitted ? (
+        {!hasDirectContact ? (
+          <div className="p-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+              <Clock className="w-8 h-8" />
+            </div>
+            <h4 className="font-heading font-black text-xl text-[#1C1917]">
+              Walk-in Dining Only
+            </h4>
+            <p className="text-xs text-stone-600 max-w-sm mx-auto leading-relaxed font-sans">
+              {restaurant.name} has not configured direct WhatsApp table reservations yet. You can visit them in person or check their Google Maps listing for live timings.
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              {restaurant.google_maps_url && (
+                <a
+                  href={restaurant.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3 px-6 rounded-full bg-[#1C1917] hover:bg-black text-white font-extrabold text-xs flex items-center gap-2 transition-all shadow-md"
+                >
+                  <span>View on Google Maps</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="py-3 px-6 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 font-extrabold text-xs transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : submitted ? (
           <div className="p-8 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
               <CheckCircle2 className="w-8 h-8" />

@@ -64,12 +64,47 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
       const allRestaurantDishes = await api.getMenuItems(item.restaurant_id);
       setSameRestaurantDishes(allRestaurantDishes.filter((i) => i.id !== item.id).slice(0, 4));
 
-      // Fetch similar dishes across restaurants
+      // Fetch contextual similar dishes across restaurants
       const allDishes = await api.getMenuItems();
-      const similar = allDishes
+      const currentKeywords = item.name
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, '')
+        .split(/\s+/)
+        .filter((w) => w.length > 2);
+      const isCurrentVeg = item.dietary_tags?.includes('Veg');
+
+      const scoredSimilar = allDishes
         .filter((i) => i.id !== item.id && i.restaurant_id !== item.restaurant_id)
-        .slice(0, 4);
-      setSimilarDishes(similar);
+        .map((candidate) => {
+          let score = 0;
+          const candidateName = candidate.name.toLowerCase();
+          
+          // 1. Keyword match on dish title (e.g. coffee, pizza, momo, chicken, pasta)
+          for (const kw of currentKeywords) {
+            if (candidateName.includes(kw)) score += 3.0;
+          }
+
+          // 2. Category / Cuisine alignment
+          if (candidate.category_id === item.category_id) score += 2.0;
+
+          // 3. Dietary tag alignment
+          const isCandidateVeg = candidate.dietary_tags?.includes('Veg');
+          if (isCurrentVeg === isCandidateVeg) score += 1.5;
+
+          // 4. Price bracket proximity (within 30%)
+          if (item.price > 0 && Math.abs(candidate.price - item.price) / item.price <= 0.3) {
+            score += 1.0;
+          }
+
+          // 5. Popularity boost
+          if (candidate.is_must_try) score += 0.5;
+          if (candidate.is_featured) score += 0.5;
+
+          return { candidate, score };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      setSimilarDishes(scoredSimilar.slice(0, 4).map((s) => s.candidate));
     } catch (e) {
       console.error('Error loading food detail:', e);
     } finally {
@@ -87,7 +122,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `${dish?.name} on Menu Map`,
+        title: `${dish?.name} on Menu Maps`,
         text: dish?.description,
         url: window.location.href,
       }).catch(() => {});

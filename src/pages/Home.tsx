@@ -40,6 +40,7 @@ import {
 } from '../lib/recommendations';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { useToast } from '../components/Toast';
+import { LocationPickerModal } from '../components/LocationPickerModal';
 
 const SpinWheelModal = React.lazy(() =>
   import('../components/interactive/SpinWheelModal').then((m) => ({ default: m.SpinWheelModal }))
@@ -79,6 +80,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   const [spinModalOpen, setSpinModalOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [plannerModalOpen, setPlannerModalOpen] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   // Restaurant tab filter
   const [restaurantFilter, setRestaurantFilter] = useState<'All' | 'Pure Veg' | 'Rooftop' | 'Late night'>('All');
@@ -141,7 +143,8 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       const context = detectAreaContext(coords, restaurants);
       showToast(`Location detected! Showing cafes near ${context.areaName}.`, 'success');
     } catch {
-      showToast('Location permission denied or unavailable. Showing all venues in Delhi NCR.', 'info');
+      showToast('GPS unavailable. Please pick your Delhi neighborhood below.', 'info');
+      setLocationModalOpen(true);
     } finally {
       setLocating(false);
     }
@@ -1072,8 +1075,16 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
               </button>
               <button
                 type="button"
+                onClick={() => setLocationModalOpen(true)}
+                className="btn bg-white text-[#1C1917] hover:bg-stone-50 min-h-[52px] border border-[#BCE3DA] flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <MapPin className="w-4 h-4 text-[#FF5A36]" />
+                <span>Choose Area Manually</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate('/restaurants?sort=distance')}
-                className="btn bg-white text-[#1C1917] hover:bg-stone-50 min-h-[52px] border border-[#BCE3DA]"
+                className="btn bg-[#1C1917] text-white hover:bg-black min-h-[52px]"
               >
                 Explore radius map
               </button>
@@ -1415,7 +1426,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
             </div>
 
             <div className="mt-4 text-xs font-bold text-stone-600">
-              menumap.in/your-cafe
+              menumaps.online/your-cafe
             </div>
             <div className="mt-1 text-[11px] text-[#0F766E] font-extrabold">
               0% Commission · Instant WhatsApp Cart
@@ -1532,6 +1543,12 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
           />
         )}
       </React.Suspense>
+
+      <LocationPickerModal
+        isOpen={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        activeCity={detectedAreaContext?.areaName || 'Delhi NCR'}
+      />
     </div>
   );
 };

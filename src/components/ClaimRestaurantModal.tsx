@@ -45,7 +45,6 @@ export const ClaimRestaurantModal: React.FC<ClaimRestaurantModalProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [otpSending, setOtpSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [demoCodeHint, setDemoCodeHint] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -104,14 +103,10 @@ export const ClaimRestaurantModal: React.FC<ClaimRestaurantModalProps> = ({
   const handleSendOtp = async () => {
     if (!existingClaim) return;
     setOtpSending(true);
-    setDemoCodeHint(null);
     try {
       const res = await api.sendClaimOtp(existingClaim.id);
       if (res.success) {
         showToast(`OTP sent to ${existingClaim.phone_number}! (${res.attemptsLeft} attempt(s) remaining)`, 'success');
-        if (res.demoCode) {
-          setDemoCodeHint(res.demoCode);
-        }
         await loadClaimStatus();
       } else {
         showToast(res.error || 'Failed to send OTP.', 'error');
@@ -259,12 +254,6 @@ export const ClaimRestaurantModal: React.FC<ClaimRestaurantModalProps> = ({
                     ) : (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 font-semibold text-center">
                         ⚠️ Maximum 2 OTP attempts exceeded. Please contact the administrator.
-                      </div>
-                    )}
-
-                    {demoCodeHint && (
-                      <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-mono text-center">
-                        Verification Code: <strong>{demoCodeHint}</strong>
                       </div>
                     )}
 

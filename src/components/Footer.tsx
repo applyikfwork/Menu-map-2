@@ -19,7 +19,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
             >
               <MenuMapLogo size={40} className="shrink-0" />
               <span className="hd text-3xl font-extrabold text-white">
-                Menu<span className="text-[#FF5A36]">Map</span>
+                Menu<span className="text-[#FF5A36]">Maps</span>
               </span>
             </button>
             <p className="mt-4 text-[15px] leading-relaxed text-[#A8A29E]">
@@ -149,7 +149,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
         {/* Public domain disclaimer */}
         <div className="py-6 border-b border-[#292524] text-xs text-[#78716C] leading-relaxed space-y-2">
           <p>
-            <strong className="text-stone-400">Independent Directory:</strong> MenuMap is an independent culinary directory celebrating food culture, cafes, and iconic eateries across Delhi NCR. All trademarks, photos, and brand marks belong to their respective owners. Counter prices are verified from public storefront records, community patrons, and direct submissions.
+            <strong className="text-stone-400">Independent Directory:</strong> Menu Maps is an independent culinary directory celebrating food culture, cafes, and iconic eateries across Delhi NCR. All trademarks, photos, and brand marks belong to their respective owners. Counter prices are verified from public storefront records, community patrons, and direct submissions.
           </p>
           <p>
             Restaurants do not pay listing fees or commissions. Final orders placed via WhatsApp are fulfilled directly by each restaurant at their counter rates.
@@ -158,7 +158,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
 
         {/* Bottom bar */}
         <div className="pt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-[#78716C]">
-          <span>© {new Date().getFullYear()} MenuMap. Real menus. Real prices. No markup.</span>
+          <span>© {new Date().getFullYear()} Menu Maps. Real menus. Real prices. No markup.</span>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-stone-400">
               <span className="w-2 h-2 rounded-full bg-[#2DD4BF]"></span>

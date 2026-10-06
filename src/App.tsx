@@ -22,6 +22,7 @@ const StaticPage = React.lazy(() => import('./pages/StaticPages').then((m) => ({
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
 const OwnerLogin = React.lazy(() => import('./pages/OwnerLogin').then((m) => ({ default: m.OwnerLogin })));
 const OwnerDashboard = React.lazy(() => import('./pages/OwnerDashboard').then((m) => ({ default: m.OwnerDashboard })));
+const NotFound = React.lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 import { ADMIN_EMAIL, getCurrentAdminSession, api } from './lib/supabase';
 import { getCachedUserCoordinates, detectAreaContext, GeoCoordinates } from './lib/location';
@@ -202,8 +203,8 @@ function AppContent() {
       return <RestaurantDetail slug={directSlug} navigate={navigate} />;
     }
 
-    // Fallback: 404 or redirect home
-    return <Home navigate={navigate} />;
+    // Fallback: 404
+    return <NotFound navigate={navigate} />;
   };
 
   const isAdminPage = currentPath === '/admin-secure-panel2010';

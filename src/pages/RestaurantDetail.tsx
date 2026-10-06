@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { NotFound } from './NotFound';
 import { 
   Star, 
   MapPin, 
@@ -278,13 +279,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
   if (!restaurant) {
     return (
-      <div className="max-w-md mx-auto px-6 py-24 text-center">
-        <h2 className="hd text-3xl font-extrabold text-[#1C1917]">Restaurant Not Found</h2>
-        <p className="mt-2 text-sm text-[#78716C]">The venue you are looking for does not exist or has been relocated.</p>
-        <button onClick={() => navigate('/restaurants')} className="btn mt-6 bg-[#1C1917] text-white">
-          Return to Explore
-        </button>
-      </div>
+      <NotFound
+        message={`We couldn't find a verified cafe matching "${slug}". Explore other iconic Delhi venues below.`}
+        navigate={navigate}
+      />
     );
   }
 
@@ -886,7 +884,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       {cartList.length > 0 && (
         <aside
           aria-label="Floating order tray bar"
-          className="md:hidden fixed bottom-[68px] left-3 right-3 z-30 bg-[#14110F] text-white p-3.5 rounded-2xl shadow-2xl flex items-center justify-between border border-white/10"
+          className="md:hidden fixed left-3 right-3 z-30 bg-[#14110F] text-white p-3.5 rounded-2xl shadow-2xl flex items-center justify-between border border-white/10"
+          style={{
+            bottom: 'calc(64px + max(12px, env(safe-area-inset-bottom)))',
+          }}
         >
           <div className="flex flex-col">
             <span className="text-[11px] text-stone-400 font-semibold uppercase tracking-wider">

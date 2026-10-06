@@ -16,6 +16,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_WHATSAPP_URL } from '../lib/constants';
 
 interface StaticPageProps {
   type: 'about' | 'contact' | 'terms' | 'privacy';
@@ -42,7 +43,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
       setEmail('');
       setCafeName('');
       setMessage('');
-      showToast('Thank you! Your message has been sent to the Menu Map team.', 'success');
+      showToast('Thank you! Your message has been sent to the Menu Maps team.', 'success');
     }, 600);
   };
 
@@ -208,7 +209,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             <div className="min-w-0">
               <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Cafe Partner Hotline</div>
               <a
-                href="https://wa.me/919711510115?text=Hello%20Menu%20Map%20Team!%20I%20would%20like%20to%20inquire%20about%20my%20cafe%20listing."
+                href={SUPPORT_WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-heading font-black text-base text-[#0F766E] hover:underline truncate block"

@@ -5,10 +5,12 @@ import {
   Bookmark,
   UtensilsCrossed,
   Sparkles,
-  Search
+  Search,
+  ChevronDown
 } from 'lucide-react';
 import { MenuMapLogo } from './Logo';
 import { getBookmarks } from '../lib/bookmarks';
+import { LocationPickerModal } from './LocationPickerModal';
 
 interface NavbarProps {
   currentPath: string;
@@ -19,6 +21,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'Delhi NCR' }) => {
   const [scrolled, setScrolled] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const isHome = currentPath === '/' || currentPath === '';
 
@@ -81,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
         >
           <MenuMapLogo size={38} className="shrink-0 group-hover:scale-105 transition-transform" />
           <span className={`hd text-2xl font-extrabold tracking-tight ${isHome ? 'text-white' : 'text-[#1C1917]'}`}>
-            Menu<span className="text-[#FF5A36]">Map</span>
+            Menu<span className="text-[#FF5A36]">Maps</span>
           </span>
         </button>
 
@@ -120,16 +123,20 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
 
         {/* Right Action & City Badge */}
         <div className="hidden sm:flex items-center gap-3">
-          <span
-            className={`inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full text-sm font-semibold border ${
+          <button
+            type="button"
+            onClick={() => setLocationModalOpen(true)}
+            className={`inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full text-sm font-semibold border transition-all hover:scale-102 active:scale-95 cursor-pointer ${
               isHome
-                ? 'border-white/20 text-white bg-white/5'
-                : 'border-[#E7E2DA] text-[#1C1917] bg-white'
+                ? 'border-white/20 text-white bg-white/5 hover:bg-white/10'
+                : 'border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50'
             }`}
+            title="Click to change Delhi neighborhood or recalibrate GPS"
           >
             <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse"></span>
-            {city}
-          </span>
+            <span>{city}</span>
+            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+          </button>
           <button
             onClick={() => {
               if (isHome) {
@@ -153,14 +160,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
         {/* Mobile Right Cluster (Clean Location Pill + Search Button) */}
         <div className="flex md:hidden items-center gap-2">
           <button
-            onClick={() => navigate('/restaurants?sort=distance')}
-            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors active:scale-95 ${
+            type="button"
+            onClick={() => setLocationModalOpen(true)}
+            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95 cursor-pointer ${
               isHome ? 'border-white/20 text-white bg-white/10 hover:bg-white/20' : 'border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50'
             }`}
-            title="Explore nearby venues by GPS"
+            title="Click to change Delhi neighborhood or recalibrate GPS"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse"></span>
             <span className="truncate max-w-[120px]">{city}</span>
+            <ChevronDown className="w-3 h-3 opacity-60" />
           </button>
 
           <button
@@ -174,6 +183,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           </button>
         </div>
       </div>
+
+      <LocationPickerModal
+        isOpen={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        activeCity={city}
+      />
     </header>
   );
 };

@@ -187,4 +187,97 @@ export function getNearestAreaName(coords: GeoCoordinates, restaurants: Restaura
   return context.areaName;
 }
 
+export interface PopularFoodHub {
+  id: string;
+  name: string;
+  tagline: string;
+  metroStation: string;
+  latitude: number;
+  longitude: number;
+}
+
+export const POPULAR_FOOD_HUBS: PopularFoodHub[] = [
+  {
+    id: 'north-campus-du',
+    name: 'North Campus (DU) / Hudson Lane',
+    tagline: 'Student cafes, waffle bars & Italian trattorias',
+    metroStation: 'Vishwavidyalaya / GTB Nagar',
+    latitude: 28.6942,
+    longitude: 77.2045,
+  },
+  {
+    id: 'satya-niketan',
+    name: 'Satya Niketan (South Campus)',
+    tagline: 'Budget shakes, rooftop cafes & sizzlers',
+    metroStation: 'Durgabai Deshmukh South Campus',
+    latitude: 28.5882,
+    longitude: 77.1654,
+  },
+  {
+    id: 'hauz-khas-village',
+    name: 'Hauz Khas Village & Deer Park',
+    tagline: 'Lakeside bistros, craft coffee & European dining',
+    metroStation: 'IIT Delhi / Hauz Khas',
+    latitude: 28.5494,
+    longitude: 77.1932,
+  },
+  {
+    id: 'connaught-place',
+    name: 'Connaught Place (CP)',
+    tagline: 'Colonial heritage bars, legacy bakeries & fine dining',
+    metroStation: 'Rajiv Chowk',
+    latitude: 28.6304,
+    longitude: 77.2177,
+  },
+  {
+    id: 'majnu-ka-tilla',
+    name: 'Majnu Ka Tilla (Little Tibet)',
+    tagline: 'Authentic Laphing, Tibetan momos & rooftop bakeries',
+    metroStation: 'Vidhan Sabha / GTB Nagar',
+    latitude: 28.7011,
+    longitude: 77.2294,
+  },
+  {
+    id: 'malviya-saket',
+    name: 'Malviya Nagar & Saket',
+    tagline: 'Artisan pizzerias, craft bakeries & South Indian thalis',
+    metroStation: 'Malviya Nagar / Saket',
+    latitude: 28.5245,
+    longitude: 77.2066,
+  },
+  {
+    id: 'karol-bagh-rajendra',
+    name: 'Karol Bagh & Old Rajendra Nagar',
+    tagline: 'Classic North Indian, late-night tea & Amritsari kulchas',
+    metroStation: 'Karol Bagh / Rajendra Place',
+    latitude: 28.6448,
+    longitude: 77.1895,
+  },
+  {
+    id: 'mukherjee-nagar',
+    name: 'Mukherjee Nagar & Kingsway Camp',
+    tagline: 'Thalis, chai points, roll stalls & fast bites',
+    metroStation: 'Guru Tegh Bahadur Nagar',
+    latitude: 28.7089,
+    longitude: 77.2144,
+  },
+  {
+    id: 'chandni-chowk',
+    name: 'Chandni Chowk (Old Delhi)',
+    tagline: 'Paranthe Wali Gali, legacy sweets & street delights',
+    metroStation: 'Chandni Chowk',
+    latitude: 28.6506,
+    longitude: 77.2334,
+  },
+  {
+    id: 'west-delhi',
+    name: 'West Delhi (Nangloi / Rajouri Garden)',
+    tagline: 'Local family feasts, chaat addas & sizzling platters',
+    metroStation: 'Rajouri Garden / Nangloi',
+    latitude: 28.6752,
+    longitude: 77.0588,
+  },
+];
+
+
 

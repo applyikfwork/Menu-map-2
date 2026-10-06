@@ -73,7 +73,6 @@ export function getSupabaseClient(): SupabaseClient | null {
   return supabaseInstance;
 }
 
-import { generateSeedData } from './seedData';
 import { enrichRestaurant, enrichMenuItem } from './restaurantEnricher';
 import { getSmartDishImage } from './dishImageRegistry';
 
@@ -124,7 +123,9 @@ export function recordMapDoneId(id: string, isDone: boolean): void {
 const CURRENT_DATA_VERSION = '2026-v3-delhi-ncr-full';
 const VERSION_KEY = `${STORAGE_PREFIX}data_version`;
 
-function ensureSeedInitialized() {
+let seedInitPromise: Promise<void> | null = null;
+
+export async function ensureSeedInitialized(): Promise<void> {
   try {
     const currentVer = localStorage.getItem(VERSION_KEY);
     const existing = localStorage.getItem(`${STORAGE_PREFIX}tbl_restaurants`);
@@ -134,34 +135,43 @@ function ensureSeedInitialized() {
 
     // Ensure all verified restaurants, categories, and area guides are initialized
     if (
-      currentVer !== CURRENT_DATA_VERSION ||
-      !existing ||
-      !Array.isArray(parsed) ||
-      parsed.length < 170 ||
-      colsParsed.length < 12
+      currentVer === CURRENT_DATA_VERSION &&
+      existing &&
+      Array.isArray(parsed) &&
+      parsed.length >= 170 &&
+      colsParsed.length >= 12
     ) {
-      const data = generateSeedData();
-      // Retain any existing map_profile_done progress during re-seed
-      const doneIds = new Set(getStoredMapDoneIds());
-      const seededRestaurants = data.restaurants.map((r) => ({
-        ...enrichRestaurant(r),
-        map_profile_done: Boolean(r.map_profile_done || doneIds.has(r.id)),
-      }));
-
-      localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(seededRestaurants));
-      localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_categories`, JSON.stringify(data.categories));
-      localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(data.menuItems.map((i) => enrichMenuItem(i))));
-      localStorage.setItem(`${STORAGE_PREFIX}tbl_collections`, JSON.stringify(data.collections));
-      localStorage.setItem(`${STORAGE_PREFIX}tbl_collection_items`, JSON.stringify(data.collectionItems));
-      localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
+      return;
     }
+
+    if (!seedInitPromise) {
+      seedInitPromise = (async () => {
+        const { generateSeedData } = await import('./seedData');
+        const data = generateSeedData();
+        // Retain any existing map_profile_done progress during re-seed
+        const doneIds = new Set(getStoredMapDoneIds());
+        const seededRestaurants = data.restaurants.map((r) => ({
+          ...enrichRestaurant(r),
+          map_profile_done: Boolean(r.map_profile_done || doneIds.has(r.id)),
+        }));
+
+        localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(seededRestaurants));
+        localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_categories`, JSON.stringify(data.categories));
+        localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(data.menuItems.map((i) => enrichMenuItem(i))));
+        localStorage.setItem(`${STORAGE_PREFIX}tbl_collections`, JSON.stringify(data.collections));
+        localStorage.setItem(`${STORAGE_PREFIX}tbl_collection_items`, JSON.stringify(data.collectionItems));
+        localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
+      })();
+    }
+    await seedInitPromise;
   } catch (e) {
     console.error('Error auto-seeding verified restaurant data:', e);
   }
 }
 
 function loadTable<T>(table: string): T[] {
-  ensureSeedInitialized();
+  // Trigger background seed initialization if uninitialized
+  ensureSeedInitialized().catch(console.error);
   const doneIds = new Set(getStoredMapDoneIds());
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}tbl_${table}`);
@@ -188,22 +198,6 @@ function loadTable<T>(table: string): T[] {
   } catch (e) {
     console.error(`Error loading table ${table}:`, e);
   }
-  const seed = generateSeedData();
-  if (table === 'restaurants') {
-    return seed.restaurants.map((r) => ({
-      ...enrichRestaurant(r),
-      map_profile_done: Boolean(
-        r.map_profile_done ||
-        r.google_maps_place_id === 'MAP_DONE' ||
-        r.google_maps_place_id === 'DONE' ||
-        doneIds.has(r.id)
-      ),
-    })) as unknown as T[];
-  }
-  if (table === 'menu_categories') return seed.categories as unknown as T[];
-  if (table === 'menu_items') return seed.menuItems.map((i) => enrichMenuItem(i)) as unknown as T[];
-  if (table === 'collections') return seed.collections as unknown as T[];
-  if (table === 'collection_items') return seed.collectionItems as unknown as T[];
   return [];
 }
 
@@ -279,10 +273,13 @@ export async function adminLogin(password: string, email: string): Promise<{ suc
         email: normalizedEmail,
         password: password,
       });
+
       if (error) {
-        // If user doesn't exist in Supabase auth yet, or wrong pass
-        console.warn('Supabase auth attempt:', error.message);
-        // If error is invalid login or unconfirmed, let admin know or allow local session if matched
+        // Explicit invalid credentials from Supabase
+        if (error.status === 400 || error.message.toLowerCase().includes('invalid login credentials')) {
+          return { success: false, error: 'Invalid administrator credentials.' };
+        }
+        console.warn('Supabase auth network warning:', error.message);
       } else if (data.session) {
         setAdminSession({
           email: data.user.email || ADMIN_EMAIL,
@@ -296,16 +293,16 @@ export async function adminLogin(password: string, email: string): Promise<{ suc
     }
   }
 
-  // Secure admin fallback check:
-  // Requires non-empty password of at least 6 characters
-  if (!password || password.length < 6) {
-    return { success: false, error: 'Password must be at least 6 characters long.' };
+  // Secure offline / master password fallback
+  const masterAdminPassword = (import.meta as any).env?.VITE_ADMIN_PASSWORD || 'MenumapsAdmin#2026';
+  if (password !== masterAdminPassword) {
+    return { success: false, error: 'Invalid administrator password.' };
   }
 
   // Store active admin session
   setAdminSession({
     email: ADMIN_EMAIL,
-    token: 'admin-token-' + Math.random().toString(36).substring(2),
+    token: 'admin-token-' + crypto.randomUUID(),
     loggedInAt: new Date().toISOString(),
   });
 
@@ -352,6 +349,7 @@ export async function hashPassword(plain: string): Promise<string> {
 export const api = {
   // RESTAURANTS
   async getRestaurants(activeOnly: boolean = true): Promise<Restaurant[]> {
+    await ensureSeedInitialized();
     const doneIds = new Set(getStoredMapDoneIds());
     const supabase = getSupabaseClient();
     let result: Restaurant[] = [];
@@ -404,6 +402,7 @@ export const api = {
   },
 
   async getRestaurantBySlug(slug: string): Promise<Restaurant | null> {
+    await ensureSeedInitialized();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -419,6 +418,7 @@ export const api = {
   },
 
   async getRestaurantById(id: string): Promise<Restaurant | null> {
+    await ensureSeedInitialized();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -621,6 +621,7 @@ export const api = {
 
   // MENU CATEGORIES
   async getCategories(restaurantId: string): Promise<MenuCategory[]> {
+    await ensureSeedInitialized();
     const local = loadTable<MenuCategory>('menu_categories').filter((c) => c.restaurant_id === restaurantId);
     const sortedLocal = local.sort((a, b) => a.sort_order - b.sort_order);
 
@@ -689,6 +690,7 @@ export const api = {
 
   // MENU ITEMS
   async getMenuItems(restaurantId?: string): Promise<MenuItem[]> {
+    await ensureSeedInitialized();
     const local = loadTable<MenuItem>('menu_items');
     const sortedLocal = (restaurantId ? local.filter((i) => i.restaurant_id === restaurantId) : local)
       .sort((a, b) => a.sort_order - b.sort_order);
@@ -714,6 +716,7 @@ export const api = {
   },
 
   async getMenuItemBySlug(slug: string): Promise<MenuItem | null> {
+    await ensureSeedInitialized();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -789,6 +792,7 @@ export const api = {
 
   // REVIEWS
   async getReviews(restaurantId?: string, approvedOnly: boolean = true): Promise<Review[]> {
+    await ensureSeedInitialized();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -883,6 +887,7 @@ export const api = {
 
   // COLLECTIONS & LIVING NEIGHBORHOOD GUIDES
   async getCollections(activeOnly: boolean = true): Promise<Collection[]> {
+    await ensureSeedInitialized();
     const list = loadTable<Collection>('collections');
     // Ensure all living area guides from AREA_FOOD_GUIDES are merged seamlessly
     const existingSlugs = new Set(list.map((c) => c.slug));
@@ -1604,6 +1609,7 @@ export const api = {
     const localCols = await this.getCollections(false);
     const localCollectionItems = loadTable<CollectionItem>('collection_items');
 
+    const { generateSeedData } = await import('./seedData');
     const seed = generateSeedData();
     const restaurantsToSync = localRests.length > 0 ? localRests : seed.restaurants;
     const categoriesToSync = localCats.length > 0 ? localCats : seed.categories;
@@ -1759,7 +1765,7 @@ export const api = {
     return updated;
   },
 
-  async sendClaimOtp(claimId: string): Promise<{ success: boolean; attemptsLeft: number; error?: string; demoCode?: string }> {
+  async sendClaimOtp(claimId: string): Promise<{ success: boolean; attemptsLeft: number; error?: string }> {
     const list = loadTable<RestaurantClaim>('restaurant_claims');
     const claim = list.find((c) => c.id === claimId);
     if (!claim) {
@@ -1812,10 +1818,13 @@ export const api = {
       }
     }
 
+    if ((import.meta as any).env?.DEV) {
+      console.info(`[Dev OTP] Verification code dispatched for claim ${claim.id}: ${generatedCode}`);
+    }
+
     return {
       success: true,
       attemptsLeft,
-      demoCode: generatedCode,
     };
   },
 

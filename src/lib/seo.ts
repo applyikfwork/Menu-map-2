@@ -121,9 +121,9 @@ export function buildRestaurantSchema(
       restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
     ],
     'description': restaurant.short_description || restaurant.long_description || `${restaurant.name} in ${restaurant.city}`,
-    'url': url,
-    'telephone': restaurant.phone || restaurant.whatsapp_number || '+919711510115',
-    'priceRange': restaurant.price_range || '₹₹',
+    ...(restaurant.phone || restaurant.whatsapp_number
+      ? { telephone: restaurant.phone || restaurant.whatsapp_number }
+      : {}),
     'servesCuisine': restaurant.cuisine_types || ['Multi-cuisine', 'Cafe', 'Fast Food'],
     'address': {
       '@type': 'PostalAddress',
