@@ -105,7 +105,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
     return () => {
       updatePageSeo({
-        title: 'Menu Map – Real Menus, Cafes & Restaurant Discovery',
+        title: 'Menu Maps – Real Menus, Cafes & Restaurant Discovery',
         description: 'Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.',
         canonicalUrl: window.location.origin,
       });
@@ -141,7 +141,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       const restaurantSchema = buildRestaurantSchema(rest, cats, items, pageUrl);
 
       updatePageSeo({
-        title: `${rest.name} Menu, Prices & Photos | ${rest.city} | Menu Map`,
+        title: `${rest.name} Menu, Prices & Photos | ${rest.city} | Menu Maps`,
         description: `Explore ${rest.name} in ${rest.city}. View live digital menu with verified prices, dish photos, address (${rest.address_line1}), opening timings, and 0% commission direct WhatsApp ordering.`,
         canonicalUrl: pageUrl,
         ogImage: rest.cover_image_url,
@@ -364,7 +364,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn bg-white hover:bg-stone-100 text-[#1C1917] min-h-[48px] px-6 text-sm"
+                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-6 text-sm font-bold"
               >
                 <Navigation className="w-4 h-4 mr-1.5 text-rose-500" />
                 Directions
@@ -374,20 +374,20 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 type="button"
                 onClick={handleBookmarkToggle}
                 aria-label="Save"
-                className={`btn w-12 h-12 p-0 rounded-full transition-transform active:scale-90 ${
-                  bookmarked ? 'bg-[#FF5A36] text-white' : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-md'
+                className={`btn w-12 h-12 p-0 rounded-full transition-transform active:scale-90 shadow-md border ${
+                  bookmarked ? 'bg-[#FF5A36] text-white border-[#FF5A36]' : 'bg-white text-[#1C1917] hover:bg-stone-100 border-stone-200'
                 }`}
               >
-                <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-white' : ''}`} />
+                <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-white' : 'text-[#1C1917]'}`} />
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowSocialModal(true)}
                 aria-label="Share"
-                className="btn w-12 h-12 p-0 rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition-transform active:scale-90"
+                className="btn w-12 h-12 p-0 rounded-full bg-white text-[#1C1917] hover:bg-stone-100 border border-stone-200 shadow-md transition-transform active:scale-90"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-5 h-5 text-[#1C1917]" />
               </button>
             </div>
           </div>
@@ -397,8 +397,8 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       {/* ========================================================
           2. QUICK FACT BAR (MATCHES restaurant_template.html)
       ======================================================== */}
-      <section className="max-w-[1280px] mx-auto -mt-8 px-4 sm:px-8 relative z-20">
-        <div className="bg-white border border-[#EFEAE2] rounded-[28px] shadow-[0_30px_60px_-34px_rgba(28,25,23,0.35)] p-6 sm:p-7 grid grid-cols-2 md:grid-cols-4 gap-6">
+      <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
+        <div className="bg-white border border-[#EFEAE2] rounded-[28px] shadow-sm p-6 sm:p-7 grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
             <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C]">
               Rating
@@ -442,14 +442,14 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       {/* ========================================================
           3. MAIN BODY (MENU, REVIEWS & WHATSAPP CART SIDEBAR)
       ======================================================== */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-12 pb-24 flex flex-col lg:flex-row gap-10 items-start">
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-8 pb-24 flex flex-col lg:flex-row gap-10 items-start">
         {/* Left Column: Menu Items & Reviews */}
         <div className="flex-1 min-w-0 w-full">
           {/* Category Tabs */}
           <div className="sticky top-20 z-30 py-3 bg-[#FAF8F5]/95 backdrop-blur-md flex flex-wrap gap-2 border-b border-[#E7E2DA]">
             <button
               onClick={() => setSelectedCategoryTab('all')}
-              className={`chip ${selectedCategoryTab === 'all' ? 'on' : ''} text-xs`}
+              className={`chipl ${selectedCategoryTab === 'all' ? 'on' : ''} text-xs font-bold`}
             >
               All Items ({menuItems.length})
             </button>
@@ -459,7 +459,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategoryTab(on ? 'all' : cat.name)}
-                  className={`chip ${on ? 'on' : ''} text-xs`}
+                  className={`chipl ${on ? 'on' : ''} text-xs font-bold`}
                 >
                   {cat.name}
                 </button>
@@ -559,19 +559,19 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                         )}
                       </div>
 
-                      <h3 className="hd mt-1 text-lg sm:text-xl font-bold text-[#1C1917] leading-snug">
+                      <h3 className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug">
                         {item.name}
                       </h3>
                       {item.description && (
-                        <p className="mt-1 text-xs sm:text-sm text-[#57534E] line-clamp-2 leading-relaxed">
+                        <p className="mt-1 text-xs sm:text-sm text-[#44403C] line-clamp-2 leading-relaxed">
                           {item.description}
                         </p>
                       )}
                     </div>
 
                     {/* Price & Add Button */}
-                    <div className="flex flex-col items-end gap-2.5 shrink-0 pl-2">
-                      <span className="hd text-xl sm:text-2xl font-black text-[#1C1917]">
+                    <div className="flex flex-col items-end gap-2 shrink-0 pl-2">
+                      <span className="hd text-lg sm:text-2xl font-black text-[#1C1917]">
                         ₹{item.price}
                       </span>
                       <button

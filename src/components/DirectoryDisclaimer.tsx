@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Info, Sparkles, Building2, CheckCircle2, X, Send } from 'lucide-react';
 import { useToast } from './Toast';
+import { APP_NAME } from '../lib/constants';
 
 interface DirectoryDisclaimerProps {
   restaurantName?: string;
@@ -99,7 +100,7 @@ export const DirectoryDisclaimer: React.FC<DirectoryDisclaimerProps> = ({
               <span>Public Information & Indicative Pricing Guide</span>
             </h4>
             <p>
-              Menu Map operates as an independent community culinary directory celebrating heritage eateries, local cafes, and dining spots across Delhi NCR. Menus, dish names, and pricing displayed for{' '}
+              {APP_NAME} operates as an independent community culinary directory celebrating heritage eateries, local cafes, and dining spots across Delhi NCR. Menus, dish names, and pricing displayed for{' '}
               <strong className="text-[#1C1917] font-semibold">{restaurantName || 'listed restaurants'}</strong> are compiled from publicly accessible platforms, photo archives, and recent dine-in visits.
             </p>
             <p className="text-stone-500 text-[11px]">
@@ -144,7 +145,7 @@ export const DirectoryDisclaimer: React.FC<DirectoryDisclaimerProps> = ({
                     Menu Update & Verification
                   </h3>
                   <p className="text-[11px] text-stone-500 font-sans">
-                    {restaurantName ? `Listing: ${restaurantName}` : 'Menu Map Community Directory'}
+                    {restaurantName ? `Listing: ${restaurantName}` : `${APP_NAME} Community Directory`}
                   </p>
                 </div>
               </div>

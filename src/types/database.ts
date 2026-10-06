@@ -264,3 +264,13 @@ export interface RestaurantOwnerAccount {
   last_login_at?: string;
 }
 
+export interface ContactInquiry {
+  id: string;
+  name: string;
+  email: string;
+  cafe_name?: string;
+  message: string;
+  status: 'new' | 'reviewed' | 'resolved';
+  created_at: string;
+}
+

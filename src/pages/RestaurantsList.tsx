@@ -284,16 +284,13 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
             <span>Near Me</span>
           </button>
 
-          {/* Location button */}
-          <button
-            type="button"
-            onClick={() => handleLocate(true)}
-            disabled={locating}
-            className="chipl min-h-[58px] px-5 rounded-[22px] font-bold text-sm bg-[#0F766E] text-white border-[#0F766E] hover:bg-[#0D9488]"
-          >
-            <Crosshair className={`w-4 h-4 mr-1 ${locating ? 'animate-spin' : ''}`} />
-            <span>{locating ? 'Locating…' : 'Use my location'}</span>
-          </button>
+          {/* Current Active Location Pill */}
+          <div className="inline-flex items-center gap-2 min-h-[58px] px-5 rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-bold text-[#1C1917]">
+            <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0" />
+            <span className="text-stone-400 font-medium">Area:</span>
+            <span className="text-[#D8350F] font-black">{detectedArea || 'Delhi NCR'}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
+          </div>
 
           {/* Mobile Filter Toggle */}
           <button

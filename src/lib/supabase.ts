@@ -18,10 +18,14 @@ import {
   AreaGuideMetadata,
   FamousDishSpotlight,
   FoodCrawlStop,
+  ContactInquiry,
 } from '../types/database';
 import { AREA_FOOD_GUIDES } from './areaGuidesData';
 
 export const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
+
+export const DEFAULT_SUPABASE_URL = 'https://ifurnbsejdwrrfwtvivg.supabase.co';
+export const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmdXJuYnNlamR3cnJmd3R2aXZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3Njc3NTgsImV4cCI6MjEwNjM0Mzc1OH0.lNyyKz5PxYScYYo1dvkwBfqa5RjdN_7V-HgxEdI23zU';
 
 // Config state
 const STORAGE_PREFIX = 'menumap_';
@@ -33,13 +37,13 @@ export interface SupabaseConfig {
 }
 
 export function getSavedSupabaseConfig(): SupabaseConfig {
-  const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-  const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+  const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   try {
     const saved = localStorage.getItem(CONFIG_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.url && parsed.anonKey) return parsed;
+      if (parsed.url && parsed.anonKey && parsed.url.startsWith('http')) return parsed;
     }
   } catch (e) {
     // ignore
@@ -346,10 +350,47 @@ export async function hashPassword(plain: string): Promise<string> {
 // DATA REPOSITORIES (API)
 // ----------------------------------------------------------------------------
 
+export function generateFallbackMenuItems(restaurant: Restaurant): MenuItem[] {
+  const dishes = [
+    ...(restaurant.specialty_dishes || []),
+    ...(restaurant.known_for_dishes || []),
+  ];
+  const uniqueDishes = Array.from(new Set(dishes.filter(Boolean)));
+  if (uniqueDishes.length === 0) return [];
+
+  const basePrice = Math.max(80, Math.round((restaurant.average_cost_for_two || 320) / 2.3));
+  return uniqueDishes.map((dishName, idx) => {
+    const isVeg =
+      restaurant.dietary_options?.includes('Pure Veg') ||
+      !dishName.toLowerCase().match(/\b(chicken|mutton|fish|egg|meat|prawn|boti|keema|seekh|tandoori chicken)\b/i);
+    const variance = ((idx * 27) % 70) - 20;
+    const price = Math.max(60, Math.round((basePrice + variance) / 10) * 10);
+    return enrichMenuItem({
+      id: `${restaurant.id}-syn-${idx}`,
+      restaurant_id: restaurant.id,
+      category_id: `${restaurant.id}-cat-main`,
+      name: dishName,
+      slug: slugify(dishName),
+      description: `Authentic house specialty prepared fresh daily at ${restaurant.name} counter rates.`,
+      price,
+      is_available: true,
+      is_featured: idx < 2,
+      is_must_try: idx === 0,
+      dietary_tags: isVeg ? ['Veg'] : ['Non-veg'],
+      spice_level: idx % 3 === 0 ? 2 : 1,
+      view_count: 50 + idx * 5,
+      order_count: 20 + idx * 3,
+      sort_order: idx + 1,
+      image_url: getSmartDishImage(dishName, restaurant.cuisine_types?.[0] || 'North Indian'),
+      created_at: restaurant.created_at || new Date().toISOString(),
+      updated_at: restaurant.updated_at || new Date().toISOString(),
+    });
+  });
+}
+
 export const api = {
   // RESTAURANTS
   async getRestaurants(activeOnly: boolean = true): Promise<Restaurant[]> {
-    await ensureSeedInitialized();
     const doneIds = new Set(getStoredMapDoneIds());
     const supabase = getSupabaseClient();
     let result: Restaurant[] = [];
@@ -361,6 +402,8 @@ export const api = {
         const { data, error } = await query.order('rating_avg', { ascending: false });
         if (!error && data && data.length > 0) {
           result = data as Restaurant[];
+          // Cache verified cloud restaurants to local table for offline speed
+          saveTable('restaurants', result);
         }
       } catch (e) {
         console.warn('Supabase fetch failed, falling back to local DB:', e);
@@ -370,6 +413,16 @@ export const api = {
     if (result.length === 0) {
       const list = loadTable<Restaurant>('restaurants');
       result = activeOnly ? list.filter((r) => r.is_active) : list;
+    }
+
+    if (activeOnly) {
+      // Exclude empty draft entries with no menu items and no known specialties
+      result = result.filter((r) => {
+        const hasKnown =
+          (r.known_for_dishes && r.known_for_dishes.length > 0) ||
+          (r.specialty_dishes && r.specialty_dishes.length > 0);
+        return hasKnown;
+      });
     }
 
     let updatedDoneIds = false;
@@ -621,10 +674,6 @@ export const api = {
 
   // MENU CATEGORIES
   async getCategories(restaurantId: string): Promise<MenuCategory[]> {
-    await ensureSeedInitialized();
-    const local = loadTable<MenuCategory>('menu_categories').filter((c) => c.restaurant_id === restaurantId);
-    const sortedLocal = local.sort((a, b) => a.sort_order - b.sort_order);
-
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -633,18 +682,27 @@ export const api = {
           .select('*')
           .eq('restaurant_id', restaurantId)
           .order('sort_order', { ascending: true });
-        if (!error && data) {
-          if (data.length >= sortedLocal.length && data.length > 0) {
-            return data as MenuCategory[];
-          }
-          if (data.length > 0) {
-            const cloudIds = new Set(data.map((d: any) => d.id));
-            return [...(data as MenuCategory[]), ...sortedLocal.filter((l) => !cloudIds.has(l.id))];
-          }
+        if (!error && data && data.length > 0) {
+          return data as MenuCategory[];
         }
       } catch (e) {}
     }
-    return sortedLocal;
+
+    const local = loadTable<MenuCategory>('menu_categories').filter((c) => c.restaurant_id === restaurantId);
+    if (local.length > 0) return local.sort((a, b) => a.sort_order - b.sort_order);
+
+    // Provide default category so categories are never blank
+    return [
+      {
+        id: `${restaurantId}-cat-main`,
+        restaurant_id: restaurantId,
+        name: 'House Specialties',
+        description: 'Counter signature favorites and kitchen specialties',
+        sort_order: 1,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      },
+    ];
   },
 
   async saveCategory(cat: Partial<MenuCategory>): Promise<MenuCategory> {
@@ -690,29 +748,32 @@ export const api = {
 
   // MENU ITEMS
   async getMenuItems(restaurantId?: string): Promise<MenuItem[]> {
-    await ensureSeedInitialized();
-    const local = loadTable<MenuItem>('menu_items');
-    const sortedLocal = (restaurantId ? local.filter((i) => i.restaurant_id === restaurantId) : local)
-      .sort((a, b) => a.sort_order - b.sort_order);
-
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         let query = supabase.from('menu_items').select('*');
         if (restaurantId) query = query.eq('restaurant_id', restaurantId);
         const { data, error } = await query.order('sort_order', { ascending: true });
-        if (!error && data) {
-          if (data.length >= sortedLocal.length && data.length > 0) {
-            return data as MenuItem[];
-          }
-          if (data.length > 0) {
-            const cloudIds = new Set(data.map((d: any) => d.id));
-            return [...(data as MenuItem[]), ...sortedLocal.filter((l) => !cloudIds.has(l.id))];
-          }
+        if (!error && data && data.length > 0) {
+          return data.map((i: any) => enrichMenuItem(i));
         }
       } catch (e) {}
     }
-    return sortedLocal;
+
+    if (restaurantId) {
+      const local = loadTable<MenuItem>('menu_items').filter((i) => i.restaurant_id === restaurantId);
+      if (local.length > 0) return local.sort((a, b) => a.sort_order - b.sort_order);
+
+      const rest = await api.getRestaurantById(restaurantId);
+      if (rest) {
+        const fallbacks = generateFallbackMenuItems(rest);
+        if (fallbacks.length > 0) return fallbacks.map((i) => enrichMenuItem(i));
+      }
+      return [];
+    }
+
+    const local = loadTable<MenuItem>('menu_items');
+    return local.sort((a, b) => a.sort_order - b.sort_order);
   },
 
   async getMenuItemBySlug(slug: string): Promise<MenuItem | null> {
@@ -1948,6 +2009,63 @@ export const api = {
 
     setOwnerSession(matched);
     return { success: true, owner: matched };
+  },
+
+  async submitContactInquiry(data: {
+    name: string;
+    email: string;
+    cafe_name?: string;
+    message: string;
+  }): Promise<{ success: boolean; error?: string; inquiry?: ContactInquiry }> {
+    try {
+      const inquiries = loadTable<ContactInquiry>('contact_inquiries');
+      const newInquiry: ContactInquiry = {
+        id: crypto.randomUUID(),
+        name: data.name.trim(),
+        email: data.email.trim(),
+        cafe_name: data.cafe_name?.trim() || undefined,
+        message: data.message.trim(),
+        status: 'new',
+        created_at: new Date().toISOString(),
+      };
+      inquiries.unshift(newInquiry);
+      saveTable('contact_inquiries', inquiries);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        try {
+          await supabase.from('contact_inquiries').insert(newInquiry);
+        } catch (e) {
+          console.warn('Could not save contact inquiry to Supabase:', e);
+        }
+      }
+
+      try {
+        await api.logAdminAction('Contact inquiry submitted', {
+          name: newInquiry.name,
+          email: newInquiry.email,
+          cafe_name: newInquiry.cafe_name,
+        });
+      } catch (e) {}
+
+      return { success: true, inquiry: newInquiry };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to submit inquiry' };
+    }
+  },
+
+  async getContactInquiries(): Promise<ContactInquiry[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('contact_inquiries')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data) return data;
+      } catch (e) {}
+    }
+    return loadTable<ContactInquiry>('contact_inquiries');
   },
 };
 

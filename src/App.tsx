@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -239,9 +240,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AppContent />
-      <Analytics />
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <AppContent />
+        <Analytics />
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }

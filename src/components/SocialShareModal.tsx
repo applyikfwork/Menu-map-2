@@ -40,7 +40,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   };
 
   const handleShareWhatsApp = () => {
-    const text = `Check out ${restaurant.name}'s official counter menu on Menu Map! Explore dishes, verified photos & order directly at 0% app markup: ${restaurantUrl}`;
+    const text = `Check out ${restaurant.name}'s official counter menu on Menu Maps! Explore dishes, verified photos & order directly at 0% app markup: ${restaurantUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 

@@ -68,12 +68,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isDarkTop
-          ? 'bg-[#14110F] text-white border-b border-white/5'
-          : isHome
-          ? 'bg-[#14110F]/95 backdrop-blur-md text-white border-b border-white/10 shadow-lg'
-          : 'bg-[#FAF8F5]/95 backdrop-blur-md text-[#1C1917] border-b border-[#E7E2DA] shadow-sm'
+      className={`sticky top-0 z-50 transition-all duration-300 bg-[#FAF8F5]/95 backdrop-blur-md text-[#1C1917] border-b border-[#E7E2DA] ${
+        scrolled ? 'shadow-sm' : ''
       }`}
     >
       <div className="max-w-[1280px] mx-auto px-6 sm:px-8 h-20 flex items-center justify-between gap-4">
@@ -83,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           className="flex items-center gap-2.5 text-left group transition-transform active:scale-95 cursor-pointer shrink-0"
         >
           <MenuMapLogo size={38} className="shrink-0 group-hover:scale-105 transition-transform" />
-          <span className={`hd text-2xl font-extrabold tracking-tight ${isHome ? 'text-white' : 'text-[#1C1917]'}`}>
+          <span className="hd text-2xl font-extrabold tracking-tight text-[#1C1917]">
             Menu<span className="text-[#FF5A36]">Maps</span>
           </span>
         </button>
@@ -101,11 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
                 key={link.label}
                 onClick={() => handleLinkClick(link.path)}
                 className={`font-semibold text-[15px] transition-colors relative py-1 cursor-pointer ${
-                  isHome
-                    ? isActive
-                      ? 'text-[#FF8A6B]'
-                      : 'text-[#E7E5E4] hover:text-[#FF8A6B]'
-                    : isActive
+                  isActive
                     ? 'text-[#D8350F]'
                     : 'text-[#44403C] hover:text-[#D8350F]'
                 }`}
@@ -126,11 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           <button
             type="button"
             onClick={() => setLocationModalOpen(true)}
-            className={`inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full text-sm font-semibold border transition-all hover:scale-102 active:scale-95 cursor-pointer ${
-              isHome
-                ? 'border-white/20 text-white bg-white/5 hover:bg-white/10'
-                : 'border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50'
-            }`}
+            className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full text-sm font-semibold border border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50 transition-all hover:scale-102 active:scale-95 cursor-pointer shadow-xs"
             title="Click to change Delhi neighborhood or recalibrate GPS"
           >
             <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse"></span>
@@ -138,20 +126,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
             <ChevronDown className="w-3.5 h-3.5 opacity-60" />
           </button>
           <button
-            onClick={() => {
-              if (isHome) {
-                const el = document.getElementById('owners');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                else navigate('/contact');
-              } else {
-                navigate('/contact');
-              }
-            }}
-            className={`btn min-h-[44px] px-5 text-sm font-bold shadow-sm ${
-              isHome
-                ? 'bg-white text-[#14110F] hover:bg-[#FAF8F5]'
-                : 'bg-[#1C1917] text-white hover:bg-stone-800'
-            }`}
+            onClick={() => navigate('/contact')}
+            className="btn min-h-[44px] px-5 text-sm font-bold shadow-sm bg-[#1C1917] text-white hover:bg-stone-800"
           >
             List your cafe
           </button>
@@ -162,9 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           <button
             type="button"
             onClick={() => setLocationModalOpen(true)}
-            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all active:scale-95 cursor-pointer ${
-              isHome ? 'border-white/20 text-white bg-white/10 hover:bg-white/20' : 'border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50'
-            }`}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50 transition-all active:scale-95 cursor-pointer shadow-xs"
             title="Click to change Delhi neighborhood or recalibrate GPS"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse"></span>
@@ -174,9 +148,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
 
           <button
             onClick={() => navigate('/search')}
-            className={`p-2 rounded-full transition-colors active:scale-95 ${
-              isHome ? 'text-white hover:bg-white/10' : 'text-[#1C1917] hover:bg-stone-100'
-            }`}
+            className="p-2 rounded-full transition-colors active:scale-95 text-[#1C1917] hover:bg-stone-100"
             aria-label="Search dishes and cafes"
           >
             <Search className="w-5 h-5" />

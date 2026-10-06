@@ -186,7 +186,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       if (updated) {
         setRestaurant(updated);
         setProfileData((prev) => ({ ...prev, is_open: isOpen }));
-        showToast(`Store status set to ${isOpen ? 'OPEN' : 'CLOSED'} live on Menu Map!`, 'success');
+        showToast(`Store status set to ${isOpen ? 'OPEN' : 'CLOSED'} live on Menu Maps!`, 'success');
       }
     } catch (e) {
       showToast('Failed to update status.', 'error');

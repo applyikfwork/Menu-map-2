@@ -62,7 +62,7 @@ export const OwnerLogin: React.FC<OwnerLoginProps> = ({ navigate }) => {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Menu Map</span>
+          <span>Back to Menu Maps</span>
         </button>
 
         {/* Branding */}

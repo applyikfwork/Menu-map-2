@@ -115,7 +115,7 @@ export const RestaurantQrModal: React.FC<RestaurantQrModalProps> = ({
             {/* Footer Tag */}
             <div className="pt-2 border-t border-[#EFEAE2] flex items-center justify-center gap-1.5 text-[10px] font-bold text-stone-400">
               <UtensilsCrossed className="w-3 h-3 text-[#FF5A36]" />
-              <span>Powered by Menu Map</span>
+              <span>Powered by Menu Maps</span>
             </div>
           </div>
         </div>

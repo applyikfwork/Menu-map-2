@@ -347,7 +347,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
                   const rawNum = restaurant.whatsapp_number || restaurant.phone || '';
                   const num = rawNum.replace(/\D/g, '');
                   const liveUrl = window.location.href;
-                  let msg = `🍽️ *ORDER REQUEST via Menu Map*\n`;
+                  let msg = `🍽️ *ORDER REQUEST via Menu Maps*\n`;
                   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
                   msg += `📍 *Restaurant:* ${restaurant.name}\n`;
                   msg += `🍽️ *Dish:* ${dish.name} (₹${dish.price})\n`;
@@ -356,7 +356,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
                   msg += `Hello! I would like to order:\n`;
                   msg += `• 1x *${dish.name}* (₹${dish.price})\n\n`;
                   msg += `Please confirm availability & delivery/dine-in timing.\n\n`;
-                  msg += `_Powered by Menu Map (0% App Markup)_`;
+                  msg += `_Powered by Menu Maps (0% App Markup)_`;
                   const encoded = encodeURIComponent(msg);
                   const waUrl = num
                     ? `https://wa.me/${num.startsWith('91') ? num : '91' + num}?text=${encoded}`

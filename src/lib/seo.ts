@@ -4,6 +4,8 @@
  * Canonical URLs, Googlebot Indexing directives, and Schema.org JSON-LD Structured Data
  */
 
+import { APP_NAME } from './constants';
+
 export interface SeoConfig {
   title: string;
   description: string;
@@ -83,7 +85,7 @@ export function updatePageSeo(config: SeoConfig) {
   setMetaTag('meta[property="og:description"]', 'property', 'og:description', config.description);
   setMetaTag('meta[property="og:url"]', 'property', 'og:url', canonical);
   setMetaTag('meta[property="og:type"]', 'property', 'og:type', config.ogType || 'website');
-  setMetaTag('meta[property="og:site_name"]', 'property', 'og:site_name', 'Menu Map');
+  setMetaTag('meta[property="og:site_name"]', 'property', 'og:site_name', APP_NAME);
 
   if (config.ogImage) {
     setMetaTag('meta[property="og:image"]', 'property', 'og:image', config.ogImage);

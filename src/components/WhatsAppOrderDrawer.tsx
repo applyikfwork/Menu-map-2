@@ -54,7 +54,7 @@ export const WhatsAppOrderDrawer: React.FC<WhatsAppOrderDrawerProps> = ({
     const liveUrl = window.location.href;
 
     // Build formatted message
-    let message = `🍽️ *NEW ORDER via Menu Map*\n`;
+    let message = `🍽️ *NEW ORDER via Menu Maps*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n`;
     message += `📍 *Restaurant:* ${restaurant.name}\n`;
     message += `🔗 *Live Menu:* ${liveUrl}\n`;

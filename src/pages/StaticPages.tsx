@@ -16,7 +16,8 @@ import {
   FileText
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
-import { APP_NAME, SUPPORT_EMAIL, SUPPORT_WHATSAPP_URL } from '../lib/constants';
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_WHATSAPP_URL, SUPPORT_WHATSAPP_NUMBER } from '../lib/constants';
+import { api } from '../lib/supabase';
 
 interface StaticPageProps {
   type: 'about' | 'contact' | 'terms' | 'privacy';
@@ -32,19 +33,41 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
   const [cafeName, setCafeName] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [lastSubmittedName, setLastSubmittedName] = useState('');
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      showToast('Please fill in all required fields.', 'error');
+      return;
+    }
 
-    setTimeout(() => {
+    setIsSubmitting(true);
+    try {
+      const res = await api.submitContactInquiry({
+        name,
+        email,
+        cafe_name: cafeName,
+        message,
+      });
+
+      if (res.success) {
+        setLastSubmittedName(name);
+        setSubmitted(true);
+        setName('');
+        setEmail('');
+        setCafeName('');
+        setMessage('');
+        showToast(`Thank you, ${name}! Your inquiry has been submitted to the ${APP_NAME} team.`, 'success');
+      } else {
+        showToast(res.error || 'Failed to submit inquiry. Please try again.', 'error');
+      }
+    } catch (err: any) {
+      showToast('An error occurred. Please contact us directly via WhatsApp.', 'error');
+    } finally {
       setIsSubmitting(false);
-      setName('');
-      setEmail('');
-      setCafeName('');
-      setMessage('');
-      showToast('Thank you! Your message has been sent to the Menu Maps team.', 'success');
-    }, 600);
+    }
   };
 
   // ABOUT PAGE
@@ -61,7 +84,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             Why Pay 30% More on Food Delivery Apps?
           </h1>
           <p className="text-stone-600 text-sm sm:text-base leading-relaxed font-sans">
-            Menu Map was built on a simple premise: restaurant food shouldn't cost more just because you looked it up online. We connect you directly with Delhi's local kitchens at authentic counter rates.
+            {APP_NAME} was built on a simple premise: restaurant food shouldn't cost more just because you looked it up online. We connect you directly with Delhi's local kitchens at authentic counter rates.
           </p>
         </div>
 
@@ -75,7 +98,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
               100% Counter Prices
             </h3>
             <p className="text-xs text-stone-600 leading-relaxed font-sans">
-              Unlike delivery marketplace apps that add 20% to 35% markups onto every single dish, Menu Map verifies physical counter rates so you know the real price before ordering.
+              Unlike delivery marketplace apps that add 20% to 35% markups onto every single dish, {APP_NAME} verifies physical counter rates so you know the real price before ordering.
             </p>
           </div>
 
@@ -140,7 +163,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
           </p>
 
           <p>
-            Menu Map was launched to reverse this trend. We believe every diner has the right to browse an authentic in-house menu before leaving their home or ordering a meal. We provide high-resolution dish photography, real customer favorites, and one-click direct communication via WhatsApp and phone.
+            {APP_NAME} was launched to reverse this trend. We believe every diner has the right to browse an authentic in-house menu before leaving their home or ordering a meal. We provide high-resolution dish photography, real customer favorites, and one-click direct communication via WhatsApp and phone.
           </p>
 
           <div className="pt-4 border-t border-[#EFEAE2] flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -178,7 +201,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             Contact & Cafe Support
           </h1>
           <p className="text-stone-600 text-sm sm:text-base font-sans">
-            Have questions, feedback, or want your restaurant featured on Menu Map? We'd love to hear from you.
+            Have questions, feedback, or want your restaurant featured on {APP_NAME}? We'd love to hear from you.
           </p>
         </div>
 
@@ -192,112 +215,143 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             <div className="min-w-0">
               <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Direct Email</div>
               <a
-                href="mailto:xyzapplywork@gmail.com"
+                href="mailto:support@menumaps.online"
                 className="font-heading font-black text-base text-[#1C1917] hover:text-[#FF5A36] transition-colors truncate block"
               >
-                xyzapplywork@gmail.com
+                support@menumaps.online
               </a>
               <div className="text-[11px] text-stone-500 mt-0.5">Replies within 24 hours</div>
             </div>
           </div>
 
-          {/* WhatsApp Support Card */}
+          {/* Online Helpdesk Card */}
           <div className="bg-white rounded-3xl p-6 border border-[#EFEAE2] shadow-xs flex items-center gap-4 lift">
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#0F766E] flex items-center justify-center shrink-0">
               <MessageSquare className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Cafe Partner Hotline</div>
-              <a
-                href={SUPPORT_WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-heading font-black text-base text-[#0F766E] hover:underline truncate block"
-              >
-                WhatsApp Inquiry (+91 97115 •••15)
-              </a>
-              <div className="text-[11px] text-stone-500 mt-0.5">Instant cafe partner assistance</div>
+              <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Cafe Partner Desk</div>
+              <span className="font-heading font-black text-base text-[#0F766E] truncate block">
+                Direct In-App Support
+              </span>
+              <div className="text-[11px] text-stone-500 mt-0.5">Submit the form below for instant assistance</div>
             </div>
           </div>
         </div>
 
-        {/* Message Form */}
+        {/* Message Form / Success Confirmation */}
         <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#EFEAE2] shadow-xs space-y-6">
-          <div>
-            <h3 className="font-heading font-black text-2xl text-[#1C1917]">
-              Send Us a Message
-            </h3>
-            <p className="text-xs text-stone-500 font-sans mt-1">
-              Whether you are a diner with a tip, a food creator, or a restaurant manager.
-            </p>
-          </div>
-
-          <form onSubmit={handleContactSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
-                  Your Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
-                  className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
-                />
+          {submitted ? (
+            <div className="py-8 text-center space-y-5 animate-in fade-in zoom-in duration-300">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#0F766E] mx-auto flex items-center justify-center shadow-inner">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <div className="space-y-2 max-w-md mx-auto">
+                <h3 className="font-heading font-black text-2xl text-[#1C1917]">
+                  Inquiry Received!
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-600 font-sans leading-relaxed">
+                  Thank you, <strong className="text-[#1C1917]">{lastSubmittedName}</strong>. Your message has been safely recorded in our editorial dispatch vault. A {APP_NAME} coordinator will get back to you within 24 hours.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
-                />
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a
+                  href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi Menu Maps Team, I just submitted an inquiry from ${lastSubmittedName} on menumaps.online.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold px-6 py-3 rounded-full flex items-center gap-2 shadow-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Immediate WhatsApp Escalation</span>
+                </a>
+                <button
+                  onClick={() => setSubmitted(false)}
+                  className="btn bg-stone-100 hover:bg-stone-200 text-[#1C1917] text-xs font-bold px-6 py-3 rounded-full"
+                >
+                  <span>Send Another Inquiry</span>
+                </button>
               </div>
             </div>
+          ) : (
+            <>
+              <div>
+                <h3 className="font-heading font-black text-2xl text-[#1C1917]">
+                  Send Us a Message
+                </h3>
+                <p className="text-xs text-stone-500 font-sans mt-1">
+                  Whether you are a diner with a tip, a food creator, or a restaurant manager.
+                </p>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Restaurant / Cafe Name (Optional)
-              </label>
-              <input
-                type="text"
-                value={cafeName}
-                onChange={(e) => setCafeName(e.target.value)}
-                placeholder="e.g. The Blue Bistro, Majnu Ka Tila"
-                className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
-              />
-            </div>
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Your Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
+                    />
+                  </div>
 
-            <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Message / Inquiry *
-              </label>
-              <textarea
-                required
-                rows={4}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Share your feedback, correction request, or cafe listing details..."
-                className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
-              />
-            </div>
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
+                    />
+                  </div>
+                </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 rounded-full bg-[#1C1917] hover:bg-black text-white font-extrabold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Sending Message...' : 'Send Message to Team'}
-            </button>
-          </form>
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Restaurant / Cafe Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={cafeName}
+                    onChange={(e) => setCafeName(e.target.value)}
+                    placeholder="e.g. The Blue Bistro, Majnu Ka Tila"
+                    className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Message / Inquiry *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Share your feedback, correction request, or cafe listing details..."
+                    className="w-full px-4 py-2.5 bg-[#FAF8F5] border border-[#EFEAE2] rounded-2xl text-xs font-medium focus:outline-hidden focus:border-[#FF5A36] text-[#1C1917]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 rounded-full bg-[#1C1917] hover:bg-black text-white font-extrabold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Sending Message...' : 'Send Message to Team'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     );
@@ -317,7 +371,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
           {isTerms ? 'Terms of Service' : 'Privacy Policy'}
         </h1>
         <p className="text-xs text-stone-400 font-sans">
-          Last revised: October 2026 • Menu Map Independent Food Transparency Directory
+          Last revised: October 2026 • {APP_NAME} Independent Food Transparency Directory
         </p>
       </div>
 
@@ -329,7 +383,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             1. Overview & Core Mission
           </h3>
           <p>
-            Welcome to Menu Map. By accessing or using our platform, you acknowledge and agree to these terms. Menu Map operates as an independent community directory dedicated to consumer price transparency, in-store counter menu records, and direct non-intermediated contact between diners and food venues.
+            Welcome to {APP_NAME}. By accessing or using our platform, you acknowledge and agree to these terms. {APP_NAME} operates as an independent community directory dedicated to consumer price transparency, in-store counter menu records, and direct non-intermediated contact between diners and food venues.
           </p>
         </section>
 
@@ -338,7 +392,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             2. Offline-First Privacy & Zero Ad Tracking
           </h3>
           <p>
-            We respect your privacy unconditionally. Menu Map does not sell, rent, or monetize personal user data. Your saved cafes, favorite dishes, and food trails are stored purely in your own browser's local storage (Offline Vault). We do not require mandatory registration for public menu exploration.
+            We respect your privacy unconditionally. {APP_NAME} does not sell, rent, or monetize personal user data. Your saved cafes, favorite dishes, and food trails are stored purely in your own browser's local storage (Offline Vault). We do not require mandatory registration for public menu exploration.
           </p>
           <p>
             When you request GPS coordinates via the Nearby hub, your coordinates are processed strictly inside your device's browser to compute mathematical distances (Haversine formula) to nearby restaurants.
@@ -350,7 +404,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             3. Menu Accuracy & Indicative Counter Pricing
           </h3>
           <p>
-            Menu items, photographs, spice levels, and pricing data displayed on Menu Map reflect in-store physical menus and direct verified cafe submissions. While we endeavor to keep all information updated and accurate:
+            Menu items, photographs, spice levels, and pricing data displayed on {APP_NAME} reflect in-store physical menus and direct verified cafe submissions. While we endeavor to keep all information updated and accurate:
           </p>
           <ul className="list-disc pl-5 space-y-1 text-stone-600 text-xs">
             <li>Prices are indicative counter rates subject to seasonal updates and statutory local taxes (e.g. GST).</li>
@@ -364,7 +418,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             4. Direct WhatsApp Connect & 0% Commissions
           </h3>
           <p>
-            Menu Map acts solely as a discovery conduit. Orders initiated via our WhatsApp drawer are transmitted directly to the restaurant's registered telephone line. Menu Map charges zero marketplace fees, handles no payments, and does not retain consumer banking details.
+            {APP_NAME} acts solely as a discovery conduit. Orders initiated via our WhatsApp drawer are transmitted directly to the restaurant's registered telephone line. {APP_NAME} charges zero marketplace fees, handles no payments, and does not retain consumer banking details.
           </p>
         </section>
 
@@ -374,8 +428,8 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
           </h3>
           <p>
             For any rights requests, copyright notices, or directory corrections, please contact our team at{' '}
-            <a href="mailto:xyzapplywork@gmail.com" className="text-[#D8350F] font-bold hover:underline">
-              xyzapplywork@gmail.com
+            <a href="mailto:support@menumaps.online" className="text-[#D8350F] font-bold hover:underline">
+              support@menumaps.online
             </a>.
           </p>
         </section>
@@ -388,7 +442,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
           >
             ← Return to Home
           </button>
-          <span>Menu Map Transparency Initiative</span>
+          <span>{APP_NAME} Transparency Initiative</span>
         </div>
       </div>
     </div>

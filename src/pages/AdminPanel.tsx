@@ -745,7 +745,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
     const normalizedEmail = loginEmail.trim().toLowerCase();
     if (normalizedEmail !== ADMIN_EMAIL) {
       setLoginLoading(false);
-      setLoginError(`Unauthorized: Only the designated admin account (${ADMIN_EMAIL}) is permitted.`);
+      setLoginError('Unauthorized: Access restricted to authorized platform administrators only.');
       showToast('Unauthorized access. Redirecting...', 'error');
       setTimeout(() => navigate('/'), 2000);
       return;
@@ -1216,12 +1216,9 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="xyzapplywork@gmail.com"
+                placeholder="Enter authorized admin email"
                 className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
               />
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Required account: <strong className="text-slate-600">{ADMIN_EMAIL}</strong>
-              </span>
             </div>
 
             <div>
@@ -1279,7 +1276,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
             </div>
             <div>
               <span className="font-heading font-extrabold text-base tracking-tight text-white">
-                Menu Map Admin
+                Menu Maps Admin
               </span>
               <span className="hidden sm:inline-block ml-2 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">
                 {ADMIN_EMAIL}
