@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   MapPin, 
@@ -8,7 +9,7 @@ import {
   ChevronRight, 
   Search, 
   Compass, 
-  Navigation,
+  Navigation, 
   Train,
   CheckCircle2
 } from 'lucide-react';
@@ -38,10 +39,16 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   activeCity = 'Delhi NCR',
 }) => {
   const { showToast } = useToast();
+  const [mounted, setMounted] = useState(false);
   const [locating, setLocating] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Ensure portal target document.body is ready
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prevent background body scrolling when modal is open
   useEffect(() => {
@@ -123,7 +130,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     return results;
   }, [searchFilter, selectedZone, userCoords]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSelectLocation = (loc: DelhiLocation) => {
     const coords = {
@@ -152,9 +159,19 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-hidden"
+      className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-hidden"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 999999,
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -431,6 +448,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

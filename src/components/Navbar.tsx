@@ -67,11 +67,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
   const isDarkTop = isHome && !scrolled;
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 bg-[#FAF8F5]/95 backdrop-blur-md text-[#1C1917] border-b border-[#E7E2DA] ${
-        scrolled ? 'shadow-sm' : ''
-      }`}
-    >
+    <>
+      <header
+        className={`sticky top-0 z-50 transition-all duration-300 bg-[#FAF8F5]/95 backdrop-blur-md text-[#1C1917] border-b border-[#E7E2DA] ${
+          scrolled ? 'shadow-sm' : ''
+        }`}
+      >
       <div className="max-w-[1280px] mx-auto px-6 sm:px-8 h-20 flex items-center justify-between gap-4">
         {/* Logo */}
         <button
@@ -155,12 +156,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           </button>
         </div>
       </div>
-
-      <LocationPickerModal
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-        activeCity={city}
-      />
     </header>
+
+    <LocationPickerModal
+      isOpen={locationModalOpen}
+      onClose={() => setLocationModalOpen(false)}
+      activeCity={city}
+    />
+  </>
   );
 };
