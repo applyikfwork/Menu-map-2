@@ -1,4 +1,13 @@
 import { Restaurant } from '../types/database';
+import { 
+  DELHI_LOCATIONS, 
+  DelhiLocation, 
+  DELHI_ZONES, 
+  DelhiZoneInfo 
+} from './delhiLocationsData';
+
+export { DELHI_LOCATIONS, DELHI_ZONES };
+export type { DelhiLocation, DelhiZoneInfo };
 
 export interface GeoCoordinates {
   latitude: number;
@@ -89,83 +98,69 @@ export interface DetectedAreaInfo {
   isHeritage: boolean;
   isCentralDelhi: boolean;
   isWestDelhi: boolean;
+  isNorthWestDelhi: boolean;
+  isSouthDelhi: boolean;
+  isEastDelhi: boolean;
+  nearestMetro?: string;
+  zone?: string;
   closestRestaurant?: Restaurant;
+  closestLocation?: DelhiLocation;
 }
 
 /**
- * Intelligently analyzes user coordinates relative to verified venues and landmarks.
- * Accurately detects whether the user is in Nangloi, North Campus DU, Connaught Place,
- * Old Delhi, Saket, etc., without false positives.
+ * High-accuracy multi-tier Delhi reverse geospatial detection engine.
+ * Matches device coordinates against the 60+ Delhi location network and live restaurant venues.
  */
-export function detectAreaContext(coords: GeoCoordinates, restaurants: Restaurant[]): DetectedAreaInfo {
-  let closestDist = Infinity;
+export function detectAreaContext(coords: GeoCoordinates, restaurants: Restaurant[] = []): DetectedAreaInfo {
+  // 1. Find nearest Delhi Location from comprehensive dataset
+  let closestLocDist = Infinity;
+  let closestLoc: DelhiLocation = DELHI_LOCATIONS[0];
+
+  for (const loc of DELHI_LOCATIONS) {
+    const dist = calculateDistanceKm(coords.latitude, coords.longitude, loc.latitude, loc.longitude);
+    if (dist < closestLocDist) {
+      closestLocDist = dist;
+      closestLoc = loc;
+    }
+  }
+
+  // 2. Find closest restaurant in live database
+  let closestRestDist = Infinity;
   let closestRest: Restaurant | null = null;
 
   for (const r of restaurants) {
     if (typeof r.latitude === 'number' && typeof r.longitude === 'number') {
       const d = calculateDistanceKm(coords.latitude, coords.longitude, r.latitude, r.longitude);
-      if (d < closestDist) {
-        closestDist = d;
+      if (d < closestRestDist) {
+        closestRestDist = d;
         closestRest = r;
       }
     }
   }
 
-  // Exact coordinates of DU North Campus: 28.6942, 77.2045
-  // Exact coordinates of DU South Campus: 28.5855, 77.1654
-  const distToDUNorth = calculateDistanceKm(coords.latitude, coords.longitude, 28.6942, 77.2045);
-  const distToDUSouth = calculateDistanceKm(coords.latitude, coords.longitude, 28.5855, 77.1654);
-  const isDUCampus = distToDUNorth <= 3.2 || distToDUSouth <= 2.0;
+  const isDUCampus = closestLoc.zoneKey === 'north' || /hudson|kamla|vishwavidyalaya|campus/i.test(closestLoc.id);
+  const isHeritage = closestLoc.zoneKey === 'central' && /chandni|jama|old delhi/i.test(closestLoc.id);
+  const isCentralDelhi = closestLoc.zoneKey === 'central';
+  const isWestDelhi = closestLoc.zoneKey === 'west';
+  const isNorthWestDelhi = closestLoc.zoneKey === 'northwest';
+  const isSouthDelhi = closestLoc.zoneKey === 'south';
+  const isEastDelhi = closestLoc.zoneKey === 'east';
 
-  // Exact coordinates of Old Delhi Heritage: 28.6506, 77.2334
-  // Hauz Khas Monument: 28.5494, 77.1932
-  const distToOldDelhi = calculateDistanceKm(coords.latitude, coords.longitude, 28.6506, 77.2334);
-  const distToHauzKhas = calculateDistanceKm(coords.latitude, coords.longitude, 28.5494, 77.1932);
-  const isHeritage = distToOldDelhi <= 2.8 || distToHauzKhas <= 2.0;
+  let areaName = closestLoc.name;
+  let tagline = closestLoc.tagline;
+  let headline = `Best Cafes & Verified Menus in ${closestLoc.shortName}`;
+  let subheadline = `Explore authentic counter menus, zero app markups, and direct WhatsApp orders near ${closestLoc.shortName} (Metro: ${closestLoc.metroStation}).`;
 
-  // Connaught Place: 28.6304, 77.2177
-  const distToCP = calculateDistanceKm(coords.latitude, coords.longitude, 28.6304, 77.2177);
-  const isCentralDelhi = distToCP <= 2.8;
-
-  // West Delhi (Nangloi, Paschim Vihar, Najafgarh): 28.6752, 77.0588
-  const distToWestDelhi = calculateDistanceKm(coords.latitude, coords.longitude, 28.6752, 77.0588);
-  const isWestDelhi = distToWestDelhi <= 6.5;
-
-  let areaName = 'Delhi NCR';
-  let tagline = 'Real menus. Verified prices. Dine-in discovery.';
-  let headline = 'Discover the best cafes & restaurants near you';
-  let subheadline = 'Explore authentic food menus, 0% markup counter prices, verified seating ambience, and direct WhatsApp pre-orders.';
-
-  if (closestRest && closestDist <= 25) {
-    const rawCity = closestRest.city || '';
-    const cleanCity = rawCity.replace(/,?\s*(New Delhi|Delhi)$/i, '').trim();
-    areaName = cleanCity || closestRest.landmark || 'Your Area';
-
-    if (isDUCampus) {
-      areaName = 'North Campus, DU';
-      tagline = 'Student Hub & Pocket-Friendly Hangouts';
-      headline = 'Best Cafes & Hangout Spots in North Campus (DU)';
-      subheadline = 'Explore student-budget cafes, study tables with power outlets & Wi-Fi, and late-night addas in Hudson Lane & Kamla Nagar.';
-    } else if (isHeritage) {
-      areaName = distToOldDelhi <= 2.8 ? 'Old Delhi Heritage Trail' : 'Hauz Khas Village';
-      tagline = 'Historic Recipes & Heritage Dining';
-      headline = 'Centuries of Flavour & Heritage Dishes';
-      subheadline = 'Discover legendary 100-year-old royal recipes, heritage tandoori gravies, and historic street eats.';
-    } else if (isCentralDelhi) {
-      areaName = 'Connaught Place (CP)';
-      tagline = 'Colonial Elegance & Iconic Cafes';
-      headline = 'Best Cafes & Dining in Connaught Place';
-      subheadline = 'Iconic colonial heritage cafes, business lunches, and rooftop lounges in the heart of Delhi.';
-    } else if (isWestDelhi || areaName.toLowerCase().includes('nangloi')) {
-      areaName = 'Nangloi, West Delhi';
-      tagline = 'Authentic Local Cafes & Family Feasts';
-      headline = 'Discover the Best Cafes & Restaurants in Nangloi';
-      subheadline = 'Authentic neighborhood favorites, cozy coffee spots, family dining thalis, and sizzling fast-food addas.';
-    } else {
-      headline = `Discover the Best Cafes & Dining in ${areaName}`;
-      tagline = `Live GPS: Showing verified cafes near ${areaName}`;
-      subheadline = `Explore authentic dine-in menus, verified prices, and seating ambience in ${areaName}.`;
-    }
+  // If user is far from Delhi (> 35 km)
+  if (closestLocDist > 35) {
+    areaName = 'Delhi NCR';
+    tagline = 'Real menus. Verified prices. Dine-in discovery.';
+    headline = 'Discover the best cafes & restaurants in Delhi NCR';
+    subheadline = 'Explore authentic food menus, 0% markup counter prices, verified seating ambience, and direct WhatsApp orders across Delhi NCR.';
+  } else if (closestLocDist > 12) {
+    areaName = `Delhi NCR (${closestLoc.shortName} Region)`;
+    headline = `Explore Cafes & Dining near ${closestLoc.shortName}`;
+    subheadline = `Closest verified dining hub is ${closestLoc.name} (${formatDistance(closestLocDist)} away, Metro: ${closestLoc.metroStation}).`;
   }
 
   return {
@@ -173,20 +168,75 @@ export function detectAreaContext(coords: GeoCoordinates, restaurants: Restauran
     tagline,
     headline,
     subheadline,
-    distanceKm: closestDist,
+    distanceKm: closestLocDist,
     isDUCampus,
     isHeritage,
     isCentralDelhi,
     isWestDelhi,
+    isNorthWestDelhi,
+    isSouthDelhi,
+    isEastDelhi,
+    nearestMetro: closestLoc.metroStation,
+    zone: closestLoc.zone,
     closestRestaurant: closestRest || undefined,
+    closestLocation: closestLoc,
   };
 }
 
-export function getNearestAreaName(coords: GeoCoordinates, restaurants: Restaurant[]): string {
+export function getNearestAreaName(coords: GeoCoordinates, restaurants: Restaurant[] = []): string {
   const context = detectAreaContext(coords, restaurants);
   return context.areaName;
 }
 
+/**
+ * Filter & search Delhi locations by name, metro station, metro line, landmarks, or zone
+ */
+export function searchDelhiLocations(query: string, zoneFilter: string = 'all'): DelhiLocation[] {
+  const q = query.trim().toLowerCase();
+
+  return DELHI_LOCATIONS.filter((loc) => {
+    // Zone filter check
+    if (zoneFilter !== 'all' && loc.zoneKey !== zoneFilter) {
+      return false;
+    }
+
+    if (!q) return true;
+
+    return (
+      loc.name.toLowerCase().includes(q) ||
+      loc.shortName.toLowerCase().includes(q) ||
+      loc.metroStation.toLowerCase().includes(q) ||
+      loc.metroLines.some((l) => l.toLowerCase().includes(q)) ||
+      loc.famousSpecialties.some((s) => s.toLowerCase().includes(q)) ||
+      loc.tagline.toLowerCase().includes(q) ||
+      loc.zone.toLowerCase().includes(q) ||
+      (loc.pincode && loc.pincode.includes(q)) ||
+      (loc.landmarks && loc.landmarks.some((lm) => lm.toLowerCase().includes(q)))
+    );
+  });
+}
+
+/**
+ * Find the single closest Delhi location to given coordinates
+ */
+export function getNearestDelhiLocation(coords: GeoCoordinates): { location: DelhiLocation; distanceKm: number } {
+  let closestDist = Infinity;
+  let closestLoc: DelhiLocation = DELHI_LOCATIONS[0];
+
+  for (const loc of DELHI_LOCATIONS) {
+    const dist = calculateDistanceKm(coords.latitude, coords.longitude, loc.latitude, loc.longitude);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestLoc = loc;
+    }
+  }
+
+  return { location: closestLoc, distanceKm: closestDist };
+}
+
+// ---------------------------------------------------------------------------
+// Backward Compatibility Layer: PopularFoodHub
+// ---------------------------------------------------------------------------
 export interface PopularFoodHub {
   id: string;
   name: string;
@@ -194,90 +244,17 @@ export interface PopularFoodHub {
   metroStation: string;
   latitude: number;
   longitude: number;
+  zone?: string;
+  famousSpecialties?: string[];
 }
 
-export const POPULAR_FOOD_HUBS: PopularFoodHub[] = [
-  {
-    id: 'north-campus-du',
-    name: 'North Campus (DU) / Hudson Lane',
-    tagline: 'Student cafes, waffle bars & Italian trattorias',
-    metroStation: 'Vishwavidyalaya / GTB Nagar',
-    latitude: 28.6942,
-    longitude: 77.2045,
-  },
-  {
-    id: 'satya-niketan',
-    name: 'Satya Niketan (South Campus)',
-    tagline: 'Budget shakes, rooftop cafes & sizzlers',
-    metroStation: 'Durgabai Deshmukh South Campus',
-    latitude: 28.5882,
-    longitude: 77.1654,
-  },
-  {
-    id: 'hauz-khas-village',
-    name: 'Hauz Khas Village & Deer Park',
-    tagline: 'Lakeside bistros, craft coffee & European dining',
-    metroStation: 'IIT Delhi / Hauz Khas',
-    latitude: 28.5494,
-    longitude: 77.1932,
-  },
-  {
-    id: 'connaught-place',
-    name: 'Connaught Place (CP)',
-    tagline: 'Colonial heritage bars, legacy bakeries & fine dining',
-    metroStation: 'Rajiv Chowk',
-    latitude: 28.6304,
-    longitude: 77.2177,
-  },
-  {
-    id: 'majnu-ka-tilla',
-    name: 'Majnu Ka Tilla (Little Tibet)',
-    tagline: 'Authentic Laphing, Tibetan momos & rooftop bakeries',
-    metroStation: 'Vidhan Sabha / GTB Nagar',
-    latitude: 28.7011,
-    longitude: 77.2294,
-  },
-  {
-    id: 'malviya-saket',
-    name: 'Malviya Nagar & Saket',
-    tagline: 'Artisan pizzerias, craft bakeries & South Indian thalis',
-    metroStation: 'Malviya Nagar / Saket',
-    latitude: 28.5245,
-    longitude: 77.2066,
-  },
-  {
-    id: 'karol-bagh-rajendra',
-    name: 'Karol Bagh & Old Rajendra Nagar',
-    tagline: 'Classic North Indian, late-night tea & Amritsari kulchas',
-    metroStation: 'Karol Bagh / Rajendra Place',
-    latitude: 28.6448,
-    longitude: 77.1895,
-  },
-  {
-    id: 'mukherjee-nagar',
-    name: 'Mukherjee Nagar & Kingsway Camp',
-    tagline: 'Thalis, chai points, roll stalls & fast bites',
-    metroStation: 'Guru Tegh Bahadur Nagar',
-    latitude: 28.7089,
-    longitude: 77.2144,
-  },
-  {
-    id: 'chandni-chowk',
-    name: 'Chandni Chowk (Old Delhi)',
-    tagline: 'Paranthe Wali Gali, legacy sweets & street delights',
-    metroStation: 'Chandni Chowk',
-    latitude: 28.6506,
-    longitude: 77.2334,
-  },
-  {
-    id: 'west-delhi',
-    name: 'West Delhi (Nangloi / Rajouri Garden)',
-    tagline: 'Local family feasts, chaat addas & sizzling platters',
-    metroStation: 'Rajouri Garden / Nangloi',
-    latitude: 28.6752,
-    longitude: 77.0588,
-  },
-];
-
-
-
+export const POPULAR_FOOD_HUBS: PopularFoodHub[] = DELHI_LOCATIONS.map((loc) => ({
+  id: loc.id,
+  name: loc.name,
+  tagline: loc.tagline,
+  metroStation: loc.metroStation,
+  latitude: loc.latitude,
+  longitude: loc.longitude,
+  zone: loc.zone,
+  famousSpecialties: loc.famousSpecialties,
+}));
