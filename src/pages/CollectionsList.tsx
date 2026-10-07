@@ -19,7 +19,8 @@ import {
   Utensils,
   ExternalLink,
   MessageCircle,
-  Copy
+  Copy,
+  Train
 } from 'lucide-react';
 import { Collection, AreaGuideMetadata, FamousDishSpotlight } from '../types/database';
 import { api } from '../lib/supabase';
@@ -33,6 +34,11 @@ import {
   formatDistance, 
   GeoCoordinates 
 } from '../lib/location';
+import { 
+  DELHI_LOCATIONS, 
+  DELHI_ZONES, 
+  DelhiLocation 
+} from '../lib/delhiLocationsData';
 import { useToast } from '../components/Toast';
 
 interface CollectionsListProps {
@@ -52,7 +58,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
   const [selectedZone, setSelectedZone] = useState('all');
   const [selectedCraving, setSelectedCraving] = useState<string | null>(null);
   const [savedGuideIds, setSavedGuideIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'areas' | 'famous_dishes'>('areas');
+  const [activeTab, setActiveTab] = useState<'areas' | 'delhi_hubs' | 'famous_dishes'>('areas');
 
   // Automatic Live GPS State (no manual location input required!)
   const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
@@ -224,9 +230,13 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
 
       if (selectedZone === 'all') return true;
       if (selectedZone === 'north') return meta?.zone?.toLowerCase().includes('north') || /hudson|campus/i.test(c.title);
-      if (selectedZone === 'west') return meta?.zone?.toLowerCase().includes('west') || /nangloi|rajouri/i.test(c.title);
+      if (selectedZone === 'west') return meta?.zone?.toLowerCase().includes('west') || /nangloi|rajouri|punjabi/i.test(c.title);
       if (selectedZone === 'central') return meta?.zone?.toLowerCase().includes('central') || /connaught|cp|old delhi|chandni/i.test(c.title);
-      if (selectedZone === 'south') return meta?.zone?.toLowerCase().includes('south') || /hauz khas|south/i.test(c.title);
+      if (selectedZone === 'south') return meta?.zone?.toLowerCase().includes('south') || /hauz khas|south|saket/i.test(c.title);
+      if (selectedZone === 'northwest') return meta?.zone?.toLowerCase().includes('northwest') || /nsp|pitampura|rohini|model town/i.test(c.title);
+      if (selectedZone === 'southwest') return meta?.zone?.toLowerCase().includes('southwest') || /dwarka|aerocity|vasant|janakpuri/i.test(c.title);
+      if (selectedZone === 'east') return meta?.zone?.toLowerCase().includes('east') || /laxmi|mayur|preet|trans/i.test(c.title);
+      if (selectedZone === 'ncr') return meta?.zone?.toLowerCase().includes('ncr') || /cyber|gurgaon|noida|indirapuram/i.test(c.title);
 
       return true;
     });
@@ -239,6 +249,62 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
 
     return result;
   }, [enrichedGuides, searchQuery, selectedZone, sortByDistance, userCoords]);
+
+  // Color-coded metro line styling
+  const getMetroLineBadgeClass = (line: string) => {
+    const l = line.toLowerCase();
+    if (l.includes('yellow')) return 'bg-amber-100 text-amber-900 border-amber-300';
+    if (l.includes('blue')) return 'bg-sky-100 text-sky-900 border-sky-300';
+    if (l.includes('red')) return 'bg-rose-100 text-rose-900 border-rose-300';
+    if (l.includes('pink')) return 'bg-pink-100 text-pink-900 border-pink-300';
+    if (l.includes('violet')) return 'bg-purple-100 text-purple-900 border-purple-300';
+    if (l.includes('magenta')) return 'bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300';
+    if (l.includes('airport') || l.includes('orange')) return 'bg-orange-100 text-orange-900 border-orange-300';
+    if (l.includes('green')) return 'bg-emerald-100 text-emerald-900 border-emerald-300';
+    return 'bg-stone-100 text-stone-700 border-stone-200';
+  };
+
+  // Filtered and sorted 60+ Delhi Localities & Metro Hubs
+  const filteredDelhiHubs = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return DELHI_LOCATIONS.filter((loc) => {
+      if (selectedZone !== 'all' && loc.zoneKey !== selectedZone) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        loc.name.toLowerCase().includes(q) ||
+        loc.shortName.toLowerCase().includes(q) ||
+        loc.metroStation.toLowerCase().includes(q) ||
+        loc.metroLines.some((l) => l.toLowerCase().includes(q)) ||
+        loc.famousSpecialties.some((s) => s.toLowerCase().includes(q)) ||
+        loc.tagline.toLowerCase().includes(q) ||
+        loc.zone.toLowerCase().includes(q)
+      );
+    }).map((loc) => {
+      const dist = userCoords
+        ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, loc.latitude, loc.longitude)
+        : undefined;
+      return { ...loc, distanceKm: dist };
+    }).sort((a, b) => {
+      if (sortByDistance && userCoords) {
+        return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
+      }
+      return 0;
+    });
+  }, [searchQuery, selectedZone, userCoords, sortByDistance]);
+
+  const handleSelectDelhiHub = (loc: DelhiLocation) => {
+    const coords = {
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      accuracy: 50,
+    };
+    saveCachedUserCoordinates(coords);
+    window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
+    showToast(`Switched active area to ${loc.shortName}! Showing menus.`, 'success');
+    navigate('/restaurants');
+  };
 
   // Flatten all famous dishes across all iconic areas for direct search
   const allFamousDishes = useMemo(() => {
@@ -436,9 +502,9 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             ))}
           </div>
 
-          {/* Toggle between "Neighborhood Guides" and "Famous Foods" */}
+          {/* Toggle between "Neighborhood Guides", "All 60+ Localities" and "Famous Foods" */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] inline-flex">
+            <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] inline-flex flex-wrap">
               <button
                 onClick={() => setActiveTab('areas')}
                 className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -448,7 +514,18 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                 }`}
               >
                 <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
-                <span>Neighborhoods ({filteredGuides.length})</span>
+                <span>Featured Guides ({filteredGuides.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('delhi_hubs')}
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'delhi_hubs'
+                    ? 'bg-white text-[#14110F] shadow-xs'
+                    : 'text-[#57534E] hover:text-[#14110F]'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#0F766E]" />
+                <span>All 60+ Delhi Localities</span>
               </button>
               <button
                 onClick={() => setActiveTab('famous_dishes')}
@@ -464,7 +541,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             </div>
 
             {/* Live GPS Sorting Toggle */}
-            {userCoords && activeTab === 'areas' && (
+            {userCoords && (activeTab === 'areas' || activeTab === 'delhi_hubs') && (
               <button
                 onClick={() => setSortByDistance(!sortByDistance)}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
@@ -493,21 +570,16 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
           {/* Delhi Zones Quick Filter Pills (Horizontal swipe on mobile) */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-4">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-1">
-              {[
-                { id: 'all', label: 'All Delhi NCR' },
-                { id: 'north', label: 'North Campus' },
-                { id: 'west', label: 'West Delhi' },
-                { id: 'central', label: 'Central & CP' },
-                { id: 'south', label: 'South Delhi' },
-              ].map((zone) => (
+              {DELHI_ZONES.map((zone) => (
                 <button
-                  key={zone.id}
-                  onClick={() => setSelectedZone(zone.id)}
+                  key={zone.key}
+                  onClick={() => setSelectedZone(zone.key)}
                   className={`chipl text-xs min-h-[36px] px-3.5 font-bold shrink-0 ${
-                    selectedZone === zone.id ? 'on' : ''
+                    selectedZone === zone.key ? 'on' : ''
                   }`}
                 >
-                  {zone.label}
+                  <span className="mr-1">{zone.icon}</span>
+                  <span>{zone.label}</span>
                 </button>
               ))}
             </div>
@@ -686,7 +758,139 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
       )}
 
       {/* ========================================================================= */}
-      {/* 3. TAB B: WHAT'S FAMOUS DIRECTORY (INSTANT FOOD SEARCH ACROSS ALL LOCALITIES) */}
+      {/* 2B. TAB B: ALL 60+ DELHI LOCALITIES & METRO HUBS (COMPREHENSIVE DIRECTORY) */}
+      {/* ========================================================================= */}
+      {activeTab === 'delhi_hubs' && (
+        <div className="space-y-6">
+          {/* Delhi Zones Quick Filter Pills */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-4">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-1">
+              {DELHI_ZONES.map((zone) => (
+                <button
+                  key={zone.key}
+                  onClick={() => setSelectedZone(zone.key)}
+                  className={`chipl text-xs min-h-[36px] px-3.5 font-bold shrink-0 ${
+                    selectedZone === zone.key ? 'on' : ''
+                  }`}
+                >
+                  <span className="mr-1">{zone.icon}</span>
+                  <span>{zone.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {userCoords && (
+              <span className="text-xs font-bold text-[#0F766E] flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse" />
+                <span>Sorted by GPS Proximity</span>
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDelhiHubs.map((loc) => (
+              <div
+                key={loc.id}
+                className="bg-white rounded-[28px] border border-[#EFEAE2] p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  {/* Badges */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
+                      {loc.zone}
+                    </span>
+                    {loc.isPopularHub && (
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-100 text-[#D8350F]">
+                        ★ Top Hub
+                      </span>
+                    )}
+                    {loc.pincode && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-stone-50 text-stone-500 border border-stone-200/50">
+                        PIN: {loc.pincode}
+                      </span>
+                    )}
+                    {loc.distanceKm !== undefined && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] border border-teal-100">
+                        {formatDistance(loc.distanceKm)} away
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="font-heading font-black text-lg sm:text-xl text-[#1C1917] group-hover:text-[#D8350F] transition-colors">
+                    {loc.name}
+                  </h3>
+
+                  {/* Tagline */}
+                  <p className="mt-1 text-xs text-[#57534E] leading-relaxed line-clamp-2">
+                    {loc.tagline}
+                  </p>
+
+                  {/* Metro Station & Lines */}
+                  <div className="mt-3.5 pt-3 border-t border-[#E7E2DA]/80 flex flex-wrap items-center gap-1.5 text-xs text-stone-600">
+                    <span className="inline-flex items-center gap-1 text-[#0F766E] font-bold">
+                      <Train className="w-3.5 h-3.5 shrink-0" />
+                      <span>{loc.metroStation}</span>
+                    </span>
+                    {loc.metroLines.map((line) => (
+                      <span
+                        key={line}
+                        className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded border ${getMetroLineBadgeClass(line)}`}
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Food Highlights */}
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {loc.famousSpecialties.map((dish) => (
+                      <span
+                        key={dish}
+                        className="text-[10px] font-medium bg-[#FAF8F5] text-stone-600 px-2 py-0.5 rounded-lg border border-stone-200/60"
+                      >
+                        {dish}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Footer with Avg Cost and Action */}
+                <div className="mt-5 pt-3.5 border-t border-[#E7E2DA] flex items-center justify-between gap-3">
+                  <div className="text-xs font-bold text-stone-600">
+                    <span className="text-stone-400 font-normal">Avg: </span>
+                    <span>₹{loc.avgCostForTwo} for two</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDelhiHub(loc)}
+                    className="btn bg-[#1C1917] hover:bg-[#D8350F] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
+                  >
+                    <span>View Menus</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredDelhiHubs.length === 0 && (
+            <div className="text-center py-16 bg-white rounded-3xl border border-[#E7E2DA] p-6 space-y-3">
+              <p className="text-base font-bold text-[#1C1917]">No Delhi locality found matching your filters</p>
+              <button
+                type="button"
+                onClick={() => { setSelectedZone('all'); setSearchQuery(''); }}
+                className="btn bg-[#D8350F] text-white text-xs px-4 py-2 rounded-xl font-bold cursor-pointer"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. TAB C: WHAT'S FAMOUS DIRECTORY (INSTANT FOOD SEARCH ACROSS ALL LOCALITIES) */}
       {/* ========================================================================= */}
       {activeTab === 'famous_dishes' && (
         <div className="space-y-6 animate-in fade-in duration-200">

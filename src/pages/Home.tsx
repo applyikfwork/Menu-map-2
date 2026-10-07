@@ -27,7 +27,8 @@ import {
   Award,
   Zap,
   Filter,
-  Percent
+  Percent,
+  Train
 } from 'lucide-react';
 import { Restaurant, MenuItem, Collection } from '../types/database';
 import { api } from '../lib/supabase';
@@ -41,6 +42,7 @@ import {
   formatDistance,
   POPULAR_FOOD_HUBS
 } from '../lib/location';
+import { DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
 import { 
   getDynamicMealContext,
   getRecommendedVenues,
@@ -168,16 +170,23 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   // Detected Area Context
   const detectedAreaContext = useMemo(() => {
     if (!userCoords) {
+      const defaultLoc = DELHI_LOCATIONS[0];
       return {
-        areaName: 'Hudson Lane / North Campus',
-        tagline: 'Student Hub & Pocket-Friendly Hangouts',
-        headline: 'Best Cafes & Hangout Spots in North Campus (DU)',
+        areaName: defaultLoc.name,
+        tagline: defaultLoc.tagline,
+        headline: 'Best Cafes & Verified Menus in North Campus (DU)',
         subheadline: 'Explore student-budget cafes, study tables with power outlets & Wi-Fi, and late-night addas.',
         distanceKm: 0,
         isDUCampus: true,
         isHeritage: false,
         isCentralDelhi: false,
-        isWestDelhi: false
+        isWestDelhi: false,
+        isNorthWestDelhi: false,
+        isSouthDelhi: false,
+        isEastDelhi: false,
+        nearestMetro: defaultLoc.metroStation,
+        zone: defaultLoc.zone,
+        closestLocation: defaultLoc,
       };
     }
     return detectAreaContext(userCoords, restaurants);
@@ -185,7 +194,14 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
 
   const activeAreaName = detectedAreaContext?.areaName || 'Delhi NCR';
 
-  // Find the exact single matching area guide for THIS location only
+  const activeDelhiLocation: DelhiLocation = useMemo(() => {
+    if (detectedAreaContext?.closestLocation) {
+      return detectedAreaContext.closestLocation;
+    }
+    return DELHI_LOCATIONS[0];
+  }, [detectedAreaContext]);
+
+  // Find either an exact editorial guide from AREA_FOOD_GUIDES or generate a rich guide dynamically
   const activeAreaGuide = useMemo(() => {
     const active = activeAreaName.toLowerCase();
     const match = AREA_FOOD_GUIDES.find((g) => {
@@ -199,8 +215,74 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
         active.includes(metaName.split(/[\s,/]+/)[0])
       );
     });
-    return match || AREA_FOOD_GUIDES[0];
-  }, [activeAreaName]);
+
+    if (match) return match;
+
+    // Dynamically construct a rich area guide for ANY of the 60+ Delhi locations!
+    const loc = activeDelhiLocation;
+    const dynamicGuide: Collection = {
+      id: `dynamic-${loc.id}`,
+      slug: loc.id,
+      title: `Foodie Guide to ${loc.name}`,
+      description: loc.tagline,
+      cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
+      type: 'Area-Guide',
+      is_featured: true,
+      is_active: true,
+      sort_order: 1,
+      created_at: new Date().toISOString(),
+      area_metadata: {
+        area_name: loc.name,
+        zone: loc.zone,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        nearest_metro: `${loc.metroStation} (${loc.metroLines.join(', ')})`,
+        best_time_to_visit: 'Evening 4:00 PM – 11:00 PM',
+        parking_tips: `Metro multilevel parking available near ${loc.metroStation}.`,
+        avg_cost_for_two: loc.avgCostForTwo,
+        famous_for_summary: loc.famousSpecialties.join(' · '),
+        vibe_badge: loc.tagline,
+        food_crawl_stops: [
+          {
+            stop_number: 1,
+            time: '4:30 PM',
+            type: 'Quick Bites & Snacks',
+            venue_name: `${loc.famousSpecialties[0] || 'Signature Dish'} Corner`,
+            recommended_dish: loc.famousSpecialties[0] || 'Local Favorite',
+            distance_to_next: '150 meters (2 min walk)',
+            note: `Top rated spot near ${loc.metroStation} for authentic quick bites.`
+          },
+          {
+            stop_number: 2,
+            time: '6:30 PM',
+            type: 'Cafe & Beverage Break',
+            venue_name: `Central ${loc.shortName} Cafe`,
+            recommended_dish: loc.famousSpecialties[1] || 'Cold Coffee & Shakes',
+            distance_to_next: '200 meters (3 min walk)',
+            note: 'Relaxed ambience, verified counter menu, and power sockets for casual hangouts.'
+          },
+          {
+            stop_number: 3,
+            time: '8:30 PM',
+            type: 'Dinner Feast',
+            venue_name: `${loc.shortName} Iconic Feast Spot`,
+            recommended_dish: loc.famousSpecialties[2] || 'Dinner Specialties',
+            distance_to_next: 'End of trail',
+            note: 'Famous in the colony for rich gravies, breads, and authentic Delhi street flavors.'
+          }
+        ],
+        famous_dishes: loc.famousSpecialties.map((dish, i) => ({
+          name: dish,
+          restaurant_name: `${loc.shortName} Iconic Eatery`,
+          price: Math.round((loc.avgCostForTwo / 3) + (i * 20)),
+          is_veg: true,
+          why_famous: `Quintessential ${loc.shortName} specialty loved by local residents and Delhi foodies.`,
+          counter_vs_app_savings: `Save ₹${Math.round(loc.avgCostForTwo * 0.15)} on in-store menu`
+        }))
+      }
+    };
+    return dynamicGuide;
+  }, [activeAreaName, activeDelhiLocation]);
 
   // Restaurants filtered and sorted by proximity to the active user location
   const areaRestaurants = useMemo(() => {
@@ -352,14 +434,25 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
         <div className="relative max-w-[1280px] mx-auto px-4 sm:px-8">
           {/* Universal Live Location Status Pill (Clean, Attractive, Non-redundant) */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7E2DA]/80">
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-extrabold text-[#1C1917]">
                 <MapPin className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
                 <span className="text-[#78716C] font-bold">Current Area:</span>
                 <span className="text-[#D8350F]">{activeAreaName}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
               </div>
-              <span className="text-[11px] text-[#78716C] font-semibold hidden md:inline">
+              {activeDelhiLocation?.metroStation && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-xs font-bold text-[#0F766E]">
+                  <Train className="w-3.5 h-3.5 shrink-0" />
+                  <span>{activeDelhiLocation.metroStation}</span>
+                  {activeDelhiLocation.metroLines[0] && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-white text-teal-800 font-extrabold border border-teal-200">
+                      {activeDelhiLocation.metroLines[0]}
+                    </span>
+                  )}
+                </div>
+              )}
+              <span className="text-[11px] text-[#78716C] font-semibold hidden lg:inline">
                 (Click top bar location button to switch area anytime)
               </span>
             </div>
@@ -835,10 +928,20 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                 {/* Trail Link Button */}
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button
-                    onClick={() => navigate(`/iconic-area/${activeAreaGuide.slug}`)}
+                    onClick={() => {
+                      if (activeAreaGuide.id.startsWith('dynamic-')) {
+                        navigate('/restaurants');
+                      } else {
+                        navigate(`/iconic-area/${activeAreaGuide.slug}`);
+                      }
+                    }}
                     className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white min-h-[48px] px-6 rounded-xl font-bold cursor-pointer shadow-sm flex items-center gap-2"
                   >
-                    <span>Read complete {activeAreaGuide.area_metadata?.area_name || 'neighbourhood'} guide</span>
+                    <span>
+                      {activeAreaGuide.id.startsWith('dynamic-')
+                        ? `Explore verified menus in ${activeDelhiLocation.shortName}`
+                        : `Read complete ${activeAreaGuide.area_metadata?.area_name || 'neighbourhood'} guide`}
+                    </span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                   <button

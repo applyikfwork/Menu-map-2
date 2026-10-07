@@ -73,6 +73,39 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Helper to color-code Delhi Metro Lines realistically
+  const getMetroLineBadgeClass = (line: string) => {
+    const l = line.toLowerCase();
+    if (l.includes('yellow')) return 'bg-amber-100 text-amber-900 border-amber-300';
+    if (l.includes('blue')) return 'bg-sky-100 text-sky-900 border-sky-300';
+    if (l.includes('red')) return 'bg-rose-100 text-rose-900 border-rose-300';
+    if (l.includes('pink')) return 'bg-pink-100 text-pink-900 border-pink-300';
+    if (l.includes('violet')) return 'bg-purple-100 text-purple-900 border-purple-300';
+    if (l.includes('magenta')) return 'bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300';
+    if (l.includes('airport') || l.includes('orange')) return 'bg-orange-100 text-orange-900 border-orange-300';
+    if (l.includes('green')) return 'bg-emerald-100 text-emerald-900 border-emerald-300';
+    return 'bg-stone-100 text-stone-700 border-stone-200';
+  };
+
+  // Top quick-access hubs for 1-tap switching
+  const popularHubShortcuts = useMemo(() => {
+    const desiredShortNames = [
+      'Connaught Place',
+      'Hudson Lane',
+      'NSP Pitampura',
+      'Hauz Khas',
+      'Chandni Chowk',
+      'Dwarka Sec 12',
+      'Rajouri Garden',
+      'Laxmi Nagar',
+      'Aerocity',
+      'Saket'
+    ];
+    return DELHI_LOCATIONS.filter((l) => 
+      desiredShortNames.some((name) => l.name.toLowerCase().includes(name.toLowerCase()) || l.shortName.toLowerCase().includes(name.toLowerCase()))
+    ).slice(0, 10);
+  }, []);
+
   // Filtered locations with distance calculation if coordinates cached
   const userCoords = useMemo(() => getCachedUserCoordinates(), [isOpen]);
 
@@ -180,9 +213,9 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. UNIVERSAL SEARCH INPUT */}
+        {/* 3. UNIVERSAL SEARCH INPUT & INSTANT POPULAR SHORTCUTS */}
         {/* ========================================================================= */}
-        <div className="shrink-0 px-3 sm:px-4 pt-3 pb-2 bg-[#FAF8F5]">
+        <div className="shrink-0 px-3 sm:px-4 pt-3 pb-2 bg-[#FAF8F5] space-y-2">
           <div className="relative flex items-center bg-white border border-[#E7E2DA] rounded-2xl px-3.5 py-2.5 shadow-xs focus-within:border-[#FF5A36] focus-within:ring-2 focus-within:ring-[#FF5A36]/15 transition-all">
             <Search className="w-4 h-4 text-stone-400 shrink-0 mr-2" />
             <input
@@ -202,6 +235,23 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
+
+          {/* Quick-Tap Popular Food Hubs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 shrink-0 mr-0.5">
+              Top Hubs:
+            </span>
+            {popularHubShortcuts.map((loc) => (
+              <button
+                key={loc.id}
+                type="button"
+                onClick={() => handleSelectLocation(loc)}
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-orange-50 hover:text-[#D8350F] hover:border-[#FF5A36]/40 text-[#44403C] font-bold whitespace-nowrap transition-colors shrink-0 border border-[#E7E2DA] shadow-2xs cursor-pointer"
+              >
+                {loc.shortName}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -262,13 +312,18 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
               >
                 <div className="min-w-0 flex-1">
                   {/* Top Badges */}
-                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                     <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
                       {loc.zone}
                     </span>
                     {loc.isPopularHub && (
                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-100 text-[#D8350F]">
                         ★ Top Hub
+                      </span>
+                    )}
+                    {loc.pincode && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-stone-50 text-stone-500 border border-stone-200/50">
+                        PIN: {loc.pincode}
                       </span>
                     )}
                     {dist !== undefined && (
@@ -295,19 +350,27 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                     {loc.tagline}
                   </p>
 
-                  {/* Metro Station Indicator */}
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-stone-600">
+                  {/* Metro Station & Metro Line Tags */}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-stone-600">
                     <span className="inline-flex items-center gap-1 text-[#0F766E] font-bold">
                       <Train className="w-3.5 h-3.5 shrink-0" />
                       <span>{loc.metroStation}</span>
                     </span>
+                    {loc.metroLines.map((line) => (
+                      <span
+                        key={line}
+                        className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border ${getMetroLineBadgeClass(line)}`}
+                      >
+                        {line}
+                      </span>
+                    ))}
                     <span className="text-stone-300">·</span>
                     <span className="text-stone-500">Avg ₹{loc.avgCostForTwo} for two</span>
                   </div>
 
                   {/* Food Highlights Strip */}
                   <div className="mt-2 flex flex-wrap items-center gap-1">
-                    {loc.famousSpecialties.slice(0, 3).map((dish) => (
+                    {loc.famousSpecialties.slice(0, 4).map((dish) => (
                       <span
                         key={dish}
                         className="text-[10px] font-medium bg-[#FAF8F5] text-stone-600 px-2 py-0.5 rounded-lg border border-stone-200/60"

@@ -160,7 +160,7 @@ export interface AreaGuideMetadata {
   famous_dishes?: FamousDishSpotlight[];
   best_time_to_visit: string;
   nearest_metro: string;
-  parking_tips: string;
+  parking_tips?: string;
   avg_cost_for_two: number;
   food_crawl_stops?: FoodCrawlStop[];
   sub_guide_filters?: string[];

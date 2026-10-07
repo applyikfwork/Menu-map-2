@@ -7,7 +7,8 @@ import {
   X,
   SlidersHorizontal,
   ArrowUpDown,
-  Check
+  Check,
+  Train
 } from 'lucide-react';
 import { Restaurant } from '../types/database';
 import { api } from '../lib/supabase';
@@ -18,8 +19,14 @@ import {
   GeoCoordinates,
   getCachedUserCoordinates,
   saveCachedUserCoordinates,
-  getNearestAreaName
+  getNearestAreaName,
+  detectAreaContext
 } from '../lib/location';
+import { 
+  DELHI_ZONES, 
+  DELHI_LOCATIONS, 
+  DelhiLocation 
+} from '../lib/delhiLocationsData';
 import { useToast } from '../components/Toast';
 
 interface RestaurantsListProps {
@@ -38,9 +45,11 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
   const [locating, setLocating] = useState(false);
   const [detectedArea, setDetectedArea] = useState<string>('Delhi NCR');
+  const [nearestMetro, setNearestMetro] = useState<string>('');
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedCuisine, setSelectedCuisine] = useState<string>('all');
   const [selectedPrice, setSelectedPrice] = useState<'all' | '₹' | '₹₹' | '₹₹₹'>('all');
   const [selectedDiet, setSelectedDiet] = useState<string>('all');
@@ -61,8 +70,9 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       if (e.detail) {
         setUserCoords(e.detail);
         if (restaurants.length > 0) {
-          const area = getNearestAreaName(e.detail, restaurants);
-          if (area) setDetectedArea(area);
+          const ctx = detectAreaContext(e.detail, restaurants);
+          if (ctx?.areaName) setDetectedArea(ctx.areaName);
+          if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
         }
       }
     };
@@ -76,8 +86,9 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       const data = await api.getRestaurants(true);
       setRestaurants(data);
       if (userCoords) {
-        const area = getNearestAreaName(userCoords, data);
-        if (area) setDetectedArea(area);
+        const ctx = detectAreaContext(userCoords, data);
+        if (ctx?.areaName) setDetectedArea(ctx.areaName);
+        if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
       }
     } finally {
       setLoading(false);
@@ -92,8 +103,9 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       saveCachedUserCoordinates(coords);
       window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
       if (restaurants.length > 0) {
-        const area = getNearestAreaName(coords, restaurants);
-        if (area) setDetectedArea(area);
+        const ctx = detectAreaContext(coords, restaurants);
+        if (ctx?.areaName) setDetectedArea(ctx.areaName);
+        if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
       }
       if (showNotification) {
         showToast('Live GPS location detected successfully!', 'success');
@@ -109,6 +121,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
   const clearAllFilters = () => {
     setSearchQuery('');
+    setSelectedZone('all');
     setSelectedCuisine('all');
     setSelectedPrice('all');
     setSelectedDiet('all');
@@ -171,6 +184,22 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         if (!hasAmenity) return false;
       }
 
+      // Delhi Zone filter
+      if (selectedZone !== 'all') {
+        const qz = selectedZone.toLowerCase();
+        const matchesLandmark = (r.landmark || '').toLowerCase().includes(qz);
+        const matchesCity = (r.city || '').toLowerCase().includes(qz);
+        const inZoneLocs = DELHI_LOCATIONS.filter(l => l.zoneKey === selectedZone);
+        const isNearZone = inZoneLocs.some(l => {
+          if (typeof r.latitude === 'number' && typeof r.longitude === 'number') {
+            const d = calculateDistanceKm(l.latitude, l.longitude, r.latitude, r.longitude);
+            return d <= 5.5;
+          }
+          return false;
+        });
+        if (!matchesLandmark && !matchesCity && !isNearZone) return false;
+      }
+
       // Distance radius if userCoords available
       if (userCoords && typeof r.distanceKm === 'number') {
         if (r.distanceKm > distanceRadius) return false;
@@ -184,9 +213,10 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       if (sortBy === 'distance') return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
       return 0;
     });
-  }, [restaurantsWithDistance, searchQuery, selectedCuisine, selectedPrice, selectedDiet, selectedAmenity, distanceRadius, sortBy, userCoords]);
+  }, [restaurantsWithDistance, searchQuery, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedAmenity, distanceRadius, sortBy, userCoords]);
 
   const activeFiltersCount = 
+    (selectedZone !== 'all' ? 1 : 0) +
     (selectedCuisine !== 'all' ? 1 : 0) +
     (selectedPrice !== 'all' ? 1 : 0) +
     (selectedDiet !== 'all' ? 1 : 0) +
@@ -288,7 +318,13 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
           <div className="inline-flex items-center gap-2 min-h-[58px] px-5 rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-bold text-[#1C1917]">
             <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0" />
             <span className="text-stone-400 font-medium">Area:</span>
-            <span className="text-[#D8350F] font-black">{detectedArea || 'Delhi NCR'}</span>
+            <span className="text-[#D8350F] font-black truncate max-w-[150px]">{detectedArea || 'Delhi NCR'}</span>
+            {nearestMetro && (
+              <span className="hidden xl:inline-flex items-center gap-1 text-[#0F766E] text-xs font-semibold pl-2 border-l border-stone-200">
+                <Train className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate max-w-[130px]">{nearestMetro.split('(')[0].trim()}</span>
+              </span>
+            )}
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
           </div>
 
@@ -301,6 +337,28 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
             <SlidersHorizontal className="w-4 h-4 mr-1.5" />
             Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
+        </div>
+
+        {/* Delhi Zones Quick Horizontal Strip */}
+        <div className="mt-4 pt-3 border-t border-[#E7E2DA]/70 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 shrink-0 mr-1">
+            Delhi Zones:
+          </span>
+          {DELHI_ZONES.map((zone) => (
+            <button
+              key={zone.key}
+              type="button"
+              onClick={() => setSelectedZone(zone.key)}
+              className={`text-xs px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer border ${
+                selectedZone === zone.key
+                  ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-xs'
+                  : 'bg-white text-[#57534E] border-[#E7E2DA] hover:bg-stone-50'
+              }`}
+            >
+              <span>{zone.icon}</span>
+              <span>{zone.label}</span>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -324,6 +382,29 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                 Clear all
               </button>
             )}
+          </div>
+
+          {/* Delhi Zone */}
+          <div>
+            <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+              Delhi Zone
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {DELHI_ZONES.map((z) => {
+                const on = selectedZone === z.key;
+                return (
+                  <button
+                    key={z.key}
+                    type="button"
+                    onClick={() => setSelectedZone(z.key)}
+                    className={`chipl text-xs min-h-[34px] px-3 py-1 ${on ? 'on' : ''}`}
+                  >
+                    <span>{z.icon}</span>
+                    <span>{z.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Cuisine */}
