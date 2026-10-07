@@ -363,105 +363,87 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
   }, [allFamousDishes, searchQuery, selectedCraving]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 font-sans">
       
       {/* ========================================================================= */}
-      {/* 1. AUTOMATIC LIVE GPS STATUS & HERO HEADER */}
+      {/* 1. CLEAN, MODERN HEADER (MOBILE OPTIMIZED) */}
       {/* ========================================================================= */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        
-        {/* Navigation Breadcrumb / Tagline */}
-        <div className="eyebrow text-[#D8350F]">
-          Living Area Guides
+      <div className="text-center max-w-2xl mx-auto space-y-2.5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-[#D8350F] text-xs font-black uppercase tracking-wider">
+          <Compass className="w-3.5 h-3.5" />
+          <span>Delhi Living Food Guides</span>
         </div>
 
-        <h1 className="hd text-4xl sm:text-6xl font-black text-[#1C1917] tracking-tight leading-tight">
+        <h1 className="hd text-3xl sm:text-5xl font-black text-[#1C1917] tracking-tight leading-tight">
           Iconic foodie neighbourhoods &amp; trails
         </h1>
 
-        <p className="text-base sm:text-lg text-[#57534E] leading-relaxed font-normal max-w-2xl mx-auto">
-          Pick a neighbourhood. We plan the whole evening. Real counter menus, verified prices, landmark signature dishes and walking trails.
+        <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed max-w-xl mx-auto">
+          Pick a neighbourhood. We map the whole evening: tested 3-stop food crawls, nearest metro gates, landmark signature dishes &amp; exact counter prices.
         </p>
 
         {/* ========================================================================= */}
-        {/* LIVE GPS DETECTION BANNER (100% AUTOMATIC) */}
+        {/* COMPACT LIVE GPS NEAREST BANNER (SLEEK, NON-INTRUSIVE) */}
         {/* ========================================================================= */}
-        <div className="pt-2">
-          {nearestGuide && typeof nearestGuide.distanceKm === 'number' ? (
-            <div className="bg-white border border-[#EFEAE2] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left shadow-xs">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-[#E6F4F1] text-[#0F766E] flex items-center justify-center shrink-0 shadow-xs">
-                  <MapPin className="w-5 h-5 animate-bounce" />
+        {nearestGuide && typeof nearestGuide.distanceKm === 'number' && (
+          <div className="pt-1 max-w-xl mx-auto">
+            <div className="bg-gradient-to-r from-teal-50/90 via-stone-50 to-orange-50/70 border border-teal-200/80 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 text-left shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <MapPin className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#0F766E] bg-[#E6F4F1] px-2 py-0.5 rounded-md">
-                      Live GPS Nearest
-                    </span>
-                    <span className="text-xs font-bold text-[#57534E]">
-                      {formatDistance(nearestGuide.distanceKm)} from your location
-                    </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#0F766E] uppercase tracking-wide">
+                    <span>Nearest Area</span>
+                    <span className="text-stone-300">·</span>
+                    <span>{formatDistance(nearestGuide.distanceKm)} away</span>
                   </div>
-                  <h3 className="hd font-bold text-base sm:text-lg text-[#14110F]">
-                    Closest Food District: <span className="text-[#D8350F]">{nearestGuide.area_metadata?.area_name || nearestGuide.title}</span>
+                  <h3 className="font-heading font-black text-sm text-[#1C1917] truncate">
+                    {nearestGuide.area_metadata?.area_name || nearestGuide.title}
                   </h3>
-                  <p className="text-xs text-[#57534E] line-clamp-1 italic">
-                    "{nearestGuide.area_metadata?.vibe_badge}"
-                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
+                  type="button"
                   onClick={() => navigate(`/iconic-area/${nearestGuide.slug}`)}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
                 >
-                  <span>Explore Guide</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <span>Open Guide</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
                 <button
+                  type="button"
                   onClick={handleManualLiveGpsTrigger}
                   disabled={isDetectingLocation}
-                  title="Refresh live GPS"
-                  className="p-2.5 rounded-xl bg-[#FAF8F5] hover:bg-stone-100 border border-[#E7E2DA] text-[#57534E] transition-colors cursor-pointer"
+                  title="Recalibrate GPS"
+                  className="p-1.5 rounded-xl bg-white hover:bg-stone-100 border border-[#E7E2DA] text-[#57534E] cursor-pointer"
                 >
-                  <Crosshair className={`w-4 h-4 ${isDetectingLocation ? 'animate-spin text-[#FF5A36]' : ''}`} />
+                  <Crosshair className={`w-3.5 h-3.5 ${isDetectingLocation ? 'animate-spin text-[#FF5A36]' : ''}`} />
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between text-xs text-[#57534E] border border-[#EFEAE2]">
-              <div className="flex items-center gap-2">
-                <Crosshair className="w-4 h-4 text-[#FF5A36] shrink-0" />
-                <span>Automatic live GPS is detecting your nearest Delhi NCR food district...</span>
-              </div>
-              <button
-                onClick={handleManualLiveGpsTrigger}
-                className="text-[#D8350F] font-bold hover:underline cursor-pointer shrink-0"
-              >
-                Detect Now
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* ========================================================================= */}
-        {/* VIEW MODE SWITCHER & SEARCH ENGINE */}
+        {/* COMPACT SEARCH & SEGMENTED VIEW SWITCHER */}
         {/* ========================================================================= */}
-        <div className="space-y-4 pt-2">
-          
+        <div className="pt-2 space-y-3 max-w-xl mx-auto">
           {/* Main Search Input */}
-          <div className="relative max-w-xl mx-auto">
+          <div className="relative">
             <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search what's famous (e.g. Monster Shake, Chur Chur Naan, Dal Bukhara)..."
-              className="w-full pl-11 pr-20 py-3.5 bg-white border border-[#E7E2DA] rounded-2xl text-xs sm:text-sm font-medium text-[#14110F] shadow-xs focus:outline-hidden focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 transition-all"
+              placeholder="Search colony, metro, or food (e.g. NSP, Momos, Yellow Line)..."
+              className="w-full pl-10 pr-16 py-2.5 sm:py-3 bg-white border border-[#E7E2DA] rounded-2xl text-xs sm:text-sm font-medium text-[#1C1917] shadow-2xs focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/15 outline-none transition-all"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
               >
@@ -470,95 +452,46 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             )}
           </div>
 
-          {/* Quick Craving Filters (Horizontal swipe on mobile) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-3xl mx-auto">
-            <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider shrink-0 mr-1">
-              Famous:
-            </span>
-            {[
-              { id: null, label: 'All Specialties' },
-              { id: 'shakes', label: '🥤 Monster Shakes' },
-              { id: 'naan', label: '🫓 Amritsari Naan' },
-              { id: 'dal', label: '🥘 Dal Bukhara' },
-              { id: 'momos', label: '🥟 Kurkure Momos' },
-              { id: 'jalebi', label: '🍯 Desi Ghee Jalebi' },
-              { id: 'chaap', label: '🍢 Tandoori Chaap' },
-              { id: 'nonveg', label: '🍖 Heritage Mutton' },
-            ].map((chip) => (
-              <button
-                key={chip.label}
-                onClick={() => {
-                  setSelectedCraving(chip.id);
-                  if (chip.id) setActiveTab('famous_dishes');
-                }}
-                className={`text-xs px-3 py-1.5 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                  selectedCraving === chip.id
-                    ? 'bg-[#FF5A36] text-white shadow-xs'
-                    : 'bg-white hover:bg-stone-100 text-[#44403C] border border-[#E7E2DA]'
-                }`}
-              >
-                {chip.label}
-              </button>
-            ))}
+          {/* 3-Tab Segmented View Switcher */}
+          <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] inline-flex w-full sm:w-auto justify-center">
+            <button
+              type="button"
+              onClick={() => setActiveTab('areas')}
+              className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === 'areas'
+                  ? 'bg-white text-[#1C1917] shadow-xs'
+                  : 'text-[#57534E] hover:text-[#1C1917]'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <span>Area Guides ({filteredGuides.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('delhi_hubs')}
+              className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === 'delhi_hubs'
+                  ? 'bg-white text-[#1C1917] shadow-xs'
+                  : 'text-[#57534E] hover:text-[#1C1917]'
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5 text-[#0F766E]" />
+              <span>All 60+ Localities</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('famous_dishes')}
+              className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === 'famous_dishes'
+                  ? 'bg-white text-[#1C1917] shadow-xs'
+                  : 'text-[#57534E] hover:text-[#1C1917]'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#D8350F]" />
+              <span>Famous Dishes</span>
+            </button>
           </div>
-
-          {/* Toggle between "Neighborhood Guides", "All 60+ Localities" and "Famous Foods" */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] inline-flex flex-wrap">
-              <button
-                onClick={() => setActiveTab('areas')}
-                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'areas'
-                    ? 'bg-white text-[#14110F] shadow-xs'
-                    : 'text-[#57534E] hover:text-[#14110F]'
-                }`}
-              >
-                <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
-                <span>Featured Guides ({filteredGuides.length})</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('delhi_hubs')}
-                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'delhi_hubs'
-                    ? 'bg-white text-[#14110F] shadow-xs'
-                    : 'text-[#57534E] hover:text-[#14110F]'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5 text-[#0F766E]" />
-                <span>All 60+ Delhi Localities</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('famous_dishes')}
-                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'famous_dishes'
-                    ? 'bg-white text-[#14110F] shadow-xs'
-                    : 'text-[#57534E] hover:text-[#14110F]'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#D8350F]" />
-                <span>Famous Dishes ({filteredFamousDishes.length})</span>
-              </button>
-            </div>
-
-            {/* Live GPS Sorting Toggle */}
-            {userCoords && (activeTab === 'areas' || activeTab === 'delhi_hubs') && (
-              <button
-                onClick={() => setSortByDistance(!sortByDistance)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
-                  sortByDistance
-                    ? 'bg-[#E6F4F1] text-[#0F766E] border-[#2DD4BF]/40'
-                    : 'bg-white text-[#57534E] border-[#E7E2DA] hover:bg-stone-50'
-                }`}
-                title="Toggle Live GPS distance sorting"
-              >
-                <ArrowUpDown className="w-3.5 h-3.5 text-[#0F766E]" />
-                <span>{sortByDistance ? 'GPS Distance Sort' : 'Default Order'}</span>
-              </button>
-            )}
-          </div>
-
         </div>
-
       </div>
 
       {/* ========================================================================= */}
@@ -568,27 +501,41 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
         <div className="space-y-6">
           
           {/* Delhi Zones Quick Filter Pills (Horizontal swipe on mobile) */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-4">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-1">
-              {DELHI_ZONES.map((zone) => (
-                <button
-                  key={zone.key}
-                  onClick={() => setSelectedZone(zone.key)}
-                  className={`chipl text-xs min-h-[36px] px-3.5 font-bold shrink-0 ${
-                    selectedZone === zone.key ? 'on' : ''
-                  }`}
-                >
-                  <span className="mr-1">{zone.icon}</span>
-                  <span>{zone.label}</span>
-                </button>
-              ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full py-1">
+              {DELHI_ZONES.map((zone) => {
+                const isSelected = selectedZone === zone.key;
+                return (
+                  <button
+                    key={zone.key}
+                    type="button"
+                    onClick={() => setSelectedZone(zone.key)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer border shrink-0 ${
+                      isSelected
+                        ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-xs'
+                        : 'bg-white text-[#57534E] border-[#E7E2DA] hover:border-stone-400 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span>{zone.icon}</span>
+                    <span>{zone.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {userCoords && (
-              <span className="text-xs font-bold text-[#0F766E] flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse" />
-                <span>Live GPS Active</span>
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSortByDistance(!sortByDistance)}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
+                    sortByDistance ? 'bg-teal-50 text-[#0F766E] border-teal-200' : 'bg-white text-stone-500 border-stone-200'
+                  }`}
+                >
+                  <ArrowUpDown className="w-3 h-3" />
+                  <span>{sortByDistance ? 'Sorted by Proximity' : 'Default Order'}</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -856,19 +803,29 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                 </div>
 
                 {/* Footer with Avg Cost and Action */}
-                <div className="mt-5 pt-3.5 border-t border-[#E7E2DA] flex items-center justify-between gap-3">
-                  <div className="text-xs font-bold text-stone-600">
+                <div className="mt-5 pt-3.5 border-t border-[#E7E2DA] flex items-center justify-between gap-2">
+                  <div className="text-xs font-bold text-stone-600 truncate">
                     <span className="text-stone-400 font-normal">Avg: </span>
-                    <span>₹{loc.avgCostForTwo} for two</span>
+                    <span>₹{loc.avgCostForTwo}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectDelhiHub(loc)}
-                    className="btn bg-[#1C1917] hover:bg-[#D8350F] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
-                  >
-                    <span>View Menus</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/iconic-area/${loc.id}`)}
+                      className="px-2.5 py-1.5 rounded-xl border border-stone-200 hover:border-[#D8350F] hover:text-[#D8350F] text-xs font-bold text-stone-600 bg-stone-50 transition-all cursor-pointer active:scale-95"
+                      title="Open full Food Guide & 3-Stop Trail"
+                    >
+                      Guide
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectDelhiHub(loc)}
+                      className="btn bg-[#1C1917] hover:bg-[#D8350F] text-white text-xs font-bold px-3 py-1.5 min-h-[34px] rounded-xl transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
+                    >
+                      <span>Menus</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
