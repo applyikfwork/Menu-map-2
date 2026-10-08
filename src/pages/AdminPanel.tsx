@@ -78,6 +78,7 @@ import { MenuMapLogo } from '../components/Logo';
 import { useToast } from '../components/Toast';
 import { getSmartDishImage, DISH_IMAGE_PRESETS } from '../lib/dishImageRegistry';
 import { NANGLOI_50_CAFES_SAMPLE, HUDSON_LANE_50_CAFES_SAMPLE } from '../lib/sample50Cafes';
+import { DelhiExpansionHub } from '../components/admin/DelhiExpansionHub';
 
 interface AdminPanelProps {
   navigate: (path: string) => void;
@@ -85,6 +86,7 @@ interface AdminPanelProps {
 
 export type AdminSection = 
   | 'dashboard'
+  | 'delhi_expansion'
   | 'ai_scout'
   | 'restaurants'
   | 'map_links'
@@ -1309,6 +1311,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 sm:gap-2 py-2">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+            { id: 'delhi_expansion', label: 'Delhi Coverage & Scout Hub', icon: Compass },
             { id: 'ai_scout', label: 'AI Restaurant Scout', icon: Sparkles },
             { id: 'restaurants', label: `Restaurants (${restaurants.length})`, icon: UtensilsCrossed },
             { 
@@ -1526,6 +1529,17 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
             </div>
 
           </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* DELHI EXPANSION COVERAGE MATRIX & GEMINI SCOUT HUB */}
+        {/* ================================================================ */}
+        {activeSection === 'delhi_expansion' && (
+          <DelhiExpansionHub
+            restaurants={restaurants}
+            navigate={navigate}
+            onRefreshRestaurants={loadData}
+          />
         )}
 
         {/* ================================================================ */}

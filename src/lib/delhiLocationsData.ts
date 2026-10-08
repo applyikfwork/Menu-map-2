@@ -854,4 +854,396 @@ export const DELHI_LOCATIONS: DelhiLocation[] = [
     pincode: '122002',
     landmarks: ['DLF Cyber City', 'CyberHub Amphitheatre'],
   },
+  {
+    id: 'shahpur-jat',
+    name: 'Shahpur Jat (Fashion & Indie Cafes)',
+    shortName: 'Shahpur Jat',
+    zone: 'South Delhi',
+    zoneKey: 'south',
+    latitude: 28.5492,
+    longitude: 77.2155,
+    metroStation: 'Hauz Khas (Yellow & Magenta Line)',
+    metroLines: ['Yellow Line', 'Magenta Line'],
+    famousSpecialties: ['Artisan Coffee', 'Handmade Pizzas', 'Vegan Smoothies', 'Bakery Treats'],
+    tagline: 'Bohemian designer alleyways packed with concept bistros and specialty coffee',
+    avgCostForTwo: 650,
+    isPopularHub: true,
+    pincode: '110049',
+    landmarks: ['Siri Fort Road', 'Dada Jungi House'],
+  },
+  {
+    id: 'amar-colony-lajpat',
+    name: 'Amar Colony (Lajpat Nagar 4)',
+    shortName: 'Amar Colony',
+    zone: 'South Delhi',
+    zoneKey: 'south',
+    latitude: 28.5665,
+    longitude: 77.2425,
+    metroStation: 'Moolchand (Violet Line)',
+    metroLines: ['Violet Line'],
+    famousSpecialties: ['Tandoori Momos', 'Afghani Burgers', 'Ram Laddoo', 'Kathi Rolls'],
+    tagline: 'Delhi’s legendary evening street food hub where tandoori momos were born',
+    avgCostForTwo: 350,
+    isPopularHub: true,
+    pincode: '110024',
+    landmarks: ['Amar Colony Main Market', 'Old Double Storey'],
+  },
+  {
+    id: 'lajpat-nagar-central',
+    name: 'Lajpat Nagar Central Market',
+    shortName: 'Lajpat Nagar',
+    zone: 'South Delhi',
+    zoneKey: 'south',
+    latitude: 28.5695,
+    longitude: 77.2395,
+    metroStation: 'Lajpat Nagar (Violet & Pink Interchange)',
+    metroLines: ['Violet Line', 'Pink Line'],
+    famousSpecialties: ['Chole Bhature', 'Dolma Aunty Momos', 'Moong Dal Ram Laddoo', 'Nagpal Chole'],
+    tagline: 'High-energy shopping boulevard with iconic street eats and quick-service stalls',
+    avgCostForTwo: 300,
+    isPopularHub: true,
+    pincode: '110024',
+    landmarks: ['Central Market', '3C Cinema Complex'],
+  },
+  {
+    id: 'khan-market',
+    name: 'Khan Market & Rabindra Nagar',
+    shortName: 'Khan Market',
+    zone: 'Central Delhi',
+    zoneKey: 'central',
+    latitude: 28.6002,
+    longitude: 77.2275,
+    metroStation: 'Khan Market (Violet Line)',
+    metroLines: ['Violet Line'],
+    famousSpecialties: ['Kakori Kebabs', 'Gourmet Bagels', 'Artisan Gelato', 'European Bistro Fare'],
+    tagline: 'India’s most prestigious high-street retail enclave filled with boutique dining',
+    avgCostForTwo: 1400,
+    isPopularHub: true,
+    pincode: '110003',
+    landmarks: ['Middle Lane Bistros', 'Front Lane Bookstores'],
+  },
+  {
+    id: 'pandara-road',
+    name: 'Pandara Road Market (India Gate)',
+    shortName: 'Pandara Road',
+    zone: 'Central Delhi',
+    zoneKey: 'central',
+    latitude: 28.6085,
+    longitude: 77.2345,
+    metroStation: 'Khan Market (Violet Line) / Central Secretariat',
+    metroLines: ['Violet Line', 'Yellow Line'],
+    famousSpecialties: ['Butter Chicken', 'Dal Makhani', 'Mutton Rogan Josh', 'Paneer Tikka'],
+    tagline: 'Delhi’s timeless midnight dining landmark for iconic North Indian feasts',
+    avgCostForTwo: 950,
+    isPopularHub: true,
+    pincode: '110003',
+    landmarks: ['Gulati Restaurant', 'Havemore', 'Bawarchi'],
+  },
+  {
+    id: 'daryaganj-heritage',
+    name: 'Daryaganj & Delhi Gate',
+    shortName: 'Daryaganj',
+    zone: 'Central Delhi',
+    zoneKey: 'central',
+    latitude: 28.6435,
+    longitude: 77.2415,
+    metroStation: 'Delhi Gate (Violet Line)',
+    metroLines: ['Violet Line'],
+    famousSpecialties: ['Original Butter Chicken', 'Tandoori Roti', 'Mutton Korma', 'Bedmi Poori'],
+    tagline: 'Historic culinary trail where world-famous Tandoori dishes originated',
+    avgCostForTwo: 550,
+    isPopularHub: true,
+    pincode: '110002',
+    landmarks: ['Moti Mahal Original', 'Golcha Cinema Lane'],
+  },
+  {
+    id: 'chawri-bazar',
+    name: 'Chawri Bazar & Nai Sarak',
+    shortName: 'Chawri Bazar',
+    zone: 'Central Delhi',
+    zoneKey: 'central',
+    latitude: 28.6495,
+    longitude: 77.2285,
+    metroStation: 'Chawri Bazar (Yellow Line)',
+    metroLines: ['Yellow Line'],
+    famousSpecialties: ['Kulfi Falooda', 'Bedmi Poori Nagori', 'Hing Kachori', 'Fruit Chaat'],
+    tagline: 'Centuries-old lanes home to India’s most beloved sweetshops and street breakfast',
+    avgCostForTwo: 200,
+    isPopularHub: true,
+    pincode: '110006',
+    landmarks: ['Kuremal Mohanlal Kulfi', 'Shyam Sweets'],
+  },
+  {
+    id: 'paharganj-main-bazar',
+    name: 'Paharganj (Main Bazar & Imperial)',
+    shortName: 'Paharganj',
+    zone: 'Central Delhi',
+    zoneKey: 'central',
+    latitude: 28.6442,
+    longitude: 77.2155,
+    metroStation: 'New Delhi (Yellow Line & Airport Line)',
+    metroLines: ['Yellow Line', 'Airport Express Line'],
+    famousSpecialties: ['Shakshuka & Hummus', 'Nutella Pancakes', 'Rooftop Cafes', 'Sita Ram Chole Bhature'],
+    tagline: 'Legendary backpacker haven packed with international rooftop cafes and street eats',
+    avgCostForTwo: 350,
+    isPopularHub: true,
+    pincode: '110055',
+    landmarks: ['Main Bazar Market', 'Imperial Cinema'],
+  },
+  {
+    id: 'subhash-nagar-pacific',
+    name: 'Subhash Nagar & Pacific Mall Food Street',
+    shortName: 'Subhash Nagar',
+    zone: 'West Delhi',
+    zoneKey: 'west',
+    latitude: 28.6395,
+    longitude: 77.1085,
+    metroStation: 'Subhash Nagar (Blue Line)',
+    metroLines: ['Blue Line'],
+    famousSpecialties: ['Afghani Malai Chaap', 'Tandoori Burgers', 'Kulhad Pizza', 'Mojitos'],
+    tagline: 'Buzzing West Delhi hangout filled with neon-lit street food stalls and malls',
+    avgCostForTwo: 350,
+    isPopularHub: false,
+    pincode: '110027',
+    landmarks: ['Pacific Mall Tag', 'Ajay Enclave'],
+  },
+  {
+    id: 'vikaspuri-pvr',
+    name: 'Vikaspuri (PVR Complex & Community Centre)',
+    shortName: 'Vikaspuri',
+    zone: 'West Delhi',
+    zoneKey: 'west',
+    latitude: 28.6385,
+    longitude: 77.0785,
+    metroStation: 'Janakpuri West (Blue & Magenta Interchange)',
+    metroLines: ['Blue Line', 'Magenta Line'],
+    famousSpecialties: ['Tandoori Soya Chaap', 'Paneer Tikka Roll', 'Cold Coffee', 'Pasta Platter'],
+    tagline: 'Residential foodie hub with open-air plaza cafes and midnight snack counters',
+    avgCostForTwo: 400,
+    isPopularHub: false,
+    pincode: '110018',
+    landmarks: ['PVR Vikaspuri', 'F Block Market'],
+  },
+  {
+    id: 'uttam-nagar-east',
+    name: 'Uttam Nagar (Arya Samaj Road & Metro Street)',
+    shortName: 'Uttam Nagar',
+    zone: 'West Delhi',
+    zoneKey: 'west',
+    latitude: 28.6215,
+    longitude: 77.0585,
+    metroStation: 'Uttam Nagar East (Blue Line)',
+    metroLines: ['Blue Line'],
+    famousSpecialties: ['Gravy Momos', 'Pav Bhaji', 'Chole Kulche', 'Fruit Beer'],
+    tagline: 'High-density transit street with hundreds of budget-friendly takeaway food counters',
+    avgCostForTwo: 250,
+    isPopularHub: false,
+    pincode: '110059',
+    landmarks: ['Arya Samaj Road', 'Metro Pillar 650'],
+  },
+  {
+    id: 'rohini-sector-7-8',
+    name: 'Rohini Sector 7 & 8 Food Street',
+    shortName: 'Rohini Sec 7-8',
+    zone: 'North-West Delhi',
+    zoneKey: 'northwest',
+    latitude: 28.7095,
+    longitude: 77.1195,
+    metroStation: 'Rohini East (Red Line)',
+    metroLines: ['Red Line'],
+    famousSpecialties: ['Overload Monster Shakes', 'Kurkure Paneer Momos', 'Cheesy Pizza Fries', 'Waffles'],
+    tagline: 'The North-West youth capital famous for evening snacks, shakes and viral street foods',
+    avgCostForTwo: 350,
+    isPopularHub: true,
+    pincode: '110085',
+    landmarks: ['Sector 7 Market', 'M2K Cinema Complex'],
+  },
+  {
+    id: 'rohini-sector-13-14',
+    name: 'Rohini Sector 13 & 14 (DC Chowk & Ring Road Mall)',
+    shortName: 'Rohini Sec 13-14',
+    zone: 'North-West Delhi',
+    zoneKey: 'northwest',
+    latitude: 28.7215,
+    longitude: 77.1325,
+    metroStation: 'Rohini West (Red Line)',
+    metroLines: ['Red Line'],
+    famousSpecialties: ['North Indian Thalis', 'Wood-fired Pizzas', 'Artisan Coffee', 'Kulfi Falooda'],
+    tagline: 'Family dining and student adda surrounding DC Chowk and community centers',
+    avgCostForTwo: 450,
+    isPopularHub: false,
+    pincode: '110085',
+    landmarks: ['DC Chowk Market', 'Ring Road Mall'],
+  },
+  {
+    id: 'mayur-vihar-phase-2',
+    name: 'Mayur Vihar Phase 2 (Pocket B Shopping Centre)',
+    shortName: 'Mayur Vihar 2',
+    zone: 'East Delhi',
+    zoneKey: 'east',
+    latitude: 28.6185,
+    longitude: 77.3095,
+    metroStation: 'Mayur Vihar Phase 1 / Trilokpuri Sanjay Lake',
+    metroLines: ['Pink Line'],
+    famousSpecialties: ['South Indian Thali', 'Kathi Rolls', 'Chilli Garlic Chowmein', 'Cold Coffee'],
+    tagline: 'Cozy neighbourhood center filled with family diners and evening snack stalls',
+    avgCostForTwo: 350,
+    isPopularHub: false,
+    pincode: '110091',
+    landmarks: ['Pocket B Market', 'Neelam Mata Mandir Chowk'],
+  },
+  {
+    id: 'krishna-nagar-lal-quarter',
+    name: 'Krishna Nagar (Lal Quarter Food Market)',
+    shortName: 'Krishna Nagar',
+    zone: 'East Delhi',
+    zoneKey: 'east',
+    latitude: 28.6625,
+    longitude: 77.2795,
+    metroStation: 'Krishna Nagar (Pink Line)',
+    metroLines: ['Pink Line'],
+    famousSpecialties: ['Bombay Pav Bhaji', 'Rabri Jalebi', 'Aloo Chaat', 'Afghani Soya Chaap'],
+    tagline: 'Trans-Yamuna’s premier shopping street packed with historic street food vendors',
+    avgCostForTwo: 300,
+    isPopularHub: true,
+    pincode: '110051',
+    landmarks: ['Lal Quarter Market', 'Ghondly Chowk'],
+  },
+  {
+    id: 'indirapuram-habitat',
+    name: 'Indirapuram (Habitat Centre & Vaibhav Khand)',
+    shortName: 'Indirapuram',
+    zone: 'NCR Gateways',
+    zoneKey: 'ncr',
+    latitude: 28.6415,
+    longitude: 77.3715,
+    metroStation: 'Vaishali (Blue Line) / Electronic City (Blue Line)',
+    metroLines: ['Blue Line'],
+    famousSpecialties: ['Craft Mocktails', 'Tandoori Kebabs', 'Thin Crust Pizzas', 'Cold Brews'],
+    tagline: 'Modern township promenade with open-air dining plazas and high-energy cafes',
+    avgCostForTwo: 600,
+    isPopularHub: true,
+    pincode: '201014',
+    landmarks: ['Indirapuram Habitat Centre', 'Aditya Mall'],
+  },
+  {
+    id: 'gurgaon-sector-29',
+    name: 'Gurgaon Sector 29 Food & Brewery Boulevard',
+    shortName: 'Gurgaon Sec 29',
+    zone: 'NCR Gateways',
+    zoneKey: 'ncr',
+    latitude: 28.4685,
+    longitude: 77.0625,
+    metroStation: 'IFFCO Chowk (Yellow Line)',
+    metroLines: ['Yellow Line'],
+    famousSpecialties: ['Craft Beer', 'BBQ Chicken Wings', 'Tandoori Platters', 'Gourmet Sliders'],
+    tagline: 'NCR’s renowned open-air brewery strip with high-octane live music and dining',
+    avgCostForTwo: 1100,
+    isPopularHub: true,
+    pincode: '122001',
+    landmarks: ['Leisure Valley Park', 'Sector 29 Market'],
+  },
+  {
+    id: 'golf-course-road',
+    name: 'Golf Course Road & One Horizon Centre',
+    shortName: 'Golf Course Rd',
+    zone: 'NCR Gateways',
+    zoneKey: 'ncr',
+    latitude: 28.4725,
+    longitude: 77.0985,
+    metroStation: 'Sector 42-43 (Rapid Metro)',
+    metroLines: ['Rapid Metro'],
+    famousSpecialties: ['Artisan Bakery Treats', 'Authentic Sushi', 'Italian Risotto', 'Specialty Matcha'],
+    tagline: 'Ultra-modern luxury dining district featuring award-winning chefs and lounges',
+    avgCostForTwo: 1500,
+    isPopularHub: true,
+    pincode: '122002',
+    landmarks: ['One Horizon Centre', 'DLF South Point Mall'],
+  },
 ];
+
+export interface DelhiCoverageStats {
+  totalLocations: number;
+  coveredCount: number; // 3+ cafes
+  partialCount: number; // 1-2 cafes
+  uncoveredCount: number; // 0 cafes
+  coveragePercentage: number;
+}
+
+/**
+ * Computes coverage statistics across all Delhi NCR locations.
+ * Matches restaurants by name, address, landmark, city, and GPS coordinates.
+ */
+export function computeDelhiCoverage(restaurants: any[]): {
+  stats: DelhiCoverageStats;
+  locationCounts: Record<string, number>;
+  coveredLocations: DelhiLocation[];
+  partialLocations: DelhiLocation[];
+  uncoveredLocations: DelhiLocation[];
+} {
+  const counts: Record<string, number> = {};
+
+  for (const loc of DELHI_LOCATIONS) {
+    counts[loc.id] = 0;
+  }
+
+  for (const r of restaurants) {
+    const fullText = `${r.name || ''} ${r.landmark || ''} ${r.address_line1 || ''} ${r.city || ''}`.toLowerCase();
+    
+    // Check if restaurant is explicitly in an area
+    let matched = false;
+    for (const loc of DELHI_LOCATIONS) {
+      const matchKey = loc.shortName.toLowerCase();
+      const nameKey = loc.name.toLowerCase();
+      if (fullText.includes(matchKey) || fullText.includes(nameKey)) {
+        counts[loc.id] = (counts[loc.id] || 0) + 1;
+        matched = true;
+        break;
+      }
+    }
+
+    // Geolocation fallback matching if text didn't trigger
+    if (!matched && r.latitude && r.longitude) {
+      for (const loc of DELHI_LOCATIONS) {
+        const dLat = Math.abs(r.latitude - loc.latitude);
+        const dLng = Math.abs(r.longitude - loc.longitude);
+        if (dLat < 0.015 && dLng < 0.015) { // ~1.5 km
+          counts[loc.id] = (counts[loc.id] || 0) + 1;
+          break;
+        }
+      }
+    }
+  }
+
+  const covered: DelhiLocation[] = [];
+  const partial: DelhiLocation[] = [];
+  const uncovered: DelhiLocation[] = [];
+
+  for (const loc of DELHI_LOCATIONS) {
+    const c = counts[loc.id] || 0;
+    if (c >= 3) {
+      covered.push(loc);
+    } else if (c > 0) {
+      partial.push(loc);
+    } else {
+      uncovered.push(loc);
+    }
+  }
+
+  const total = DELHI_LOCATIONS.length;
+  const coveragePercentage = total > 0 ? Math.round((covered.length / total) * 100) : 0;
+
+  return {
+    stats: {
+      totalLocations: total,
+      coveredCount: covered.length,
+      partialCount: partial.length,
+      uncoveredCount: uncovered.length,
+      coveragePercentage,
+    },
+    locationCounts: counts,
+    coveredLocations: covered,
+    partialLocations: partial,
+    uncoveredLocations: uncovered,
+  };
+}

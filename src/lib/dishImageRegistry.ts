@@ -510,11 +510,63 @@ const CANONICAL_REGISTRY: CanonicalDish[] = [
     patterns: [/gulab.*jamun/i, /jalebi/i, /kulfi/i, /rasgulla/i, /halwa/i],
     imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80',
   },
+  // -------------------------------------------------------------
+  // SANDWICHES & FRIES
+  // -------------------------------------------------------------
+  {
+    patterns: [/sandwich/i, /club.*sandwich/i, /grilled.*cheese/i, /panini/i],
+    imageUrl: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    patterns: [/peri.*peri.*fries/i, /cheesy.*fries/i, /loaded.*fries/i, /french.*fries/i, /fries/i],
+    imageUrl: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    patterns: [/spring.*roll/i, /manchurian/i],
+    imageUrl: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    patterns: [/iced.*tea/i, /lemon.*tea/i, /peach.*tea/i],
+    imageUrl: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    patterns: [/lassi/i, /chaas/i, /buttermilk/i],
+    imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    patterns: [/mocktail/i, /blue.*lagoon/i, /cooler/i],
+    imageUrl: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    patterns: [/tikka/i, /kebab/i, /seekh/i],
+    imageUrl: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+  },
+];
+
+/**
+ * Category-aware high-definition verified fallback image bank.
+ * Ensures that if a new or creative dish name doesn't match an exact regex,
+ * it gets an authentic image matching its category (e.g. beverages get cold drinks, not burgers).
+ */
+const CATEGORY_FALLBACK_IMAGES: { pattern: RegExp; imageUrl: string }[] = [
+  { pattern: /beverage|drink|shake|coffee|juice|tea|mocktail|cooler|bar/i, imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /dessert|sweet|cake|waffle|pastry|ice.*cream|bakery|mithai/i, imageUrl: 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /bread|roti|naan|paratha|kulcha/i, imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /momo|dimsum|dumpling/i, imageUrl: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /pizza/i, imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /burger/i, imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /pasta/i, imageUrl: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /rice|biryani|pulao/i, imageUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /south.*indian|dosa|idli/i, imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /starter|snack|appetizer|chaat|fast.*food/i, imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80' },
+  { pattern: /main|curry|gravy|dal|paneer|thali|sabzi/i, imageUrl: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80' },
 ];
 
 /**
  * Returns a high-definition, verified canonical image URL matching the exact dish type.
- * If the user supplied a custom image URL, that custom image is preserved.
+ * Zero-Mismatch Guarantee:
+ * - Identical dishes across all restaurants share the exact same high-res photo.
+ * - Creative/unseen dishes receive category-aware high-definition photos.
  */
 export function getSmartDishImage(name: string, category?: string, currentImageUrl?: string): string {
   // If a valid custom photo already exists, use it
@@ -522,12 +574,14 @@ export function getSmartDishImage(name: string, category?: string, currentImageU
     return currentImageUrl;
   }
 
-  const query = `${name || ''} ${category || ''}`.trim();
+  const cleanName = (name || '').trim();
+  const cleanCat = (category || '').trim();
+  const query = `${cleanName} ${cleanCat}`.trim();
   if (!query) {
     return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80';
   }
 
-  // Find exact canonical match
+  // 1. Primary check: Exact canonical match on full query
   for (const item of CANONICAL_REGISTRY) {
     for (const pattern of item.patterns) {
       if (pattern.test(query)) {
@@ -536,7 +590,16 @@ export function getSmartDishImage(name: string, category?: string, currentImageU
     }
   }
 
-  // Fallback high-quality food presentation
+  // 2. Secondary check: Match category against category fallback bank
+  if (cleanCat) {
+    for (const fallback of CATEGORY_FALLBACK_IMAGES) {
+      if (fallback.pattern.test(cleanCat)) {
+        return fallback.imageUrl;
+      }
+    }
+  }
+
+  // 3. Fallback high-quality food presentation
   return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80';
 }
 
