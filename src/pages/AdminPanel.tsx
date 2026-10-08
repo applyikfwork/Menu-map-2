@@ -1538,7 +1538,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
           <DelhiExpansionHub
             restaurants={restaurants}
             navigate={navigate}
-            onRefreshRestaurants={loadData}
+            onRefreshRestaurants={loadAllAdminData}
           />
         )}
 
