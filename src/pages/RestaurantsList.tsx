@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -8,9 +8,16 @@ import {
   SlidersHorizontal,
   ArrowUpDown,
   Check,
-  Train
+  Train,
+  Utensils,
+  Sparkles,
+  Flame,
+  Store,
+  Compass,
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
-import { Restaurant } from '../types/database';
+import { Restaurant, MenuItem } from '../types/database';
 import { api } from '../lib/supabase';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { 
@@ -41,6 +48,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
   const [locating, setLocating] = useState(false);
   const [detectedArea, setDetectedArea] = useState<string>('Delhi NCR');
@@ -48,6 +56,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedCuisine, setSelectedCuisine] = useState<string>('all');
   const [selectedPrice, setSelectedPrice] = useState<'all' | '₹' | '₹₹' | '₹₹₹'>('all');
@@ -58,6 +67,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const [sortBy, setSortBy] = useState<'rating' | 'cost_low' | 'cost_high' | 'distance'>('rating');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadData();
@@ -79,6 +89,16 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
     return () => window.removeEventListener('menumap_location_updated', handleLocationUpdate);
   }, [initialMode, restaurants.length]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setSearchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const loadData = async () => {
     const cached = engine.getAllRestaurants();
     if (cached.length > 0 && restaurants.length === 0) {
@@ -88,8 +108,12 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       setLoading(true);
     }
     try {
-      const data = await api.getRestaurants(true);
+      const [data, items] = await Promise.all([
+        api.getRestaurants(true),
+        api.getMenuItems(),
+      ]);
       setRestaurants(data);
+      setMenuItems(items.filter((i) => i.is_available));
       if (userCoords) {
         const ctx = detectAreaContext(userCoords, data);
         if (ctx?.areaName) setDetectedArea(ctx.areaName);
@@ -152,17 +176,130 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const meals = ['Breakfast', 'Lunch', 'Dinner', 'Night owls'];
   const amenities = ['AC', 'Outdoor', 'Wi-Fi', 'Rooftop', 'Live music'];
 
+  // Map of restaurant ID -> menu items
+  const restaurantItemsMap = useMemo(() => {
+    const map = new Map<string, MenuItem[]>();
+    menuItems.forEach((item) => {
+      const existing = map.get(item.restaurant_id) || [];
+      existing.push(item);
+      map.set(item.restaurant_id, existing);
+    });
+    return map;
+  }, [menuItems]);
+
+  // Expand search tokens with synonyms & Delhi locality acronyms
+  const searchTokens = useMemo(() => {
+    const lower = searchQuery.toLowerCase().trim();
+    if (!lower) return [];
+    const tokens = lower.split(/[\s,+/]+/).filter((t) => t.length > 0);
+    const expanded = new Set<string>(tokens);
+    expanded.add(lower);
+
+    const synonyms: Record<string, string[]> = {
+      cp: ['connaught place', 'central delhi', 'rajiv chowk'],
+      connaught: ['cp', 'rajiv chowk'],
+      nsp: ['netaji subhash place', 'pitampura', 'kohat'],
+      pitampura: ['nsp', 'netaji subhash place'],
+      hkv: ['hauz khas', 'hauz khas village'],
+      hauz: ['hkv', 'hauz khas village'],
+      gtb: ['gtb nagar', 'hudson lane', 'north campus', 'delhi university', 'du'],
+      hudson: ['hudson lane', 'gtb nagar', 'north campus'],
+      du: ['north campus', 'south campus', 'hudson lane', 'satyaniketan'],
+      satya: ['satyaniketan', 'south campus'],
+      momo: ['momos', 'dimsum', 'dumpling', 'kurkure', 'tandoori'],
+      momos: ['momo', 'dimsum', 'dumpling', 'kurkure', 'tandoori'],
+      shake: ['shakes', 'thickshake', 'smoothie', 'freakshake', 'beverage'],
+      shakes: ['shake', 'thickshake', 'smoothie', 'freakshake'],
+      coffee: ['cappuccino', 'latte', 'cold coffee', 'espresso', 'frappe', 'brew', 'cafe'],
+      cafe: ['coffee', 'bistro', 'bakery', 'rooftop', 'continental'],
+      pizza: ['woodfired', 'margherita', 'crust', 'slice', 'italian'],
+      pasta: ['penne', 'spaghetti', 'alfredo', 'arrabbiata', 'lasagna', 'italian'],
+      burger: ['burgers', 'patty', 'cheeseburger', 'crispy chicken'],
+      chaap: ['malai chaap', 'afghani chaap', 'tandoori chaap', 'soya'],
+      naan: ['chur chur naan', 'butter naan', 'garlic naan', 'amritsari'],
+      biryani: ['dum biryani', 'hyderabadi', 'murgh', 'gosht', 'rice'],
+      paneer: ['cottage cheese', 'shahi paneer', 'paneer tikka', 'kadai paneer'],
+      chicken: ['butter chicken', 'tikka', 'tandoori chicken', 'kebab'],
+      sweet: ['dessert', 'waffle', 'ice cream', 'pastry', 'cake', 'brownie'],
+      waffle: ['waffles', 'belgian', 'pancake', 'dessert'],
+      maggi: ['maggie', 'noodles', 'wai wai'],
+      veg: ['vegetarian', 'pure veg', 'jain'],
+      nonveg: ['non veg', 'chicken', 'mutton', 'meat', 'egg'],
+    };
+
+    tokens.forEach((tok) => {
+      if (synonyms[tok]) {
+        synonyms[tok].forEach((s) => expanded.add(s));
+      }
+    });
+
+    return Array.from(expanded);
+  }, [searchQuery]);
+
+  // Matching dishes based on search
+  const matchingDishes = useMemo(() => {
+    if (searchTokens.length === 0) return [];
+    return menuItems.filter((item) => {
+      const name = item.name.toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      const cat = (item.category_name || '').toLowerCase();
+      const tags = (item.dietary_tags || []).map((t) => t.toLowerCase());
+
+      return searchTokens.some((tok) =>
+        name.includes(tok) ||
+        desc.includes(tok) ||
+        cat.includes(tok) ||
+        tags.some((t) => t.includes(tok))
+      );
+    }).slice(0, 10);
+  }, [menuItems, searchTokens]);
+
+  // Matching Delhi localities for quick filter
+  const matchingAreas = useMemo(() => {
+    if (searchTokens.length === 0) return [];
+    return DELHI_LOCATIONS.filter((loc) => {
+      const name = loc.name.toLowerCase();
+      const shortName = loc.shortName.toLowerCase();
+      const station = loc.metroStation.toLowerCase();
+      return searchTokens.some((tok) =>
+        name.includes(tok) ||
+        shortName.includes(tok) ||
+        station.includes(tok)
+      );
+    }).slice(0, 3);
+  }, [searchTokens]);
+
   // Filtered & Sorted
   const filteredRestaurants = useMemo(() => {
     return restaurantsWithDistance.filter((r) => {
-      // Search
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesName = r.name.toLowerCase().includes(q);
-        const matchesArea = (r.landmark || r.city || '').toLowerCase().includes(q);
-        const matchesCuisine = r.cuisine_types?.some((c) => c.toLowerCase().includes(q));
-        const matchesDish = r.known_for_dishes?.some((d) => d.toLowerCase().includes(q));
-        if (!matchesName && !matchesArea && !matchesCuisine && !matchesDish) return false;
+      // Powerful Multi-Token Search
+      if (searchTokens.length > 0) {
+        const rItems = restaurantItemsMap.get(r.id) || [];
+        const rName = r.name.toLowerCase();
+        const rArea = (r.landmark || r.city || r.address_line1 || '').toLowerCase();
+        const rCuisines = (r.cuisine_types || []).map((c) => c.toLowerCase());
+        const rDishes = (r.known_for_dishes || []).map((d) => d.toLowerCase());
+        const rDesc = (r.short_description || '').toLowerCase();
+        const rFacilities = (r.facilities || []).map((f) => f.toLowerCase());
+        const itemNames = rItems.map((i) => i.name.toLowerCase());
+        const itemCategories = rItems.map((i) => (i.category_name || '').toLowerCase());
+        const itemDescriptions = rItems.map((i) => (i.description || '').toLowerCase());
+
+        const matches = searchTokens.some((tok) => {
+          return (
+            rName.includes(tok) ||
+            rArea.includes(tok) ||
+            rCuisines.some((c) => c.includes(tok)) ||
+            rDishes.some((d) => d.includes(tok)) ||
+            rDesc.includes(tok) ||
+            rFacilities.some((f) => f.includes(tok)) ||
+            itemNames.some((name) => name.includes(tok)) ||
+            itemCategories.some((cat) => cat.includes(tok)) ||
+            itemDescriptions.some((desc) => desc.includes(tok))
+          );
+        });
+
+        if (!matches) return false;
       }
 
       // Cuisine
@@ -187,16 +324,16 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       if (selectedMeal !== 'all') {
         const ml = selectedMeal.toLowerCase();
         if (ml === 'breakfast') {
-          const isBreakfast = r.cuisine_types?.some(c => /cafe|bakery|breakfast|south indian/i.test(c)) ||
-            r.known_for_dishes?.some(d => /paratha|dosa|idli|omelette|pancake|sandwich|coffee|chai|tea/i.test(d));
+          const isBreakfast = r.cuisine_types?.some((c) => /cafe|bakery|breakfast|south indian/i.test(c)) ||
+            r.known_for_dishes?.some((d) => /paratha|dosa|idli|omelette|pancake|sandwich|coffee|chai|tea/i.test(d));
           if (!isBreakfast) return false;
         } else if (ml === 'lunch') {
-          const isLunch = r.cuisine_types?.some(c => /thali|north indian|chinese|biryani|mughlai|buffet/i.test(c)) ||
+          const isLunch = r.cuisine_types?.some((c) => /thali|north indian|chinese|biryani|mughlai|buffet/i.test(c)) ||
             (r.average_cost_for_two || 0) >= 200;
           if (!isLunch) return false;
         } else if (ml === 'dinner') {
-          const isDinner = r.cuisine_types?.some(c => /dinner|north indian|chinese|italian|mughlai|barbecue/i.test(c)) ||
-            (r.facilities || []).some(f => /rooftop|outdoor|ac/i.test(f));
+          const isDinner = r.cuisine_types?.some((c) => /dinner|north indian|chinese|italian|mughlai|barbecue/i.test(c)) ||
+            (r.facilities || []).some((f) => /rooftop|outdoor|ac/i.test(f));
           if (!isDinner) return false;
         } else if (ml === 'night owls') {
           const isLateNight = typeof r.opening_hours === 'object' || /11|12|1|2|3|night|24/i.test(JSON.stringify(r.opening_hours || ''));
@@ -215,8 +352,8 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         const qz = selectedZone.toLowerCase();
         const matchesLandmark = (r.landmark || '').toLowerCase().includes(qz);
         const matchesCity = (r.city || '').toLowerCase().includes(qz);
-        const inZoneLocs = DELHI_LOCATIONS.filter(l => l.zoneKey === selectedZone);
-        const isNearZone = inZoneLocs.some(l => {
+        const inZoneLocs = DELHI_LOCATIONS.filter((l) => l.zoneKey === selectedZone);
+        const isNearZone = inZoneLocs.some((l) => {
           if (typeof r.latitude === 'number' && typeof r.longitude === 'number') {
             const d = calculateDistanceKm(l.latitude, l.longitude, r.latitude, r.longitude);
             return d <= 5.5;
@@ -239,7 +376,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       if (sortBy === 'distance') return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
       return 0;
     });
-  }, [restaurantsWithDistance, searchQuery, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, distanceRadius, sortBy, userCoords]);
+  }, [restaurantsWithDistance, searchTokens, restaurantItemsMap, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, distanceRadius, sortBy, userCoords]);
 
   const renderFilterContent = () => (
     <>
@@ -432,21 +569,200 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
         {/* Search, Sort & Location bar */}
         <div className="mt-5 sm:mt-7 flex flex-wrap gap-2 sm:gap-3 items-center">
-          <label className="flex-1 min-w-0 w-full sm:w-auto flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 min-h-[48px] sm:min-h-[56px] rounded-2xl sm:rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs">
-            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-[#78716C] shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search cafes, dishes, areas (e.g. Hudson Lane, Momos)"
-              className="flex-1 min-w-0 bg-transparent text-[#1C1917] placeholder:text-stone-400 text-xs sm:text-base font-medium outline-none"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="text-stone-400 hover:text-stone-700 p-1">
-                <X className="w-4 h-4" />
-              </button>
+          {/* Search Input Container with Dropdown Suggestions */}
+          <div ref={searchContainerRef} className="relative flex-1 min-w-0 w-full sm:w-auto">
+            <label className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 min-h-[48px] sm:min-h-[56px] rounded-2xl sm:rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs focus-within:border-[#FF5A36] focus-within:ring-2 focus-within:ring-[#FF5A36]/10 transition-all cursor-text">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-[#78716C] shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onFocus={() => setSearchDropdownOpen(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchDropdownOpen(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setSearchDropdownOpen(false);
+                }}
+                placeholder="Search cafes, dishes, areas (e.g. Hudson Lane, Momos, Cold Coffee)"
+                className="flex-1 min-w-0 bg-transparent text-[#1C1917] placeholder:text-stone-400 text-xs sm:text-base font-medium outline-none"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchDropdownOpen(false);
+                  }}
+                  className="text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </label>
+
+            {/* Instant Search Suggestions Popover */}
+            {searchDropdownOpen && searchQuery.trim().length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-[#E7E2DA] rounded-2xl shadow-2xl z-40 overflow-hidden divide-y divide-stone-100 max-h-[460px] overflow-y-auto animate-fadeIn">
+                {/* 1. Matching Cafes */}
+                {filteredRestaurants.length > 0 && (
+                  <div className="p-3">
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 px-2 mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Store className="w-3.5 h-3.5 text-[#FF5A36]" /> Matching Cafes ({filteredRestaurants.length})
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {filteredRestaurants.slice(0, 3).map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchDropdownOpen(false);
+                            navigate(`/${r.slug}`);
+                          }}
+                          className="w-full text-left p-2 rounded-xl hover:bg-[#FAF8F5] transition-colors flex items-center justify-between group cursor-pointer"
+                        >
+                          <div className="min-w-0 flex-1 pr-3">
+                            <div className="font-bold text-sm text-[#1C1917] group-hover:text-[#D8350F] truncate">
+                              {r.name}
+                            </div>
+                            <div className="text-xs text-stone-500 truncate flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
+                              <span>{r.landmark || r.city || 'Delhi'}</span>
+                              {r.cuisine_types?.[0] && (
+                                <>
+                                  <span>•</span>
+                                  <span>{r.cuisine_types[0]}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            {r.rating && (
+                              <span className="text-xs font-black text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                ★ {r.rating.toFixed(1)}
+                              </span>
+                            )}
+                            <div className="text-[10px] text-stone-400 mt-1 font-medium">₹{r.average_cost_for_two || 350} for 2</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Matching Dishes */}
+                {matchingDishes.length > 0 && (
+                  <div className="p-3 bg-stone-50/50">
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 px-2 mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Utensils className="w-3.5 h-3.5 text-[#D8350F]" /> Matching Dishes ({matchingDishes.length})
+                      </span>
+                      <span className="text-[10px] font-bold text-[#0F766E]">0% App Markup</span>
+                    </div>
+                    <div className="space-y-1">
+                      {matchingDishes.slice(0, 4).map((dish) => {
+                        const parentCafe = restaurants.find((r) => r.id === dish.restaurant_id);
+                        return (
+                          <button
+                            key={dish.id}
+                            type="button"
+                            onClick={() => {
+                              setSearchDropdownOpen(false);
+                              if (parentCafe) navigate(`/${parentCafe.slug}`);
+                            }}
+                            className="w-full text-left p-2 rounded-xl hover:bg-white transition-colors flex items-center justify-between group cursor-pointer border border-transparent hover:border-stone-200"
+                          >
+                            <div className="min-w-0 flex-1 pr-3">
+                              <div className="font-bold text-sm text-[#1C1917] group-hover:text-[#D8350F] truncate">
+                                {dish.name}
+                              </div>
+                              {parentCafe && (
+                                <div className="text-xs text-stone-500 truncate flex items-center gap-1 mt-0.5">
+                                  <span>at</span>
+                                  <span className="font-semibold text-stone-700">{parentCafe.name}</span>
+                                  <span>•</span>
+                                  <span>{parentCafe.landmark || 'Delhi'}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="text-sm font-black text-[#1C1917]">₹{dish.price}</div>
+                              <span className="text-[9px] font-extrabold text-[#0F766E] uppercase">In-Store</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Matching Delhi Localities / Areas */}
+                {matchingAreas.length > 0 && (
+                  <div className="p-3">
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 px-2 mb-2 flex items-center gap-1.5">
+                      <Compass className="w-3.5 h-3.5 text-blue-600" /> Delhi Hubs & Metro Areas
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 px-2">
+                      {matchingAreas.map((loc) => (
+                        <button
+                          key={loc.name}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(loc.shortName);
+                            setSelectedZone(loc.zoneKey);
+                            setSearchDropdownOpen(false);
+                          }}
+                          className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-[#E7E2DA] hover:border-[#1C1917] hover:bg-stone-50 text-[#1C1917] transition-colors flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <MapPin className="w-3 h-3 text-[#FF5A36]" />
+                          <span>{loc.shortName}</span>
+                          <span className="text-[10px] text-stone-400 font-normal">({loc.metroStation.split('(')[0].trim()})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Empty suggestion pills if no results */}
+                {filteredRestaurants.length === 0 && matchingDishes.length === 0 && matchingAreas.length === 0 && (
+                  <div className="p-4 text-center">
+                    <p className="text-xs text-stone-500 font-medium mb-3">
+                      No direct matches for "{searchQuery}". Try popular Delhi cravings:
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-1.5">
+                      {['Momos', 'Cold Coffee', 'Pizza', 'Burger', 'Hudson Lane', 'NSP'].map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(k);
+                            setSearchDropdownOpen(false);
+                          }}
+                          className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-[#FFE9E2] text-stone-700 hover:text-[#D8350F] transition-colors cursor-pointer"
+                        >
+                          {k}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer hint */}
+                <div className="p-2.5 bg-stone-50 flex items-center justify-between text-[11px] text-stone-500 font-medium">
+                  <span>Press <kbd className="font-mono bg-white px-1.5 py-0.5 rounded border border-stone-200">Esc</kbd> to close</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchDropdownOpen(false)}
+                    className="font-bold text-[#D8350F] hover:underline"
+                  >
+                    View all results
+                  </button>
+                </div>
+              </div>
             )}
-          </label>
+          </div>
 
           {/* Sort Dropdown */}
           <div className="relative">
@@ -631,6 +947,89 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
         {/* Right Cards Column */}
         <div className="flex-1 min-w-0 w-full">
+          {/* Matching Dishes Horizontal Scroll Strip */}
+          {searchQuery.trim().length > 0 && matchingDishes.length > 0 && (
+            <div className="mb-6 p-4 sm:p-5 bg-white border border-[#E7E2DA] rounded-[24px] shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#FFE9E2] text-[#D8350F] flex items-center justify-center font-bold">
+                    <Utensils className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-sm sm:text-base text-[#1C1917]">
+                      Dishes matching "{searchQuery}"
+                    </h3>
+                    <p className="text-xs text-[#78716C] font-medium">
+                      Found {matchingDishes.length} menu items with verified in-store pricing
+                    </p>
+                  </div>
+                </div>
+                <span className="hidden sm:inline-flex text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#E6F4F1] text-[#0F766E]">
+                  0% Delivery Markup
+                </span>
+              </div>
+
+              {/* Horizontal scroll of dish cards */}
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {matchingDishes.map((dish) => {
+                  const parentCafe = restaurants.find((r) => r.id === dish.restaurant_id);
+                  const isVeg = dish.dietary_tags?.includes('Vegetarian') || dish.dietary_tags?.includes('Pure Veg');
+                  return (
+                    <div
+                      key={dish.id}
+                      onClick={() => parentCafe && navigate(`/${parentCafe.slug}`)}
+                      className="group flex-shrink-0 w-64 sm:w-72 bg-[#FAF8F5] hover:bg-stone-50 border border-[#E7E2DA] hover:border-[#FF5A36] rounded-2xl p-3 cursor-pointer transition-all flex flex-col justify-between"
+                    >
+                      <div className="flex gap-3">
+                        {dish.image_url ? (
+                          <img
+                            src={dish.image_url}
+                            alt={dish.name}
+                            className="w-16 h-16 rounded-xl object-cover shrink-0 border border-stone-200"
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-[#FFE9E2]/60 text-[#D8350F] flex items-center justify-center shrink-0">
+                            <Utensils className="w-6 h-6" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${isVeg ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 truncate">
+                              {dish.category_name || 'Dish'}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-sm text-[#1C1917] truncate group-hover:text-[#D8350F] transition-colors">
+                            {dish.name}
+                          </h4>
+                          {parentCafe && (
+                            <p className="text-xs text-stone-500 truncate flex items-center gap-1 mt-0.5">
+                              <Store className="w-3 h-3 text-[#FF5A36] shrink-0" />
+                              <span className="truncate">{parentCafe.name}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-[#E7E2DA]/60 flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-black text-[#1C1917]">₹{dish.price}</span>
+                          <span className="text-[10px] font-bold text-[#0F766E] ml-1.5 bg-[#E6F4F1] px-1.5 py-0.5 rounded">
+                            0% markup
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-[#D8350F] flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                          View Cafe <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Top Status & Active Filter Tags */}
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <p className="text-sm sm:text-base text-[#57534E]">
@@ -671,21 +1070,46 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
               ))}
             </div>
           ) : filteredRestaurants.length === 0 ? (
-            <div className="bg-white rounded-[28px] border border-[#EFEAE2] p-12 text-center my-6">
+            <div className="bg-white rounded-[28px] border border-[#EFEAE2] p-8 sm:p-12 text-center my-6">
               <div className="w-14 h-14 rounded-2xl bg-[#FFE9E2] text-[#D8350F] flex items-center justify-center mx-auto mb-4 font-bold text-2xl">
-                ✕
+                <Search className="w-6 h-6" />
               </div>
-              <h3 className="hd text-2xl font-bold text-[#1C1917]">No counters found</h3>
-              <p className="mt-2 text-sm text-[#78716C] max-w-sm mx-auto">
-                No verified restaurants matched your current filters or radius. Try widening your distance or clearing selected cuisines.
+              <h3 className="hd text-xl sm:text-2xl font-bold text-[#1C1917]">
+                {searchQuery ? `No counters found for "${searchQuery}"` : 'No counters found'}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-[#78716C] max-w-md mx-auto">
+                {searchQuery
+                  ? "We couldn't find any restaurants or menu items matching that exact search. Try tapping one of the popular cravings or areas below:"
+                  : 'No verified restaurants matched your current filters or radius. Try widening your distance or clearing selected cuisines.'}
               </p>
-              <button
-                type="button"
-                onClick={clearAllFilters}
-                className="btn mt-6 bg-[#1C1917] text-white min-h-[46px]"
-              >
-                Clear all filters
-              </button>
+
+              {/* Quick suggestions pills */}
+              <div className="mt-5 flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                {['Momos', 'Cold Coffee', 'Thick Shake', 'Woodfired Pizza', 'Burgers', 'Hudson Lane', 'NSP Pitampura', 'Connaught Place', 'Chur Chur Naan', 'Pure Veg'].map((keyword) => (
+                  <button
+                    key={keyword}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(keyword);
+                      setSelectedZone('all');
+                      setSelectedCuisine('all');
+                    }}
+                    className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2DA] hover:border-[#FF5A36] hover:bg-[#FFE9E2]/50 text-[#1C1917] transition-all cursor-pointer"
+                  >
+                    🔍 {keyword}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 flex justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="btn bg-[#1C1917] text-white min-h-[44px] text-xs sm:text-sm"
+                >
+                  Clear all filters
+                </button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">

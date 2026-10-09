@@ -6,11 +6,7 @@ import {
   UtensilsCrossed,
   Sparkles,
   Search,
-  ChevronDown,
-  Menu,
-  X,
-  PlusCircle,
-  PhoneCall
+  ChevronDown
 } from 'lucide-react';
 import { MenuMapLogo } from './Logo';
 import { getBookmarks } from '../lib/bookmarks';
@@ -26,7 +22,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
   const [scrolled, setScrolled] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isHome = currentPath === '/' || currentPath === '';
 
@@ -48,22 +43,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
     return () => window.removeEventListener('menumap_bookmarks_updated', updateCount);
   }, []);
 
-  // Close mobile drawer on route change or ESC
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [currentPath]);
-
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileMenuOpen]);
-
   const navLinks = [
     { label: 'Explore', path: '/restaurants' },
     { label: 'Area guides', path: '/iconic-area' },
@@ -72,7 +51,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
   ];
 
   const handleLinkClick = (path: string) => {
-    setMobileMenuOpen(false);
     if (path.startsWith('#')) {
       if (!isHome) {
         navigate('/' + path);
@@ -154,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
             </button>
           </div>
 
-          {/* Mobile Right Cluster (Visible ONLY below md) */}
+          {/* Mobile Right Cluster (Clean Location Pill + Direct Search) */}
           <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
             <button
               type="button"
@@ -164,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
               aria-label={`Current location: ${city}. Tap to change`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse shrink-0"></span>
-              <span className="truncate max-w-[76px] xs:max-w-[105px] sm:max-w-[130px]">{city}</span>
+              <span className="truncate max-w-[85px] xs:max-w-[115px] sm:max-w-[130px]">{city}</span>
               <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
             </button>
 
@@ -175,111 +153,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
             >
               <Search className="w-4 h-4" />
             </button>
-
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors active:scale-95 text-[#1C1917] hover:bg-stone-100 bg-white border border-[#E7E2DA] shadow-xs cursor-pointer"
-              aria-label="Open navigation menu"
-            >
-              <Menu className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </header>
-
-      {/* Mobile Slide-In Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[9999] md:hidden flex justify-end">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-
-          <div
-            className="relative w-[85%] max-w-[320px] h-full bg-[#FAF8F5] text-[#1C1917] shadow-2xl flex flex-col justify-between p-6 z-10 animate-slideInRight border-l border-[#E7E2DA]"
-            style={{
-              paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-            }}
-          >
-            <div>
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-5 border-b border-[#E7E2DA]">
-                <div className="flex items-center gap-2">
-                  <MenuMapLogo size={28} />
-                  <span className="hd text-lg font-extrabold text-[#1C1917]">
-                    Menu<span className="text-[#FF5A36]">Maps</span>
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
-                  aria-label="Close menu"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Location Shortcut inside Drawer */}
-              <div className="mt-4 p-3 rounded-2xl bg-white border border-[#E7E2DA] shadow-2xs">
-                <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-1">
-                  Active Locality
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setLocationModalOpen(true);
-                  }}
-                  className="w-full text-left flex items-center justify-between text-sm font-black text-[#1C1917] hover:text-[#D8350F]"
-                >
-                  <span className="truncate">{city}</span>
-                  <span className="text-xs text-[#0F766E] font-bold">Change &rarr;</span>
-                </button>
-              </div>
-
-              {/* Navigation Links */}
-              <nav className="mt-6 flex flex-col gap-1.5">
-                {navLinks.map((link) => (
-                  <button
-                    key={link.label}
-                    onClick={() => handleLinkClick(link.path)}
-                    className="w-full text-left px-3.5 py-3 rounded-xl font-bold text-base text-[#44403C] hover:text-[#1C1917] hover:bg-stone-100/70 transition-colors flex items-center justify-between cursor-pointer"
-                  >
-                    <span>{link.label}</span>
-                    {link.badge && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-black bg-[#FF5A36] text-white">
-                        {link.badge}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </nav>
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="pt-6 border-t border-[#E7E2DA] space-y-3">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate('/contact');
-                }}
-                className="w-full min-h-[48px] rounded-2xl bg-[#1C1917] hover:bg-black text-white text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-98 cursor-pointer"
-              >
-                <PlusCircle className="w-4 h-4 text-[#FF5A36]" />
-                <span>List your cafe / menu</span>
-              </button>
-
-              <div className="text-center">
-                <p className="text-[11px] text-stone-400 font-medium">
-                  Verified real menus · 0% markups
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <LocationPickerModal
         isOpen={locationModalOpen}
