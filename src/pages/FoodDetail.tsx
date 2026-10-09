@@ -16,10 +16,12 @@ import {
 import { MenuItem, Restaurant } from '../types/database';
 import { api } from '../lib/supabase';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
-import { getSmartDishImage, IMAGE_DISCLAIMER_BADGE, IMAGE_DISCLAIMER_TEXT } from '../lib/dishImageRegistry';
 import { FoodItemCard } from '../components/FoodItemCard';
 import { DirectoryDisclaimer } from '../components/DirectoryDisclaimer';
 import { useToast } from '../components/Toast';
+import { useDiscovery } from '../context/DiscoveryContext';
+import { LocalityPriceComparisonCard } from '../components/discovery/LocalityPriceComparisonCard';
+import { DishPairingStrip } from '../components/discovery/DishPairingStrip';
 
 interface FoodDetailProps {
   slug: string;
@@ -28,6 +30,7 @@ interface FoodDetailProps {
 
 export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
   const { showToast } = useToast();
+  const { engine, trackView, activeLocality } = useDiscovery();
 
   const [loading, setLoading] = useState(true);
   const [dish, setDish] = useState<MenuItem | null>(null);
@@ -44,7 +47,11 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
   const loadDishData = async () => {
     setLoading(true);
     try {
-      const item = await api.getMenuItemBySlug(slug);
+      // 1. Instant Cache Check from Central Discovery Engine
+      let item = engine.getDishBySlug(slug);
+      if (!item) {
+        item = await api.getMenuItemBySlug(slug) || undefined;
+      }
       if (!item) {
         setDish(null);
         return;
@@ -52,20 +59,29 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
       setDish(item);
       setBookmarked(isBookmarked('dish', item.id));
 
+      // Track view in personal discovery memory
+      trackView('dish', item.id, item.name, item.slug);
+
       // Log click & view count
       api.logItemClick('food', item.id);
       api.incrementMenuItemView(item.id);
 
       // Fetch restaurant
-      const rest = await api.getRestaurantById(item.restaurant_id);
-      setRestaurant(rest);
+      let rest = engine.getRestaurantById(item.restaurant_id);
+      if (!rest) {
+        rest = await api.getRestaurantById(item.restaurant_id) || undefined;
+      }
+      setRestaurant(rest || null);
 
       // Fetch other dishes from same restaurant
-      const allRestaurantDishes = await api.getMenuItems(item.restaurant_id);
+      let allRestaurantDishes = engine.getDishesForRestaurant(item.restaurant_id);
+      if (allRestaurantDishes.length === 0) {
+        allRestaurantDishes = await api.getMenuItems(item.restaurant_id);
+      }
       setSameRestaurantDishes(allRestaurantDishes.filter((i) => i.id !== item.id).slice(0, 4));
 
       // Fetch contextual similar dishes across restaurants
-      const allDishes = await api.getMenuItems();
+      const allDishes = engine.getAllDishes().length > 0 ? engine.getAllDishes() : await api.getMenuItems();
       const currentKeywords = item.name
         .toLowerCase()
         .replace(/[^a-z0-9 ]/g, '')
@@ -111,6 +127,16 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
       setLoading(false);
     }
   };
+
+  const pairings = React.useMemo(() => {
+    if (!dish) return [];
+    return engine.getDishPairings(dish, sameRestaurantDishes, 3);
+  }, [dish, sameRestaurantDishes, engine]);
+
+  const localityAlternatives = React.useMemo(() => {
+    if (!dish) return [];
+    return engine.getAlternativeDishesInLocality(dish, restaurant?.city || activeLocality, 4);
+  }, [dish, restaurant, activeLocality, engine]);
 
   const handleBookmarkToggle = () => {
     if (!dish) return;
@@ -411,6 +437,16 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
         </div>
       </div>
 
+      {/* Cross-Entity Pairing Strip (Drinks / Sides to pair with this dish) */}
+      {dish && pairings.length > 0 && (
+        <DishPairingStrip
+          currentDish={dish}
+          restaurantName={restaurant?.name || 'this cafe'}
+          pairings={pairings}
+          navigate={navigate}
+        />
+      )}
+
       {/* Directory Transparency Notice */}
       <DirectoryDisclaimer
         restaurantName={restaurant?.name}
@@ -448,6 +484,18 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Cross-Entity Locality Price & Menu Comparison */}
+      {dish && localityAlternatives.length > 0 && (
+        <div className="pt-6">
+          <LocalityPriceComparisonCard
+            currentDish={dish}
+            localityName={restaurant?.city || activeLocality}
+            alternatives={localityAlternatives}
+            navigate={navigate}
+          />
         </div>
       )}
 

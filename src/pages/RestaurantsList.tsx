@@ -22,12 +22,10 @@ import {
   getNearestAreaName,
   detectAreaContext
 } from '../lib/location';
-import { 
-  DELHI_ZONES, 
-  DELHI_LOCATIONS, 
-  DelhiLocation 
-} from '../lib/delhiLocationsData';
+import { DELHI_ZONES, DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
 import { useToast } from '../components/Toast';
+import { MealTimeHeroBanner } from '../components/discovery/MealTimeHeroBanner';
+import { useDiscovery } from '../context/DiscoveryContext';
 
 interface RestaurantsListProps {
   navigate: (path: string) => void;
@@ -39,6 +37,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   initialMode = 'explore' 
 }) => {
   const { showToast } = useToast();
+  const { engine, currentMealTime, setManualMealTime } = useDiscovery();
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -81,7 +80,13 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   }, [initialMode, restaurants.length]);
 
   const loadData = async () => {
-    setLoading(true);
+    const cached = engine.getAllRestaurants();
+    if (cached.length > 0 && restaurants.length === 0) {
+      setRestaurants(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     try {
       const data = await api.getRestaurants(true);
       setRestaurants(data);
@@ -178,6 +183,27 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         if (!r.dietary_options?.includes(selectedDiet as any)) return false;
       }
 
+      // Meal time filter
+      if (selectedMeal !== 'all') {
+        const ml = selectedMeal.toLowerCase();
+        if (ml === 'breakfast') {
+          const isBreakfast = r.cuisine_types?.some(c => /cafe|bakery|breakfast|south indian/i.test(c)) ||
+            r.known_for_dishes?.some(d => /paratha|dosa|idli|omelette|pancake|sandwich|coffee|chai|tea/i.test(d));
+          if (!isBreakfast) return false;
+        } else if (ml === 'lunch') {
+          const isLunch = r.cuisine_types?.some(c => /thali|north indian|chinese|biryani|mughlai|buffet/i.test(c)) ||
+            (r.average_cost_for_two || 0) >= 200;
+          if (!isLunch) return false;
+        } else if (ml === 'dinner') {
+          const isDinner = r.cuisine_types?.some(c => /dinner|north indian|chinese|italian|mughlai|barbecue/i.test(c)) ||
+            (r.facilities || []).some(f => /rooftop|outdoor|ac/i.test(f));
+          if (!isDinner) return false;
+        } else if (ml === 'night owls') {
+          const isLateNight = typeof r.opening_hours === 'object' || /11|12|1|2|3|night|24/i.test(JSON.stringify(r.opening_hours || ''));
+          if (!isLateNight) return false;
+        }
+      }
+
       // Amenities
       if (selectedAmenity !== 'all') {
         const hasAmenity = r.facilities?.some((f) => f.toLowerCase().includes(selectedAmenity.toLowerCase()));
@@ -213,7 +239,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       if (sortBy === 'distance') return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
       return 0;
     });
-  }, [restaurantsWithDistance, searchQuery, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedAmenity, distanceRadius, sortBy, userCoords]);
+  }, [restaurantsWithDistance, searchQuery, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, distanceRadius, sortBy, userCoords]);
 
   const activeFiltersCount = 
     (selectedZone !== 'all' ? 1 : 0) +
@@ -233,6 +259,11 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         <h1 className="hd mt-2 text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight">
           Cafes &amp; restaurants near you
         </h1>
+
+        {/* Meal Time Contextual Discovery Banner */}
+        <div className="mt-5 mb-1">
+          <MealTimeHeroBanner />
+        </div>
 
         {/* Search, Sort & Location bar */}
         <div className="mt-7 flex flex-wrap gap-3 items-center">

@@ -31,6 +31,7 @@ import { RestaurantCard } from '../components/RestaurantCard';
 import { CartItem } from '../components/WhatsAppOrderDrawer';
 import { updatePageSeo, buildRestaurantSchema } from '../lib/seo';
 import { useToast } from '../components/Toast';
+import { useDiscovery } from '../context/DiscoveryContext';
 
 const RestaurantQrModal = React.lazy(() =>
   import('../components/RestaurantQrModal').then((m) => ({ default: m.RestaurantQrModal }))
@@ -67,6 +68,7 @@ const formatOpeningHours = (hours?: any): string => {
 
 export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, navigate }) => {
   const { showToast } = useToast();
+  const { engine, currentMealTime, trackView, calculateSavings } = useDiscovery();
 
   const [loading, setLoading] = useState(true);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -113,7 +115,16 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   }, [slug]);
 
   const loadRestaurantData = async () => {
-    setLoading(true);
+    // Fast in-memory discovery engine cache lookup
+    const cachedRest = engine.getRestaurantBySlug(slug);
+    if (cachedRest && !restaurant) {
+      setRestaurant(cachedRest);
+      setBookmarked(isBookmarked('restaurant', cachedRest.id));
+      trackView('restaurant', cachedRest.id, cachedRest.name, cachedRest.slug);
+    } else {
+      setLoading(true);
+    }
+
     try {
       const rest = await api.getRestaurantBySlug(slug);
       if (!rest) {
@@ -122,6 +133,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       }
       setRestaurant(rest);
       setBookmarked(isBookmarked('restaurant', rest.id));
+      trackView('restaurant', rest.id, rest.name, rest.slug);
 
       api.logItemClick('restaurant', rest.id);
 
@@ -149,15 +161,20 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
         jsonLd: restaurantSchema,
       });
 
-      // Similar
-      const similar = allRests
-        .filter((r) => r.id !== rest.id && (
-          r.cuisine_types?.some((c) => rest.cuisine_types?.includes(c)) ||
-          (rest.landmark && r.landmark === rest.landmark) ||
-          r.city === rest.city
-        ))
-        .slice(0, 3);
-      setSimilarRestaurants(similar);
+      // Contextual similar restaurants via CentralDiscoveryEngine
+      const smartSimilar = engine.getSimilarVibeRestaurants(rest, 3).map((s) => s.restaurant);
+      if (smartSimilar.length > 0) {
+        setSimilarRestaurants(smartSimilar);
+      } else {
+        const fallbackSimilar = allRests
+          .filter((r) => r.id !== rest.id && (
+            r.cuisine_types?.some((c) => rest.cuisine_types?.includes(c)) ||
+            (rest.landmark && r.landmark === rest.landmark) ||
+            r.city === rest.city
+          ))
+          .slice(0, 3);
+        setSimilarRestaurants(fallbackSimilar);
+      }
     } catch (e) {
       console.error('Error loading restaurant detail:', e);
     } finally {
@@ -445,6 +462,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-8 pb-24 flex flex-col lg:flex-row gap-10 items-start">
         {/* Left Column: Menu Items & Reviews */}
         <div className="flex-1 min-w-0 w-full">
+          {/* Meal Time Contextual Banner */}
+          <div className="mb-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-xs font-semibold text-amber-900 shadow-sm">
+            <span>{currentMealTime.emoji}</span>
+            <span>{currentMealTime.title} Hour:</span>
+            <span className="text-amber-700 font-normal">0% marked-up counter rates & live dine-in menu</span>
+          </div>
+
           {/* Category Tabs */}
           <div className="sticky top-20 z-30 py-3 bg-[#FAF8F5]/95 backdrop-blur-md flex flex-wrap gap-2 border-b border-[#E7E2DA]">
             <button
@@ -512,7 +536,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                   <div key={item.id} className="item group">
                     {/* Thumbnail Photo / Gradient */}
                     <div
-                      className="ph w-24 h-24 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100"
+                      onClick={() => item.slug && navigate(`/dish/${item.slug}`)}
+                      className={`ph w-24 h-24 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 ${
+                        item.slug ? 'cursor-pointer hover:opacity-95' : ''
+                      }`}
                     >
                       {item.image_url ? (
                         <img
@@ -559,7 +586,12 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                         )}
                       </div>
 
-                      <h3 className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug">
+                      <h3
+                        onClick={() => item.slug && navigate(`/dish/${item.slug}`)}
+                        className={`hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug ${
+                          item.slug ? 'cursor-pointer hover:text-[#0F766E] transition-colors' : ''
+                        }`}
+                      >
                         {item.name}
                       </h3>
                       {item.description && (
@@ -570,10 +602,18 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                     </div>
 
                     {/* Price & Add Button */}
-                    <div className="flex flex-col items-end gap-2 shrink-0 pl-2">
+                    <div className="flex flex-col items-end gap-1.5 shrink-0 pl-2">
                       <span className="hd text-lg sm:text-2xl font-black text-[#1C1917]">
                         ₹{item.price}
                       </span>
+                      {(() => {
+                        const savings = calculateSavings(item.price);
+                        return savings.savingsRupees > 0 ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 hidden sm:inline-block">
+                            Save ₹{savings.savingsRupees} vs apps
+                          </span>
+                        ) : null;
+                      })()}
                       <button
                         type="button"
                         onClick={() => handleAddToCart(item)}
@@ -775,6 +815,39 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           </div>
         </aside>
       </section>
+
+      {/* ========================================================
+          4. SIMILAR VIBE & NEARBY GEMS (CENTRAL DISCOVERY ENGINE)
+      ======================================================== */}
+      {similarRestaurants.length > 0 && (
+        <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pb-20">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="text-xs font-extrabold uppercase tracking-wider text-[#0F766E]">
+                Personalized for your palate
+              </div>
+              <h2 className="hd text-2xl sm:text-3xl font-extrabold text-[#1C1917] mt-0.5">
+                Similar vibe & nearby spots
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate('/restaurants')}
+              className="text-xs font-bold text-[#0F766E] hover:underline"
+            >
+              Explore all &rarr;
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {similarRestaurants.map((simRest) => (
+              <RestaurantCard
+                key={simRest.id}
+                restaurant={simRest}
+                onClick={() => navigate(`/${simRest.slug}`)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Modals (Lazy Loaded) */}
       <React.Suspense fallback={null}>

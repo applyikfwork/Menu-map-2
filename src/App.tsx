@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { DiscoveryProvider } from './context/DiscoveryContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -242,8 +243,10 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <AppContent />
-        <Analytics />
+        <DiscoveryProvider>
+          <AppContent />
+          <Analytics />
+        </DiscoveryProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
