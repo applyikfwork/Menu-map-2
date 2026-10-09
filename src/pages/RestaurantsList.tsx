@@ -406,6 +406,14 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
     </>
   );
 
+  const activeFiltersCount = 
+    (selectedZone !== 'all' ? 1 : 0) +
+    (selectedCuisine !== 'all' ? 1 : 0) +
+    (selectedPrice !== 'all' ? 1 : 0) +
+    (selectedDiet !== 'all' ? 1 : 0) +
+    (selectedMeal !== 'all' ? 1 : 0) +
+    (selectedAmenity !== 'all' ? 1 : 0);
+
   return (
     <div className="w-full bg-[#FAF8F5] text-[#1C1917] min-h-screen">
       {/* Top Header / Title */}
