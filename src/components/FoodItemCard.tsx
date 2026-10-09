@@ -174,12 +174,13 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
           {/* Bookmark Button */}
           <button
             onClick={handleBookmarkToggle}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-90 ${
+            className={`w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center transition-transform active:scale-90 cursor-pointer ${
               bookmarked
                 ? 'bg-[#FF5A36] text-white shadow-md'
                 : 'bg-white/85 hover:bg-white text-stone-700 backdrop-blur-sm shadow-xs'
             }`}
             title="Bookmark dish"
+            aria-label="Bookmark dish"
           >
             <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-white' : ''}`} />
           </button>
@@ -216,7 +217,7 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
       {/* Dish Details Body */}
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 bg-white">
         <div>
-          <h4 className="font-heading font-extrabold text-base text-[#1C1917] group-hover:text-[#D8350F] transition-colors line-clamp-1">
+          <h4 className="font-heading font-extrabold text-base text-[#1C1917] group-hover:text-[#D8350F] transition-colors line-clamp-2">
             {item.name}
           </h4>
 

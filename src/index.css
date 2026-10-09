@@ -45,16 +45,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 0 28px;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 20px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   border: 0;
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.25s, box-shadow 0.25s;
+}
+
+@media (min-width: 640px) {
+  .btn {
+    gap: 10px;
+    min-height: 52px;
+    padding: 0 28px;
+    font-size: 16px;
+  }
 }
 
 .btn:hover {
@@ -267,13 +276,21 @@
 
 .item {
   display: flex;
-  gap: 18px;
+  gap: 12px;
   align-items: center;
   background: #fff;
   border: 1px solid #EFEAE2;
-  border-radius: 24px;
-  padding: 14px;
+  border-radius: 20px;
+  padding: 10px;
   transition: box-shadow 0.3s, transform 0.2s;
+}
+
+@media (min-width: 640px) {
+  .item {
+    gap: 18px;
+    border-radius: 24px;
+    padding: 14px;
+  }
 }
 
 .item:hover {

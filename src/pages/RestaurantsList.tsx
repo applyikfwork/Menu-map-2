@@ -241,43 +241,200 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
     });
   }, [restaurantsWithDistance, searchQuery, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, distanceRadius, sortBy, userCoords]);
 
-  const activeFiltersCount = 
-    (selectedZone !== 'all' ? 1 : 0) +
-    (selectedCuisine !== 'all' ? 1 : 0) +
-    (selectedPrice !== 'all' ? 1 : 0) +
-    (selectedDiet !== 'all' ? 1 : 0) +
-    (selectedMeal !== 'all' ? 1 : 0) +
-    (selectedAmenity !== 'all' ? 1 : 0);
+  const renderFilterContent = () => (
+    <>
+      {/* Delhi Zone */}
+      <div>
+        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+          Delhi Zone
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {DELHI_ZONES.map((z) => {
+            const on = selectedZone === z.key;
+            return (
+              <button
+                key={z.key}
+                type="button"
+                onClick={() => setSelectedZone(z.key)}
+                className={`chipl text-xs min-h-[36px] px-3 py-1 cursor-pointer ${on ? 'on' : ''}`}
+              >
+                <span>{z.icon}</span>
+                <span>{z.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Cuisine */}
+      <div>
+        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+          Cuisine
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {cuisines.map((c) => {
+            const on = selectedCuisine.toLowerCase() === c.toLowerCase();
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setSelectedCuisine(on ? 'all' : c)}
+                className={`chipl text-xs min-h-[36px] px-3.5 py-1 cursor-pointer ${on ? 'on' : ''}`}
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Budget */}
+      <div>
+        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+          Budget for Two
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { label: '₹', val: '₹' as const, sub: '< ₹300' },
+            { label: '₹₹', val: '₹₹' as const, sub: '₹300-600' },
+            { label: '₹₹₹', val: '₹₹₹' as const, sub: '> ₹600' },
+          ].map((p) => {
+            const on = selectedPrice === p.val;
+            return (
+              <button
+                key={p.val}
+                type="button"
+                onClick={() => setSelectedPrice(on ? 'all' : p.val)}
+                className={`chipl text-sm justify-center min-h-[42px] font-bold cursor-pointer ${on ? 'on' : ''}`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Dietary */}
+      <div>
+        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+          Dietary
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {diets.map((d) => {
+            const on = selectedDiet === d;
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setSelectedDiet(on ? 'all' : d)}
+                className={`chipl text-xs min-h-[36px] px-3.5 py-1 cursor-pointer ${on ? 'on' : ''}`}
+              >
+                {d}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Meal Time */}
+      <div>
+        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+          Meal Selection
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {meals.map((m) => {
+            const on = selectedMeal.toLowerCase() === m.toLowerCase();
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setSelectedMeal(on ? 'all' : m)}
+                className={`chipl text-xs min-h-[36px] px-3.5 py-1 cursor-pointer ${on ? 'on' : ''}`}
+              >
+                {m}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Amenities */}
+      <div>
+        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
+          Amenities
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {amenities.map((a) => {
+            const on = selectedAmenity === a;
+            return (
+              <button
+                key={a}
+                type="button"
+                onClick={() => setSelectedAmenity(on ? 'all' : a)}
+                className={`chipl text-xs min-h-[36px] px-3.5 py-1 cursor-pointer ${on ? 'on' : ''}`}
+              >
+                {a}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Distance Slider */}
+      <div>
+        <div className="flex justify-between items-baseline mb-2">
+          <span className="text-xs font-extrabold tracking-wider uppercase text-[#78716C]">
+            Distance radius
+          </span>
+          <span className="hd text-base font-bold text-[#1C1917]">
+            {distanceRadius} km
+          </span>
+        </div>
+        <input
+          type="range"
+          min="1"
+          max="25"
+          value={distanceRadius}
+          onChange={(e) => setDistanceRadius(Number(e.target.value))}
+          className="w-full accent-[#D8350F] cursor-pointer"
+        />
+        <div className="flex justify-between text-[11px] text-[#78716C] mt-1 font-medium">
+          <span>Walking (1km)</span>
+          <span>Metro/Cab (25km)</span>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div className="w-full bg-[#FAF8F5] text-[#1C1917] min-h-screen">
       {/* Top Header / Title */}
-      <section className="max-w-[1280px] mx-auto px-6 sm:px-8 pt-8 pb-3">
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-6 sm:pt-8 pb-3">
         <div className="text-xs font-extrabold tracking-widest uppercase text-[#D8350F]">
           Explore
         </div>
-        <h1 className="hd mt-2 text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight">
+        <h1 className="hd mt-1 sm:mt-2 text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight">
           Cafes &amp; restaurants near you
         </h1>
 
         {/* Meal Time Contextual Discovery Banner */}
-        <div className="mt-5 mb-1">
+        <div className="mt-4 sm:mt-5 mb-1">
           <MealTimeHeroBanner />
         </div>
 
         {/* Search, Sort & Location bar */}
-        <div className="mt-7 flex flex-wrap gap-3 items-center">
-          <label className="flex-1 min-w-[280px] flex items-center gap-3 px-5 min-h-[58px] rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs">
-            <Search className="w-5 h-5 text-[#78716C] shrink-0" />
+        <div className="mt-5 sm:mt-7 flex flex-wrap gap-2 sm:gap-3 items-center">
+          <label className="flex-1 min-w-0 w-full sm:w-auto flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 min-h-[48px] sm:min-h-[56px] rounded-2xl sm:rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs">
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-[#78716C] shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search cafes, dishes, areas (e.g. Hudson Lane, Momos)"
-              className="flex-1 min-w-0 bg-transparent text-[#1C1917] placeholder:text-stone-400 text-base font-medium outline-none"
+              className="flex-1 min-w-0 bg-transparent text-[#1C1917] placeholder:text-stone-400 text-xs sm:text-base font-medium outline-none"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="text-stone-400 hover:text-stone-700">
+              <button onClick={() => setSearchQuery('')} className="text-stone-400 hover:text-stone-700 p-1">
                 <X className="w-4 h-4" />
               </button>
             )}
@@ -288,10 +445,10 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
             <button
               type="button"
               onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-              className="chipl min-h-[58px] px-5 rounded-[22px] font-bold text-sm bg-white"
+              className="chipl min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-5 rounded-2xl sm:rounded-[22px] font-bold text-xs sm:text-sm bg-white"
             >
               <span>Sort: {sortBy === 'rating' ? 'Rating' : sortBy === 'cost_low' ? 'Cost: Low to High' : sortBy === 'cost_high' ? 'Cost: High to Low' : 'Distance'}</span>
-              <ChevronDown className="w-4 h-4 ml-1" />
+              <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1" />
             </button>
 
             {sortDropdownOpen && (
@@ -335,21 +492,21 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                 if (!userCoords) handleLocate(true);
               }
             }}
-            className={`chipl min-h-[58px] px-5 rounded-[22px] font-bold text-sm transition-all ${
+            className={`chipl min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-5 rounded-2xl sm:rounded-[22px] font-bold text-xs sm:text-sm transition-all ${
               sortBy === 'distance'
                 ? 'bg-[#FF5A36] text-white border-[#FF5A36] shadow-sm'
                 : 'bg-white text-[#1C1917] border-[#E7E2DA] hover:border-stone-300'
             }`}
           >
-            <MapPin className="w-4 h-4 mr-1 text-current" />
+            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 text-current" />
             <span>Near Me</span>
           </button>
 
           {/* Current Active Location Pill */}
-          <div className="inline-flex items-center gap-2 min-h-[58px] px-5 rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-bold text-[#1C1917]">
-            <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0" />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-5 rounded-2xl sm:rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-bold text-[#1C1917]">
+            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF5A36] shrink-0" />
             <span className="text-stone-400 font-medium">Area:</span>
-            <span className="text-[#D8350F] font-black truncate max-w-[150px]">{detectedArea || 'Delhi NCR'}</span>
+            <span className="text-[#D8350F] font-black truncate max-w-[110px] sm:max-w-[150px]">{detectedArea || 'Delhi NCR'}</span>
             {nearestMetro && (
               <span className="hidden xl:inline-flex items-center gap-1 text-[#0F766E] text-xs font-semibold pl-2 border-l border-stone-200">
                 <Train className="w-3.5 h-3.5 shrink-0" />
@@ -363,7 +520,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
           <button
             type="button"
             onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-            className="lg:hidden chipl min-h-[58px] px-4 rounded-[22px] font-bold text-sm bg-white"
+            className="lg:hidden chipl min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-4 rounded-2xl sm:rounded-[22px] font-bold text-xs sm:text-sm bg-white"
           >
             <SlidersHorizontal className="w-4 h-4 mr-1.5" />
             Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
@@ -394,13 +551,11 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       </section>
 
       {/* Main Content: Sidebar + Cards Grid */}
-      <section className="max-w-[1280px] mx-auto px-6 sm:px-8 pt-6 pb-24 flex flex-col lg:flex-row gap-10 items-start">
-        {/* Left Filter Sidebar */}
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-4 sm:pt-6 pb-24 flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
+        {/* Desktop Left Filter Sidebar */}
         <aside
           aria-label="Filters"
-          className={`${
-            mobileFilterOpen ? 'block' : 'hidden lg:flex'
-          } w-full lg:w-72 bg-white border border-[#EFEAE2] rounded-[28px] p-6 flex-col gap-6 shrink-0 shadow-xs`}
+          className="hidden lg:flex w-72 bg-white border border-[#EFEAE2] rounded-[28px] p-6 flex-col gap-6 shrink-0 shadow-xs"
         >
           <div className="flex justify-between items-center pb-2 border-b border-[#E7E2DA]">
             <h2 className="text-xl font-bold text-[#1C1917]">Filters</h2>
@@ -408,152 +563,63 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="text-xs font-bold text-[#D8350F] hover:underline"
+                className="text-xs font-bold text-[#D8350F] hover:underline cursor-pointer"
               >
                 Clear all
               </button>
             )}
           </div>
 
-          {/* Delhi Zone */}
-          <div>
-            <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
-              Delhi Zone
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {DELHI_ZONES.map((z) => {
-                const on = selectedZone === z.key;
-                return (
-                  <button
-                    key={z.key}
-                    type="button"
-                    onClick={() => setSelectedZone(z.key)}
-                    className={`chipl text-xs min-h-[34px] px-3 py-1 ${on ? 'on' : ''}`}
-                  >
-                    <span>{z.icon}</span>
-                    <span>{z.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Cuisine */}
-          <div>
-            <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
-              Cuisine
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {cuisines.map((c) => {
-                const on = selectedCuisine.toLowerCase() === c.toLowerCase();
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setSelectedCuisine(on ? 'all' : c)}
-                    className={`chipl text-xs min-h-[36px] px-3.5 py-1 ${on ? 'on' : ''}`}
-                  >
-                    {c}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Price */}
-          <div>
-            <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
-              Budget for Two
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {[
-                { label: '₹', val: '₹' as const, sub: '< ₹300' },
-                { label: '₹₹', val: '₹₹' as const, sub: '₹300-600' },
-                { label: '₹₹₹', val: '₹₹₹' as const, sub: '> ₹600' },
-              ].map((p) => {
-                const on = selectedPrice === p.val;
-                return (
-                  <button
-                    key={p.val}
-                    type="button"
-                    onClick={() => setSelectedPrice(on ? 'all' : p.val)}
-                    className={`chipl text-sm justify-center min-h-[42px] font-bold ${on ? 'on' : ''}`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Dietary */}
-          <div>
-            <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
-              Dietary
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {diets.map((d) => {
-                const on = selectedDiet === d;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setSelectedDiet(on ? 'all' : d)}
-                    className={`chipl text-xs min-h-[36px] px-3.5 py-1 ${on ? 'on' : ''}`}
-                  >
-                    {d}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Amenities */}
-          <div>
-            <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
-              Amenities
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {amenities.map((a) => {
-                const on = selectedAmenity === a;
-                return (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setSelectedAmenity(on ? 'all' : a)}
-                    className={`chipl text-xs min-h-[36px] px-3.5 py-1 ${on ? 'on' : ''}`}
-                  >
-                    {a}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Distance Slider */}
-          <div>
-            <div className="flex justify-between items-baseline mb-2">
-              <span className="text-xs font-extrabold tracking-wider uppercase text-[#78716C]">
-                Distance radius
-              </span>
-              <span className="hd text-base font-bold text-[#1C1917]">
-                {distanceRadius} km
-              </span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="25"
-              value={distanceRadius}
-              onChange={(e) => setDistanceRadius(Number(e.target.value))}
-              className="w-full accent-[#D8350F] cursor-pointer"
-            />
-            <div className="flex justify-between text-[11px] text-[#78716C] mt-1 font-medium">
-              <span>Walking (1km)</span>
-              <span>Metro/Cab (25km)</span>
-            </div>
-          </div>
+          {renderFilterContent()}
         </aside>
+
+        {/* Mobile Filters Drawer Modal */}
+        {mobileFilterOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex flex-col bg-white animate-fadeIn">
+            <div className="flex items-center justify-between p-4 border-b border-[#E7E2DA] bg-[#FAF8F5]">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-[#FF5A36]" />
+                <h3 className="font-heading font-extrabold text-lg text-[#1C1917]">Filters</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="text-xs font-bold text-[#D8350F] hover:underline cursor-pointer"
+                  >
+                    Clear all
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMobileFilterOpen(false)}
+                  className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Close filters"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {renderFilterContent()}
+            </div>
+
+            <div 
+              className="p-4 border-t border-[#E7E2DA] bg-white sticky bottom-0 shadow-lg"
+              style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+            >
+              <button
+                type="button"
+                onClick={() => setMobileFilterOpen(false)}
+                className="w-full py-3.5 bg-[#1C1917] hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Show {filteredRestaurants.length} Restaurants</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Right Cards Column */}
         <div className="flex-1 min-w-0 w-full">

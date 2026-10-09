@@ -161,7 +161,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-hidden"
+      className="fixed inset-0 z-[999999] flex items-center justify-center p-2.5 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-hidden"
       style={{
         position: 'fixed',
         top: 0,
@@ -169,7 +169,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         zIndex: 999999,
       }}
       onClick={(e) => {
@@ -178,20 +178,20 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     >
       {/* Modal Dialog Card (Optimized Height, Zero Flex-Clipping, 100% Contained) */}
       <div 
-        className="relative w-full max-w-2xl h-[92vh] sm:h-[86vh] max-h-[760px] bg-[#FAF8F5] rounded-3xl sm:rounded-[36px] shadow-2xl border border-[#EFEAE2] flex flex-col overflow-hidden animate-scaleUp"
+        className="relative w-full max-w-2xl h-[94dvh] sm:h-[86vh] max-h-[760px] bg-[#FAF8F5] rounded-2xl sm:rounded-[36px] shadow-2xl border border-[#EFEAE2] flex flex-col overflow-hidden animate-scaleUp"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* ========================================================================= */}
         {/* 1. FIXED TOP HEADER (ALWAYS FULLY VISIBLE & ACCESSIBLE) */}
         {/* ========================================================================= */}
-        <div className="shrink-0 p-4 sm:p-5 border-b border-[#E7E2DA] bg-white flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-orange-100 text-[#FF5A36] flex items-center justify-center shrink-0 shadow-xs">
-              <MapPin className="w-5 h-5" />
+        <div className="shrink-0 p-3.5 sm:p-5 border-b border-[#E7E2DA] bg-white flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-orange-100 text-[#FF5A36] flex items-center justify-center shrink-0 shadow-xs">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-heading font-black text-base sm:text-lg text-[#1C1917] leading-tight truncate">
+              <h3 className="font-heading font-black text-sm sm:text-lg text-[#1C1917] leading-tight truncate">
                 Select Delhi Location
               </h3>
               <div className="flex items-center gap-1.5 mt-0.5 text-xs text-stone-500 font-sans truncate">
@@ -204,8 +204,9 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             title="Close dialog (Esc)"
+            aria-label="Close dialog"
           >
             <X className="w-4 h-4 stroke-[2.5]" />
           </button>
@@ -433,15 +434,15 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         </div>
 
         {/* Bottom Micro Footer */}
-        <div className="shrink-0 p-3 bg-white border-t border-[#E7E2DA] flex items-center justify-between text-[11px] text-stone-500 px-4">
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
-            <span>60+ colonies across all 11 Delhi revenue districts mapped</span>
+        <div className="shrink-0 p-3 bg-white border-t border-[#E7E2DA] flex items-center justify-between gap-2 text-[11px] text-stone-500 px-4">
+          <span className="flex items-center gap-1.5 min-w-0 truncate">
+            <Sparkles className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
+            <span className="truncate">60+ Delhi colonies mapped</span>
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="font-bold text-[#D8350F] hover:underline cursor-pointer"
+            className="font-bold text-[#D8350F] hover:underline cursor-pointer shrink-0 min-h-[40px] px-2 flex items-center"
           >
             Done
           </button>

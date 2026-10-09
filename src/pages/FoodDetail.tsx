@@ -250,19 +250,21 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleShare}
-                className="w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-transform active:scale-95 border border-white/10 cursor-pointer"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-transform active:scale-95 border border-white/10 cursor-pointer"
                 title="Share dish"
+                aria-label="Share dish"
               >
                 <Share2 className="w-4 h-4" />
               </button>
               <button
                 onClick={handleBookmarkToggle}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-95 cursor-pointer ${
+                className={`w-10 h-10 min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition-transform active:scale-95 cursor-pointer ${
                   bookmarked
                     ? 'bg-[#FF5A36] text-white shadow-md'
                     : 'bg-black/50 hover:bg-black/75 text-white backdrop-blur-md border border-white/10'
                 }`}
                 title="Bookmark dish"
+                aria-label="Bookmark dish"
               >
                 <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-white' : ''}`} />
               </button>
@@ -334,9 +336,9 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-dashed border-stone-200 text-[11px] text-stone-500 flex items-center justify-between">
+              <div className="pt-2 border-t border-dashed border-stone-200 text-[11px] text-stone-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <span>* Direct cafe counter rate. No food app commissions added.</span>
-                <span className="font-bold text-emerald-700">Verified Menu</span>
+                <span className="font-bold text-emerald-700 shrink-0">Verified Menu</span>
               </div>
             </div>
 

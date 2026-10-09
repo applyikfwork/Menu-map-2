@@ -421,12 +421,12 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
         </div>
 
         {/* Filter Trigger on Mobile & Tabs on Desktop */}
-        <div className="flex items-center justify-between w-full md:w-auto gap-2 border-t md:border-t-0 pt-2 md:pt-0 border-stone-100">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between w-full md:w-auto gap-2 border-t md:border-t-0 pt-2 md:pt-0 border-stone-100">
           {/* Tab Selector */}
-          <div className="flex items-center bg-[#F5F1EB] p-1 rounded-2xl text-xs font-bold text-[#57534E]">
+          <div className="flex items-center bg-[#F5F1EB] p-1 rounded-2xl text-xs font-bold text-[#57534E] overflow-x-auto no-scrollbar whitespace-nowrap max-w-full">
             <button
               onClick={() => setTabMode('all')}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer min-h-[34px] shrink-0 ${
                 tabMode === 'all' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
               }`}
             >
@@ -434,7 +434,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             </button>
             <button
               onClick={() => setTabMode('restaurants')}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer min-h-[34px] shrink-0 ${
                 tabMode === 'restaurants' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
               }`}
             >
@@ -442,7 +442,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             </button>
             <button
               onClick={() => setTabMode('dishes')}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer min-h-[34px] shrink-0 ${
                 tabMode === 'dishes' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
               }`}
             >
@@ -452,7 +452,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
 
           <button
             onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-            className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold border transition-colors ${
+            className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-2xl text-xs font-bold border transition-colors shrink-0 ${
               hasActiveFilters
                 ? 'bg-[#FF5A36]/10 text-[#FF5A36] border-[#FF5A36]/30'
                 : 'bg-white text-stone-700 border-[#E7E2DA]'
@@ -517,10 +517,13 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
               {renderFilterContent()}
             </div>
 
-            <div className="p-4 border-t border-stone-200 bg-white sticky bottom-0 shadow-lg">
+            <div 
+              className="p-4 border-t border-stone-200 bg-white sticky bottom-0 shadow-lg"
+              style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+            >
               <button
                 onClick={() => setShowFiltersMobile(false)}
-                className="w-full py-3.5 bg-[#14110F] hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#14110F] hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Show {filteredRestaurants.length + filteredItems.length} Results</span>
               </button>

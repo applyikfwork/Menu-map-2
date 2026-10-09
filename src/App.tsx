@@ -221,7 +221,7 @@ function AppContent() {
         />
       )}
       
-      <main className="flex-1 pb-28 md:pb-0">
+      <main className="flex-1 pb-32 md:pb-0">
         <React.Suspense
           fallback={
             <div className="min-h-[50vh] flex items-center justify-center">

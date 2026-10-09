@@ -75,31 +75,32 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
           <button
             onClick={handleBookmarkToggle}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-90 shadow-sm ${
+            className={`w-10 h-10 min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition-transform active:scale-90 shadow-sm cursor-pointer ${
               bookmarked
                 ? 'bg-[#FF5A36] text-white'
                 : 'bg-white/90 hover:bg-white text-stone-700'
             }`}
             title={bookmarked ? 'Remove bookmark' : 'Bookmark restaurant'}
+            aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark restaurant'}
           >
             <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-white' : ''}`} />
           </button>
         </div>
 
         {/* Bottom Badges on Image */}
-        <div className="absolute bottom-3.5 inset-x-3.5 flex items-center justify-between text-white z-10">
+        <div className="absolute bottom-3.5 inset-x-3.5 flex items-center justify-between gap-2 text-white z-10">
           {typeof userDistanceKm === 'number' ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-teal-300">
-              <MapPin className="w-3 h-3 text-[#2DD4BF]" />
-              {formatDistance(userDistanceKm)}
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-teal-300 truncate max-w-[140px]">
+              <MapPin className="w-3 h-3 text-[#2DD4BF] shrink-0" />
+              <span className="truncate">{formatDistance(userDistanceKm)}</span>
             </span>
           ) : (
-            <span className="text-xs font-bold text-stone-200 drop-shadow-sm">
+            <span className="text-xs font-bold text-stone-200 drop-shadow-sm truncate max-w-[140px] xs:max-w-[170px] sm:max-w-[200px]">
               {restaurant.landmark || restaurant.city}
             </span>
           )}
 
-          <span className="px-3 py-1 rounded-full bg-[#1C1917] text-white text-xs font-bold shadow-sm">
+          <span className="px-3 py-1 rounded-full bg-[#1C1917] text-white text-xs font-bold shadow-sm shrink-0">
             {restaurant.is_open ? 'Open now' : 'Opens 11 AM'}
           </span>
         </div>

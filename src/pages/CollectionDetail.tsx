@@ -527,15 +527,15 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. MOBILE STICKY QUICK-JUMP ANCHOR BAR */}
+      {/* 4. MOBILE STICKY QUICK-JUMP ANCHOR BAR (PINS DIRECTLY BELOW STICKY NAVBAR) */}
       {/* ========================================================================= */}
-      <div className="sticky top-0 z-30 bg-[#FAF8F5]/95 backdrop-blur-md border-y border-[#E7E2DA] my-6 py-2 px-4 sm:px-6 shadow-2xs">
+      <div className="sticky top-16 sm:top-20 z-30 bg-[#FAF8F5]/95 backdrop-blur-md border-y border-[#E7E2DA] my-4 sm:my-6 py-2 px-3.5 sm:px-6 shadow-2xs">
         <div className="max-w-[1280px] mx-auto flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => scrollToAnchor('section-transit', 'transit')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 min-h-[38px] ${
                 activeNavSection === 'transit'
                   ? 'bg-[#1C1917] text-white shadow-xs'
                   : 'bg-white text-stone-600 border border-[#E7E2DA] hover:bg-stone-50'

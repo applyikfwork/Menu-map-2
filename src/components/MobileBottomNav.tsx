@@ -9,7 +9,7 @@ interface MobileBottomNavProps {
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, navigate }) => {
   const isHome = currentPath === '/' || currentPath === '';
-  const isExplore = currentPath === '/restaurants' || currentPath.startsWith('/restaurant/');
+  const isExplore = currentPath === '/restaurants' || currentPath.startsWith('/restaurant/') || currentPath === '/search' || currentPath.startsWith('/food/') || currentPath.startsWith('/dish/');
   const isGuides = currentPath === '/iconic-area' || currentPath === '/iconic-areas' || currentPath.startsWith('/iconic-area/') || currentPath === '/collections';
   const isSaved = currentPath === '/bookmarks';
 
@@ -56,10 +56,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
   return (
     <nav
       aria-label="Mobile Navigation Bar"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-t border-[#E7E2DA] flex items-center justify-around px-2 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-t border-[#E7E2DA] flex items-center justify-around px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
       style={{
-        paddingTop: '8px',
-        paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
+        paddingTop: '6px',
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
       }}
     >
       {navItems.map((item) => {
@@ -68,7 +68,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
           <button
             key={item.label}
             onClick={() => navigate(item.path)}
-            className={`flex flex-col items-center justify-center gap-1 py-1 px-2.5 text-[11px] font-bold transition-all active:scale-95 relative cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-1.5 px-1 min-h-[48px] text-[11px] font-bold transition-all active:scale-95 relative cursor-pointer ${
               item.active
                 ? 'text-[#FF5A36]'
                 : 'text-[#78716C] hover:text-[#1C1917]'

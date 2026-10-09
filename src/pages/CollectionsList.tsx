@@ -452,42 +452,42 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             )}
           </div>
 
-          {/* 3-Tab Segmented View Switcher */}
-          <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] inline-flex w-full sm:w-auto justify-center">
+          {/* 3-Tab Segmented View Switcher (Swipeable on narrow mobile, prevents text crushing) */}
+          <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] flex w-full sm:w-auto overflow-x-auto no-scrollbar whitespace-nowrap justify-start sm:justify-center gap-1">
             <button
               type="button"
               onClick={() => setActiveTab('areas')}
-              className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`shrink-0 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] ${
                 activeTab === 'areas'
                   ? 'bg-white text-[#1C1917] shadow-xs'
                   : 'text-[#57534E] hover:text-[#1C1917]'
               }`}
             >
-              <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <Compass className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
               <span>Area Guides ({filteredGuides.length})</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('delhi_hubs')}
-              className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`shrink-0 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] ${
                 activeTab === 'delhi_hubs'
                   ? 'bg-white text-[#1C1917] shadow-xs'
                   : 'text-[#57534E] hover:text-[#1C1917]'
               }`}
             >
-              <MapPin className="w-3.5 h-3.5 text-[#0F766E]" />
+              <MapPin className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
               <span>All 60+ Localities</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('famous_dishes')}
-              className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`shrink-0 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] ${
                 activeTab === 'famous_dishes'
                   ? 'bg-white text-[#1C1917] shadow-xs'
                   : 'text-[#57534E] hover:text-[#1C1917]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#D8350F]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#D8350F] shrink-0" />
               <span>Famous Dishes</span>
             </button>
           </div>

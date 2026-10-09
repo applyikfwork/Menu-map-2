@@ -469,11 +469,11 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             <span className="text-amber-700 font-normal">0% marked-up counter rates & live dine-in menu</span>
           </div>
 
-          {/* Category Tabs */}
-          <div className="sticky top-20 z-30 py-3 bg-[#FAF8F5]/95 backdrop-blur-md flex flex-wrap gap-2 border-b border-[#E7E2DA]">
+          {/* Category Tabs (Horizontally Swipeable Strip on Mobile, Prevents 260px Sticky Block) */}
+          <div className="sticky top-16 sm:top-20 z-30 py-2.5 bg-[#FAF8F5]/95 backdrop-blur-md flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap border-b border-[#E7E2DA]">
             <button
               onClick={() => setSelectedCategoryTab('all')}
-              className={`chipl ${selectedCategoryTab === 'all' ? 'on' : ''} text-xs font-bold`}
+              className={`chipl ${selectedCategoryTab === 'all' ? 'on' : ''} text-xs font-bold shrink-0 min-h-[38px]`}
             >
               All Items ({menuItems.length})
             </button>
@@ -483,7 +483,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategoryTab(on ? 'all' : cat.name)}
-                  className={`chipl ${on ? 'on' : ''} text-xs font-bold`}
+                  className={`chipl ${on ? 'on' : ''} text-xs font-bold shrink-0 min-h-[38px]`}
                 >
                   {cat.name}
                 </button>
@@ -492,28 +492,28 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           </div>
 
           {/* Search inside menu & veg filters */}
-          <div className="mt-6 flex flex-wrap gap-3 items-center">
-            <div className="flex-1 min-w-[200px] flex items-center gap-2.5 px-4 min-h-[46px] rounded-2xl bg-white border border-[#E7E2DA]">
+          <div className="mt-6 flex flex-wrap gap-2.5 sm:gap-3 items-center">
+            <div className="flex-1 min-w-[170px] sm:min-w-[200px] flex items-center gap-2 px-3.5 sm:px-4 min-h-[44px] sm:min-h-[46px] rounded-2xl bg-white border border-[#E7E2DA]">
               <Search className="w-4 h-4 text-[#78716C] shrink-0" />
               <input
                 type="text"
                 value={menuSearch}
                 onChange={(e) => setMenuSearch(e.target.value)}
                 placeholder="Search this menu (e.g. momos, burger, shake)…"
-                className="flex-1 bg-transparent text-sm text-[#1C1917] outline-none placeholder:text-stone-400"
+                className="flex-1 bg-transparent text-xs sm:text-sm text-[#1C1917] outline-none placeholder:text-stone-400"
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <button
                 onClick={() => setDietaryFilter(dietaryFilter === 'veg' ? 'all' : 'veg')}
-                className={`chipl text-xs min-h-[46px] px-3.5 ${dietaryFilter === 'veg' ? 'on' : ''}`}
+                className={`chipl text-xs min-h-[44px] px-3 sm:px-3.5 ${dietaryFilter === 'veg' ? 'on' : ''}`}
               >
                 🟢 Pure Veg
               </button>
               <button
                 onClick={() => setDietaryFilter(dietaryFilter === 'non-veg' ? 'all' : 'non-veg')}
-                className={`chipl text-xs min-h-[46px] px-3.5 ${dietaryFilter === 'non-veg' ? 'on' : ''}`}
+                className={`chipl text-xs min-h-[44px] px-3 sm:px-3.5 ${dietaryFilter === 'non-veg' ? 'on' : ''}`}
               >
                 🔴 Non-Veg
               </button>
@@ -522,7 +522,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
           {/* Dish Items List matching .item from redesign */}
           <div className="mt-8">
-            <h2 className="hd text-3xl font-extrabold text-[#1C1917]">
+            <h2 className="hd text-2xl sm:text-3xl font-extrabold text-[#1C1917]">
               {selectedCategoryTab === 'all' ? 'Counter menu items' : selectedCategoryTab}
             </h2>
 
@@ -531,13 +531,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <p className="text-sm font-semibold text-stone-500">No dishes matched your filter or search.</p>
               </div>
             ) : (
-              <div className="mt-5 flex flex-col gap-3.5">
+              <div className="mt-5 flex flex-col gap-3">
                 {filteredMenuItems.map((item) => (
                   <div key={item.id} className="item group">
                     {/* Thumbnail Photo / Gradient */}
                     <div
                       onClick={() => item.slug && navigate(`/dish/${item.slug}`)}
-                      className={`ph w-24 h-24 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 ${
+                      className={`ph w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 ${
                         item.slug ? 'cursor-pointer hover:opacity-95' : ''
                       }`}
                     >
@@ -558,7 +558,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
                     {/* Dish Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         {/* Veg / Non-Veg dot */}
                         <span
                           className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center ${
@@ -575,12 +575,12 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                         </span>
 
                         {(item.is_featured || item.is_must_try) && (
-                          <span className="text-[11px] font-extrabold uppercase text-[#D8350F] bg-[#FFE9E2] px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[#D8350F] bg-[#FFE9E2] px-1.5 sm:px-2 py-0.5 rounded-md">
                             Bestseller
                           </span>
                         )}
                         {item.spice_level && item.spice_level > 1 && (
-                          <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2 py-0.5 rounded-md">
                             🌶️ Spicy
                           </span>
                         )}
@@ -588,7 +588,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
                       <h3
                         onClick={() => item.slug && navigate(`/dish/${item.slug}`)}
-                        className={`hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug ${
+                        className={`hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-2 ${
                           item.slug ? 'cursor-pointer hover:text-[#0F766E] transition-colors' : ''
                         }`}
                       >
@@ -645,9 +645,9 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             </div>
 
             {/* Review Score Summary Box */}
-            <div className="mt-6 bg-white border border-[#EFEAE2] rounded-[28px] p-7 flex flex-wrap gap-8 items-center shadow-xs">
+            <div className="mt-6 bg-white border border-[#EFEAE2] rounded-[28px] p-5 sm:p-7 flex flex-wrap gap-6 sm:gap-8 items-center shadow-xs">
               <div>
-                <div className="hd text-5xl sm:text-6xl font-black text-[#1C1917] leading-none">
+                <div className="hd text-4xl sm:text-6xl font-black text-[#1C1917] leading-none">
                   {restaurant.rating_avg > 0 ? restaurant.rating_avg.toFixed(1) : '4.6'}
                 </div>
                 <div className="mt-1 text-xs text-[#57534E] font-medium">
@@ -656,7 +656,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               </div>
 
               {/* Simulated Rating Bar Breakdown */}
-              <div className="flex-1 min-w-[240px] flex flex-col gap-2">
+              <div className="flex-1 min-w-0 w-full sm:min-w-[240px] flex flex-col gap-2">
                 {[
                   { star: '5', width: '78%' },
                   { star: '4', width: '16%' },
