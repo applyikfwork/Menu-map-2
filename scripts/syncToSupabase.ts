@@ -60,8 +60,11 @@ async function sync() {
 
   // 4. Ingest collections & items
   console.log('🚀 Upserting collections to Supabase...');
-  const { error: colErr } = await supabase.from('collections').upsert(data.collections, { onConflict: 'id' });
-  if (colErr) console.error('Error inserting collections:', colErr.message);
+  for (const col of data.collections) {
+    const { error: colErr } = await supabase.from('collections').upsert(col, { onConflict: 'id' });
+    if (colErr) console.error(`Error inserting collection ${col.title}:`, colErr.message);
+  }
+  console.log(`✅ Synced ${data.collections.length} collections.`);
 
   const { error: colItemErr } = await supabase.from('collection_items').upsert(data.collectionItems, { onConflict: 'id' });
   if (colItemErr) console.error('Error inserting collection items:', colItemErr.message);

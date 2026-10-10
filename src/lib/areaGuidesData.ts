@@ -1096,5 +1096,253 @@ export const AREA_FOOD_GUIDES: Collection[] = [
         }
       ]
     }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000015',
+    title: 'CR Park Bengali Culinary Heritage Guide',
+    slug: 'cr-park-food-guide',
+    description: 'Mini Kolkata in the heart of South Delhi: steaming Basanti Pulao, melt-in-mouth Kosha Mangsho, crispy Bhetki Fish Fry, crumbly chops, and pure date palm jaggery sandesh.',
+    cover_image_url: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 15,
+    created_at: '2026-10-10T08:00:00.000Z',
+    area_metadata: {
+      area_name: 'CR Park (Chittaranjan Park)',
+      zone: 'South Delhi',
+      latitude: 28.5395,
+      longitude: 77.2472,
+      vibe_badge: 'Aroma of mustard oil, evening cha addas & timeless Kolkata soul.',
+      famous_for_summary: 'Kosha Mangsho, Bhetki Macher Paturi, Kolkata Fish Fry, Mughlai Paratha, Mishti Doi & Nolen Gurer Sandesh.',
+      best_time_to_visit: '12:00 PM – 3:30 PM (Traditional Bengali lunch) & 5:30 PM – 10:30 PM (Evening street snacks and sweets)',
+      nearest_metro: 'Nehru Enclave Metro Station (Magenta Line) & Greater Kailash Metro Station (Magenta Line)',
+      parking_tips: 'Market 1 and Market 2 have dedicated municipal parking lots; Market 2 gets packed by 7:30 PM.',
+      avg_cost_for_two: 550,
+      sub_guide_filters: [
+        'Authentic Bengali Curries & Rice',
+        'Iconic Kolkata Cutlets & Chops',
+        'Traditional Mishti & Sweets',
+        'Evening Cha & Street Addas'
+      ],
+      famous_dishes: [
+        {
+          name: 'Kosha Mangsho with Basanti Pulao',
+          why_famous: 'Slow-cooked rich Kolkata mutton curry with tender potatoes paired with fragrant sweet yellow basanti pulao.',
+          restaurant_name: 'Maa Tara Restaurant',
+          price: 280,
+          image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        },
+        {
+          name: 'Pure Bhetki Kolkata Fish Fry',
+          why_famous: 'Fresh sea-bass fillet marinated in green coriander-chili-ginger emulsion and crumb-fried crisp with mustard kasundi.',
+          restaurant_name: 'City Cafe',
+          price: 160,
+          image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        },
+        {
+          name: 'Nolen Gurer Rasgulla & Mishti Doi',
+          why_famous: 'Spongy winter date palm jaggery rasgullas and earthenware set fermented sweet curd.',
+          restaurant_name: 'Annapurna Sweet House',
+          price: 70,
+          image_url: 'https://images.unsplash.com/photo-1560008581-09826d1de69e?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000016',
+    title: 'Epicuria Nehru Place Metro Transit Dining Guide',
+    slug: 'epicuria-nehru-place-food-guide',
+    description: 'Asias premier transit dining hub nestled right under Nehru Place Metro: high-energy brewpubs, Pan-Asian dim sum bars, artisanal bakeries, and gourmet coffee shops.',
+    cover_image_url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 16,
+    created_at: '2026-10-10T08:00:00.000Z',
+    area_metadata: {
+      area_name: 'Epicuria / Nehru Place',
+      zone: 'South Delhi',
+      latitude: 28.5492,
+      longitude: 77.2528,
+      vibe_badge: 'High-energy metro transit hub, neon gastropubs & corporate power lunches.',
+      famous_for_summary: 'Loaded Death Wings, Truffle Mac & Cheese, Sushi Platters, Craft Brews & Gourmet Artisanal Gelato.',
+      best_time_to_visit: '12:30 PM – 3:30 PM (Corporate Lunch) & 6:00 PM – 12:30 AM (Lively nightlife & live gigs)',
+      nearest_metro: 'Nehru Place Metro Station (Violet Line, Direct Escalator to Concourse Level)',
+      parking_tips: 'Epicuria has a massive automated multilevel basement parking facility with valet services available.',
+      avg_cost_for_two: 1400,
+      sub_guide_filters: [
+        'Gastropubs & Craft Beers',
+        'Pan-Asian Sushi & Dim Sum',
+        'Quick Metro Takeaways',
+        'Desserts & Specialty Coffee'
+      ],
+      famous_dishes: [
+        {
+          name: 'Butter Chicken Biryani Box',
+          why_famous: 'Tender charbroiled chicken tikka layered with rich makhani gravy and spiced rice.',
+          restaurant_name: 'Nehru Place Social',
+          price: 445,
+          image_url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        },
+        {
+          name: 'Classic Fish & Chips',
+          why_famous: 'Beer-battered crispy bhetki served with mushy peas and house tartar sauce.',
+          restaurant_name: 'The Chatter House',
+          price: 525,
+          image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000017',
+    title: 'Bengali Market & Mandi House Theatre Food Walk',
+    slug: 'bengali-market-mandi-house-food-guide',
+    description: 'The cultural heartbeat of New Delhi: century-old sweet shops, legendary Chole Bhature, open-air cultural cafe terraces, and state bhavan thalis.',
+    cover_image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 17,
+    created_at: '2026-10-10T08:00:00.000Z',
+    area_metadata: {
+      area_name: 'Bengali Market & Mandi House',
+      zone: 'Central Delhi',
+      latitude: 28.6271,
+      longitude: 77.2343,
+      vibe_badge: 'Intellectual theatre crowd, heritage sweet shops & quiet cultural courtyards.',
+      famous_for_summary: 'Raj Kachori, Special Chole Bhature, Apple Jalebi, Shami Kebabs, Masala Chai & State Bhavan Thalis.',
+      best_time_to_visit: '10:00 AM – 2:00 PM (Fresh morning sweets & breakfast) & 5:00 PM – 9:30 PM (Post-theatre snacks)',
+      nearest_metro: 'Mandi House Metro Station (Blue & Violet Interchange, Exit Gate 1)',
+      parking_tips: 'Bengali Market circle has surface parking attendants; Mandi House complex has ample street parking.',
+      avg_cost_for_two: 450,
+      sub_guide_filters: [
+        'Iconic Chaat & Sweets',
+        'Chole Bhature & Thalis',
+        'Theatre Terraces & Chai',
+        'Regional State Bhavans'
+      ],
+      famous_dishes: [
+        {
+          name: 'Special Raj Kachori',
+          why_famous: 'Giant golden crispy kachori stuffed with boiled potatoes, sprouted lentils, chilled curd, and tangy tamarind.',
+          restaurant_name: "Nathu's Sweets",
+          price: 130,
+          image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Desi Ghee Chole Bhature',
+          why_famous: 'Fluffy balloon bhaturas served with robust black Punjabi chana, raw onion rings, and amla pickle.',
+          restaurant_name: "Bhimsain's Bengali Sweet House",
+          price: 150,
+          image_url: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000018',
+    title: 'Rajouri Garden Street Food & Dining Trail',
+    slug: 'rajouri-garden-food-guide',
+    description: 'The epicentre of West Delhi food culture: crunchy aloo tikkis, melt-in-mouth kulfi faloodas, fiery tandoori chicken, and buzzing family dining rooms.',
+    cover_image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 18,
+    created_at: '2026-10-10T08:00:00.000Z',
+    area_metadata: {
+      area_name: 'Rajouri Garden',
+      zone: 'West Delhi',
+      latitude: 28.6472,
+      longitude: 77.1212,
+      vibe_badge: 'Bustling Punjabi street market, high-energy shopping crowds & decadent feasts.',
+      famous_for_summary: 'Crispy Aloo Tikki, Tandoori Chicken, Kesar Pista Kulfi Falooda, Butter Chicken & Dal Makhani.',
+      best_time_to_visit: '4:00 PM – 11:30 PM (Evening street shopping crowd & buzzing dinner scene)',
+      nearest_metro: 'Rajouri Garden Metro Station (Blue & Pink Interchange, Exit Gate 4 or 5)',
+      parking_tips: 'Park in the Shivaji Place multi-level parking complex near TDI Mall to avoid market jams.',
+      avg_cost_for_two: 500,
+      sub_guide_filters: [
+        'Legendary Chaat & Tikkis',
+        'Dhaba & Tandoori Masters',
+        'Famous Kulfi & Mithai',
+        'Trendy Cafes & Lounges'
+      ],
+      famous_dishes: [
+        {
+          name: 'Crispy Aloo Tikki Chaat',
+          why_famous: 'Deep shallow-fried crunchy potato patties topped with sweet curd, spicy green chutney, and dried sonth.',
+          restaurant_name: 'Atul Chaat Corner',
+          price: 90,
+          image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Kesar Pista Kulfi Falooda',
+          why_famous: 'Rich, dense, slow-reduced saffron milk kulfi sliced over chilled vermicelli falooda and rose syrup.',
+          restaurant_name: 'Roshan Di Kulfi',
+          price: 120,
+          image_url: 'https://images.unsplash.com/photo-1560008581-09826d1de69e?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000019',
+    title: 'Punjabi Bagh Club Road Lounges & Culinary Avenue',
+    slug: 'punjabi-bagh-food-guide',
+    description: 'West Delhis premier fine dining strip on Club Road: rooftop terraces, artisan grills, modern Indian masterpieces, and chic bakery parlours.',
+    cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 19,
+    created_at: '2026-10-10T08:00:00.000Z',
+    area_metadata: {
+      area_name: 'Punjabi Bagh',
+      zone: 'West Delhi',
+      latitude: 28.6668,
+      longitude: 77.1264,
+      vibe_badge: 'Upscale dining promenade, glowing neon rooftops & gourmet family celebrations.',
+      famous_for_summary: 'Dahi Ke Kebab, Tashan Butter Chicken, Wood-Fired Neapolitan Pizzas, Sizzlers & Decadent Milkshakes.',
+      best_time_to_visit: '1:00 PM – 4:00 PM (Leisurely lunch) & 7:00 PM – 12:30 AM (Vibrant lounge dinner vibes)',
+      nearest_metro: 'Punjabi Bagh West Metro Station (Pink Line) & Shivaji Park Metro (Green Line)',
+      parking_tips: 'Club Road has designated valet parking at all major establishments; avoid double parking on the main road.',
+      avg_cost_for_two: 1300,
+      sub_guide_filters: [
+        'Artisan North Indian & Mughlai',
+        'Rooftops & Cocktail Lounges',
+        'Italian & Wood-Fired Pizza',
+        'Dessert Bars & Bakeries'
+      ],
+      famous_dishes: [
+        {
+          name: 'Artisan Dahi Ke Kebab',
+          why_famous: 'Velvety hung curd patties spiced with green cardamom and fresh herbs crisped to a golden crunch.',
+          restaurant_name: 'Tashan - Artisan Dine',
+          price: 345,
+          image_url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Verandah Special Dal Makhani',
+          why_famous: 'Slow-simmered over charcoal for 24 hours with fresh churned white butter.',
+          restaurant_name: 'Verandah Moonshine',
+          price: 395,
+          image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
   }
 ];

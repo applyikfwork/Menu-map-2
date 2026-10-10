@@ -124,7 +124,7 @@ export function recordMapDoneId(id: string, isDone: boolean): void {
   saveStoredMapDoneIds(Array.from(current));
 }
 
-const CURRENT_DATA_VERSION = '2026-v4-delhi-5-hubs-full';
+const CURRENT_DATA_VERSION = '2026-v5-full-delhi-10-hubs';
 const VERSION_KEY = `${STORAGE_PREFIX}data_version`;
 
 let seedInitPromise: Promise<void> | null = null;
@@ -142,7 +142,7 @@ export async function ensureSeedInitialized(): Promise<void> {
       currentVer === CURRENT_DATA_VERSION &&
       existing &&
       Array.isArray(parsed) &&
-      parsed.length >= 300 &&
+      parsed.length >= 480 &&
       colsParsed.length >= 12
     ) {
       return;
