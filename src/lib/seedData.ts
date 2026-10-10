@@ -5,6 +5,23 @@ import { EXTRA_ZONE_RESTAURANTS, EXTRA_ZONE_CATEGORIES, EXTRA_ZONE_MENU_ITEMS } 
 import { NORTH_CAMPUS_DU_RESTAURANTS, NORTH_CAMPUS_DU_CATEGORIES, NORTH_CAMPUS_DU_MENU_ITEMS } from './northCampusDuVenues';
 import { NEW_DELHI_RESTAURANTS, NEW_DELHI_CATEGORIES, NEW_DELHI_MENU_ITEMS } from './newDelhiVenues';
 import { AREA_FOOD_GUIDES } from './areaGuidesData';
+import {
+  MODEL_TOWN_RESTAURANTS,
+  MODEL_TOWN_CATEGORIES,
+  MODEL_TOWN_MENU_ITEMS,
+  VIJAY_NAGAR_RESTAURANTS,
+  VIJAY_NAGAR_CATEGORIES,
+  VIJAY_NAGAR_MENU_ITEMS,
+  GK1_RESTAURANTS,
+  GK1_CATEGORIES,
+  GK1_MENU_ITEMS,
+  GK2_RESTAURANTS,
+  GK2_CATEGORIES,
+  GK2_MENU_ITEMS,
+  DEF_COL_RESTAURANTS,
+  DEF_COL_CATEGORIES,
+  DEF_COL_MENU_ITEMS,
+} from '../data/venues';
 
 export interface SeedDataset {
   restaurants: Restaurant[];
@@ -5270,9 +5287,39 @@ export function generateSeedData(): SeedDataset {
   ];
 
   return {
-    restaurants: [...restaurants, ...EXTRA_ZONE_RESTAURANTS, ...NORTH_CAMPUS_DU_RESTAURANTS, ...NEW_DELHI_RESTAURANTS],
-    categories: [...categories, ...EXTRA_ZONE_CATEGORIES, ...NORTH_CAMPUS_DU_CATEGORIES, ...NEW_DELHI_CATEGORIES],
-    menuItems: [...menuItems, ...EXTRA_ZONE_MENU_ITEMS, ...NORTH_CAMPUS_DU_MENU_ITEMS, ...NEW_DELHI_MENU_ITEMS],
+    restaurants: [
+      ...restaurants,
+      ...EXTRA_ZONE_RESTAURANTS,
+      ...NORTH_CAMPUS_DU_RESTAURANTS,
+      ...NEW_DELHI_RESTAURANTS,
+      ...MODEL_TOWN_RESTAURANTS,
+      ...VIJAY_NAGAR_RESTAURANTS,
+      ...GK1_RESTAURANTS,
+      ...GK2_RESTAURANTS,
+      ...DEF_COL_RESTAURANTS,
+    ],
+    categories: [
+      ...categories,
+      ...EXTRA_ZONE_CATEGORIES,
+      ...NORTH_CAMPUS_DU_CATEGORIES,
+      ...NEW_DELHI_CATEGORIES,
+      ...MODEL_TOWN_CATEGORIES,
+      ...VIJAY_NAGAR_CATEGORIES,
+      ...GK1_CATEGORIES,
+      ...GK2_CATEGORIES,
+      ...DEF_COL_CATEGORIES,
+    ],
+    menuItems: [
+      ...menuItems,
+      ...EXTRA_ZONE_MENU_ITEMS,
+      ...NORTH_CAMPUS_DU_MENU_ITEMS,
+      ...NEW_DELHI_MENU_ITEMS,
+      ...MODEL_TOWN_MENU_ITEMS,
+      ...VIJAY_NAGAR_MENU_ITEMS,
+      ...GK1_MENU_ITEMS,
+      ...GK2_MENU_ITEMS,
+      ...DEF_COL_MENU_ITEMS,
+    ],
     collections: [...collections, ...AREA_FOOD_GUIDES],
     collectionItems,
   };

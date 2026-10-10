@@ -928,5 +928,173 @@ export const AREA_FOOD_GUIDES: Collection[] = [
         }
       ]
     }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000031',
+    title: 'Model Town Food Map & Lake Dining Trail',
+    slug: 'model-town-food-guide',
+    description: 'North Delhi’s premier foodie destination: lakeside European bakeries, sizzling tandoori soya chaap joints, iconic street pav bhaji, and vibrant music restrobars.',
+    cover_image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 12,
+    created_at: '2026-10-10T06:00:00.000Z',
+    area_metadata: {
+      area_name: 'Model Town (Phase 2 & 3)',
+      zone: 'North Delhi',
+      latitude: 28.7032,
+      longitude: 77.1944,
+      vibe_badge: 'North Delhi high-street dining, scenic lake strolls & legendary chaap hubs.',
+      famous_for_summary: 'Artisan Almond Croissants, Tandoori Malai Soya Chaap, Mumbai Butter Pav Bhaji & Wood-Fired Pizzas.',
+      best_time_to_visit: '5:00 PM – 11:30 PM (Lively family crowds, twinkling market lights & lake breeze)',
+      nearest_metro: 'Model Town Metro Station (Yellow Line), Exit Gate 2 (3-min E-Rickshaw ₹10)',
+      parking_tips: 'Model Town 2 & 3 markets have organized surface parking lots. Valet available at Parra by Imperfecto and Flos.',
+      avg_cost_for_two: 650,
+      sub_guide_filters: [
+        'Artisan Bakeries & Cafes',
+        'Soya Chaap Specialists',
+        'Lakeside Dining & Chill',
+        'Late Night Bites'
+      ],
+      famous_dishes: [
+        {
+          name: 'Twice Baked Almond Croissant',
+          why_famous: 'Flaky butter croissant loaded with almond frangipane cream and toasted sliced almonds.',
+          restaurant_name: "Suchali's Artisan Bakehouse",
+          price: 240,
+          image_url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Original Malai Chaap Tikka',
+          why_famous: 'Charcoal-grilled soya chaap drenched in heavy dairy cream, butter, and freshly ground chaat masala.',
+          restaurant_name: 'Sardarji Malai Chaap Wale',
+          price: 220,
+          image_url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Special Butter Pav Bhaji',
+          why_famous: 'Iconic street style mashed bhaji loaded with Amul butter and fluffy griddled pavs.',
+          restaurant_name: 'Arjun Bombay Pav Bhaji',
+          price: 140,
+          image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000032',
+    title: 'Greater Kailash (GK 1 & GK 2) Gourmet Food Map',
+    slug: 'greater-kailash-gk-food-guide',
+    description: 'South Delhi’s chicest lifestyle enclave: authentic Italian trattorias, artisanal coffee roasters, Tokyo ramen, and legendary whole-wheat chicken momos.',
+    cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 13,
+    created_at: '2026-10-10T06:00:00.000Z',
+    area_metadata: {
+      area_name: 'Greater Kailash (GK 1 & GK 2)',
+      zone: 'South Delhi',
+      latitude: 28.5450,
+      longitude: 77.2420,
+      vibe_badge: 'High-end European trattorias, artisanal roasteries & South Delhi iconic retail markets.',
+      famous_for_summary: 'Steamed Wheat Momos, Burrata Pugliese, Tokyo Tonkotsu Ramen, Benne Dosas & New York Cheesecakes.',
+      best_time_to_visit: '12:00 PM – 11:00 PM (Great for afternoon coffee dates and buzzing dinner nightlife)',
+      nearest_metro: 'Greater Kailash Metro Station (Magenta Line) & Kailash Colony Metro Station (Violet Line)',
+      parking_tips: 'GK1 and GK2 M-Block markets feature multilevel automated parking facilities. Valet available at fine-dine outlets.',
+      avg_cost_for_two: 1400,
+      sub_guide_filters: [
+        'Fine Dining & Italian',
+        'Specialty Coffee & Bakes',
+        'Pan-Asian & Sushi',
+        'Market Street Legends'
+      ],
+      famous_dishes: [
+        {
+          name: 'Steamed Wheat Chicken Momos',
+          why_famous: 'Healthy whole wheat thin wrapper dumplings filled with juicy scallion chicken, paired with fiery red dip.',
+          restaurant_name: 'Brown Sugar GK1',
+          price: 180,
+          image_url: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        },
+        {
+          name: 'Handcrafted Tagliolini al Tartufo',
+          why_famous: 'Fresh homemade pasta ribbons tossed in aromatic black truffle butter emulsion and parmesan.',
+          restaurant_name: 'Diva - The Italian Restaurant GK2',
+          price: 890,
+          image_url: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Malleswaram 18th Cross Dosa',
+          why_famous: 'Thick, crispy golden benne dosa smeared with aromatic red garlic chutney and white butter.',
+          restaurant_name: 'Carnatic Cafe GK2',
+          price: 240,
+          image_url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000033',
+    title: 'Defence Colony (Def Col) Epicurean Food Trail',
+    slug: 'defence-colony-def-col-food-guide',
+    description: 'Classic South Delhi sophistication: decadent Italian pasta bakes, melt-in-mouth Awadhi mutton seekh kebabs, Mangalorean butter garlic crab, and French patisseries.',
+    cover_image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 14,
+    created_at: '2026-10-10T06:00:00.000Z',
+    area_metadata: {
+      area_name: 'Defence Colony',
+      zone: 'South Delhi',
+      latitude: 28.5733,
+      longitude: 77.2311,
+      vibe_badge: 'Tree-lined avenues, retro-chic cafes & timeless culinary royalty.',
+      famous_for_summary: 'Butter Garlic Mud Crab, Penne with Vodka Sauce, Kakori Kebabs, Mississippi Mud Pie & French Baguettes.',
+      best_time_to_visit: '1:00 PM – 11:30 PM (Chic brunches, evening coffee, and late-night dinner cocktails)',
+      nearest_metro: 'Lajpat Nagar Metro Station (Pink & Violet Lines, Exit 2) & Moolchand Metro Station (Violet Line)',
+      parking_tips: 'Def Col Main Market has paid surface parking with attendants, though weekend evenings are crowded. Take metro/cab for ease.',
+      avg_cost_for_two: 1200,
+      sub_guide_filters: [
+        'Continental & Italian Legends',
+        'Mughlai & Kebab Institutions',
+        'Coastal Seafood & Grills',
+        'Artisanal Bakeries & Pies'
+      ],
+      famous_dishes: [
+        {
+          name: 'Penne with Vodka Sauce',
+          why_famous: 'Tubular pasta tossed in signature silky pink tomato cream sauce flamed with vodka and parmesan.',
+          restaurant_name: 'The Big Chill Cafe',
+          price: 440,
+          image_url: 'https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Mutton Seekh Kebab',
+          why_famous: 'Finely minced spiced mutton skewers char-grilled on seekh over burning coal embers.',
+          restaurant_name: "Colonel's Kababz",
+          price: 320,
+          image_url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        },
+        {
+          name: 'Butter Garlic Crab',
+          why_famous: 'Fresh whole coastal mud crab sauteed in rich golden garlic butter emulsion with cracked pepper.',
+          restaurant_name: 'Swagath',
+          price: 650,
+          image_url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        }
+      ]
+    }
   }
 ];
