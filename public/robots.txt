@@ -12,4 +12,4 @@ Allow: /nearby
 Disallow: /admin-secure-panel2010
 Disallow: /owner/dashboard
 
-Sitemap: https://menumap.in/sitemap.xml
+Sitemap: https://menumaps.in/sitemap.xml

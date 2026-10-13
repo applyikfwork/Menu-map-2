@@ -189,8 +189,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
 Act as an elite local restaurant scout and living neighborhood food guide editor for Delhi NCR.
 
 ### ABOUT OUR PLATFORM:
-Platform Name: MenuMap Delhi (https://menumap.delhi)
-Mission: MenuMap Delhi is Delhi NCR's dedicated local cafe & restaurant discovery platform and Living Neighborhood Food Guide. Our mission is to digitize and showcase established, quality medium-to-large dine-in cafes and standalone restaurants that DO NOT have their own website. We bring real physical counter menus, genuine counter prices in INR (₹), food item dietary badges (Veg/Non-veg/Vegan), seating vibes, study/work amenities (Wi-Fi, power outlets, quietness), opening hours, exact physical addresses, and geo-coordinates online for food lovers and college students across Delhi NCR.
+Platform Name: Menu Maps Delhi (https://menumaps.in)
+Mission: Menu Maps Delhi is Delhi NCR's dedicated local cafe & restaurant discovery platform and Living Neighborhood Food Guide. Our mission is to digitize and showcase established, quality medium-to-large dine-in cafes and standalone restaurants that DO NOT have their own website. We bring real physical counter menus, genuine counter prices in INR (₹), food item dietary badges (Veg/Non-veg/Vegan), seating vibes, study/work amenities (Wi-Fi, power outlets, quietness), opening hours, exact physical addresses, and geo-coordinates online for food lovers and college students across Delhi NCR.
 
 ### TARGET LOCATION & SCOUTING GOAL:
 - Target Locality/Area: "${scoutArea}" (Delhi NCR)

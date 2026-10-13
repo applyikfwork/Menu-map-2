@@ -9,7 +9,7 @@ Use this prompt with **ChatGPT (GPT-4o)**, **Google Gemini (1.5 Pro / 2.0 Flash)
 > **Copy everything inside the box below and fill in the bracketed `[YOUR LOCALITY]` before sending to the AI:**
 
 ```text
-Act as a senior Delhi food curator and restaurant scout for MenuMaps.
+Act as a senior Delhi food curator and restaurant scout for MenuMaps (menumaps.in).
 I need a comprehensive, high-quality dataset of 30 to 40 of the best, most popular, and iconic restaurants, cafes, bakeries, and street food legends in: [INSERT LOCALITY HERE, e.g., "Rajouri Garden, West Delhi" or "Hauz Khas Village & SDA, South Delhi" or "Chandni Chowk, Old Delhi"].
 
 Follow these strict data quality rules:

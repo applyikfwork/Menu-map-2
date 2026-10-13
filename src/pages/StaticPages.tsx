@@ -215,10 +215,10 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
             <div className="min-w-0">
               <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Direct Email</div>
               <a
-                href="mailto:support@menumaps.online"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="font-heading font-black text-base text-[#1C1917] hover:text-[#FF5A36] transition-colors truncate block"
               >
-                support@menumaps.online
+                {SUPPORT_EMAIL}
               </a>
               <div className="text-[11px] text-stone-500 mt-0.5">Replies within 24 hours</div>
             </div>
@@ -257,7 +257,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
 
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
-                  href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi Menu Maps Team, I just submitted an inquiry from ${lastSubmittedName} on menumaps.online.`)}`}
+                  href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi Menu Maps Team, I just submitted an inquiry from ${lastSubmittedName} on menumaps.in.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold px-6 py-3 rounded-full flex items-center gap-2 shadow-sm"
@@ -428,8 +428,8 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
           </h3>
           <p>
             For any rights requests, copyright notices, or directory corrections, please contact our team at{' '}
-            <a href="mailto:support@menumaps.online" className="text-[#D8350F] font-bold hover:underline">
-              support@menumaps.online
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[#D8350F] font-bold hover:underline">
+              {SUPPORT_EMAIL}
             </a>.
           </p>
         </section>

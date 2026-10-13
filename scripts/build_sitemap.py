@@ -1,7 +1,7 @@
 import re
 import os
 
-DOMAIN = "https://menumaps.online"
+DOMAIN = "https://menumaps.in"
 
 def get_slugs_from_file(filepath):
     if not os.path.exists(filepath):
@@ -16,13 +16,19 @@ rest_files = [
     'src/lib/sample50Cafes.ts',
     'src/lib/northCampusDuVenues.ts',
     'src/lib/extraZoneVenues.ts',
-    'src/lib/newDelhiVenues.ts'
+    'src/lib/newDelhiVenues.ts',
+    'src/data/venues/modelTownVenues.ts',
+    'src/data/venues/vijayNagarVenues.ts',
+    'src/data/venues/gk1Venues.ts',
+    'src/data/venues/gk2Venues.ts',
+    'src/data/venues/defColVenues.ts',
+    'src/data/venues/delhiBatch2Venues.ts',
 ]
 
 restaurant_slugs = set()
 for rf in rest_files:
     for s in get_slugs_from_file(rf):
-        if s and not s.startswith('http'):
+        if s and not s.startswith('http') and not s.endswith('-food-guide'):
             restaurant_slugs.add(s)
 
 area_guide_slugs = set(get_slugs_from_file('src/lib/areaGuidesData.ts'))
@@ -76,4 +82,4 @@ output_path = 'public/sitemap.xml'
 with open(output_path, 'w', encoding='utf-8') as f:
     f.write('\n'.join(lines))
 
-print(f"Sitemap generated successfully at {output_path} with {len(core_pages)} core pages, {len(area_guide_slugs)} area guides, and {len(restaurant_slugs)} cafes.")
+print(f"Sitemap generated successfully at {output_path} with {len(core_pages)} core pages, {len(area_guide_slugs)} area guides, and {len(restaurant_slugs)} restaurants for {DOMAIN}.")

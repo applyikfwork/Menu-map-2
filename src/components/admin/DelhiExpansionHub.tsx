@@ -103,7 +103,7 @@ export const DelhiExpansionHub: React.FC<DelhiExpansionHubProps> = ({
    * Generates the Master Gemini Spark CSV Prompt for a given Delhi locality.
    */
   const generateGeminiPrompt = (loc: DelhiLocation) => {
-    return `You are a Delhi NCR food scouting expert helping build "Menu Maps" (menumaps.online).
+    return `You are a Delhi NCR food scouting expert helping build "Menu Maps" (menumaps.in).
 
 TARGET LOCALITY:
 - Area Name: ${loc.name}

@@ -455,7 +455,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
     );
   }
 
-  // Direct clean root URL: https://menumape.vercel.app/${slug}
+  // Direct clean root URL: https://menumaps.in/${slug}
   const cleanPublicUrl = `${window.location.origin}/${restaurant.slug}`;
 
   // Filtered dishes for menu list

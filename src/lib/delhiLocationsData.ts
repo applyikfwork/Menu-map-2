@@ -1,5 +1,5 @@
 /**
- * Comprehensive Delhi NCR Geospatial Directory for Menu Maps (menumaps.online)
+ * Comprehensive Delhi NCR Geospatial Directory for Menu Maps (menumaps.in)
  * Covers all 11 Delhi Districts, 60+ Iconic Dining Neighborhoods,
  * Delhi Metro lines, and key food specialties.
  */
