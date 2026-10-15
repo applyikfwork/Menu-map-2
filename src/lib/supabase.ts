@@ -284,7 +284,7 @@ export function setAdminCustomPassword(pass: string): void {
 export async function adminLogin(password: string, email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.trim().toLowerCase();
   if (normalizedEmail !== ADMIN_EMAIL) {
-    return { success: false, error: 'Unauthorized: Only the designated administrator account (xyzapplywork@gmail.com) is permitted.' };
+    return { success: false, error: 'Invalid administrator credentials.' };
   }
 
   const cleanPass = (password || '').trim();
@@ -349,7 +349,7 @@ export async function adminLogin(password: string, email: string): Promise<{ suc
 
   return {
     success: false,
-    error: 'Invalid administrator password. You can sign in using your custom password or the Master Password (MenumapsAdmin#2026).',
+    error: 'Invalid administrator credentials.',
   };
 }
 

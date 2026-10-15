@@ -106,7 +106,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginEmail, setLoginEmail] = useState(ADMIN_EMAIL);
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -1223,7 +1223,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="Enter authorized admin email"
+                placeholder="name@example.com"
                 className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
               />
             </div>
@@ -1247,12 +1247,9 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="Enter password"
+                placeholder="••••••••"
                 className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
               />
-              <p className="text-[11px] text-stone-500 mt-1.5 leading-relaxed">
-                Accepted: Your personal admin password or default Master Password: <code className="bg-stone-100 px-1.5 py-0.5 rounded text-rose-600 font-mono font-bold select-all">MenumapsAdmin#2026</code>
-              </p>
             </div>
 
             <button
@@ -3118,7 +3115,7 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                       Administrator Account & Password Security
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Designated Admin Email: <strong className="text-slate-800">{ADMIN_EMAIL}</strong>
+                      Secure administrator password and credentials management.
                     </p>
                   </div>
                 </div>
@@ -3130,14 +3127,14 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                     Set / Update Custom Admin Password
                   </label>
                   <input
-                    type="text"
+                    type="password"
                     value={newAdminPasswordInput}
                     onChange={(e) => setNewAdminPasswordInput(e.target.value)}
-                    placeholder="Enter custom password (at least 6 characters)"
+                    placeholder="Enter new password (at least 6 characters)"
                     className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden focus:border-rose-500"
                   />
                   <p className="text-[11px] text-stone-500">
-                    Active Custom Password: {getAdminCustomPassword() ? <span className="font-mono font-bold text-emerald-600">Configured</span> : <span className="text-stone-400">Default Master active</span>} • Master Fallback: <code className="text-rose-600 font-mono font-bold">MenumapsAdmin#2026</code>
+                    Active Status: {getAdminCustomPassword() ? <span className="font-mono font-bold text-emerald-600">Custom password active</span> : <span className="text-stone-400">Default administrator password active</span>}
                   </p>
                 </div>
 
@@ -3163,11 +3160,11 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                       onClick={() => {
                         localStorage.removeItem('menumap_admin_custom_password');
                         setNewAdminPasswordInput('');
-                        showToast('Reset to default Master Password (MenumapsAdmin#2026)', 'info');
+                        showToast('Reset to default administrator password', 'info');
                       }}
                       className="btn bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold px-4 py-2.5 rounded-xl"
                     >
-                      Reset to Master
+                      Reset to Default
                     </button>
                   )}
                 </div>
