@@ -76,11 +76,18 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
 
   // Auto-detect live GPS location systematically on mount
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const isIconicArea = window.location.pathname.includes('iconic');
     updatePageSeo({
-      title: 'Iconic Delhi Food Guides & Area Collections | Menu Maps',
-      description: 'Explore curated culinary guides to Connaught Place, Hauz Khas Village, North Campus, Majnu Ka Tilla, GK, and top Delhi foodie neighborhoods with real menus.',
-      canonicalUrl: 'https://menumaps.in/collections',
+      title: isIconicArea
+        ? 'Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs'
+        : 'Menu Maps Collections – Handpicked Delhi Cafes, Rooftops & Eats',
+      description: isIconicArea
+        ? 'Explore Delhi’s iconic food destinations: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas, Khan Market, Cyber Hub & more with authentic menu prices.'
+        : 'Discover handpicked dining collections across Delhi NCR: Aesthetic cafes, budget eats, romantic date spots, and regional delicacies.',
+      keywords: isIconicArea
+        ? ['menu maps iconic areas', 'iconic food areas delhi', 'hudson lane food guide', 'majnu ka tilla cafes', 'connaught place food map']
+        : ['menu maps collections', 'best cafes delhi', 'aesthetic cafes delhi', 'budget eats delhi', 'rooftop restaurants delhi'],
+      canonicalUrl: isIconicArea ? 'https://menumaps.in/iconic-area' : 'https://menumaps.in/collections',
       ogType: 'website',
     });
 

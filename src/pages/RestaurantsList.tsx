@@ -71,10 +71,18 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const isNearby = initialMode === 'near_me' || window.location.pathname === '/nearby';
     updatePageSeo({
-      title: 'Top Cafes & Restaurants in Delhi NCR | Real Menus & Prices | Menu Maps',
-      description: 'Discover the best cafes, restaurants, and hidden culinary gems across Delhi NCR. Browse verified digital menus, real prices, and order directly on WhatsApp with 0% markups.',
-      canonicalUrl: 'https://menumaps.in/restaurants',
+      title: isNearby
+        ? 'Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR'
+        : 'Menu Maps Restaurants – Verified Cafes & Menus in Delhi NCR',
+      description: isNearby
+        ? 'Find the best cafes and restaurants near you with verified menus, real counter prices, and live distance discovery across Delhi NCR.'
+        : 'Browse 680+ verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you.',
+      keywords: isNearby
+        ? ['best cafes near me', 'restaurants near me with prices', 'cafes near me', 'food near me', 'top rated cafes delhi']
+        : ['menu maps resturant', 'menu maps restaurants', 'cafes in delhi ncr', 'delhi restaurant menu prices', 'verified cafes'],
+      canonicalUrl: isNearby ? 'https://menumaps.in/nearby' : 'https://menumaps.in/restaurants',
       ogType: 'website',
     });
 
