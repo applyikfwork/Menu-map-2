@@ -33,6 +33,7 @@ import { DELHI_ZONES, DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocatio
 import { useToast } from '../components/Toast';
 import { MealTimeHeroBanner } from '../components/discovery/MealTimeHeroBanner';
 import { useDiscovery } from '../context/DiscoveryContext';
+import { updatePageSeo } from '../lib/seo';
 
 interface RestaurantsListProps {
   navigate: (path: string) => void;
@@ -70,6 +71,13 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    updatePageSeo({
+      title: 'Top Cafes & Restaurants in Delhi NCR | Real Menus & Prices | Menu Maps',
+      description: 'Discover the best cafes, restaurants, and hidden culinary gems across Delhi NCR. Browse verified digital menus, real prices, and order directly on WhatsApp with 0% markups.',
+      canonicalUrl: 'https://menumaps.in/restaurants',
+      ogType: 'website',
+    });
+
     loadData();
     if (initialMode === 'near_me') {
       handleLocate(false);

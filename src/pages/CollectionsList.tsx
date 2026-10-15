@@ -40,6 +40,7 @@ import {
   DelhiLocation 
 } from '../lib/delhiLocationsData';
 import { useToast } from '../components/Toast';
+import { updatePageSeo } from '../lib/seo';
 
 interface CollectionsListProps {
   navigate: (path: string) => void;
@@ -76,7 +77,12 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
   // Auto-detect live GPS location systematically on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.title = 'Iconic Area Food Guides & What’s Famous - MenuMap Delhi NCR';
+    updatePageSeo({
+      title: 'Iconic Delhi Food Guides & Area Collections | Menu Maps',
+      description: 'Explore curated culinary guides to Connaught Place, Hauz Khas Village, North Campus, Majnu Ka Tilla, GK, and top Delhi foodie neighborhoods with real menus.',
+      canonicalUrl: 'https://menumaps.in/collections',
+      ogType: 'website',
+    });
 
     // 1. Check cached or silent background detect
     const cached = getCachedUserCoordinates();

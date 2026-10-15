@@ -24,8 +24,58 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#FF5A36" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="google-site-verification" content="INLD09mGfTH4dhzX6Vsy2_RHybod3jIWzD_8R0uCoFM" />
+
+    <!-- Hyperlocal Geo SEO Tags (Delhi NCR, India) -->
+    <meta name="geo.region" content="IN-DL" />
+    <meta name="geo.placename" content="New Delhi, Delhi, India" />
+    <meta name="geo.position" content="28.613939;77.209021" />
+    <meta name="ICBM" content="28.613939, 77.209021" />
+
+    <!-- Root Knowledge Graph & Entity Grounding JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://menumaps.in/#website",
+          "url": "https://menumaps.in/",
+          "name": "Menu Maps",
+          "description": "Discover verified cafes, restaurants, and digital menus across Delhi NCR with transparent pricing.",
+          "inLanguage": "en-IN",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://menumaps.in/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://menumaps.in/#organization",
+          "name": "Menu Maps",
+          "url": "https://menumaps.in/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://menumaps.in/logo.jpg",
+            "caption": "Menu Maps Logo"
+          },
+          "email": "contact@menumaps.in",
+          "sameAs": [
+            "https://www.linkedin.com/in/menumaps/",
+            "https://www.instagram.com/menumaps.in"
+          ],
+          "areaServed": {
+            "@type": "AdministrativeArea",
+            "name": "Delhi National Capital Region (NCR), India"
+          }
+        }
+      ]
+    }
+    </script>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3MB2KQ1SDW"></script>

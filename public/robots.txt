@@ -1,15 +1,53 @@
-# robots.txt for Menu Map
-# Allows automated crawling and indexing of all restaurants and dishes
+# robots.txt for Menu Maps (https://menumaps.in)
+# Allows comprehensive crawling and indexing of verified restaurants, cafes, digital menus, and iconic area guides
+
 User-agent: *
 Allow: /
 Allow: /restaurant/
 Allow: /restaurants
 Allow: /food/
 Allow: /collections
+Allow: /collection/
+Allow: /iconic-area/
+Allow: /iconic-areas/
 Allow: /nearby
+Allow: /search
+Allow: /about
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
 
-# Protect administrative areas
+# Disallow internal administrative and owner dashboards
 Disallow: /admin-secure-panel2010
 Disallow: /owner/dashboard
 
+# Dedicated Allow Directives for Generative AI & Conversational Answer Engine Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Canonical Sitemaps & LLM Discovery Index
 Sitemap: https://menumaps.in/sitemap.xml
+# LLMs Index: https://menumaps.in/llms.txt

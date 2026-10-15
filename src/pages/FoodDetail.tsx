@@ -22,6 +22,7 @@ import { useToast } from '../components/Toast';
 import { useDiscovery } from '../context/DiscoveryContext';
 import { LocalityPriceComparisonCard } from '../components/discovery/LocalityPriceComparisonCard';
 import { DishPairingStrip } from '../components/discovery/DishPairingStrip';
+import { updatePageSeo, buildDishSchema } from '../lib/seo';
 
 interface FoodDetailProps {
   slug: string;
@@ -42,6 +43,14 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
   useEffect(() => {
     loadDishData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    return () => {
+      updatePageSeo({
+        title: 'Menu Maps – Real Menus, Cafes & Restaurant Discovery',
+        description: 'Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.',
+        canonicalUrl: 'https://menumaps.in/',
+      });
+    };
   }, [slug]);
 
   const loadDishData = async () => {
@@ -72,6 +81,19 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
         rest = await api.getRestaurantById(item.restaurant_id) || undefined;
       }
       setRestaurant(rest || null);
+
+      // Dynamic Dish SEO & Schema
+      const dishUrl = `https://menumaps.in/food/${item.slug}`;
+      const dishSchema = buildDishSchema(item, rest, dishUrl);
+
+      updatePageSeo({
+        title: `${item.name} (₹${item.price}) at ${rest?.name || 'Delhi Cafe'} | Menu Maps`,
+        description: `Order ${item.name} for ₹${item.price} at ${rest?.name || 'Delhi'}. View verified price, ingredients, dietary details, and direct WhatsApp counter ordering.`,
+        canonicalUrl: dishUrl,
+        ogImage: item.image_url || rest?.cover_image_url,
+        ogType: 'food',
+        jsonLd: dishSchema,
+      });
 
       // Fetch other dishes from same restaurant
       let allRestaurantDishes = engine.getDishesForRestaurant(item.restaurant_id);

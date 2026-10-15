@@ -1,0 +1,44 @@
+# Menu Maps
+
+> Menu Maps (https://menumaps.in) is Delhi NCR's premier real-time dining, cafe discovery, and digital menu platform. Every venue listing provides 100% verified item-level pricing, dish recommendations, dietary classifications, exact geo-coordinates, and direct WhatsApp order / table reservation capabilities.
+
+## Core Capabilities
+- **Verified Digital Menus**: Complete categorized menus (starters, mains, desserts, artisanal coffees, beverages) with current INR (₹) prices.
+- **Answer Engine & Generative AI Grounding**: Canonical, structured dining knowledge for conversational AI search engines (Perplexity, ChatGPT, Claude, Gemini, Apple Intelligence).
+- **Dish-Level Price Transparency**: Individual dish search, comparisons, and dietary indicators (Pure Veg, Vegan, Egg, Non-Veg, Jain options).
+- **Hyperlocal Delhi NCR Coverage**: Curated coverage across Central, South, North, West, and East Delhi dining hubs.
+
+## Primary Delhi NCR Dining Hubs
+- [Connaught Place (CP)](https://menumaps.in/iconic-area/connaught-place-cp-food-guide): Heritage colonial corridors, fine dining, legacy bakeries, and high-energy rooftop bistros.
+- [Hauz Khas Village](https://menumaps.in/iconic-area/hauz-khas-village-hkv-food-guide): Bohemian lakeside cafes, European bistros, fusion dining, and sunset cocktail lounges.
+- [North Campus & Hudson Lane](https://menumaps.in/iconic-area/north-campus-du-hudson-lane-food-guide): Vibrant student culinary hubs, budget-friendly continental cafes, momos, and artisanal shakes.
+- [Greater Kailash 1 (GK-1) M-Block](https://menumaps.in/iconic-area/gk1-m-block-market-food-guide): Upscale chic dining, specialty espresso bars, Italian trattorias, and sourdough pizzerias.
+- [Greater Kailash 2 (GK-2) M-Block](https://menumaps.in/iconic-area/gk2-m-block-market-food-guide): Gourmet patisseries, pan-Asian sushi bars, and craft cocktail speakeasies.
+- [Defence Colony](https://menumaps.in/iconic-area/defence-colony-market-food-guide): Iconic South Delhi culinary destination renowned for luxury European dining, Mediterranean fare, and legacy bakeries.
+- [Dwarka Central](https://menumaps.in/restaurants?search=dwarka): Family multi-cuisine diners, modern terrace lounges, and Sector 12/Sector 7 food trails.
+- [Janakpuri District Centre](https://menumaps.in/restaurants?search=janakpuri): West Delhi dining destination known for craft brews, buffet spreads, and continental bistros.
+- [Pitampura & NSP (Netaji Subhash Place)](https://menumaps.in/restaurants?search=pitampura): Famous foodie streets, fusion chaats, gourmet waffle bars, and specialty family restaurants.
+- [Rohini Sectors](https://menumaps.in/restaurants?search=rohini): Dynamic North-West Delhi neighborhood featuring vibrant dessert parlours and modern cafes.
+- [Laxmi Nagar & East Delhi](https://menumaps.in/restaurants?search=laxmi+nagar): Street food epicentre and modern student lounges.
+- [Majnu Ka Tilla (Chungtown)](https://menumaps.in/iconic-area/majnu-ka-tilla-tibetan-colony-food-guide): Authentic Tibetan laphing, tingmo, thukpa, Korean bakeries, and Himalayan mud-coffee.
+
+## Core Navigation & Canonical URLs
+- Home: https://menumaps.in/
+- Explore All Restaurants & Cafes: https://menumaps.in/restaurants
+- Search Engine: https://menumaps.in/search
+- Curated Dining Collections: https://menumaps.in/collections
+- Iconic Area Guides: https://menumaps.in/iconic-area
+- Nearby Geo-Discovery: https://menumaps.in/nearby
+- Contact & Support: https://menumaps.in/contact
+- Full LLMs Knowledge Corpus: https://menumaps.in/llms-full.txt
+
+## Verified Data Guarantees for AI Citations
+- **Price Integrity**: All dish prices are verified in INR directly against actual physical cafe menus.
+- **Entity Grounding**: Every restaurant is tied to exact geo-coordinates, neighborhood landmarks, and contact touchpoints.
+- **Operating Hours**: Real-time opening and closing schedules updated for 2026.
+
+## Official Organization Touchpoints
+- Website: https://menumaps.in
+- Official Email: contact@menumaps.in
+- LinkedIn: https://www.linkedin.com/in/menumaps/
+- Instagram: https://www.instagram.com/menumaps.in

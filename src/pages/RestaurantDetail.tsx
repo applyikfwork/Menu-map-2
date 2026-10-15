@@ -148,13 +148,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       setMenuItems(items);
       setReviews(revs);
 
-      // SEO
-      const pageUrl = `${window.location.origin}/${rest.slug}`;
+      // SEO & AEO Graph
+      const pageUrl = `https://menumaps.in/restaurant/${rest.slug}`;
       const restaurantSchema = buildRestaurantSchema(rest, cats, items, pageUrl);
 
       updatePageSeo({
-        title: `${rest.name} Menu, Prices & Photos | ${rest.city} | Menu Maps`,
-        description: `Explore ${rest.name} in ${rest.city}. View live digital menu with verified prices, dish photos, address (${rest.address_line1}), opening timings, and 0% commission direct WhatsApp ordering.`,
+        title: `${rest.name} Menu, Prices & Photos | ${rest.city_area || rest.city} | Menu Maps`,
+        description: `Explore ${rest.name} in ${rest.city_area || rest.city}. View live digital menu with verified prices, dish photos, address (${rest.address_line1}), opening timings, and 0% commission direct WhatsApp ordering.`,
         canonicalUrl: pageUrl,
         ogImage: rest.cover_image_url,
         ogType: 'restaurant.restaurant',
@@ -453,6 +453,25 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               {restaurant.landmark || restaurant.city}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ========================================================
+          2.5. AEO DIRECT ANSWER & CITATION CAPSULE
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto mt-4 px-4 sm:px-8 relative z-20">
+        <div className="bg-stone-50/90 border border-stone-200/90 rounded-2xl p-4 sm:p-5 text-xs text-stone-700 leading-relaxed shadow-xs">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase tracking-wider">
+              Verified Dining Guide
+            </span>
+            <span className="text-[11px] text-stone-500 font-medium">
+              Updated for 2026 • 100% Verified Menu Price Guarantee
+            </span>
+          </div>
+          <p className="text-[13px] text-stone-800 font-medium leading-relaxed">
+            <strong>{restaurant.name}</strong> is a dining destination located in <strong>{restaurant.city_area || restaurant.city}, Delhi</strong>. Known for serving {restaurant.cuisine_types?.join(', ') || 'multi-cuisine dishes'} with an average cost of ₹{restaurant.average_cost_for_two || 350} for two diners. View the complete, verified digital menu below with 0% markup direct WhatsApp ordering.
+          </p>
         </div>
       </section>
 

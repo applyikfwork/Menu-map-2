@@ -38,10 +38,11 @@ import {
   getUserLocation, 
   calculateDistanceKm, 
   formatDistance, 
-  GeoCoordinates, 
-  getCachedUserCoordinates 
+  GeoCoordinates,
+  getCachedUserCoordinates
 } from '../lib/location';
 import { DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
+import { updatePageSeo, buildAreaGuideSchema, buildCollectionSchema } from '../lib/seo';
 
 interface CollectionDetailProps {
   slug: string;
@@ -76,6 +77,14 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
     loadCollectionData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     getUserLocation().then(setUserCoords).catch(() => {});
+
+    return () => {
+      updatePageSeo({
+        title: 'Menu Maps – Real Menus, Cafes & Restaurant Discovery',
+        description: 'Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.',
+        canonicalUrl: 'https://menumaps.in/',
+      });
+    };
   }, [slug]);
 
   const loadCollectionData = async () => {
@@ -186,7 +195,23 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
 
       setCollection(col);
       setBookmarked(isBookmarked('collection', col.id));
-      document.title = `${col.title} - Menu Maps Delhi NCR`;
+
+      const colUrl = window.location.pathname.startsWith('/iconic-area')
+        ? `https://menumaps.in/iconic-area/${col.slug}`
+        : `https://menumaps.in/collection/${col.slug}`;
+
+      const schema = col.type === 'Area-Guide' || col.area_metadata
+        ? buildAreaGuideSchema({ name: col.title, description: col.description }, colUrl)
+        : buildCollectionSchema(col, [], colUrl);
+
+      updatePageSeo({
+        title: `${col.title} | Food & Cafe Guide | Menu Maps`,
+        description: col.description || `Explore ${col.title} on Menu Maps. Verified cafe menus, must-order dishes, and Delhi food trails.`,
+        canonicalUrl: colUrl,
+        ogImage: col.cover_image_url,
+        ogType: 'website',
+        jsonLd: schema,
+      });
 
       const [items, allRests, allDishes] = await Promise.all([
         api.getCollectionItems(col.id).catch(() => []),
