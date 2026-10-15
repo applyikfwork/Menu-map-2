@@ -389,19 +389,57 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
 
         <section className="space-y-2">
           <h3 className="font-heading font-black text-lg text-[#1C1917]">
-            2. Offline-First Privacy & Zero Ad Tracking
+            2. Offline-First Privacy & Local Storage
           </h3>
           <p>
-            We respect your privacy unconditionally. {APP_NAME} does not sell, rent, or monetize personal user data. Your saved cafes, favorite dishes, and food trails are stored purely in your own browser's local storage (Offline Vault). We do not require mandatory registration for public menu exploration.
+            We respect your privacy. {APP_NAME} does not sell, rent, or trade your personal contact details. Your saved cafes, favorite dishes, and food trails are stored securely in your own browser's local storage (Offline Vault). We do not require mandatory registration for public menu exploration.
           </p>
           <p>
             When you request GPS coordinates via the Nearby hub, your coordinates are processed strictly inside your device's browser to compute mathematical distances (Haversine formula) to nearby restaurants.
           </p>
         </section>
 
+        {/* Section required by Google AdSense & Advertising Networks */}
         <section className="space-y-2">
           <h3 className="font-heading font-black text-lg text-[#1C1917]">
-            3. Menu Accuracy & Indicative Counter Pricing
+            3. Google AdSense & Third-Party Advertising Cookies
+          </h3>
+          <p>
+            To keep restaurant listings 100% free with 0% commissions for local Delhi kitchens, {APP_NAME} displays advertisements served by Google AdSense and third-party advertising partners:
+          </p>
+          <ul className="list-disc pl-5 space-y-1.5 text-stone-600 text-xs">
+            <li>
+              Third-party vendors, including Google, use cookies (such as the DoubleClick cookie) to serve ads based on a user's prior visits to {APP_NAME} or other websites across the Internet.
+            </li>
+            <li>
+              Google's use of advertising cookies enables it and its partners to serve relevant, non-intrusive ads to visitors based on their visit to our site and/or other sites on the web.
+            </li>
+            <li>
+              Users may opt out of personalized advertising at any time by visiting{' '}
+              <a
+                href="https://www.google.com/settings/ads"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#FF5A36] font-bold underline"
+              >
+                Google Ads Settings
+              </a>
+              {' '}or through{' '}
+              <a
+                href="https://www.aboutads.info"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#FF5A36] font-bold underline"
+              >
+                www.aboutads.info
+              </a>.
+            </li>
+          </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-heading font-black text-lg text-[#1C1917]">
+            4. Menu Accuracy & Indicative Counter Pricing
           </h3>
           <p>
             Menu items, photographs, spice levels, and pricing data displayed on {APP_NAME} reflect in-store physical menus and direct verified cafe submissions. While we endeavor to keep all information updated and accurate:
@@ -415,7 +453,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
 
         <section className="space-y-2">
           <h3 className="font-heading font-black text-lg text-[#1C1917]">
-            4. Direct WhatsApp Connect & 0% Commissions
+            5. Direct WhatsApp Connect & 0% Commissions
           </h3>
           <p>
             {APP_NAME} acts solely as a discovery conduit. Orders initiated via our WhatsApp drawer are transmitted directly to the restaurant's registered telephone line. {APP_NAME} charges zero marketplace fees, handles no payments, and does not retain consumer banking details.
@@ -424,7 +462,7 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
 
         <section className="space-y-2">
           <h3 className="font-heading font-black text-lg text-[#1C1917]">
-            5. Inquiries & Data Rights
+            6. Inquiries & Data Rights
           </h3>
           <p>
             For any rights requests, copyright notices, or directory corrections, please contact our team at{' '}
