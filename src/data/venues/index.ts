@@ -5,3 +5,4 @@ export * from './gk1Venues';
 export * from './gk2Venues';
 export * from './defColVenues';
 export * from './delhiBatch2Venues';
+export * from './delhiBatch3Venues';

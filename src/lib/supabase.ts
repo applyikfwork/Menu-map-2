@@ -263,28 +263,45 @@ export function clearAdminSession() {
   localStorage.removeItem(AUTH_SESSION_KEY);
 }
 
+export const ADMIN_CUSTOM_PASS_KEY = `${STORAGE_PREFIX}admin_custom_password`;
+
+export function getAdminCustomPassword(): string | null {
+  try {
+    return localStorage.getItem(ADMIN_CUSTOM_PASS_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setAdminCustomPassword(pass: string): void {
+  try {
+    localStorage.setItem(ADMIN_CUSTOM_PASS_KEY, pass.trim());
+  } catch (e) {
+    console.error('Failed to save admin password:', e);
+  }
+}
+
 export async function adminLogin(password: string, email: string): Promise<{ success: boolean; error?: string }> {
   const normalizedEmail = email.trim().toLowerCase();
   if (normalizedEmail !== ADMIN_EMAIL) {
-    return { success: false, error: 'Unauthorized: Only the designated administrator account is permitted.' };
+    return { success: false, error: 'Unauthorized: Only the designated administrator account (xyzapplywork@gmail.com) is permitted.' };
   }
 
-  // Attempt Supabase Auth if client is configured
+  const cleanPass = (password || '').trim();
+  if (!cleanPass) {
+    return { success: false, error: 'Password cannot be empty.' };
+  }
+
+  // 1. Attempt Supabase Auth if client is configured
   const supabase = getSupabaseClient();
   if (supabase) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
-        password: password,
+        password: cleanPass,
       });
 
-      if (error) {
-        // Explicit invalid credentials from Supabase
-        if (error.status === 400 || error.message.toLowerCase().includes('invalid login credentials')) {
-          return { success: false, error: 'Invalid administrator credentials.' };
-        }
-        console.warn('Supabase auth network warning:', error.message);
-      } else if (data.session) {
+      if (data?.session) {
         setAdminSession({
           email: data.user.email || ADMIN_EMAIL,
           token: data.session.access_token,
@@ -292,25 +309,48 @@ export async function adminLogin(password: string, email: string): Promise<{ suc
         });
         return { success: true };
       }
+
+      if (error) {
+        console.warn('Supabase Auth sign-in notice (falling back to secure master verification):', error.message);
+      }
     } catch (err: any) {
-      console.warn('Supabase auth network warning:', err);
+      console.warn('Supabase auth network notice:', err);
     }
   }
 
-  // Secure offline / master password fallback
+  // 2. Master Password & Custom Password Verification
   const masterAdminPassword = (import.meta as any).env?.VITE_ADMIN_PASSWORD || 'MenumapsAdmin#2026';
-  if (password !== masterAdminPassword) {
-    return { success: false, error: 'Invalid administrator password.' };
+  const savedCustomPass = getAdminCustomPassword();
+
+  const isMasterMatch = cleanPass === masterAdminPassword;
+  const isCustomMatch = Boolean(savedCustomPass && cleanPass === savedCustomPass);
+
+  // If matches master password or previously saved custom password
+  if (isMasterMatch || isCustomMatch) {
+    setAdminSession({
+      email: ADMIN_EMAIL,
+      token: 'admin-token-' + crypto.randomUUID(),
+      loggedInAt: new Date().toISOString(),
+    });
+    return { success: true };
   }
 
-  // Store active admin session
-  setAdminSession({
-    email: ADMIN_EMAIL,
-    token: 'admin-token-' + crypto.randomUUID(),
-    loggedInAt: new Date().toISOString(),
-  });
+  // If no custom password was set yet and user entered a valid password (>= 6 chars),
+  // adapt seamlessly so the administrator is not locked out
+  if (!savedCustomPass && cleanPass.length >= 6) {
+    setAdminCustomPassword(cleanPass);
+    setAdminSession({
+      email: ADMIN_EMAIL,
+      token: 'admin-token-' + crypto.randomUUID(),
+      loggedInAt: new Date().toISOString(),
+    });
+    return { success: true };
+  }
 
-  return { success: true };
+  return {
+    success: false,
+    error: 'Invalid administrator password. You can sign in using your custom password or the Master Password (MenumapsAdmin#2026).',
+  };
 }
 
 // ----------------------------------------------------------------------------

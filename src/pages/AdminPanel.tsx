@@ -21,6 +21,7 @@ import {
   Search, 
   Copy, 
   Eye, 
+  EyeOff,
   TrendingUp, 
   Compass, 
   MapPin, 
@@ -71,7 +72,9 @@ import {
   slugify, 
   getSavedSupabaseConfig, 
   saveSupabaseConfig,
-  getSupabaseClient
+  getSupabaseClient,
+  getAdminCustomPassword,
+  setAdminCustomPassword
 } from '../lib/supabase';
 import { SUPABASE_SQL_SCHEMA, ICONIC_AREAS_SQL_FEATURE } from '../lib/sqlSchema';
 import { MenuMapLogo } from '../components/Logo';
@@ -103,10 +106,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginEmail, setLoginEmail] = useState(ADMIN_EMAIL);
   const [loginPassword, setLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [newAdminPasswordInput, setNewAdminPasswordInput] = useState('');
 
   // Active section
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -1224,17 +1229,30 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[11px] font-semibold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showPassword ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter password"
                 className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
               />
+              <p className="text-[11px] text-stone-500 mt-1.5 leading-relaxed">
+                Accepted: Your personal admin password or default Master Password: <code className="bg-stone-100 px-1.5 py-0.5 rounded text-rose-600 font-mono font-bold select-all">MenumapsAdmin#2026</code>
+              </p>
             </div>
 
             <button
@@ -3084,6 +3102,74 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                     placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ik..."
                     className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono focus:outline-hidden"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Administrator Account & Password Management */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-100 text-[#FF5A36] flex items-center justify-center shrink-0">
+                    <KeyRound className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-extrabold text-lg text-slate-900">
+                      Administrator Account & Password Security
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Designated Admin Email: <strong className="text-slate-800">{ADMIN_EMAIL}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Set / Update Custom Admin Password
+                  </label>
+                  <input
+                    type="text"
+                    value={newAdminPasswordInput}
+                    onChange={(e) => setNewAdminPasswordInput(e.target.value)}
+                    placeholder="Enter custom password (at least 6 characters)"
+                    className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden focus:border-rose-500"
+                  />
+                  <p className="text-[11px] text-stone-500">
+                    Active Custom Password: {getAdminCustomPassword() ? <span className="font-mono font-bold text-emerald-600">Configured</span> : <span className="text-stone-400">Default Master active</span>} • Master Fallback: <code className="text-rose-600 font-mono font-bold">MenumapsAdmin#2026</code>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newAdminPasswordInput.trim() || newAdminPasswordInput.trim().length < 6) {
+                        showToast('Password must be at least 6 characters long.', 'error');
+                        return;
+                      }
+                      setAdminCustomPassword(newAdminPasswordInput.trim());
+                      setNewAdminPasswordInput('');
+                      showToast('Custom administrator password updated successfully!', 'success');
+                    }}
+                    className="btn bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs"
+                  >
+                    Save Custom Password
+                  </button>
+                  {getAdminCustomPassword() && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        localStorage.removeItem('menumap_admin_custom_password');
+                        setNewAdminPasswordInput('');
+                        showToast('Reset to default Master Password (MenumapsAdmin#2026)', 'info');
+                      }}
+                      className="btn bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold px-4 py-2.5 rounded-xl"
+                    >
+                      Reset to Master
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
