@@ -44,9 +44,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
   }, []);
 
   const navLinks = [
-    { label: 'Explore', path: '/restaurants' },
-    { label: 'Area guides', path: '/iconic-area' },
-    { label: 'Dishes', path: isHome ? '#dishes' : '/search' },
+    { label: 'Restaurants', path: '/restaurants' },
+    { label: 'Iconic Areas', path: '/iconic-area' },
+    { label: 'Near Me', path: '/nearby' },
     { label: 'Saved', path: '/bookmarks', badge: savedCount > 0 ? savedCount : undefined },
   ];
 
@@ -87,8 +87,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           <nav aria-label="Main" className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => {
               const isActive =
-                (link.path === '/restaurants' && (currentPath === '/restaurants' || currentPath === '/search')) ||
-                (link.path === '/iconic-area' && (currentPath === '/iconic-area' || currentPath.startsWith('/iconic-area/'))) ||
+                (link.path === '/restaurants' && (currentPath === '/restaurants' || currentPath.startsWith('/restaurant/'))) ||
+                (link.path === '/iconic-area' && (currentPath === '/iconic-area' || currentPath.startsWith('/iconic-area/') || currentPath === '/collections')) ||
+                (link.path === '/nearby' && currentPath === '/nearby') ||
                 (link.path === '/bookmarks' && currentPath === '/bookmarks');
 
               return (

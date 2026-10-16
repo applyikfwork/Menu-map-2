@@ -17,7 +17,9 @@ import {
   Minus, 
   Trash2,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Sparkles
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -32,6 +34,7 @@ import { CartItem } from '../components/WhatsAppOrderDrawer';
 import { updatePageSeo, buildRestaurantSchema } from '../lib/seo';
 import { useToast } from '../components/Toast';
 import { useDiscovery } from '../context/DiscoveryContext';
+import { RestaurantSuperWidgets } from '../components/restaurant/RestaurantSuperWidgets';
 
 const RestaurantQrModal = React.lazy(() =>
   import('../components/RestaurantQrModal').then((m) => ({ default: m.RestaurantQrModal }))
@@ -44,6 +47,9 @@ const SocialShareModal = React.lazy(() =>
 );
 const ClaimRestaurantModal = React.lazy(() =>
   import('../components/ClaimRestaurantModal').then((m) => ({ default: m.ClaimRestaurantModal }))
+);
+const PhysicalMenuModal = React.lazy(() =>
+  import('../components/PhysicalMenuModal').then((m) => ({ default: m.PhysicalMenuModal }))
 );
 
 interface RestaurantDetailProps {
@@ -80,7 +86,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   // Navigation tab
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('all');
   const [menuSearch, setMenuSearch] = useState('');
-  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'non-veg'>('all');
+  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'non-veg' | 'jain' | 'bestseller'>('all');
 
   // Bookmarking
   const [bookmarked, setBookmarked] = useState(false);
@@ -94,6 +100,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [showClaimModal, setShowClaimModal] = useState(false);
+  const [showPhysicalMenuModal, setShowPhysicalMenuModal] = useState(false);
 
   // Review Form
   const [reviewName, setReviewName] = useState('');
@@ -273,6 +280,8 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       }
       if (dietaryFilter === 'veg' && !item.dietary_tags?.includes('Veg')) return false;
       if (dietaryFilter === 'non-veg' && item.dietary_tags?.includes('Veg')) return false;
+      if (dietaryFilter === 'jain' && !(item.dietary_tags?.includes('Jain') || item.dietary_tags?.includes('Pure Veg') || (item.dietary_tags?.includes('Veg') && !item.description?.toLowerCase().includes('garlic') && !item.description?.toLowerCase().includes('onion')))) return false;
+      if (dietaryFilter === 'bestseller' && !(item.is_featured || item.is_must_try)) return false;
 
       if (menuSearch.trim()) {
         const q = menuSearch.toLowerCase();
@@ -369,6 +378,15 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               >
                 <MessageSquare className="w-4 h-4 mr-1.5" />
                 WhatsApp
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPhysicalMenuModal(true)}
+                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-5 text-sm font-bold"
+              >
+                <FileText className="w-4 h-4 mr-1.5 text-emerald-600" />
+                Paper Menu
               </button>
 
               <a
@@ -476,6 +494,19 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       </section>
 
       {/* ========================================================
+          2.6. RESTAURANT SUPER WIDGETS (PRICE TRANSPARENCY, VIBE RADAR, METRO GUIDE & BILL SPLITTER)
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
+        <RestaurantSuperWidgets
+          restaurant={restaurant}
+          menuItems={menuItems}
+          cartTotalAmount={cartTotalAmount}
+          onAddToCart={handleAddToCart}
+          onOpenPhysicalMenu={() => setShowPhysicalMenuModal(true)}
+        />
+      </section>
+
+      {/* ========================================================
           3. MAIN BODY (MENU, REVIEWS & WHATSAPP CART SIDEBAR)
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-8 pb-24 flex flex-col lg:flex-row gap-10 items-start">
@@ -523,7 +554,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               />
             </div>
 
-            <div className="flex gap-1.5 sm:gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               <button
                 onClick={() => setDietaryFilter(dietaryFilter === 'veg' ? 'all' : 'veg')}
                 className={`chipl text-xs min-h-[44px] px-3 sm:px-3.5 ${dietaryFilter === 'veg' ? 'on' : ''}`}
@@ -535,6 +566,18 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 className={`chipl text-xs min-h-[44px] px-3 sm:px-3.5 ${dietaryFilter === 'non-veg' ? 'on' : ''}`}
               >
                 🔴 Non-Veg
+              </button>
+              <button
+                onClick={() => setDietaryFilter(dietaryFilter === 'jain' ? 'all' : 'jain')}
+                className={`chipl text-xs min-h-[44px] px-3 sm:px-3.5 ${dietaryFilter === 'jain' ? 'on' : ''}`}
+              >
+                🌾 Jain Friendly
+              </button>
+              <button
+                onClick={() => setDietaryFilter(dietaryFilter === 'bestseller' ? 'all' : 'bestseller')}
+                className={`chipl text-xs min-h-[44px] px-3 sm:px-3.5 ${dietaryFilter === 'bestseller' ? 'on' : ''}`}
+              >
+                ⭐ Bestsellers
               </button>
             </div>
           </div>
@@ -870,6 +913,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
       {/* Modals (Lazy Loaded) */}
       <React.Suspense fallback={null}>
+        {showPhysicalMenuModal && (
+          <PhysicalMenuModal
+            isOpen={showPhysicalMenuModal}
+            onClose={() => setShowPhysicalMenuModal(false)}
+            restaurant={restaurant}
+          />
+        )}
         {showQrModal && (
           <RestaurantQrModal
             isOpen={showQrModal}

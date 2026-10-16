@@ -48,25 +48,25 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                   onClick={() => navigate('/restaurants')}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
-                  Explore Directory
+                  Restaurants
                 </button>
                 <button
                   onClick={() => navigate('/iconic-area')}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
-                  Area Guides
+                  Iconic Areas
                 </button>
                 <button
-                  onClick={() => navigate('/search')}
+                  onClick={() => navigate('/nearby')}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
-                  Iconic Dishes
+                  Best Cafes Near Me
                 </button>
                 <button
-                  onClick={() => navigate('/restaurants?sort=distance')}
+                  onClick={() => navigate('/collections')}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
-                  Near Me Counters
+                  Curated Collections
                 </button>
                 <button
                   onClick={() => navigate('/bookmarks')}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Compass, MapPin, Bookmark, Sparkles } from 'lucide-react';
+import { Home, UtensilsCrossed, MapPin, Compass, Bookmark } from 'lucide-react';
 import { getBookmarks } from '../lib/bookmarks';
 
 interface MobileBottomNavProps {
@@ -9,8 +9,9 @@ interface MobileBottomNavProps {
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, navigate }) => {
   const isHome = currentPath === '/' || currentPath === '';
-  const isExplore = currentPath === '/restaurants' || currentPath.startsWith('/restaurant/') || currentPath === '/search' || currentPath.startsWith('/food/') || currentPath.startsWith('/dish/');
-  const isGuides = currentPath === '/iconic-area' || currentPath === '/iconic-areas' || currentPath.startsWith('/iconic-area/') || currentPath === '/collections';
+  const isRestaurants = (currentPath === '/restaurants' || currentPath.startsWith('/restaurant/')) && currentPath !== '/nearby';
+  const isIconicAreas = currentPath === '/iconic-area' || currentPath === '/iconic-areas' || currentPath.startsWith('/iconic-area/') || currentPath === '/collections';
+  const isNearby = currentPath === '/nearby';
   const isSaved = currentPath === '/bookmarks';
 
   const [savedCount, setSavedCount] = useState(0);
@@ -33,16 +34,22 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
       active: isHome,
     },
     {
-      label: 'Explore',
-      icon: Compass,
+      label: 'Restaurants',
+      icon: UtensilsCrossed,
       path: '/restaurants',
-      active: isExplore,
+      active: isRestaurants,
     },
     {
-      label: 'Guides',
-      icon: Sparkles,
+      label: 'Iconic Areas',
+      icon: MapPin,
       path: '/iconic-area',
-      active: isGuides,
+      active: isIconicAreas,
+    },
+    {
+      label: 'Near Me',
+      icon: Compass,
+      path: '/nearby',
+      active: isNearby,
     },
     {
       label: 'Saved',
