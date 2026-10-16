@@ -62,8 +62,41 @@ export interface Restaurant {
   nearby_landmarks?: string[];
   heritage_area?: boolean;
   specialty_dishes?: string[];
+  menu_pages?: string[];
+  announcements?: RestaurantAnnouncement[];
+  gallery_images?: RestaurantGalleryImage[];
   created_at: string;
   updated_at: string;
+}
+
+export type AnnouncementBadge = "Today's Special" | "Festival Offer" | "Live Event" | "Special Timings" | "Notice";
+
+export interface RestaurantAnnouncement {
+  id: string;
+  restaurant_id: string;
+  title: string;
+  message: string;
+  badge: AnnouncementBadge;
+  action_label?: string;
+  action_url?: string;
+  is_active: boolean;
+  starts_at?: string;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type GalleryCategory = 'menu_page' | 'ambiance' | 'food' | 'outdoor';
+
+export interface RestaurantGalleryImage {
+  id: string;
+  restaurant_id: string;
+  image_url: string;
+  caption?: string;
+  category: GalleryCategory;
+  uploaded_by: 'owner' | 'admin' | 'verified_diner';
+  sort_order: number;
+  created_at: string;
 }
 
 export interface RestaurantPhoto {

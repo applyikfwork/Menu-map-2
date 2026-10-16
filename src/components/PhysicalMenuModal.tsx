@@ -33,12 +33,14 @@ export const PhysicalMenuModal: React.FC<PhysicalMenuModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Use restaurant's actual menu card images or fallback to high-res culinary scans
-  const menuPages = [
-    restaurant.cover_image_url || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80',
-  ];
+  // Use restaurant's actual menu card images uploaded by owner, or fallback to high-res culinary scans
+  const menuPages = (restaurant.menu_pages && restaurant.menu_pages.length > 0)
+    ? restaurant.menu_pages
+    : [
+        restaurant.cover_image_url || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80',
+      ];
 
   const handleZoom = (delta: number) => {
     setZoomLevel((prev) => Math.max(1, Math.min(2.5, +(prev + delta).toFixed(1))));

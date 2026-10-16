@@ -19,15 +19,28 @@ import {
   ExternalLink,
   MessageSquare,
   FileText,
-  Sparkles
+  Sparkles,
+  Megaphone,
+  Camera,
+  Image as ImageIcon,
+  Edit3,
+  Eye,
+  Upload,
+  X
 } from 'lucide-react';
 import { 
   Restaurant, 
   MenuCategory, 
   MenuItem, 
-  Review 
+  Review,
+  RestaurantAnnouncement,
+  RestaurantGalleryImage,
+  RestaurantOwnerAccount,
+  AnnouncementBadge,
+  GalleryCategory
 } from '../types/database';
-import { api } from '../lib/supabase';
+import { api, getCurrentOwnerSession } from '../lib/supabase';
+import { compressImageFile } from '../lib/imageCompressor';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { CartItem } from '../components/WhatsAppOrderDrawer';
@@ -102,6 +115,21 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [showPhysicalMenuModal, setShowPhysicalMenuModal] = useState(false);
 
+  // Owner & Live Announcements State
+  const [ownerSession, setOwnerSession] = useState<RestaurantOwnerAccount | null>(null);
+  const [activeAnnouncement, setActiveAnnouncement] = useState<RestaurantAnnouncement | null>(null);
+  const [galleryImages, setGalleryImages] = useState<RestaurantGalleryImage[]>([]);
+  const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<RestaurantGalleryImage | null>(null);
+  const [showOwnerQuickModal, setShowOwnerQuickModal] = useState(false);
+  const [ownerQuickTab, setOwnerQuickTab] = useState<'announcement' | 'photo'>('announcement');
+  const [quickAnnouncementTitle, setQuickAnnouncementTitle] = useState('');
+  const [quickAnnouncementMsg, setQuickAnnouncementMsg] = useState('');
+  const [quickAnnouncementBadge, setQuickAnnouncementBadge] = useState<AnnouncementBadge>("Today's Special");
+  const [quickPhotoCategory, setQuickPhotoCategory] = useState<GalleryCategory>('menu_page');
+  const [quickPhotoCaption, setQuickPhotoCaption] = useState('');
+  const [savingQuickUpdate, setSavingQuickUpdate] = useState(false);
+  const quickPhotoInputRef = React.useRef<HTMLInputElement>(null);
+
   // Review Form
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState<number>(5);
@@ -144,16 +172,21 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
       api.logItemClick('restaurant', rest.id);
 
-      const [cats, items, revs, allRests] = await Promise.all([
+      const [cats, items, revs, allRests, liveAnn, gallery] = await Promise.all([
         api.getCategories(rest.id),
         api.getMenuItems(rest.id),
         api.getReviews(rest.id, true),
         api.getRestaurants(true),
+        api.getActiveRestaurantAnnouncement(rest.id),
+        api.getRestaurantGallery(rest.id),
       ]);
 
       setCategories(cats);
       setMenuItems(items);
       setReviews(revs);
+      setActiveAnnouncement(liveAnn);
+      setGalleryImages(gallery);
+      setOwnerSession(getCurrentOwnerSession());
 
       // SEO & AEO Graph
       const pageUrl = `https://menumaps.in/restaurant/${rest.slug}`;
@@ -246,6 +279,78 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
+  const isOwnerOfThisRest = Boolean(
+    ownerSession && restaurant && (
+      ownerSession.restaurant_id === restaurant.id ||
+      ownerSession.restaurant_slug === restaurant.slug
+    )
+  );
+
+  const handleQuickPostAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!restaurant) return;
+    if (!quickAnnouncementTitle.trim() || !quickAnnouncementMsg.trim()) {
+      showToast('Title and message are required.', 'error');
+      return;
+    }
+
+    setSavingQuickUpdate(true);
+    try {
+      const saved = await api.saveRestaurantAnnouncement({
+        restaurant_id: restaurant.id,
+        title: quickAnnouncementTitle.trim(),
+        message: quickAnnouncementMsg.trim(),
+        badge: quickAnnouncementBadge,
+        is_active: true,
+      });
+      setActiveAnnouncement(saved);
+      setShowOwnerQuickModal(false);
+      setQuickAnnouncementTitle('');
+      setQuickAnnouncementMsg('');
+      showToast("✓ Today's announcement published live to your page!", 'success');
+    } catch (e) {
+      showToast('Failed to publish announcement.', 'error');
+    } finally {
+      setSavingQuickUpdate(false);
+    }
+  };
+
+  const handleQuickUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !restaurant) return;
+
+    setSavingQuickUpdate(true);
+    try {
+      const compressed = await compressImageFile(file, { maxWidth: 1800, quality: 0.85 });
+      const saved = await api.saveGalleryImage({
+        restaurant_id: restaurant.id,
+        image_url: compressed.dataUrl,
+        caption: quickPhotoCaption.trim() || undefined,
+        category: quickPhotoCategory,
+        uploaded_by: 'owner',
+        sort_order: galleryImages.length,
+      });
+
+      const updated = [...galleryImages, saved];
+      setGalleryImages(updated);
+
+      if (quickPhotoCategory === 'menu_page') {
+        const pages = updated.filter((i) => i.category === 'menu_page').map((i) => i.image_url);
+        await api.updateRestaurantMenuPages(restaurant.id, pages);
+        setRestaurant((prev) => (prev ? { ...prev, menu_pages: pages } : null));
+      }
+
+      setQuickPhotoCaption('');
+      if (quickPhotoInputRef.current) quickPhotoInputRef.current.value = '';
+      setShowOwnerQuickModal(false);
+      showToast(`✓ Photo uploaded as "${quickPhotoCategory === 'menu_page' ? 'Paper Menu Page' : quickPhotoCategory}"!`, 'success');
+    } catch (e) {
+      showToast('Failed to upload photo.', 'error');
+    } finally {
+      setSavingQuickUpdate(false);
+    }
+  };
+
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!restaurant || !reviewText.trim()) {
@@ -316,6 +421,56 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
   return (
     <div className="w-full bg-[#FAF8F5] text-[#1C1917] min-h-screen">
+      {/* ========================================================
+          0. FLOATING OWNER QUICK TOOLBAR (WHEN LOGGED IN AS OWNER)
+      ======================================================== */}
+      {isOwnerOfThisRest && (
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-amber-500/30 text-white py-2.5 px-4 sm:px-8 sticky top-14 sm:top-16 z-40 shadow-xl backdrop-blur-md">
+          <div className="max-w-[1280px] mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-bold text-amber-300">Owner Mode:</span>
+              <span className="text-xs font-extrabold text-white truncate max-w-[200px] sm:max-w-none">{restaurant.name}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setOwnerQuickTab('announcement');
+                  setShowOwnerQuickModal(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm active:scale-95"
+              >
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>+ Post Today's Update</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOwnerQuickTab('photo');
+                  setShowOwnerQuickModal(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm active:scale-95"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>+ Upload Photo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/owner/dashboard')}
+                className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-amber-300" />
+                <span>Dashboard</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ========================================================
           1. HERO BANNER (MATCHES restaurant_template.html)
       ======================================================== */}
@@ -430,6 +585,52 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       </section>
 
       {/* ========================================================
+          1.5. LIVE ANNOUNCEMENT & OWNER NOTICE BOARD CAPSULE
+      ======================================================== */}
+      {activeAnnouncement && (
+        <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
+          <div className="rounded-[28px] bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-rose-500/15 border-2 border-amber-400/50 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-2.5 w-2.5 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+                </span>
+                <span className="px-3 py-0.5 rounded-full bg-rose-600 text-white font-black text-[11px] uppercase tracking-wider shadow-xs">
+                  {activeAnnouncement.badge}
+                </span>
+                <span className="text-xs text-amber-900 font-extrabold">
+                  Official Notice from Restaurant Owner
+                </span>
+              </div>
+              <h3 className="font-heading font-black text-xl text-stone-900">
+                {activeAnnouncement.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-stone-700 leading-relaxed max-w-3xl">
+                {activeAnnouncement.message}
+              </p>
+            </div>
+
+            {activeAnnouncement.action_label && (
+              <a
+                href={
+                  activeAnnouncement.action_url?.startsWith('http')
+                    ? activeAnnouncement.action_url
+                    : `https://wa.me/${(restaurant.whatsapp_number || restaurant.phone || '919876543210').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am inquiring about your announcement: "${activeAnnouncement.title}" on Menu Maps.`)}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn bg-rose-600 hover:bg-rose-700 text-white px-5 py-3 rounded-2xl font-black text-xs shadow-md shrink-0 flex items-center gap-1.5"
+              >
+                <span>{activeAnnouncement.action_label}</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ========================================================
           2. QUICK FACT BAR (MATCHES restaurant_template.html)
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
@@ -505,6 +706,65 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           onOpenPhysicalMenu={() => setShowPhysicalMenuModal(true)}
         />
       </section>
+
+      {/* ========================================================
+          2.7. VERIFIED PHOTO & PAPER MENU GALLERY
+      ======================================================== */}
+      {galleryImages.length > 0 && (
+        <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
+          <div className="bg-white border border-[#EFEAE2] rounded-[28px] p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-extrabold uppercase tracking-wider text-[#0F766E]">
+                  Real In-Store Atmosphere & Menus
+                </div>
+                <h3 className="hd text-xl sm:text-2xl font-black text-[#1C1917] mt-0.5">
+                  Verified Photos & Paper Menu Pages ({galleryImages.length})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPhysicalMenuModal(true)}
+                className="text-xs font-bold text-[#0F766E] hover:underline flex items-center gap-1"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Open Paper Flipbook &rarr;</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {galleryImages.map((img, idx) => (
+                <div
+                  key={img.id}
+                  onClick={() => {
+                    if (img.category === 'menu_page') {
+                      setShowPhysicalMenuModal(true);
+                    } else {
+                      setSelectedPhotoPreview(img);
+                    }
+                  }}
+                  className="aspect-square rounded-2xl overflow-hidden relative cursor-pointer group bg-stone-100 border border-stone-200"
+                >
+                  <img
+                    src={img.image_url}
+                    alt={img.caption || 'Restaurant gallery'}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <div className="absolute bottom-1.5 left-1.5 right-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[9px] font-bold text-white uppercase tracking-wider block truncate">
+                      {img.category === 'menu_page' ? `Menu Page ${idx + 1}` : img.category}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ========================================================
           3. MAIN BODY (MENU, REVIEWS & WHATSAPP CART SIDEBAR)
@@ -1018,6 +1278,223 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          OWNER QUICK UPDATE MODAL (ON-PAGE)
+      ======================================================== */}
+      {showOwnerQuickModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-[32px] max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border border-stone-200 my-8">
+            <div className="flex justify-between items-center pb-3 border-b border-stone-100">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-rose-100 text-rose-600">
+                  <Megaphone className="w-4 h-4" />
+                </span>
+                <h3 className="hd text-xl font-bold text-stone-900">
+                  Owner Quick Update: {restaurant.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOwnerQuickModal(false)}
+                className="text-stone-400 hover:text-stone-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Mode Switcher */}
+            <div className="flex gap-2 p-1 bg-stone-100 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setOwnerQuickTab('announcement')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                  ownerQuickTab === 'announcement'
+                    ? 'bg-white text-stone-900 shadow-xs'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
+              >
+                📢 Post Today's Announcement
+              </button>
+              <button
+                type="button"
+                onClick={() => setOwnerQuickTab('photo')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                  ownerQuickTab === 'photo'
+                    ? 'bg-white text-stone-900 shadow-xs'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
+              >
+                📸 Upload Paper Menu / Photo
+              </button>
+            </div>
+
+            {ownerQuickTab === 'announcement' ? (
+              <form onSubmit={handleQuickPostAnnouncement} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Announcement Badge *
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(["Today's Special", "Festival Offer", "Live Event", "Special Timings", "Notice"] as AnnouncementBadge[]).map((b) => (
+                      <button
+                        key={b}
+                        type="button"
+                        onClick={() => setQuickAnnouncementBadge(b)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                          quickAnnouncementBadge === b
+                            ? 'bg-rose-500 text-white border-rose-500'
+                            : 'bg-stone-50 text-stone-700 border-stone-200'
+                        }`}
+                      >
+                        {b}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Announcement Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={quickAnnouncementTitle}
+                    onChange={(e) => setQuickAnnouncementTitle(e.target.value)}
+                    placeholder="e.g. Navratri Special Thali & 15% Off Today!"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Detailed Message *
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={quickAnnouncementMsg}
+                    onChange={(e) => setQuickAnnouncementMsg(e.target.value)}
+                    placeholder="e.g. Prepared with authentic sendha namak and fresh ingredients. Available exclusively for dine-in and WhatsApp takeaways."
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowOwnerQuickModal(false)}
+                    className="px-4 py-2 text-xs font-bold text-stone-600 hover:bg-stone-100 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingQuickUpdate}
+                    className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95"
+                  >
+                    {savingQuickUpdate ? 'Publishing...' : 'Publish Instantly to Page'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Photo Type / Category
+                  </label>
+                  <select
+                    value={quickPhotoCategory}
+                    onChange={(e) => setQuickPhotoCategory(e.target.value as GalleryCategory)}
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-800 outline-none"
+                  >
+                    <option value="menu_page">📄 Paper Menu Page (Added to Flipbook Modal)</option>
+                    <option value="ambiance">🪑 Ambiance & Seating (Dining vibe, outdoor)</option>
+                    <option value="food">🍲 Signature Dish</option>
+                    <option value="outdoor">🌿 Outdoor / Rooftop</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Caption (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={quickPhotoCaption}
+                    onChange={(e) => setQuickPhotoCaption(e.target.value)}
+                    placeholder="e.g. Menu Page 1 - Starters & Rolls"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <input
+                    type="file"
+                    ref={quickPhotoInputRef}
+                    onChange={handleQuickUploadPhoto}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => quickPhotoInputRef.current?.click()}
+                    disabled={savingQuickUpdate}
+                    className="w-full py-4 rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-800 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all"
+                  >
+                    <Upload className="w-5 h-5 text-emerald-600" />
+                    <span>{savingQuickUpdate ? 'Compressing & Saving...' : 'Tap to Choose Photo from Phone/PC'}</span>
+                    <span className="text-[10px] text-emerald-600/80 font-normal">Auto-compressed for instant fast loading</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          PHOTO LIGHTBOX PREVIEW
+      ======================================================== */}
+      {selectedPhotoPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          onClick={() => setSelectedPhotoPreview(null)}
+        >
+          <div
+            className="max-w-3xl w-full bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-4 border-b border-white/10">
+              <span className="text-xs font-bold text-white uppercase tracking-wider">
+                {selectedPhotoPreview.category === 'menu_page'
+                  ? 'Paper Menu Page'
+                  : selectedPhotoPreview.category}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedPhotoPreview(null)}
+                className="text-stone-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[75vh] flex items-center justify-center p-2 bg-black">
+              <img
+                src={selectedPhotoPreview.image_url}
+                alt={selectedPhotoPreview.caption || 'Preview'}
+                className="max-h-[70vh] w-auto object-contain rounded-xl"
+              />
+            </div>
+            {selectedPhotoPreview.caption && (
+              <div className="p-4 text-xs text-stone-200 font-medium">
+                {selectedPhotoPreview.caption}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -28,7 +28,12 @@ import {
   MapPin, 
   DollarSign,
   Search,
-  Filter
+  Filter,
+  Megaphone,
+  Bell,
+  Calendar,
+  FileText,
+  Volume2
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -36,7 +41,11 @@ import {
   MenuItem, 
   RestaurantOwnerAccount,
   DietaryOption,
-  DietaryTag
+  DietaryTag,
+  RestaurantAnnouncement,
+  RestaurantGalleryImage,
+  AnnouncementBadge,
+  GalleryCategory
 } from '../types/database';
 import { 
   api, 
@@ -51,7 +60,7 @@ interface OwnerDashboardProps {
   navigate: (path: string) => void;
 }
 
-type OwnerTab = 'menu' | 'categories' | 'profile' | 'standee';
+type OwnerTab = 'menu' | 'announcements' | 'gallery' | 'categories' | 'profile' | 'standee';
 
 const COMMON_FACILITIES = [
   'Free Wi-Fi',
@@ -81,6 +90,8 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [announcements, setAnnouncements] = useState<RestaurantAnnouncement[]>([]);
+  const [galleryImages, setGalleryImages] = useState<RestaurantGalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Active Section Tab
@@ -92,6 +103,31 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   // Filter / Search inside dishes
   const [dishSearch, setDishSearch] = useState('');
   const [selectedCatFilter, setSelectedCatFilter] = useState('all');
+
+  // --------------------------------------------------------------------------
+  // ANNOUNCEMENTS & LIVE NOTICE BOARD STATE
+  // --------------------------------------------------------------------------
+  const [announcementModalOpen, setAnnouncementModalOpen] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Partial<RestaurantAnnouncement>>({
+    title: '',
+    message: '',
+    badge: "Today's Special",
+    action_label: '',
+    action_url: '',
+    is_active: true,
+  });
+  const [announcementExpiryPreset, setAnnouncementExpiryPreset] = useState<'tonight' | '24h' | '3d' | '7d' | 'indefinite'>('tonight');
+  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // GALLERY & PAPER MENU PHOTOS STATE
+  // --------------------------------------------------------------------------
+  const [galleryCategoryFilter, setGalleryCategoryFilter] = useState<'all' | GalleryCategory>('all');
+  const [uploadCategory, setUploadCategory] = useState<GalleryCategory>('menu_page');
+  const [uploadCaption, setUploadCaption] = useState('');
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<RestaurantGalleryImage | null>(null);
 
   // --------------------------------------------------------------------------
   // DISH ADD / EDIT MODAL STATE
@@ -152,12 +188,16 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         setRestaurant(rest);
         setProfileData({ ...rest });
 
-        const [cats, items] = await Promise.all([
+        const [cats, items, anns, gallery] = await Promise.all([
           api.getCategories(rest.id),
           api.getMenuItems(rest.id),
+          api.getRestaurantAnnouncements(rest.id),
+          api.getRestaurantGallery(rest.id),
         ]);
         setCategories(cats);
         setMenuItems(items);
+        setAnnouncements(anns);
+        setGalleryImages(gallery);
 
         if (cats.length > 0 && !editingItem.category_id) {
           setEditingItem((prev) => ({ ...prev, category_id: cats[0].id }));
@@ -167,6 +207,153 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       showToast('Error loading restaurant dashboard data.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // ANNOUNCEMENTS HANDLERS
+  // --------------------------------------------------------------------------
+  const handleOpenAddAnnouncement = () => {
+    setEditingAnnouncement({
+      title: '',
+      message: '',
+      badge: "Today's Special",
+      action_label: 'Enquire on WhatsApp',
+      action_url: '',
+      is_active: true,
+    });
+    setAnnouncementExpiryPreset('tonight');
+    setAnnouncementModalOpen(true);
+  };
+
+  const handleSaveAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!restaurant) return;
+    if (!editingAnnouncement.title?.trim() || !editingAnnouncement.message?.trim()) {
+      showToast('Title and message are required for the announcement.', 'error');
+      return;
+    }
+
+    setSavingAnnouncement(true);
+    try {
+      let expires_at: string | undefined = undefined;
+      const now = new Date();
+      if (announcementExpiryPreset === 'tonight') {
+        const tonight = new Date();
+        tonight.setHours(23, 59, 59, 999);
+        expires_at = tonight.toISOString();
+      } else if (announcementExpiryPreset === '24h') {
+        expires_at = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      } else if (announcementExpiryPreset === '3d') {
+        expires_at = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (announcementExpiryPreset === '7d') {
+        expires_at = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      const saved = await api.saveRestaurantAnnouncement({
+        ...editingAnnouncement,
+        restaurant_id: restaurant.id,
+        expires_at,
+      });
+
+      setAnnouncements((prev) => {
+        const filtered = prev.filter((a) => a.id !== saved.id);
+        return [saved, ...filtered];
+      });
+
+      setAnnouncementModalOpen(false);
+      showToast('✓ Announcement published to your live restaurant page!', 'success');
+    } catch (e) {
+      showToast('Failed to save announcement.', 'error');
+    } finally {
+      setSavingAnnouncement(false);
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this announcement?')) return;
+    try {
+      await api.deleteRestaurantAnnouncement(id);
+      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+      showToast('Announcement deleted.', 'info');
+    } catch (e) {
+      showToast('Failed to delete announcement.', 'error');
+    }
+  };
+
+  const handleToggleAnnouncementActive = async (ann: RestaurantAnnouncement) => {
+    try {
+      const updated = await api.saveRestaurantAnnouncement({
+        ...ann,
+        is_active: !ann.is_active,
+      });
+      setAnnouncements((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+      showToast(updated.is_active ? 'Announcement is now active!' : 'Announcement paused.', 'success');
+    } catch (e) {
+      showToast('Failed to update announcement status.', 'error');
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // GALLERY & PAPER MENU HANDLERS
+  // --------------------------------------------------------------------------
+  const handleUploadGalleryFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !restaurant) return;
+
+    setGalleryUploading(true);
+    try {
+      const compressed = await compressImageFile(file, { maxWidth: 1800, quality: 0.85 });
+      const saved = await api.saveGalleryImage({
+        restaurant_id: restaurant.id,
+        image_url: compressed.dataUrl,
+        caption: uploadCaption.trim() || undefined,
+        category: uploadCategory,
+        uploaded_by: 'owner',
+        sort_order: galleryImages.length,
+      });
+
+      const updatedGallery = [...galleryImages, saved];
+      setGalleryImages(updatedGallery);
+
+      // If category is menu_page, also update restaurant.menu_pages
+      if (uploadCategory === 'menu_page') {
+        const menuPages = updatedGallery
+          .filter((img) => img.category === 'menu_page')
+          .map((img) => img.image_url);
+        await api.updateRestaurantMenuPages(restaurant.id, menuPages);
+        setRestaurant((prev) => (prev ? { ...prev, menu_pages: menuPages } : null));
+      }
+
+      setUploadCaption('');
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+      showToast(`✓ Photo uploaded as "${uploadCategory === 'menu_page' ? 'Paper Menu Page' : uploadCategory}"!`, 'success');
+    } catch (e) {
+      showToast('Failed to upload image.', 'error');
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const handleDeleteGalleryImage = async (img: RestaurantGalleryImage) => {
+    if (!window.confirm('Delete this photo from your restaurant gallery?')) return;
+    if (!restaurant) return;
+    try {
+      await api.deleteGalleryImage(img.id);
+      const nextGallery = galleryImages.filter((i) => i.id !== img.id);
+      setGalleryImages(nextGallery);
+
+      if (img.category === 'menu_page') {
+        const menuPages = nextGallery
+          .filter((i) => i.category === 'menu_page')
+          .map((i) => i.image_url);
+        await api.updateRestaurantMenuPages(restaurant.id, menuPages);
+        setRestaurant((prev) => (prev ? { ...prev, menu_pages: menuPages } : null));
+      }
+
+      showToast('Photo removed from gallery.', 'info');
+    } catch (e) {
+      showToast('Failed to delete photo.', 'error');
     }
   };
 
@@ -533,8 +720,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-2 border-t border-slate-800/80 overflow-x-auto py-2">
           {[
             { id: 'menu', label: `Menu Dishes (${menuItems.length})`, icon: UtensilsCrossed },
+            { id: 'announcements', label: `Live Announcements (${announcements.length})`, icon: Megaphone },
+            { id: 'gallery', label: `Photos & Paper Menu (${galleryImages.length})`, icon: ImageIcon },
             { id: 'categories', label: `Categories (${categories.length})`, icon: Layers },
-            { id: 'profile', label: 'Restaurant Profile & Photo', icon: Building2 },
+            { id: 'profile', label: 'Restaurant Profile & Details', icon: Building2 },
             { id: 'standee', label: 'Table Standee & QR', icon: QrCode },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -790,6 +979,368 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* TAB: LIVE ANNOUNCEMENTS & NOTICE BOARD */}
+        {/* ================================================================ */}
+        {activeTab === 'announcements' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-rose-100 text-rose-600">
+                    <Megaphone className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-heading font-black text-xl text-slate-900">
+                    Live Announcements & Notice Board
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Broadcast today's chef specials, festival discounts, live band sessions, or holiday timings directly onto your public restaurant page header.
+                </p>
+              </div>
+              <button
+                onClick={handleOpenAddAnnouncement}
+                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-rose-500/20 transition-all active:scale-95 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Post Announcement</span>
+              </button>
+            </div>
+
+            {/* Live Preview Card */}
+            {(() => {
+              const liveAnnouncement = announcements.find((a) => a.is_active);
+              if (!liveAnnouncement) {
+                return (
+                  <div className="rounded-3xl border-2 border-dashed border-stone-200 bg-stone-50/60 p-8 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+                      <Megaphone className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-heading font-bold text-sm text-slate-800">
+                      No Live Announcement Active
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto">
+                      Post a quick bulletin to let diners know about special discounts, festival dishes, or today's chef recommendations!
+                    </p>
+                    <button
+                      onClick={handleOpenAddAnnouncement}
+                      className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-black inline-flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Post First Announcement
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-rose-500/10 border-2 border-amber-400/40 p-6 space-y-4 relative overflow-hidden shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2.5 w-2.5 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-extrabold text-[10px] uppercase tracking-wider">
+                        {liveAnnouncement.badge}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                        Currently Live on your Restaurant Page
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleAnnouncementActive(liveAnnouncement)}
+                        className="px-3 py-1 rounded-xl bg-white hover:bg-stone-50 text-slate-700 font-bold text-xs border border-stone-200 shadow-2xs"
+                      >
+                        Pause
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAnnouncement(liveAnnouncement.id)}
+                        className="p-1.5 rounded-xl bg-white hover:bg-red-50 text-red-500 border border-stone-200"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-heading font-black text-lg text-slate-900">
+                      {liveAnnouncement.title}
+                    </h3>
+                    <p className="text-xs text-slate-700 mt-1 leading-relaxed">
+                      {liveAnnouncement.message}
+                    </p>
+                  </div>
+
+                  {liveAnnouncement.action_label && (
+                    <div className="pt-2">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#0F766E] text-white text-xs font-bold shadow-xs">
+                        <span>{liveAnnouncement.action_label}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-[11px] text-slate-500 border-t border-amber-200/50 pt-2 flex items-center justify-between">
+                    <span>Posted {new Date(liveAnnouncement.created_at).toLocaleDateString()}</span>
+                    <span>
+                      {liveAnnouncement.expires_at
+                        ? `Expires: ${new Date(liveAnnouncement.expires_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`
+                        : 'Never expires (Indefinite)'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Announcement History */}
+            {announcements.length > 0 && (
+              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/90 shadow-xs space-y-4">
+                <h3 className="font-heading font-black text-base text-slate-900">
+                  All Announcements History ({announcements.length})
+                </h3>
+                <div className="space-y-3">
+                  {announcements.map((ann) => (
+                    <div
+                      key={ann.id}
+                      className="p-4 rounded-2xl border border-stone-200/80 bg-stone-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50 transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-md bg-stone-200 text-slate-800 text-[10px] font-black uppercase">
+                            {ann.badge}
+                          </span>
+                          <span
+                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                              ann.is_active
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-stone-200 text-stone-600'
+                            }`}
+                          >
+                            {ann.is_active ? 'Active' : 'Paused'}
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            {new Date(ann.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h4 className="font-heading font-bold text-sm text-slate-900">
+                          {ann.title}
+                        </h4>
+                        <p className="text-xs text-slate-600 line-clamp-1">
+                          {ann.message}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => handleToggleAnnouncementActive(ann)}
+                          className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors ${
+                            ann.is_active
+                              ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                              : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                          }`}
+                        >
+                          {ann.is_active ? 'Pause' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAnnouncement(ann.id)}
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* TAB: PHOTOS & PHYSICAL PAPER MENU GALLERY */}
+        {/* ================================================================ */}
+        {activeTab === 'gallery' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                    <ImageIcon className="w-4 h-4" />
+                  </span>
+                  <h2 className="font-heading font-black text-xl text-slate-900">
+                    Physical Paper Menu & Photo Gallery
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Upload authentic photos of your physical paper menu (Page 1, 2, 3...) to enable the interactive flipbook modal, plus ambiance and signature dish photos.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={galleryFileInputRef}
+                  onChange={handleUploadGalleryFile}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => galleryFileInputRef.current?.click()}
+                  disabled={galleryUploading}
+                  className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all active:scale-95 shrink-0"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{galleryUploading ? 'Compressing & Uploading...' : '+ Upload Photo'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Upload Category & Caption Bar */}
+            <div className="bg-stone-50/90 rounded-2xl p-4 border border-stone-200 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-700 shrink-0">Upload As:</span>
+                <select
+                  value={uploadCategory}
+                  onChange={(e) => setUploadCategory(e.target.value as GalleryCategory)}
+                  className="px-3 py-1.5 bg-white border border-stone-200 rounded-xl text-xs font-bold text-slate-800 outline-none"
+                >
+                  <option value="menu_page">📄 Paper Menu Scan / Page</option>
+                  <option value="ambiance">🪑 Ambiance & Seating</option>
+                  <option value="food">🍲 Signature Dish</option>
+                  <option value="outdoor">🌿 Outdoor / Rooftop</option>
+                </select>
+              </div>
+
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={uploadCaption}
+                  onChange={(e) => setUploadCaption(e.target.value)}
+                  placeholder="Optional caption (e.g. Menu Page 1 - Mains, Cozy Balcony Seating)..."
+                  className="w-full px-3 py-1.5 bg-white border border-stone-200 rounded-xl text-xs text-slate-800 outline-none placeholder:text-stone-400"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => galleryFileInputRef.current?.click()}
+                disabled={galleryUploading}
+                className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all shrink-0"
+              >
+                Select Image File
+              </button>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {[
+                { id: 'all', label: `All Photos (${galleryImages.length})` },
+                { id: 'menu_page', label: `📄 Paper Menu Pages (${galleryImages.filter((i) => i.category === 'menu_page').length})` },
+                { id: 'ambiance', label: `🪑 Ambiance (${galleryImages.filter((i) => i.category === 'ambiance').length})` },
+                { id: 'food', label: `🍲 Dishes (${galleryImages.filter((i) => i.category === 'food').length})` },
+                { id: 'outdoor', label: `🌿 Outdoor (${galleryImages.filter((i) => i.category === 'outdoor').length})` },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setGalleryCategoryFilter(f.id as any)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                    galleryCategoryFilter === f.id
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-white text-slate-600 hover:bg-stone-100 border border-stone-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Photos Grid */}
+            {(() => {
+              const filtered = galleryImages.filter(
+                (img) => galleryCategoryFilter === 'all' || img.category === galleryCategoryFilter
+              );
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="rounded-3xl border-2 border-dashed border-stone-200 bg-white p-12 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-400 flex items-center justify-center mx-auto">
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-heading font-bold text-sm text-slate-800">
+                      No photos in this category yet
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      Upload your physical paper menu or restaurant photos. Phone photos are automatically compressed for high-speed loading.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => galleryFileInputRef.current?.click()}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1.5"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload Photo Now
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {filtered.map((img, idx) => (
+                    <div
+                      key={img.id}
+                      className="group relative rounded-2xl overflow-hidden border border-stone-200 bg-white shadow-xs flex flex-col"
+                    >
+                      <div className="aspect-square relative overflow-hidden bg-stone-100">
+                        <img
+                          src={img.image_url}
+                          alt={img.caption || 'Restaurant gallery'}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[10px] font-bold text-white uppercase tracking-wider">
+                            {img.category === 'menu_page'
+                              ? `Menu Page ${idx + 1}`
+                              : img.category}
+                          </span>
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGalleryImage(img)}
+                            className="p-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 text-white shadow-md transition-opacity"
+                            title="Delete Photo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPhotoPreview(img)}
+                          className="absolute inset-0 bg-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition-opacity"
+                        >
+                          <Eye className="w-6 h-6 text-white" />
+                        </button>
+                      </div>
+                      {img.caption && (
+                        <div className="p-2.5 text-xs text-slate-700 font-medium truncate">
+                          {img.caption}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -1427,6 +1978,196 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: POST / EDIT LIVE ANNOUNCEMENT */}
+      {/* ==================================================================== */}
+      {announcementModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border border-stone-200 my-8">
+            <div className="flex justify-between items-center pb-3 border-b border-stone-100">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-rose-100 text-rose-600">
+                  <Megaphone className="w-4 h-4" />
+                </span>
+                <h3 className="font-heading font-black text-lg text-slate-900">
+                  {editingAnnouncement.id ? 'Edit Announcement' : 'Post Live Announcement'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setAnnouncementModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAnnouncement} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Announcement Badge / Category *
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(["Today's Special", "Festival Offer", "Live Event", "Special Timings", "Notice"] as AnnouncementBadge[]).map((badge) => (
+                    <button
+                      key={badge}
+                      type="button"
+                      onClick={() => setEditingAnnouncement({ ...editingAnnouncement, badge })}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all text-center ${
+                        editingAnnouncement.badge === badge
+                          ? 'bg-rose-500 text-white border-rose-500 shadow-2xs'
+                          : 'bg-stone-50 text-slate-700 border-stone-200 hover:bg-stone-100'
+                      }`}
+                    >
+                      {badge}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Headline / Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingAnnouncement.title || ''}
+                  onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, title: e.target.value })}
+                  placeholder="e.g. Live Sufi Band this Friday 8 PM!"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Detailed Message *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editingAnnouncement.message || ''}
+                  onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, message: e.target.value })}
+                  placeholder="e.g. Reserve your table early to enjoy mesmerizing melodies and unlimited kebab platters at ₹599 per person."
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Action Button Label (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingAnnouncement.action_label || ''}
+                    onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, action_label: e.target.value })}
+                    placeholder="e.g. Reserve on WhatsApp"
+                    className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Action Link / Phone (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingAnnouncement.action_url || ''}
+                    onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, action_url: e.target.value })}
+                    placeholder="https://... or WhatsApp phone"
+                    className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Active Duration / Expiry
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'tonight', label: 'Tonight (11:59 PM)' },
+                    { id: '24h', label: '24 Hours' },
+                    { id: '3d', label: '3 Days' },
+                    { id: 'indefinite', label: 'Indefinite' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setAnnouncementExpiryPreset(preset.id as any)}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                        announcementExpiryPreset === preset.id
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-stone-50 text-slate-600 border-stone-200 hover:bg-stone-100'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() => setAnnouncementModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-stone-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingAnnouncement}
+                  className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95"
+                >
+                  {savingAnnouncement ? 'Publishing...' : 'Publish to Restaurant Page'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: PHOTO FULLSCREEN PREVIEW */}
+      {/* ==================================================================== */}
+      {selectedPhotoPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          onClick={() => setSelectedPhotoPreview(null)}
+        >
+          <div
+            className="max-w-3xl w-full bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-4 border-b border-white/10">
+              <span className="text-xs font-bold text-white uppercase tracking-wider">
+                {selectedPhotoPreview.category === 'menu_page'
+                  ? 'Paper Menu Page'
+                  : selectedPhotoPreview.category}
+              </span>
+              <button
+                onClick={() => setSelectedPhotoPreview(null)}
+                className="text-stone-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[75vh] flex items-center justify-center p-2 bg-black">
+              <img
+                src={selectedPhotoPreview.image_url}
+                alt={selectedPhotoPreview.caption || 'Preview'}
+                className="max-h-[70vh] w-auto object-contain rounded-xl"
+              />
+            </div>
+            {selectedPhotoPreview.caption && (
+              <div className="p-4 text-xs text-stone-200 font-medium">
+                {selectedPhotoPreview.caption}
+              </div>
+            )}
           </div>
         </div>
       )}

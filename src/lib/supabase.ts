@@ -19,6 +19,10 @@ import {
   FamousDishSpotlight,
   FoodCrawlStop,
   ContactInquiry,
+  RestaurantAnnouncement,
+  RestaurantGalleryImage,
+  AnnouncementBadge,
+  GalleryCategory,
 } from '../types/database';
 import { AREA_FOOD_GUIDES } from './areaGuidesData';
 
@@ -2106,6 +2110,147 @@ export const api = {
       } catch (e) {}
     }
     return loadTable<ContactInquiry>('contact_inquiries');
+  },
+
+  // --------------------------------------------------------------------------
+  // RESTAURANT ANNOUNCEMENTS & LIVE BULLETIN ENGINE
+  // --------------------------------------------------------------------------
+  async getRestaurantAnnouncements(restaurantId: string): Promise<RestaurantAnnouncement[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('restaurant_announcements')
+          .select('*')
+          .eq('restaurant_id', restaurantId)
+          .order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) return data as RestaurantAnnouncement[];
+      } catch (e) {}
+    }
+    const all = loadTable<RestaurantAnnouncement>('restaurant_announcements');
+    return all.filter((a) => a.restaurant_id === restaurantId);
+  },
+
+  async getActiveRestaurantAnnouncement(restaurantId: string): Promise<RestaurantAnnouncement | null> {
+    const list = await this.getRestaurantAnnouncements(restaurantId);
+    const now = new Date().toISOString();
+    return list.find((a) => {
+      if (!a.is_active) return false;
+      if (a.expires_at && a.expires_at < now) return false;
+      return true;
+    }) || null;
+  },
+
+  async saveRestaurantAnnouncement(announcement: Partial<RestaurantAnnouncement>): Promise<RestaurantAnnouncement> {
+    const now = new Date().toISOString();
+    const record: RestaurantAnnouncement = {
+      id: announcement.id || crypto.randomUUID(),
+      restaurant_id: announcement.restaurant_id || '',
+      title: announcement.title?.trim() || '',
+      message: announcement.message?.trim() || '',
+      badge: announcement.badge || "Today's Special",
+      action_label: announcement.action_label?.trim() || undefined,
+      action_url: announcement.action_url?.trim() || undefined,
+      is_active: announcement.is_active ?? true,
+      starts_at: announcement.starts_at || now,
+      expires_at: announcement.expires_at,
+      created_at: announcement.created_at || now,
+      updated_at: now,
+    };
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('restaurant_announcements').upsert(record);
+      } catch (e) {
+        console.warn('Supabase announcement upsert notice:', e);
+      }
+    }
+
+    const all = loadTable<RestaurantAnnouncement>('restaurant_announcements');
+    const filtered = all.filter((a) => a.id !== record.id);
+    filtered.unshift(record);
+    saveTable('restaurant_announcements', filtered);
+
+    return record;
+  },
+
+  async deleteRestaurantAnnouncement(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('restaurant_announcements').delete().eq('id', id);
+      } catch (e) {}
+    }
+    const all = loadTable<RestaurantAnnouncement>('restaurant_announcements');
+    saveTable('restaurant_announcements', all.filter((a) => a.id !== id));
+    return true;
+  },
+
+  // --------------------------------------------------------------------------
+  // RESTAURANT PHOTO & PHYSICAL PAPER MENU GALLERY ENGINE
+  // --------------------------------------------------------------------------
+  async getRestaurantGallery(restaurantId: string): Promise<RestaurantGalleryImage[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('restaurant_gallery')
+          .select('*')
+          .eq('restaurant_id', restaurantId)
+          .order('sort_order', { ascending: true });
+        if (!error && data && data.length > 0) return data as RestaurantGalleryImage[];
+      } catch (e) {}
+    }
+    const all = loadTable<RestaurantGalleryImage>('restaurant_gallery');
+    return all.filter((img) => img.restaurant_id === restaurantId);
+  },
+
+  async saveGalleryImage(image: Partial<RestaurantGalleryImage>): Promise<RestaurantGalleryImage> {
+    const record: RestaurantGalleryImage = {
+      id: image.id || crypto.randomUUID(),
+      restaurant_id: image.restaurant_id || '',
+      image_url: image.image_url || '',
+      caption: image.caption?.trim() || '',
+      category: image.category || 'ambiance',
+      uploaded_by: image.uploaded_by || 'owner',
+      sort_order: image.sort_order ?? 0,
+      created_at: image.created_at || new Date().toISOString(),
+    };
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('restaurant_gallery').upsert(record);
+      } catch (e) {}
+    }
+
+    const all = loadTable<RestaurantGalleryImage>('restaurant_gallery');
+    const filtered = all.filter((img) => img.id !== record.id);
+    filtered.push(record);
+    saveTable('restaurant_gallery', filtered);
+
+    return record;
+  },
+
+  async deleteGalleryImage(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('restaurant_gallery').delete().eq('id', id);
+      } catch (e) {}
+    }
+    const all = loadTable<RestaurantGalleryImage>('restaurant_gallery');
+    saveTable('restaurant_gallery', all.filter((img) => img.id !== id));
+    return true;
+  },
+
+  async updateRestaurantMenuPages(restaurantId: string, pageUrls: string[]): Promise<boolean> {
+    const rest = await this.getRestaurantById(restaurantId);
+    if (!rest) return false;
+    rest.menu_pages = pageUrls;
+    await this.saveRestaurant(rest);
+    return true;
   },
 };
 
