@@ -373,7 +373,7 @@ CREATE TABLE IF NOT EXISTS public.restaurant_owners (
 -- Ensure owner columns exist and allow email login
 ALTER TABLE public.restaurant_owners ADD COLUMN IF NOT EXISTS owner_email TEXT;
 ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
-DROP INDEX IF EXISTS restaurant_owners_phone_number_key;
+ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
 
 ALTER TABLE public.restaurant_claims ENABLE ROW LEVEL SECURITY;
@@ -452,7 +452,7 @@ CREATE TABLE IF NOT EXISTS public.restaurant_owners (
 -- 5. Upgrade existing restaurant_owners table with email support
 ALTER TABLE public.restaurant_owners ADD COLUMN IF NOT EXISTS owner_email TEXT;
 ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
-DROP INDEX IF EXISTS restaurant_owners_phone_number_key;
+ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_rest_id ON public.restaurant_owners (restaurant_id);
 
