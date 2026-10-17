@@ -2863,32 +2863,46 @@ export const api = {
       }));
     } catch (e) {}
 
-    // Dispatch via Supabase Auth with a 6-second timeout to prevent 84-second hanging
+    // Dispatch via Supabase Auth with an 8-second timeout
     try {
-      const pass = passwordCandidate && passwordCandidate.length >= 6
-        ? passwordCandidate
-        : 'MenuMapsOwner2026!#' + Math.random().toString(36).slice(2, 8);
-
-      const authPromise = supabase.auth.signUp({
+      // 1. Try signInWithOtp first (Supabase's dedicated OTP dispatch method)
+      const otpPromise = supabase.auth.signInWithOtp({
         email: cleanEmail,
-        password: pass,
+        options: {
+          shouldCreateUser: true,
+        },
       });
 
       const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
         setTimeout(() => resolve({
           data: null,
           error: { message: 'Supabase mailer timeout', status: 504 }
-        }), 6000)
+        }), 8000)
       );
 
-      const res = await Promise.race([authPromise, timeoutPromise]);
+      let res = await Promise.race([otpPromise, timeoutPromise]);
 
-      if (!res.error && res.data?.user) {
-        // Supabase Auth successfully dispatched the confirmation email!
+      if (!res.error) {
         return { success: true, isSmtpConfigured: true };
       }
 
-      // If user already registered, try resend
+      // 2. Fallback to signUp if signInWithOtp had an issue
+      const pass = passwordCandidate && passwordCandidate.length >= 6
+        ? passwordCandidate
+        : 'MenuMapsOwner2026!#' + Math.random().toString(36).slice(2, 8);
+
+      const signupPromise = supabase.auth.signUp({
+        email: cleanEmail,
+        password: pass,
+      });
+
+      res = await Promise.race([signupPromise, timeoutPromise]);
+
+      if (!res.error && res.data?.user) {
+        return { success: true, isSmtpConfigured: true };
+      }
+
+      // 3. If user already registered, try resend
       if (res.error?.message?.toLowerCase().includes('already registered')) {
         const resendRes = await supabase.auth.resend({
           type: 'signup',
@@ -2900,7 +2914,6 @@ export const api = {
       }
 
       // If Supabase returned 'Error sending confirmation email' or timed out:
-      // It means custom SMTP is not set up on this Supabase project or default 3/hr limit was hit.
       console.warn('Supabase mailer unavailable or rate-limited:', res.error?.message);
       return {
         success: true,
@@ -2925,20 +2938,20 @@ export const api = {
 
     const supabase = getSupabaseClient();
 
-    // 1. Try Supabase Auth verifyOtp first (if Supabase delivered the signup email)
+    // 1. Try Supabase Auth verifyOtp first (check 'email' type for signInWithOtp, then 'signup' type)
     if (supabase) {
       try {
         let authRes = await supabase.auth.verifyOtp({
           email: cleanEmail,
           token: cleanCode,
-          type: 'signup',
+          type: 'email',
         });
 
         if (authRes.error) {
           authRes = await supabase.auth.verifyOtp({
             email: cleanEmail,
             token: cleanCode,
-            type: 'email',
+            type: 'signup',
           });
         }
 
