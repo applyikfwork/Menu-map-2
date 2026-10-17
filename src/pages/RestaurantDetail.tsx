@@ -43,11 +43,17 @@ import { api, getCurrentOwnerSession } from '../lib/supabase';
 import { compressImageFile } from '../lib/imageCompressor';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
 import { RestaurantCard } from '../components/RestaurantCard';
-import { CartItem } from '../components/WhatsAppOrderDrawer';
+import { WhatsAppOrderDrawer, CartItem } from '../components/WhatsAppOrderDrawer';
 import { updatePageSeo, buildRestaurantSchema } from '../lib/seo';
 import { useToast } from '../components/Toast';
 import { useDiscovery } from '../context/DiscoveryContext';
 import { RestaurantSuperWidgets } from '../components/restaurant/RestaurantSuperWidgets';
+import { HonestBillBox } from '../components/restaurant/HonestBillBox';
+import { CounterPulseTicker } from '../components/restaurant/CounterPulseTicker';
+import { TopPicksSpotlight } from '../components/restaurant/TopPicksSpotlight';
+import { UpsellPairingPrompt } from '../components/restaurant/UpsellPairingPrompt';
+import { NeighborStealBanner } from '../components/restaurant/NeighborStealBanner';
+import { SmartReviewShield } from '../components/restaurant/SmartReviewShield';
 
 const RestaurantQrModal = React.lazy(() =>
   import('../components/RestaurantQrModal').then((m) => ({ default: m.RestaurantQrModal }))
@@ -108,6 +114,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [cartMap, setCartMap] = useState<Record<string, number>>({});
 
   // Modals
+  const [showOrderDrawer, setShowOrderDrawer] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
@@ -266,17 +273,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       showToast('Add dishes to your order tray first!', 'info');
       return;
     }
-
-    const itemsSummary = cartList
-      .map((ci) => `• ${ci.quantity}x ${ci.item.name} (₹${ci.item.price * ci.quantity})`)
-      .join('\n');
-
-    const message = `*🍽️ New Order via MenuMap (0% Commission)*\n*Restaurant:* ${restaurant.name}\n\n*Ordered Items:*\n${itemsSummary}\n\n*Total Counter Bill:* ₹${cartTotalAmount}\n\n_Sent directly from MenuMap. Please confirm preparation and availability._`;
-
-    const cleanPhone = (restaurant.whatsapp_number || restaurant.phone || '919876543210').replace(/[^0-9]/g, '');
-    const fullPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-
-    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    setShowOrderDrawer(true);
   };
 
   const isOwnerOfThisRest = Boolean(
@@ -676,6 +673,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       </section>
 
       {/* ========================================================
+          2.45. LIVE COUNTER PULSE TICKER
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto mt-4 px-4 sm:px-8 relative z-20">
+        <CounterPulseTicker restaurant={restaurant} />
+      </section>
+
+      {/* ========================================================
           2.5. AEO DIRECT ANSWER & CITATION CAPSULE
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto mt-4 px-4 sm:px-8 relative z-20">
@@ -695,6 +699,25 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       </section>
 
       {/* ========================================================
+          2.55. THE HONEST BILL BOX (DELHI STREET COUNTER POLICIES)
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
+        <HonestBillBox restaurant={restaurant} />
+      </section>
+
+      {/* ========================================================
+          2.58. CROWD-VOTED TOP 3 MUST-ORDER SPOTLIGHT
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto mt-2 px-4 sm:px-8 relative z-20">
+        <TopPicksSpotlight
+          restaurant={restaurant}
+          menuItems={menuItems}
+          onAddToCart={handleAddToCart}
+          cartMap={cartMap}
+        />
+      </section>
+
+      {/* ========================================================
           2.6. RESTAURANT SUPER WIDGETS (PRICE TRANSPARENCY, VIBE RADAR, METRO GUIDE & BILL SPLITTER)
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
@@ -704,6 +727,18 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           cartTotalAmount={cartTotalAmount}
           onAddToCart={handleAddToCart}
           onOpenPhysicalMenu={() => setShowPhysicalMenuModal(true)}
+        />
+      </section>
+
+      {/* ========================================================
+          2.65. NEIGHBOR STEAL / VERIFIED PARTNER BANNER
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto mt-2 px-4 sm:px-8 relative z-20">
+        <NeighborStealBanner
+          currentRestaurant={restaurant}
+          nearbyRestaurants={similarRestaurants}
+          onSelectRestaurant={(s) => navigate(`/${s}`)}
+          onClaimClick={() => setShowClaimModal(true)}
         />
       </section>
 
@@ -966,6 +1001,12 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               </button>
             </div>
 
+            {/* Smart Google Review Booster & WhatsApp Complaint Shield */}
+            <SmartReviewShield
+              restaurant={restaurant}
+              onOpenInternalReview={() => setShowReviewModal(true)}
+            />
+
             {/* Review Score Summary Box */}
             <div className="mt-6 bg-white border border-[#EFEAE2] rounded-[28px] p-5 sm:p-7 flex flex-wrap gap-6 sm:gap-8 items-center shadow-xs">
               <div>
@@ -1072,6 +1113,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               </div>
             )}
 
+            {/* High-margin auto-upsell pairing prompt */}
+            <UpsellPairingPrompt
+              menuItems={menuItems}
+              cartMap={cartMap}
+              onAddToCart={handleAddToCart}
+            />
+
             <div className="my-4 border-t-2 border-dashed border-[#E7E2DA]" />
 
             <div className="flex justify-between items-baseline">
@@ -1092,7 +1140,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               }`}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
-              Send order on WhatsApp
+              <span>Review Order (or 🚶 15-Min Pickup)</span>
             </button>
           </div>
 
@@ -1524,6 +1572,18 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           </button>
         </aside>
       )}
+
+      {/* WhatsApp Order Drawer (15-min self-pickup, split bill & direct order) */}
+      <WhatsAppOrderDrawer
+        restaurant={restaurant}
+        cart={cartList}
+        onUpdateQuantity={handleUpdateQuantity}
+        onClearCart={() => setCartMap({})}
+        isOpen={showOrderDrawer}
+        onClose={() => setShowOrderDrawer(false)}
+        menuItems={menuItems}
+        onAddToCart={handleAddToCart}
+      />
     </div>
   );
 };
