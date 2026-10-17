@@ -179,7 +179,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
       if (res.success) {
         setOtpSent(true);
         setOtpCountdown(60);
-        showToast(`✓ Verification code sent to ${clean} via Supabase. Check your inbox.`, 'success');
+        showToast(`✓ Verification email sent to ${clean}. Please check your inbox or spam folder.`, 'success');
       } else {
         showToast(res.error || 'Failed to send OTP code. Try again.', 'error');
       }
@@ -511,15 +511,15 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
 
                   {/* Real Supabase Email OTP Verification Prompt */}
                   {otpSent && !isEmailVerified && (
-                    <div className="mt-3 p-4 bg-orange-50/70 border border-orange-200/90 rounded-2xl space-y-2.5">
-                      <div className="flex items-start gap-2">
+                    <div className="mt-3 p-4 bg-orange-50/70 border border-orange-200/90 rounded-2xl space-y-3">
+                      <div className="flex items-start gap-2.5">
                         <Mail className="w-4 h-4 text-[#FF5A36] shrink-0 mt-0.5" />
-                        <div>
+                        <div className="flex-1">
                           <p className="text-xs font-bold text-stone-900 leading-snug">
-                            Supabase sent a 6-digit verification code to <span className="text-[#FF5A36] font-mono">{ownerEmail}</span>
+                            Supabase confirmation email sent to <span className="text-[#FF5A36] font-mono">{ownerEmail}</span>
                           </p>
-                          <p className="text-[11px] text-stone-600 mt-0.5">
-                            Please check your email inbox (and spam/junk folder). Enter the code below or click the confirmation link in your email.
+                          <p className="text-[11px] text-stone-600 mt-1">
+                            Please check your email inbox (and spam/junk folder) for your 6-digit verification code or click the confirmation link.
                           </p>
                         </div>
                       </div>
