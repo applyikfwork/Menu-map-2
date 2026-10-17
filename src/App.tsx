@@ -24,6 +24,7 @@ const StaticPage = React.lazy(() => import('./pages/StaticPages').then((m) => ({
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
 const OwnerLogin = React.lazy(() => import('./pages/OwnerLogin').then((m) => ({ default: m.OwnerLogin })));
 const OwnerDashboard = React.lazy(() => import('./pages/OwnerDashboard').then((m) => ({ default: m.OwnerDashboard })));
+const ListCafe = React.lazy(() => import('./pages/ListCafe').then((m) => ({ default: m.ListCafe })));
 const ClaimVerify = React.lazy(() => import('./pages/ClaimVerify').then((m) => ({ default: m.ClaimVerify })));
 const NotFound = React.lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
@@ -114,6 +115,9 @@ function AppContent() {
     }
     if (currentPath === '/owner/dashboard') {
       return <OwnerDashboard navigate={navigate} />;
+    }
+    if (currentPath === '/list-cafe' || currentPath === '/create-cafe') {
+      return <ListCafe navigate={navigate} />;
     }
 
     // 2. Home

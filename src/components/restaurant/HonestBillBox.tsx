@@ -7,20 +7,33 @@ interface HonestBillBoxProps {
 }
 
 export const HonestBillBox: React.FC<HonestBillBoxProps> = ({ restaurant }) => {
-  // Derive policies from restaurant facilities, dietary options, or price range
-  const hasServiceCharge = restaurant.facilities?.some((f) => /service charge/i.test(f)) ?? false;
+  // Derive policies directly from restaurant owner settings or fallback heuristics
+  const serviceChargePercent = restaurant.service_charge_percent ?? (restaurant.facilities?.some((f) => /service charge/i.test(f)) ? 10 : 0);
+  const hasServiceCharge = serviceChargePercent > 0;
+  const serviceChargeText = !hasServiceCharge
+    ? '0% (5% Govt GST Only)'
+    : `Charges ${serviceChargePercent}% Service Fee`;
+
+  const waterPolicy = restaurant.water_policy || 'free_ro';
+  const waterText = waterPolicy === 'free_ro'
+    ? 'Free Regular / RO Served'
+    : waterPolicy === 'both'
+    ? 'Free RO & Bottled Available'
+    : 'Paid Mineral Bottle Only';
+
   const isAlcoholVenue = restaurant.facilities?.some((f) => /bar|cocktail|lounge|brewery/i.test(f)) ?? false;
+  const cakePolicy = restaurant.cake_policy || (isAlcoholVenue ? 'charges_cutting_fee' : 'free');
+  const cakeText = cakePolicy === 'free'
+    ? 'Outside Cake Allowed (₹0)'
+    : cakePolicy === 'charges_cutting_fee'
+    ? `₹${restaurant.cake_fee || 150} Cake Cutting Charge`
+    : 'Outside Cake Not Allowed';
 
-  // Most Delhi student cafes and counter joints have 0% service charge and free RO water
-  const serviceChargeText = hasServiceCharge
-    ? 'Charges 10% Discretionary Fee'
-    : '0% (5% Govt GST Only)';
-
-  const isFreeRoWater = true; // Delhi HC rule: regular water must be free
-  const isCakeAllowed = !isAlcoholVenue; // Casual cafes allow birthday cake cutting free
-  const isLaptopFriendly = restaurant.facilities?.some((f) => /wi-fi|wifi|work/i.test(f)) ||
+  const isLaptopFriendly = restaurant.wifi_available ?? (
+    restaurant.facilities?.some((f) => /wi-fi|wifi|work/i.test(f)) ||
     restaurant.best_for_tags?.some((t) => /student|work|quiet|laptop/i.test(t)) ||
-    restaurant.average_cost_for_two <= 700;
+    restaurant.average_cost_for_two <= 700
+  );
 
   return (
     <div className="bg-white border border-[#E7E2DA] rounded-[28px] p-5 sm:p-6 shadow-xs relative overflow-hidden">
@@ -79,10 +92,10 @@ export const HonestBillBox: React.FC<HonestBillBoxProps> = ({ restaurant }) => {
             <Droplets className="w-3.5 h-3.5 text-cyan-600" />
           </div>
           <div className="font-heading font-black text-sm text-[#1C1917]">
-            Free Regular / RO Served
+            {waterText}
           </div>
           <p className="text-[11px] text-stone-600 mt-0.5 leading-snug">
-            Clean drinking water available without forced ₹60 bottled charges.
+            {waterPolicy === 'paid_bottle' ? 'Sealed mineral water bottles served per MRP.' : 'Clean drinking water available without forced ₹60 bottled charges.'}
           </p>
         </div>
 
@@ -95,12 +108,14 @@ export const HonestBillBox: React.FC<HonestBillBoxProps> = ({ restaurant }) => {
             <Cake className="w-3.5 h-3.5 text-rose-600" />
           </div>
           <div className="font-heading font-black text-sm text-[#1C1917]">
-            {isCakeAllowed ? 'Outside Cake Allowed (₹0)' : '₹150 Cake Cutting Charge'}
+            {cakeText}
           </div>
           <p className="text-[11px] text-stone-600 mt-0.5 leading-snug">
-            {isCakeAllowed 
+            {cakePolicy === 'free'
               ? 'Bring your own birthday cake with zero penalty fee.'
-              : 'Inquire with counter staff before cutting.'}
+              : cakePolicy === 'charges_cutting_fee'
+              ? 'Cutting and service charge applicable for outside cakes.'
+              : 'Outside cakes and food items are not permitted.'}
           </p>
         </div>
 

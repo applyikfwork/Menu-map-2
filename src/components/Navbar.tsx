@@ -125,12 +125,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
               <span className="truncate max-w-[140px]">{city}</span>
               <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
             </button>
-            <button
-              onClick={() => navigate('/contact')}
-              className="btn min-h-[44px] px-5 text-sm font-bold shadow-sm bg-[#1C1917] text-white hover:bg-stone-800"
-            >
-              List your cafe
-            </button>
           </div>
 
           {/* Mobile Right Cluster (Clean Location Pill + Direct Search) */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { ShieldCheck, Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { MenuMapLogo } from './Logo';
 
 interface FooterProps {
@@ -9,7 +9,38 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ navigate }) => {
   return (
     <footer className="bg-[#14110F] text-white border-t border-[#292524] mt-auto">
-      <div className="max-w-[1280px] mx-auto px-6 sm:px-8 pt-16 pb-28 md:pb-10">
+      <div className="max-w-[1280px] mx-auto px-6 sm:px-8 pt-12 pb-28 md:pb-10">
+        {/* Highlighted Cafe Owner Acquisition Banner */}
+        <div className="bg-gradient-to-r from-orange-600 via-[#FF5A36] to-amber-600 rounded-3xl p-6 sm:p-8 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 mb-12 border border-white/20">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 backdrop-blur-md text-amber-200 text-xs font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>For Delhi NCR Cafe & Restaurant Owners</span>
+            </div>
+            <h3 className="font-heading font-black text-2xl sm:text-3xl text-white tracking-tight">
+              Own or Manage a Cafe in Delhi? List It on MenuMaps
+            </h3>
+            <p className="text-xs sm:text-sm text-white/90 max-w-xl leading-relaxed">
+              Stop losing walk-in customers and giving away 35% delivery commission. Showcase your authentic counter prices, capture direct WhatsApp orders, and get a free QR table standee.
+            </p>
+          </div>
+          <div className="shrink-0 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <button
+              onClick={() => navigate('/list-cafe')}
+              className="px-6 py-3.5 rounded-full bg-[#1C1917] hover:bg-black text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            >
+              <span>List Your Cafe (100% Free)</span>
+              <ArrowRight className="w-4 h-4 text-[#FF5A36]" />
+            </button>
+            <button
+              onClick={() => navigate('/owner/login')}
+              className="px-5 py-3.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm backdrop-blur-md transition-all cursor-pointer text-center"
+            >
+              Owner Login
+            </button>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-12 justify-between pb-12 border-b border-[#292524]">
           {/* Brand Info */}
           <div className="flex-1 min-w-[280px] max-w-md">
@@ -83,6 +114,13 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                 Owners
               </div>
               <div className="mt-4 flex flex-col gap-2.5 text-[15px]">
+                <button
+                  onClick={() => navigate('/list-cafe')}
+                  className="nl text-left font-bold text-[#FF8A6B] hover:text-[#FF5A36] flex items-center gap-1.5"
+                >
+                  <span>List your cafe</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#FF5A36]/20 text-[#FF8A6B] font-black uppercase">Free</span>
+                </button>
                 <button
                   onClick={() => navigate('/contact')}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"

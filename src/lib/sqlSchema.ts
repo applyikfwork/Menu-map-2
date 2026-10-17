@@ -60,6 +60,17 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   rating_avg NUMERIC DEFAULT 4.0,
   rating_count INTEGER DEFAULT 0,
   cover_image_url TEXT NOT NULL,
+  logo_url TEXT,
+  is_claimed BOOLEAN DEFAULT FALSE,
+  is_verified BOOLEAN DEFAULT FALSE,
+  metro_station TEXT,
+  metro_gate TEXT,
+  service_charge_percent NUMERIC DEFAULT 0,
+  water_policy TEXT DEFAULT 'free_ro',
+  cake_policy TEXT DEFAULT 'free',
+  cake_fee NUMERIC DEFAULT 0,
+  wifi_available BOOLEAN DEFAULT TRUE,
+  plug_points_available BOOLEAN DEFAULT TRUE,
   is_featured BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,
   is_temporarily_closed BOOLEAN DEFAULT FALSE,
@@ -455,6 +466,19 @@ ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
 ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_rest_id ON public.restaurant_owners (restaurant_id);
+
+-- 5b. Upgrade restaurants table with logo, claim, and ground policy support
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS is_claimed BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS metro_station TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS metro_gate TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS service_charge_percent NUMERIC DEFAULT 0;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS water_policy TEXT DEFAULT 'free_ro';
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS cake_policy TEXT DEFAULT 'free';
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS cake_fee NUMERIC DEFAULT 0;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS wifi_available BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS plug_points_available BOOLEAN DEFAULT TRUE;
 
 -- 6. Row-Level Security (RLS) Policies
 ALTER TABLE public.restaurant_claims ENABLE ROW LEVEL SECURITY;

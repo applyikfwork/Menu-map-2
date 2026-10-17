@@ -599,6 +599,17 @@ export const api = {
       rating_avg: Number(restaurant.rating_avg) || 4.2,
       rating_count: Number(restaurant.rating_count) || 0,
       cover_image_url: restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80',
+      logo_url: restaurant.logo_url || '',
+      is_claimed: restaurant.is_claimed ?? false,
+      is_verified: restaurant.is_verified ?? false,
+      metro_station: restaurant.metro_station || '',
+      metro_gate: restaurant.metro_gate || '',
+      service_charge_percent: Number(restaurant.service_charge_percent) || 0,
+      water_policy: restaurant.water_policy || 'free_ro',
+      cake_policy: restaurant.cake_policy || 'free',
+      cake_fee: Number(restaurant.cake_fee) || 0,
+      wifi_available: restaurant.wifi_available ?? true,
+      plug_points_available: restaurant.plug_points_available ?? true,
       is_featured: restaurant.is_featured ?? false,
       is_active: restaurant.is_active ?? true,
       is_temporarily_closed: restaurant.is_temporarily_closed ?? false,
@@ -2583,6 +2594,181 @@ export const api = {
     rest.menu_pages = pageUrls;
     await this.saveRestaurant(rest);
     return true;
+  },
+
+  async createNewCafeWithOwner(params: {
+    owner: {
+      name: string;
+      email: string;
+      phone: string;
+      password: string;
+    };
+    cafe: {
+      name: string;
+      city?: string;
+      address_line1: string;
+      landmark?: string;
+      metro_station?: string;
+      metro_gate?: string;
+      phone?: string;
+      whatsapp_number?: string;
+      average_cost_for_two: number;
+      cuisine_types?: string[];
+      dietary_options?: DietaryOption[];
+      cover_image_url?: string;
+      logo_url?: string;
+      short_description?: string;
+      service_charge_percent?: number;
+      water_policy?: 'free_ro' | 'paid_bottle' | 'both';
+      cake_policy?: 'free' | 'charges_cutting_fee' | 'not_allowed';
+    };
+  }): Promise<{ success: boolean; restaurant?: Restaurant; owner?: RestaurantOwnerAccount; error?: string }> {
+    const ownerName = params.owner.name?.trim();
+    const ownerEmail = params.owner.email?.trim().toLowerCase();
+    const ownerPhone = params.owner.phone?.trim();
+    const password = params.owner.password;
+    const cafeName = params.cafe.name?.trim();
+    const address = params.cafe.address_line1?.trim();
+
+    if (!ownerEmail || !ownerEmail.includes('@')) {
+      return { success: false, error: 'A valid email address is required.' };
+    }
+    if (!password || password.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters long.' };
+    }
+    if (!cafeName) {
+      return { success: false, error: 'Cafe or restaurant name is required.' };
+    }
+    if (!address) {
+      return { success: false, error: 'Street address is required.' };
+    }
+
+    const restId = ensureUUID();
+    let baseSlug = slugify(cafeName);
+    if (!baseSlug) baseSlug = `cafe-${Date.now()}`;
+    let finalSlug = baseSlug;
+
+    // Check slug collision
+    const existingRest = await this.getRestaurantBySlug(finalSlug);
+    if (existingRest) {
+      finalSlug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    const newRest: Partial<Restaurant> = {
+      id: restId,
+      name: cafeName,
+      slug: finalSlug,
+      short_description: params.cafe.short_description?.trim() || `${cafeName} - Authentic counter prices & dine-in in ${params.cafe.city || 'Delhi NCR'}.`,
+      cuisine_types: params.cafe.cuisine_types && params.cafe.cuisine_types.length > 0 ? params.cafe.cuisine_types : ['Cafe', 'Fast Food'],
+      meal_types: ['Lunch', 'Dinner', 'Late Night'],
+      price_range: params.cafe.average_cost_for_two <= 350 ? '₹' : params.cafe.average_cost_for_two <= 700 ? '₹₹' : '₹₹₹',
+      average_cost_for_two: Number(params.cafe.average_cost_for_two) || 450,
+      address_line1: address,
+      landmark: params.cafe.landmark?.trim() || '',
+      city: params.cafe.city?.trim() || 'Delhi NCR',
+      state: 'Delhi',
+      country: 'India',
+      phone: params.cafe.phone?.trim() || ownerPhone,
+      whatsapp_number: params.cafe.whatsapp_number?.trim() || params.cafe.phone?.trim() || ownerPhone,
+      email: ownerEmail,
+      logo_url: params.cafe.logo_url || '',
+      cover_image_url: params.cafe.cover_image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&auto=format&fit=crop&q=80',
+      is_claimed: true,
+      is_verified: true,
+      map_profile_done: true,
+      metro_station: params.cafe.metro_station?.trim() || '',
+      metro_gate: params.cafe.metro_gate?.trim() || '',
+      service_charge_percent: Number(params.cafe.service_charge_percent) || 0,
+      water_policy: params.cafe.water_policy || 'free_ro',
+      cake_policy: params.cafe.cake_policy || 'free',
+      dietary_options: params.cafe.dietary_options || ['Vegan Options'],
+      facilities: ['Free Wi-Fi', 'Air Conditioned', 'UPI Accepted'],
+      is_open: true,
+      dine_in_available: true,
+      takeaway_available: true,
+      delivery_available: true,
+      rating_avg: 4.5,
+      rating_count: 1,
+    };
+
+    const savedRestaurant = await this.saveRestaurant(newRest);
+
+    // Create owner account
+    const passwordHash = await hashPassword(password);
+    const ownerAccount: RestaurantOwnerAccount = {
+      id: ensureUUID(),
+      owner_email: ownerEmail,
+      phone_number: ownerPhone || '',
+      owner_name: ownerName || cafeName + ' Owner',
+      restaurant_id: savedRestaurant.id,
+      restaurant_slug: savedRestaurant.slug,
+      restaurant_name: savedRestaurant.name,
+      password_hash: passwordHash,
+      created_at: new Date().toISOString(),
+      last_login_at: new Date().toISOString(),
+    };
+
+    // Save to local owners table
+    const owners = loadTable<RestaurantOwnerAccount>('restaurant_owners');
+    const existingIdx = owners.findIndex((o) => o.restaurant_id === savedRestaurant.id || (o.owner_email && o.owner_email === ownerEmail));
+    if (existingIdx >= 0) {
+      owners[existingIdx] = ownerAccount;
+    } else {
+      owners.push(ownerAccount);
+    }
+    saveTable('restaurant_owners', owners);
+
+    // Cloud upsert to Supabase
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { error: ownerErr } = await supabase.from('restaurant_owners').upsert(ownerAccount);
+        if (ownerErr) {
+          console.warn('Supabase owner upsert fallback:', ownerErr.message);
+          const fallbackOwner: Record<string, any> = {
+            id: ownerAccount.id,
+            phone_number: ownerAccount.phone_number,
+            owner_name: ownerAccount.owner_name,
+            restaurant_id: ownerAccount.restaurant_id,
+            restaurant_slug: ownerAccount.restaurant_slug,
+            restaurant_name: ownerAccount.restaurant_name,
+            password_hash: ownerAccount.password_hash,
+            created_at: ownerAccount.created_at,
+            last_login_at: ownerAccount.last_login_at,
+          };
+          await supabase.from('restaurant_owners').upsert(fallbackOwner);
+        }
+      } catch (e) {
+        console.warn('Supabase cloud owner registration note:', e);
+      }
+    }
+
+    // Auto-create a starter category so the owner can immediately add dishes
+    try {
+      await this.saveCategory({
+        restaurant_id: savedRestaurant.id,
+        name: 'House Specials & Bestsellers',
+        description: 'Our most loved counter favorites',
+        sort_order: 1,
+        is_active: true,
+      });
+    } catch (e) {}
+
+    // Auto-login owner
+    setOwnerSession(ownerAccount);
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('menumap_claim_updated', { detail: { restaurant_id: savedRestaurant.id, is_claimed: true } }));
+        localStorage.setItem(`${STORAGE_PREFIX}claim_broadcast`, Date.now().toString());
+      } catch (e) {}
+    }
+
+    return {
+      success: true,
+      restaurant: savedRestaurant,
+      owner: ownerAccount,
+    };
   },
 };
 

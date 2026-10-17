@@ -52,6 +52,17 @@ export interface Restaurant {
   rating_avg: number;
   rating_count: number;
   cover_image_url: string;
+  logo_url?: string;
+  is_claimed?: boolean;
+  is_verified?: boolean;
+  metro_station?: string;
+  metro_gate?: string;
+  service_charge_percent?: number;
+  water_policy?: 'free_ro' | 'paid_bottle' | 'both';
+  cake_policy?: 'free' | 'charges_cutting_fee' | 'not_allowed';
+  cake_fee?: number;
+  wifi_available?: boolean;
+  plug_points_available?: boolean;
   is_featured: boolean;
   is_active: boolean;
   is_temporarily_closed?: boolean;

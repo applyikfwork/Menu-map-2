@@ -33,7 +33,14 @@ import {
   Bell,
   Calendar,
   FileText,
-  Volume2
+  Volume2,
+  ShieldCheck,
+  Camera,
+  Laptop,
+  Droplets,
+  Cake,
+  Navigation,
+  Store
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -60,7 +67,7 @@ interface OwnerDashboardProps {
   navigate: (path: string) => void;
 }
 
-type OwnerTab = 'menu' | 'announcements' | 'gallery' | 'categories' | 'profile' | 'standee';
+type OwnerTab = 'overview' | 'brand' | 'menu' | 'categories' | 'location' | 'policies' | 'announcements' | 'gallery' | 'standee' | 'profile';
 
 const COMMON_FACILITIES = [
   'Free Wi-Fi',
@@ -94,8 +101,8 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   const [galleryImages, setGalleryImages] = useState<RestaurantGalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Active Section Tab
-  const [activeTab, setActiveTab] = useState<OwnerTab>('menu');
+  // Active Section Tab (Default to structured Overview)
+  const [activeTab, setActiveTab] = useState<OwnerTab>('overview');
 
   // QR Modal
   const [showQrModal, setShowQrModal] = useState(false);
@@ -162,12 +169,15 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   const [savingCat, setSavingCat] = useState(false);
 
   // --------------------------------------------------------------------------
-  // RESTAURANT PROFILE EDITING STATE
+  // RESTAURANT PROFILE & BRANDING EDITING STATE
   // --------------------------------------------------------------------------
   const [profileData, setProfileData] = useState<Partial<Restaurant>>({});
   const [coverCompressing, setCoverCompressing] = useState(false);
   const [coverCompressionStats, setCoverCompressionStats] = useState<CompressionResult | null>(null);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const [logoCompressing, setLogoCompressing] = useState(false);
+  const [logoCompressionStats, setLogoCompressionStats] = useState<CompressionResult | null>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
   const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
@@ -571,8 +581,29 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   };
 
   // --------------------------------------------------------------------------
-  // RESTAURANT COVER PHOTO COMPRESSION (< 1MB) & PROFILE UPDATE
+  // RESTAURANT BRANDING, LOGO & COVER PHOTO COMPRESSION (< 1MB)
   // --------------------------------------------------------------------------
+  const handleLogoPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoCompressing(true);
+    try {
+      const compressed = await compressImageFile(file, 600, 500 * 1024);
+      setLogoCompressionStats(compressed);
+      setProfileData((prev) => ({ ...prev, logo_url: compressed.dataUrl }));
+      showToast(
+        `✓ Logo compressed: ${(compressed.originalSizeKb).toFixed(0)} KB ➔ ${compressed.compressedSizeKb} KB (< 500 KB). Remember to save!`,
+        'success'
+      );
+    } catch (err) {
+      console.error('Logo compression error:', err);
+      showToast('Failed to compress logo image.', 'error');
+    } finally {
+      setLogoCompressing(false);
+    }
+  };
+
   const handleCoverPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -583,7 +614,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       setCoverCompressionStats(compressed);
       setProfileData((prev) => ({ ...prev, cover_image_url: compressed.dataUrl }));
       showToast(
-        `✓ Cover image compressed: ${(compressed.originalSizeKb / 1024).toFixed(1)} MB ➔ ${compressed.compressedSizeKb} KB (< 1 MB)`,
+        `✓ Cover image compressed: ${(compressed.originalSizeKb / 1024).toFixed(1)} MB ➔ ${compressed.compressedSizeKb} KB (< 1 MB). Remember to save!`,
         'success'
       );
     } catch (err) {
@@ -605,25 +636,37 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         short_description: profileData.short_description?.trim(),
         long_description: profileData.long_description?.trim(),
         address_line1: profileData.address_line1?.trim(),
+        address_line2: profileData.address_line2?.trim(),
         landmark: profileData.landmark?.trim(),
         city: profileData.city?.trim(),
+        metro_station: profileData.metro_station?.trim(),
+        metro_gate: profileData.metro_gate?.trim(),
+        google_maps_url: profileData.google_maps_url?.trim(),
         phone: profileData.phone?.trim(),
         whatsapp_number: profileData.whatsapp_number?.trim(),
         average_cost_for_two: Number(profileData.average_cost_for_two) || 500,
         price_range: profileData.price_range || '₹₹',
+        logo_url: profileData.logo_url ?? restaurant.logo_url,
         cover_image_url: profileData.cover_image_url || restaurant.cover_image_url,
+        service_charge_percent: Number(profileData.service_charge_percent) || 0,
+        water_policy: profileData.water_policy || 'free_ro',
+        cake_policy: profileData.cake_policy || 'free',
+        cake_fee: Number(profileData.cake_fee) || 0,
+        wifi_available: profileData.wifi_available ?? true,
+        plug_points_available: profileData.plug_points_available ?? true,
         facilities: profileData.facilities || [],
         dietary_options: profileData.dietary_options || [],
         is_open: profileData.is_open ?? restaurant.is_open,
+        opening_hours: profileData.opening_hours || restaurant.opening_hours,
       });
 
       if (updated) {
         setRestaurant(updated);
         setProfileData({ ...updated });
-        showToast('✓ Restaurant profile details updated live!', 'success');
+        showToast('✓ Restaurant details updated and published live!', 'success');
       }
     } catch (e) {
-      showToast('Could not save profile changes.', 'error');
+      showToast('Could not save restaurant changes.', 'error');
     } finally {
       setSavingProfile(false);
     }
@@ -668,9 +711,17 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       <header className="bg-slate-950 text-white border-b border-slate-800 sticky top-0 z-30 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-heading font-black text-xl shadow-md shrink-0">
-              <Building2 className="w-6 h-6" />
-            </div>
+            {profileData.logo_url || restaurant.logo_url ? (
+              <img
+                src={profileData.logo_url || restaurant.logo_url}
+                alt={restaurant.name}
+                className="w-12 h-12 rounded-2xl object-cover border-2 border-white/20 shadow-md shrink-0 bg-white"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-heading font-black text-xl shadow-md shrink-0">
+                <Building2 className="w-6 h-6" />
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-heading font-black text-lg sm:text-xl text-white">
@@ -717,24 +768,27 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         </div>
 
         {/* Tab Navigation Strip */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-2 border-t border-slate-800/80 overflow-x-auto py-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-2 border-t border-slate-800/80 overflow-x-auto py-2.5">
           {[
+            { id: 'overview', label: 'Overview', icon: Building2 },
+            { id: 'brand', label: 'Brand & Photos', icon: ImageIcon },
             { id: 'menu', label: `Menu Dishes (${menuItems.length})`, icon: UtensilsCrossed },
-            { id: 'announcements', label: `Live Announcements (${announcements.length})`, icon: Megaphone },
-            { id: 'gallery', label: `Photos & Paper Menu (${galleryImages.length})`, icon: ImageIcon },
             { id: 'categories', label: `Categories (${categories.length})`, icon: Layers },
-            { id: 'profile', label: 'Restaurant Profile & Details', icon: Building2 },
-            { id: 'standee', label: 'Table Standee & QR', icon: QrCode },
+            { id: 'location', label: 'Location & Metro', icon: MapPin },
+            { id: 'policies', label: 'Ground Policies (Honest Bill)', icon: ShieldCheck },
+            { id: 'announcements', label: `Announcements (${announcements.length})`, icon: Megaphone },
+            { id: 'gallery', label: `Gallery (${galleryImages.length})`, icon: Camera },
+            { id: 'standee', label: 'Table QR Standee', icon: QrCode },
           ].map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = activeTab === tab.id || (activeTab === 'profile' && tab.id === 'brand');
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as OwnerTab)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-rose-500 text-white shadow-xs'
+                    ? 'bg-[#FF5A36] text-white shadow-md'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
                 }`}
               >
@@ -792,6 +846,224 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
             </button>
           </div>
         </div>
+
+        {/* ================================================================ */}
+        {/* TAB 0: STRUCTURED OVERVIEW */}
+        {/* ================================================================ */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Live Cafe Showcase Card */}
+            <div className="bg-gradient-to-r from-[#1C1917] via-stone-900 to-black rounded-3xl p-6 sm:p-8 text-white border border-stone-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                {profileData.logo_url || restaurant.logo_url ? (
+                  <img
+                    src={profileData.logo_url || restaurant.logo_url}
+                    alt={restaurant.name}
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-md bg-white shrink-0"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-500 to-[#FF5A36] text-white flex items-center justify-center font-heading font-black text-2xl shadow-md shrink-0">
+                    <Store className="w-10 h-10" />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-black uppercase tracking-wider">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Verified Counter Listing</span>
+                  </div>
+                  <h2 className="font-heading font-black text-2xl sm:text-3xl text-white">
+                    {restaurant.name}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-stone-300">
+                    {restaurant.address_line1}, {restaurant.city} {restaurant.metro_station ? `• 🚇 ${restaurant.metro_station}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
+                <a
+                  href={cleanPublicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-3 rounded-full bg-[#FF5A36] hover:bg-[#D8350F] text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
+                >
+                  <span>Open Public Live Page</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => setShowQrModal(true)}
+                  className="px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 backdrop-blur-md transition-colors cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4 text-amber-300" />
+                  <span>Table QR Standee</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div 
+                onClick={() => setActiveTab('menu')}
+                className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-stone-400">Total Dishes</span>
+                  <UtensilsCrossed className="w-4 h-4 text-[#FF5A36] group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
+                  {menuItems.length}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">Manage dishes & pricing &rarr;</p>
+              </div>
+
+              <div 
+                onClick={() => setActiveTab('categories')}
+                className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-stone-400">Categories</span>
+                  <Layers className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
+                  {categories.length}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">Organize categories &rarr;</p>
+              </div>
+
+              <div 
+                onClick={() => setActiveTab('announcements')}
+                className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-stone-400">Live Notices</span>
+                  <Megaphone className="w-4 h-4 text-rose-500 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
+                  {announcements.filter(a => a.is_active).length}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">Today's specials & offers &rarr;</p>
+              </div>
+
+              <div 
+                onClick={() => setActiveTab('gallery')}
+                className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-stone-400">Store Photos</span>
+                  <Camera className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="font-heading font-black text-2xl sm:text-3xl text-stone-900">
+                  {galleryImages.length}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">Atmosphere & paper menus &rarr;</p>
+              </div>
+            </div>
+
+            {/* Management Modules Quick Grid */}
+            <div className="space-y-3">
+              <h3 className="font-heading font-black text-lg text-stone-900">
+                Cafe Page Management Modules
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('brand')}
+                  className="bg-white p-6 rounded-3xl border border-stone-200/90 text-left hover:border-[#FF5A36] hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#FF5A36] flex items-center justify-center font-bold">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-heading font-black text-base text-stone-900 group-hover:text-[#FF5A36]">
+                    Brand Logo & Cover Banner
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Upload your circular store logo and 21:9 storefront cover photo under 1 MB auto-compression.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('menu')}
+                  className="bg-white p-6 rounded-3xl border border-stone-200/90 text-left hover:border-[#FF5A36] hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                    <UtensilsCrossed className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-heading font-black text-base text-stone-900 group-hover:text-[#FF5A36]">
+                    Counter Dishes & Prices
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Add, edit, or mark items sold out in 1 click. Veg/Non-veg tags, spice levels, and photos.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('policies')}
+                  className="bg-white p-6 rounded-3xl border border-stone-200/90 text-left hover:border-[#FF5A36] hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-heading font-black text-base text-stone-900 group-hover:text-[#FF5A36]">
+                    The Honest Bill Box
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Set 0% discretionary service charge, free RO water, outside cake policy, and WiFi availability.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('location')}
+                  className="bg-white p-6 rounded-3xl border border-stone-200/90 text-left hover:border-[#FF5A36] hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-heading font-black text-base text-stone-900 group-hover:text-[#FF5A36]">
+                    Delhi Metro & Daily Hours
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Nearest Delhi Metro station, exit gate number, Google Maps link, and daily opening timings.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('announcements')}
+                  className="bg-white p-6 rounded-3xl border border-stone-200/90 text-left hover:border-[#FF5A36] hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                    <Megaphone className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-heading font-black text-base text-stone-900 group-hover:text-[#FF5A36]">
+                    Live Notice & Daily Specials
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Broadcast today's chef special or festival offers with automated midnight expiry timers.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('standee')}
+                  className="bg-white p-6 rounded-3xl border border-stone-200/90 text-left hover:border-[#FF5A36] hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-stone-100 text-stone-800 flex items-center justify-center font-bold">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-heading font-black text-base text-stone-900 group-hover:text-[#FF5A36]">
+                    Counter QR Standee Studio
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Preview and print high-res table standees with genuine rate lock guarantee and cafe logo.
+                  </p>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ================================================================ */}
         {/* TAB 1: MENU DISHES FULL CRUD */}
@@ -1413,245 +1685,545 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         )}
 
         {/* ================================================================ */}
-        {/* TAB 3: RESTAURANT PROFILE & COVER PHOTO */}
+        {/* TAB 3: BRAND IDENTITY, LOGO & STOREFRONT BANNER */}
         {/* ================================================================ */}
-        {activeTab === 'profile' && (
+        {(activeTab === 'brand' || activeTab === 'profile') && (
           <form onSubmit={handleSaveProfile} className="space-y-6">
-            {/* Cover Photo Upload with Auto-Compression (<1MB) */}
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs space-y-4">
-              <div>
-                <h3 className="font-heading font-black text-base text-slate-900">
-                  Restaurant Cover Photo (under 1 MB Auto-Compressed)
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-xs space-y-6">
+              <div className="border-b border-stone-100 pb-4">
+                <h3 className="font-heading font-black text-xl text-slate-900">
+                  Brand Identity & Storefront Photos
                 </h3>
-                <p className="text-xs text-slate-500">
-                  Select any high-resolution photo from your phone or PC. Our system will automatically compress it strictly below 1 MB for fast loading.
+                <p className="text-xs text-slate-500 mt-1">
+                  Manage your cafe logo avatar, storefront hero banner, brand name, and public story.
                 </p>
               </div>
 
-              <div className="relative rounded-2xl overflow-hidden aspect-[21/9] bg-stone-900 border border-stone-200">
-                <img
-                  src={profileData.cover_image_url || restaurant.cover_image_url}
-                  alt={restaurant.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-4">
+              {/* Logo & Storefront Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* 1. Circular Brand Logo */}
+                <div className="border border-dashed border-stone-300 rounded-3xl p-5 bg-stone-50/70 text-center space-y-3">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-700">
+                    <Building2 className="w-3.5 h-3.5 text-[#0F766E]" />
+                    <span>Circular Brand Logo Avatar</span>
+                  </div>
+
+                  <div className="relative w-28 h-28 mx-auto rounded-full overflow-hidden border-4 border-white shadow-lg bg-white">
+                    {profileData.logo_url || restaurant.logo_url ? (
+                      <img
+                        src={profileData.logo_url || restaurant.logo_url}
+                        alt="Brand Logo"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-stone-200 flex items-center justify-center text-stone-400">
+                        <ImageIcon className="w-8 h-8" />
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-stone-500">
+                    Square or circular brand icon. Auto-compressed strictly below 500 KB.
+                  </p>
+
                   <input
                     type="file"
-                    ref={coverFileInputRef}
+                    ref={logoFileInputRef}
                     accept="image/*"
-                    onChange={handleCoverPhotoUpload}
+                    onChange={handleLogoPhotoUpload}
                     className="hidden"
                   />
-                  <button
-                    type="button"
-                    onClick={() => coverFileInputRef.current?.click()}
-                    disabled={coverCompressing}
-                    className="px-5 py-2.5 rounded-2xl bg-white/90 hover:bg-white text-slate-900 font-black text-xs flex items-center gap-2 shadow-xl backdrop-blur-xs transition-all active:scale-95"
-                  >
-                    <Upload className="w-4 h-4 text-orange-600" />
-                    <span>
-                      {coverCompressing ? 'Compressing Image...' : 'Upload & Compress Cover Photo'}
-                    </span>
-                  </button>
+
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => logoFileInputRef.current?.click()}
+                      disabled={logoCompressing}
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-[#FF5A36]" />
+                      <span>{logoCompressing ? 'Compressing...' : profileData.logo_url ? 'Replace Logo' : 'Upload Brand Logo'}</span>
+                    </button>
+
+                    {profileData.logo_url && (
+                      <button
+                        type="button"
+                        onClick={() => setProfileData((prev) => ({ ...prev, logo_url: '' }))}
+                        className="text-[11px] font-bold text-rose-500 hover:text-rose-700 cursor-pointer"
+                      >
+                        Remove Logo
+                      </button>
+                    )}
+                  </div>
+
+                  {logoCompressionStats && (
+                    <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800">
+                      ✓ Compressed to {logoCompressionStats.compressedSizeKb} KB
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Cover Banner Photo */}
+                <div className="md:col-span-2 border border-dashed border-stone-300 rounded-3xl p-5 bg-stone-50/70 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-700">
+                      <ImageIcon className="w-3.5 h-3.5 text-[#FF5A36]" />
+                      <span>Hero Storefront Cover Banner (21:9)</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-stone-400">Strictly &lt; 1 MB</span>
+                  </div>
+
+                  <div className="relative rounded-2xl overflow-hidden aspect-[21/9] bg-stone-900 border border-stone-200 shadow-sm">
+                    <img
+                      src={profileData.cover_image_url || restaurant.cover_image_url}
+                      alt={restaurant.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-4">
+                      <input
+                        type="file"
+                        ref={coverFileInputRef}
+                        accept="image/*"
+                        onChange={handleCoverPhotoUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => coverFileInputRef.current?.click()}
+                        disabled={coverCompressing}
+                        className="px-5 py-2.5 rounded-2xl bg-white/95 hover:bg-white text-slate-900 font-black text-xs flex items-center gap-2 shadow-xl backdrop-blur-xs transition-all active:scale-95 cursor-pointer"
+                      >
+                        <Upload className="w-4 h-4 text-[#FF5A36]" />
+                        <span>{coverCompressing ? 'Compressing Image...' : 'Upload & Compress Cover Photo'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {coverCompressionStats && (
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+                      <span>
+                        ✓ Compressed from {(coverCompressionStats.originalSizeKb / 1024).toFixed(1)} MB ➔ <strong>{coverCompressionStats.compressedSizeKb} KB</strong>
+                      </span>
+                      <span className="font-bold">{coverCompressionStats.width}x{coverCompressionStats.height}px</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {coverCompressionStats && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
-                  <span>
-                    ✓ Compressed from {(coverCompressionStats.originalSizeKb / 1024).toFixed(1)} MB ➔{' '}
-                    <strong>{coverCompressionStats.compressedSizeKb} KB</strong> (Strictly under 1 MB)
-                  </span>
-                  <span className="font-bold">{coverCompressionStats.width}x{coverCompressionStats.height}px</span>
-                </div>
-              )}
-            </div>
-
-            {/* Basic Info */}
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs space-y-4">
-              <h3 className="font-heading font-black text-base text-slate-900 pb-2 border-b border-stone-100">
-                Basic Restaurant Information
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Restaurant Name *
+              {/* Brand Identity Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    Cafe / Restaurant Name *
                   </label>
                   <input
                     type="text"
                     required
                     value={profileData.name || ''}
                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Direct Phone Number
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    Average Cost for Two (INR)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 text-stone-400 font-bold text-sm">₹</span>
+                    <input
+                      type="number"
+                      value={profileData.average_cost_for_two || 500}
+                      onChange={(e) => setProfileData({ ...profileData, average_cost_for_two: Number(e.target.value) })}
+                      className="w-full pl-8 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                  Catchy Tagline / Short Description
+                </label>
+                <input
+                  type="text"
+                  value={profileData.short_description || ''}
+                  onChange={(e) => setProfileData({ ...profileData, short_description: e.target.value })}
+                  placeholder="e.g. Cozy cafe serving authentic wood-fired pizzas and specialty artisanal coffee."
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-medium focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                  Full Story & About
+                </label>
+                <textarea
+                  rows={3}
+                  value={profileData.long_description || ''}
+                  onChange={(e) => setProfileData({ ...profileData, long_description: e.target.value })}
+                  placeholder="Share your kitchen philosophy, special ingredients, chef specials, and dining atmosphere..."
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-medium focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="px-8 py-3.5 rounded-full bg-[#FF5A36] hover:bg-[#D8350F] text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{savingProfile ? 'Saving...' : 'Save Brand & Photos'}</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+
+        {/* ================================================================ */}
+        {/* TAB 4: LOCATION, DELHI METRO ACCESS & DAILY HOURS */}
+        {/* ================================================================ */}
+        {activeTab === 'location' && (
+          <form onSubmit={handleSaveProfile} className="space-y-6">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-xs space-y-6">
+              <div className="border-b border-stone-100 pb-4">
+                <h3 className="font-heading font-black text-xl text-slate-900">
+                  Location, Delhi Metro & Daily Hours
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Ensure walk-in diners easily find your cafe from the nearest Metro station or Google Maps.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    Street Address Line 1 *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileData.address_line1 || ''}
+                    onChange={(e) => setProfileData({ ...profileData, address_line1: e.target.value })}
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    Landmark
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.landmark || ''}
+                    onChange={(e) => setProfileData({ ...profileData, landmark: e.target.value })}
+                    placeholder="e.g. Near Max Hospital / Gate 2"
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    City / Food Hub Area
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.city || 'Delhi NCR'}
+                    onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
+                    placeholder="e.g. Netaji Subhash Place, Delhi"
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    Google Maps Directions Link
+                  </label>
+                  <input
+                    type="url"
+                    value={profileData.google_maps_url || ''}
+                    onChange={(e) => setProfileData({ ...profileData, google_maps_url: e.target.value })}
+                    placeholder="https://maps.google.com/..."
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Delhi Metro Proximity Section */}
+              <div className="p-5 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Navigation className="w-4 h-4 text-indigo-700" />
+                  <h4 className="font-heading font-black text-sm text-indigo-950">
+                    Delhi Metro Proximity (Helps 70% Walk-In Commuters)
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-stone-700 mb-1">
+                      Nearest Delhi Metro Station
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.metro_station || ''}
+                      onChange={(e) => setProfileData({ ...profileData, metro_station: e.target.value })}
+                      placeholder="e.g. Netaji Subhash Place (Red/Pink Line)"
+                      className="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-bold bg-white outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-stone-700 mb-1">
+                      Exit Gate Number
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.metro_gate || ''}
+                      onChange={(e) => setProfileData({ ...profileData, metro_gate: e.target.value })}
+                      placeholder="e.g. Exit Gate 2 (200m Walk)"
+                      className="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-bold bg-white outline-hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Phone & WhatsApp */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    Direct Phone / Landline
                   </label>
                   <input
                     type="tel"
                     value={profileData.phone || ''}
                     onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                    placeholder="e.g. 9876543210"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+                    placeholder="9876543210"
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    WhatsApp Order Receiver Number * (For 0% commission direct orders)
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                    WhatsApp Orders Receiver No. * (0% Commission)
                   </label>
                   <input
                     type="tel"
                     required
                     value={profileData.whatsapp_number || ''}
                     onChange={(e) => setProfileData({ ...profileData, whatsapp_number: e.target.value })}
-                    placeholder="e.g. 9876543210"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-hidden"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Average Cost for Two (INR)
-                  </label>
-                  <input
-                    type="number"
-                    value={profileData.average_cost_for_two || 500}
-                    onChange={(e) => setProfileData({ ...profileData, average_cost_for_two: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+                    placeholder="9876543210"
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-sm font-semibold focus:outline-hidden"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Short Tagline / Description
-                </label>
-                <input
-                  type="text"
-                  value={profileData.short_description || ''}
-                  onChange={(e) => setProfileData({ ...profileData, short_description: e.target.value })}
-                  placeholder="e.g. Cozy cafe serving authentic wood-fired pizzas and gourmet coffee."
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
-                />
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="px-8 py-3.5 rounded-full bg-[#0F766E] hover:bg-[#0D9488] text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{savingProfile ? 'Saving...' : 'Save Location & Metro'}</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+
+        {/* ================================================================ */}
+        {/* TAB 5: THE HONEST BILL BOX & GROUND REALITY POLICIES */}
+        {/* ================================================================ */}
+        {activeTab === 'policies' && (
+          <form onSubmit={handleSaveProfile} className="space-y-6">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-xs space-y-6">
+              <div className="border-b border-stone-100 pb-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-wider mb-2">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>The Honest Bill Engine</span>
+                </div>
+                <h3 className="font-heading font-black text-xl text-slate-900">
+                  Dine-In Ground Reality Policies
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Delhi diners hate checkout surprises. Setting 0% service charge and transparent policies directly builds trust and converts walk-in visitors into regulars.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Full Description & Story
-                </label>
-                <textarea
-                  rows={3}
-                  value={profileData.long_description || ''}
-                  onChange={(e) => setProfileData({ ...profileData, long_description: e.target.value })}
-                  placeholder="Tell your restaurant's story, special ingredients, ambiance, and chef favorites..."
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-hidden"
-                />
-              </div>
-
+              {/* 3 Core Street Policies */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Address Line 1
+                {/* 1. Service Charge */}
+                <div className="p-4 rounded-2xl border border-stone-200 bg-stone-50/60 space-y-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-800">
+                    Discretionary Service Charge
                   </label>
-                  <input
-                    type="text"
-                    value={profileData.address_line1 || ''}
-                    onChange={(e) => setProfileData({ ...profileData, address_line1: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-hidden"
-                  />
+                  <select
+                    value={profileData.service_charge_percent ?? 0}
+                    onChange={(e) => setProfileData({ ...profileData, service_charge_percent: Number(e.target.value) })}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-bold bg-white outline-hidden"
+                  >
+                    <option value={0}>0% (Only 5% Govt GST - Recommended)</option>
+                    <option value={5}>5% Service Charge</option>
+                    <option value={10}>10% Discretionary Fee</option>
+                  </select>
+                  <p className="text-[11px] text-stone-500 leading-snug">
+                    0% service charge is highlighted with a green badge in diner search.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    City
+
+                {/* 2. Water Serving */}
+                <div className="p-4 rounded-2xl border border-stone-200 bg-stone-50/60 space-y-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-800">
+                    Drinking Water Policy
                   </label>
-                  <input
-                    type="text"
-                    value={profileData.city || 'Delhi NCR'}
-                    onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-hidden"
-                  />
+                  <select
+                    value={profileData.water_policy || 'free_ro'}
+                    onChange={(e) => setProfileData({ ...profileData, water_policy: e.target.value as any })}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-bold bg-white outline-hidden"
+                  >
+                    <option value="free_ro">Free Regular / RO Water Served</option>
+                    <option value="paid_bottle">Paid Mineral Bottle Only</option>
+                    <option value="both">Both Free RO & Mineral Bottle</option>
+                  </select>
+                  <p className="text-[11px] text-stone-500 leading-snug">
+                    Complies with Delhi HC consumer drinking water directive.
+                  </p>
+                </div>
+
+                {/* 3. Birthday Cake */}
+                <div className="p-4 rounded-2xl border border-stone-200 bg-stone-50/60 space-y-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-800">
+                    Outside Birthday Cake
+                  </label>
+                  <select
+                    value={profileData.cake_policy || 'free'}
+                    onChange={(e) => setProfileData({ ...profileData, cake_policy: e.target.value as any })}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-bold bg-white outline-hidden"
+                  >
+                    <option value="free">Allowed Free (₹0 Fee)</option>
+                    <option value="charges_cutting_fee">Cutting Fee Charged</option>
+                    <option value="not_allowed">Outside Food Not Allowed</option>
+                  </select>
+                  {profileData.cake_policy === 'charges_cutting_fee' && (
+                    <div className="pt-1">
+                      <label className="block text-[10px] font-bold text-stone-600 mb-1">
+                        Cutting Fee Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        value={profileData.cake_fee || 150}
+                        onChange={(e) => setProfileData({ ...profileData, cake_fee: Number(e.target.value) })}
+                        className="w-full p-2 rounded-lg border border-stone-300 text-xs font-bold bg-white"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* Facilities & Dietary Badges */}
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-xs space-y-4">
-              <h3 className="font-heading font-black text-base text-slate-900 pb-2 border-b border-stone-100">
-                Facilities & Dining Vibes
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {COMMON_FACILITIES.map((facility) => {
-                  const isChecked = profileData.facilities?.includes(facility);
-                  return (
-                    <button
-                      key={facility}
-                      type="button"
-                      onClick={() => {
-                        const current = profileData.facilities || [];
-                        const updated = isChecked
-                          ? current.filter((f) => f !== facility)
-                          : [...current, facility];
-                        setProfileData({ ...profileData, facilities: updated });
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        isChecked
-                          ? 'bg-emerald-600 text-white shadow-2xs'
-                          : 'bg-stone-100 text-slate-600 hover:bg-stone-200'
-                      }`}
-                    >
-                      {isChecked ? '✓ ' : '+ '}
-                      {facility}
-                    </button>
-                  );
-                })}
+              {/* Wi-Fi & Laptop Friendly Toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileData.wifi_available ?? true}
+                    onChange={(e) => setProfileData({ ...profileData, wifi_available: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded-sm focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="text-xs font-black text-slate-800 block">Free Customer Wi-Fi</span>
+                    <span className="text-[11px] text-stone-500">Allows diners to connect for work & orders</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileData.plug_points_available ?? true}
+                    onChange={(e) => setProfileData({ ...profileData, plug_points_available: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded-sm focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="text-xs font-black text-slate-800 block">Laptop Plug Points Available</span>
+                    <span className="text-[11px] text-stone-500">Student & study friendly seating</span>
+                  </div>
+                </label>
               </div>
 
-              <h4 className="font-heading font-black text-xs text-slate-800 pt-3">
-                Dietary Options
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {COMMON_DIETARY_OPTIONS.map((opt) => {
-                  const isChecked = profileData.dietary_options?.includes(opt);
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => {
-                        const current = profileData.dietary_options || [];
-                        const updated = isChecked
-                          ? current.filter((o) => o !== opt)
-                          : [...current, opt];
-                        setProfileData({ ...profileData, dietary_options: updated });
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        isChecked
-                          ? 'bg-orange-600 text-white shadow-2xs'
-                          : 'bg-stone-100 text-slate-600 hover:bg-stone-200'
-                      }`}
-                    >
-                      {isChecked ? '✓ ' : '+ '}
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              {/* Facilities & Dietary Badges */}
+              <div className="space-y-4">
+                <h4 className="font-heading font-black text-xs uppercase tracking-wider text-slate-800">
+                  Facilities & Dining Vibes
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {COMMON_FACILITIES.map((facility) => {
+                    const isChecked = profileData.facilities?.includes(facility);
+                    return (
+                      <button
+                        key={facility}
+                        type="button"
+                        onClick={() => {
+                          const current = profileData.facilities || [];
+                          const updated = isChecked
+                            ? current.filter((f) => f !== facility)
+                            : [...current, facility];
+                          setProfileData({ ...profileData, facilities: updated });
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isChecked
+                            ? 'bg-emerald-600 text-white shadow-2xs'
+                            : 'bg-stone-100 text-slate-600 hover:bg-stone-200'
+                        }`}
+                      >
+                        {isChecked ? '✓ ' : '+ '}
+                        {facility}
+                      </button>
+                    );
+                  })}
+                </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={savingProfile}
-                className="px-8 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all active:scale-95"
-              >
-                <Save className="w-4 h-4" />
-                <span>{savingProfile ? 'Saving Changes...' : 'Save All Restaurant Changes'}</span>
-              </button>
+                <h4 className="font-heading font-black text-xs uppercase tracking-wider text-slate-800 pt-3">
+                  Dietary Badges
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {COMMON_DIETARY_OPTIONS.map((opt) => {
+                    const isChecked = profileData.dietary_options?.includes(opt);
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          const current = profileData.dietary_options || [];
+                          const updated = isChecked
+                            ? current.filter((o) => o !== opt)
+                            : [...current, opt];
+                          setProfileData({ ...profileData, dietary_options: updated });
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isChecked
+                            ? 'bg-orange-600 text-white shadow-2xs'
+                            : 'bg-stone-100 text-slate-600 hover:bg-stone-200'
+                        }`}
+                      >
+                        {isChecked ? '✓ ' : '+ '}
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="px-8 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{savingProfile ? 'Saving...' : 'Save Ground Policies'}</span>
+                </button>
+              </div>
             </div>
           </form>
         )}

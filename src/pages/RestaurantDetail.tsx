@@ -283,6 +283,8 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     )
   );
 
+  const isAcquired = Boolean(restaurant && (restaurant.is_claimed || restaurant.is_verified));
+
   const handleQuickPostAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!restaurant) return;
@@ -495,6 +497,11 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-white">
                   {restaurant.is_open ? 'Open now' : 'Opens 11 AM'}
                 </span>
+                {restaurant.metro_station && (
+                  <span className="px-3 py-1 rounded-full bg-indigo-600/80 backdrop-blur-md text-xs font-bold text-white flex items-center gap-1">
+                    <span>🚇 {restaurant.metro_station}{restaurant.metro_gate ? ` (Gate ${restaurant.metro_gate})` : ''}</span>
+                  </span>
+                )}
                 {isPureVeg && (
                   <span className="px-3 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-extrabold">
                     Pure Veg
@@ -502,10 +509,21 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 )}
               </div>
 
-              {/* Title */}
-              <h1 className="hd mt-3 text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[0.98] tracking-tight">
-                {restaurant.name}
-              </h1>
+              {/* Title & Brand Logo */}
+              <div className="flex items-center gap-4 mt-3">
+                {restaurant.logo_url && (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl border-2 border-white/90 bg-white p-1 shadow-2xl shrink-0 overflow-hidden">
+                    <img
+                      src={restaurant.logo_url}
+                      alt={`${restaurant.name} logo`}
+                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
+                    />
+                  </div>
+                )}
+                <h1 className="hd text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[0.98] tracking-tight">
+                  {restaurant.name}
+                </h1>
+              </div>
 
               {/* Subhead / Address */}
               <p className="mt-2.5 text-base sm:text-lg text-stone-200 leading-relaxed max-w-xl">
@@ -1170,19 +1188,50 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             )}
           </div>
 
-          {/* Claim Page Card */}
-          <div className="bg-[#1C1917] text-white rounded-[28px] p-6 text-left">
-            <h3 className="hd text-xl font-bold">Own this restaurant?</h3>
-            <p className="mt-2 text-xs text-stone-300 leading-relaxed">
-              Claim your verified listing, verify with a 6-digit SMS OTP, and update your counter prices anytime.
-            </p>
-            <button
-              onClick={() => setShowClaimModal(true)}
-              className="btn mt-4 w-full bg-[#FF5A36] hover:bg-[#D8350F] text-[#1C1917] hover:text-white min-h-[46px] text-xs font-black uppercase tracking-wider"
-            >
-              Claim this page
-            </button>
-          </div>
+          {/* Claim Page Card OR Acquired / Owner Status Card */}
+          {isOwnerOfThisRest ? (
+            <div className="bg-gradient-to-br from-[#1C1917] via-stone-900 to-black text-white rounded-[28px] p-6 text-left border-2 border-[#FF5A36] shadow-xl relative overflow-hidden">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5A36]/20 border border-[#FF5A36]/40 text-[#FF5A36] text-[11px] font-black uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>You Own This Listing</span>
+              </div>
+              <h3 className="hd text-xl font-bold mt-3">Owner Control Center</h3>
+              <p className="mt-1 text-xs text-stone-300 leading-relaxed">
+                Update your logo, storefront banner, dishes, prices, announcements, and ground policies directly from your dashboard.
+              </p>
+              <button
+                onClick={() => navigate('/owner/dashboard')}
+                className="btn mt-4 w-full bg-[#FF5A36] hover:bg-[#D8350F] text-white min-h-[46px] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Manage Cafe & Menu</span>
+              </button>
+            </div>
+          ) : isAcquired ? (
+            <div className="bg-emerald-50 border border-emerald-300/80 rounded-[28px] p-6 text-left shadow-xs">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-black uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Verified In-Store Partner</span>
+              </div>
+              <h3 className="hd text-lg font-bold text-stone-900 mt-3">100% Rate Lock Guarantee</h3>
+              <p className="mt-1 text-xs text-stone-600 leading-relaxed">
+                This cafe is managed directly by the verified owner. Counter prices, RO water, and dine-in rules are actively guaranteed.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-[#1C1917] text-white rounded-[28px] p-6 text-left">
+              <h3 className="hd text-xl font-bold">Own this restaurant?</h3>
+              <p className="mt-2 text-xs text-stone-300 leading-relaxed">
+                Claim your verified listing, verify with your business documents or photo proof, and update your counter prices anytime.
+              </p>
+              <button
+                onClick={() => setShowClaimModal(true)}
+                className="btn mt-4 w-full bg-[#FF5A36] hover:bg-[#D8350F] text-white min-h-[46px] text-xs font-black uppercase tracking-wider cursor-pointer"
+              >
+                Claim this page
+              </button>
+            </div>
+          )}
         </aside>
       </section>
 
