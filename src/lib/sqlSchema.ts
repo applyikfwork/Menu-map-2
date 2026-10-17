@@ -329,12 +329,18 @@ CREATE TABLE IF NOT EXISTS public.restaurant_claims (
   restaurant_id UUID REFERENCES public.restaurants(id) ON DELETE CASCADE,
   restaurant_name TEXT NOT NULL,
   owner_name TEXT NOT NULL,
+  owner_email TEXT,
   phone_number TEXT NOT NULL,
+  designation TEXT DEFAULT 'Owner',
   proof_type TEXT DEFAULT 'fssai',
   proof_reference TEXT,
+  evidence_images JSONB DEFAULT '[]'::jsonb,
   message TEXT,
   status TEXT DEFAULT 'pending_admin_approval',
   admin_notes TEXT,
+  activation_token TEXT,
+  activation_token_expires_at TIMESTAMPTZ,
+  activation_link TEXT,
   otp_attempts_count INTEGER DEFAULT 0,
   last_otp_sent_at TIMESTAMPTZ,
   verified_at TIMESTAMPTZ,
@@ -342,10 +348,19 @@ CREATE TABLE IF NOT EXISTS public.restaurant_claims (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure all claim columns exist if table was previously created
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS owner_email TEXT;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS evidence_images JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS designation TEXT DEFAULT 'Owner';
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS activation_token TEXT;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS activation_token_expires_at TIMESTAMPTZ;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS activation_link TEXT;
+
 -- 13. Restaurant Owners Table (Credentials & portal access)
 CREATE TABLE IF NOT EXISTS public.restaurant_owners (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  phone_number TEXT UNIQUE NOT NULL,
+  owner_email TEXT,
+  phone_number TEXT,
   owner_name TEXT NOT NULL,
   restaurant_id UUID REFERENCES public.restaurants(id) ON DELETE CASCADE,
   restaurant_slug TEXT NOT NULL,
@@ -355,6 +370,93 @@ CREATE TABLE IF NOT EXISTS public.restaurant_owners (
   last_login_at TIMESTAMPTZ
 );
 
+-- Ensure owner columns exist and allow email login
+ALTER TABLE public.restaurant_owners ADD COLUMN IF NOT EXISTS owner_email TEXT;
+ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
+DROP INDEX IF EXISTS restaurant_owners_phone_number_key;
+CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
+
+ALTER TABLE public.restaurant_claims ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.restaurant_owners ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public and Admin full access on restaurant_claims" ON public.restaurant_claims;
+CREATE POLICY "Public and Admin full access on restaurant_claims" ON public.restaurant_claims
+  FOR ALL USING (TRUE) WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Public and Admin full access on restaurant_owners" ON public.restaurant_owners;
+CREATE POLICY "Public and Admin full access on restaurant_owners" ON public.restaurant_owners
+  FOR ALL USING (TRUE) WITH CHECK (TRUE);
+`;
+
+export const OWNERSHIP_CLAIMS_SQL_FEATURE = `-- ========================================================
+-- MENU MAP: RESTAURANT OWNERSHIP CLAIMS & EMAIL LOGIN
+-- Run this in your Supabase SQL Editor to enable full
+-- persistent storage for owner verification proposals,
+-- evidence documents, activation links, and email logins.
+-- ========================================================
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. Ensure restaurant_claims table exists
+CREATE TABLE IF NOT EXISTS public.restaurant_claims (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id UUID REFERENCES public.restaurants(id) ON DELETE CASCADE,
+  restaurant_name TEXT NOT NULL,
+  owner_name TEXT NOT NULL,
+  owner_email TEXT,
+  phone_number TEXT NOT NULL,
+  designation TEXT DEFAULT 'Owner',
+  proof_type TEXT DEFAULT 'fssai',
+  proof_reference TEXT,
+  evidence_images JSONB DEFAULT '[]'::jsonb,
+  message TEXT,
+  status TEXT DEFAULT 'pending_admin_approval',
+  admin_notes TEXT,
+  activation_token TEXT,
+  activation_token_expires_at TIMESTAMPTZ,
+  activation_link TEXT,
+  otp_attempts_count INTEGER DEFAULT 0,
+  last_otp_sent_at TIMESTAMPTZ,
+  verified_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Upgrade existing restaurant_claims table with required columns
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS owner_email TEXT;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS evidence_images JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS designation TEXT DEFAULT 'Owner';
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS activation_token TEXT;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS activation_token_expires_at TIMESTAMPTZ;
+ALTER TABLE public.restaurant_claims ADD COLUMN IF NOT EXISTS activation_link TEXT;
+
+-- 3. Indexes for fast lookup
+CREATE INDEX IF NOT EXISTS idx_restaurant_claims_status ON public.restaurant_claims (status);
+CREATE INDEX IF NOT EXISTS idx_restaurant_claims_rest_id ON public.restaurant_claims (restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_restaurant_claims_token ON public.restaurant_claims (activation_token);
+
+-- 4. Ensure restaurant_owners table exists
+CREATE TABLE IF NOT EXISTS public.restaurant_owners (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  owner_email TEXT,
+  phone_number TEXT,
+  owner_name TEXT NOT NULL,
+  restaurant_id UUID REFERENCES public.restaurants(id) ON DELETE CASCADE,
+  restaurant_slug TEXT NOT NULL,
+  restaurant_name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ
+);
+
+-- 5. Upgrade existing restaurant_owners table with email support
+ALTER TABLE public.restaurant_owners ADD COLUMN IF NOT EXISTS owner_email TEXT;
+ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
+DROP INDEX IF EXISTS restaurant_owners_phone_number_key;
+CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
+CREATE INDEX IF NOT EXISTS idx_restaurant_owners_rest_id ON public.restaurant_owners (restaurant_id);
+
+-- 6. Row-Level Security (RLS) Policies
 ALTER TABLE public.restaurant_claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.restaurant_owners ENABLE ROW LEVEL SECURITY;
 

@@ -80,7 +80,7 @@ import {
   getAdminCustomPassword,
   setAdminCustomPassword
 } from '../lib/supabase';
-import { SUPABASE_SQL_SCHEMA, ICONIC_AREAS_SQL_FEATURE } from '../lib/sqlSchema';
+import { SUPABASE_SQL_SCHEMA, ICONIC_AREAS_SQL_FEATURE, OWNERSHIP_CLAIMS_SQL_FEATURE } from '../lib/sqlSchema';
 import { MenuMapLogo } from '../components/Logo';
 import { useToast } from '../components/Toast';
 import { getSmartDishImage, DISH_IMAGE_PRESETS } from '../lib/dishImageRegistry';
@@ -133,6 +133,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const [evidencePreviewImage, setEvidencePreviewImage] = useState<string | null>(null);
   const [copiedClaimLinkId, setCopiedClaimLinkId] = useState<string | null>(null);
   const [claimFilterTab, setClaimFilterTab] = useState<'all' | 'pending' | 'approved' | 'active' | 'rejected'>('all');
+  const [copiedClaimsSql, setCopiedClaimsSql] = useState(false);
+  const [refreshingClaims, setRefreshingClaims] = useState(false);
+  const [claimsSqlModalOpen, setClaimsSqlModalOpen] = useState(false);
 
   // Selected Restaurant for Menu Management
   const [selectedRestId, setSelectedRestId] = useState<string>('');
@@ -660,7 +663,51 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
 
   useEffect(() => {
     checkAdminGuard();
+
+    const handleClaimBroadcast = async () => {
+      try {
+        const freshClaims = await api.getRestaurantClaims();
+        setClaims(freshClaims);
+      } catch (e) {}
+    };
+
+    window.addEventListener('menumap_claim_updated', handleClaimBroadcast);
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key?.includes('claim_broadcast') || e.key?.includes('restaurant_claims')) {
+        handleClaimBroadcast();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('menumap_claim_updated', handleClaimBroadcast);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
+
+  const handleRefreshClaims = async () => {
+    setRefreshingClaims(true);
+    try {
+      const fresh = await api.getRestaurantClaims();
+      setClaims(fresh);
+      showToast(`Refreshed claims! Loaded ${fresh.length} request(s).`, 'success');
+    } catch (e) {
+      showToast('Failed to refresh claims from cloud.', 'error');
+    } finally {
+      setRefreshingClaims(false);
+    }
+  };
+
+  const copyClaimsSql = () => {
+    try {
+      navigator.clipboard.writeText(OWNERSHIP_CLAIMS_SQL_FEATURE);
+      setCopiedClaimsSql(true);
+      showToast('Claims & Owner Supabase SQL copied to clipboard! Run in Supabase SQL editor.', 'success');
+      setTimeout(() => setCopiedClaimsSql(false), 3000);
+    } catch (e) {
+      showToast('Please copy the SQL script manually.', 'info');
+    }
+  };
 
   const checkAdminGuard = () => {
     const session = getCurrentAdminSession();
@@ -3292,17 +3339,55 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
         {/* ================================================================ */}
         {activeSection === 'owner_claims' && (
           <div className="space-y-6">
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Twilio OTP Verification & Owner Security</span>
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Evidence-Based Verification & Email Activation</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRefreshClaims}
+                    disabled={refreshingClaims}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer"
+                    title="Force refresh claims from Supabase database"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${refreshingClaims ? 'animate-spin text-emerald-300' : ''}`} />
+                    <span>{refreshingClaims ? 'Refreshing...' : 'Refresh Claims'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={copyClaimsSql}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer"
+                    title="Copy ready-to-run Supabase SQL script"
+                  >
+                    {copiedClaimsSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedClaimsSql ? 'SQL Copied!' : 'Copy Supabase SQL'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setClaimsSqlModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs transition-colors cursor-pointer"
+                    title="Inspect Supabase SQL script"
+                  >
+                    <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>View SQL</span>
+                  </button>
+                </div>
               </div>
-              <h2 className="font-heading font-black text-2xl sm:text-3xl text-white">
-                Restaurant Ownership Claims
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-                Review submitted business credentials and 1 to 3 evidence photos. Once you click <strong>Approve Claim & Generate Link</strong>, an exclusive activation link is generated and dispatched to the owner's email address, allowing them to take ownership and set their password without SMS OTP.
-              </p>
+
+              <div>
+                <h2 className="font-heading font-black text-2xl sm:text-3xl text-white">
+                  Restaurant Ownership Claims
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed mt-1">
+                  Review submitted business credentials and 1 to 3 evidence photos. Once you click <strong>Approve Claim & Generate Link</strong>, an exclusive activation link is generated and dispatched to the owner's email address, allowing them to take ownership and set their password without SMS OTP.
+                </p>
+              </div>
             </div>
 
             {/* Claims Table / List */}
@@ -3350,12 +3435,21 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
               </div>
 
               {claims.length === 0 ? (
-                <div className="py-12 text-center space-y-2 text-slate-400">
-                  <ShieldCheck className="w-10 h-10 mx-auto text-slate-300" />
-                  <p className="font-heading font-bold text-sm text-slate-600">No ownership claims yet</p>
+                <div className="py-12 text-center space-y-3 text-slate-400">
+                  <ShieldCheck className="w-12 h-12 mx-auto text-slate-300" />
+                  <p className="font-heading font-bold text-sm text-slate-600">No ownership claims found yet</p>
                   <p className="text-xs max-w-sm mx-auto">
                     When restaurant owners click "Claim Ownership" on their restaurant page, their requests with 1 to 3 evidence images will appear here for verification.
                   </p>
+                  <button
+                    type="button"
+                    onClick={handleRefreshClaims}
+                    disabled={refreshingClaims}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${refreshingClaims ? 'animate-spin' : ''}`} />
+                    <span>Check Supabase Cloud for New Claims</span>
+                  </button>
                 </div>
               ) : (
                 <div className="divide-y divide-stone-100">
@@ -5673,6 +5767,88 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                   className="px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   {copiedIconicSql ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Copied to Clipboard!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy SQL to Clipboard</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: 📋 SUPABASE CLAIMS & OWNER LOGIN SQL SCRIPT VIEWER */}
+      {/* ==================================================================== */}
+      {claimsSqlModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 space-y-4 shadow-2xl border border-stone-200 max-h-[90vh] flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-2xl bg-emerald-100 text-emerald-700">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-extrabold text-lg text-slate-900">
+                    Supabase SQL for Restaurant Claims & Owner Logins
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Creates & updates <code className="text-emerald-700 font-bold">restaurant_claims</code> and <code className="text-emerald-700 font-bold">restaurant_owners</code> tables in Supabase.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setClaimsSqlModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-stone-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 flex-1 overflow-hidden flex flex-col">
+              <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 text-emerald-950 text-xs flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <span className="font-bold">Instructions:</span> Open your Supabase Dashboard, click <strong>SQL Editor</strong> on the left, paste this script, and click <strong>Run</strong>. This enables storing evidence images, owner email, activation tokens, and direct email logins.
+                </div>
+              </div>
+
+              <div className="relative flex-1 overflow-hidden rounded-2xl border border-stone-800 bg-stone-950 text-stone-200 font-mono text-[11px]">
+                <div className="p-4 overflow-y-auto max-h-[46vh] whitespace-pre select-all leading-relaxed">
+                  {OWNERSHIP_CLAIMS_SQL_FEATURE}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-stone-100">
+              <span className="text-xs text-slate-400">
+                100% idempotent • Safe to run repeatedly
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setClaimsSqlModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-stone-100 cursor-pointer"
+                >
+                  Close
+                </button>
+
+                <button
+                  type="button"
+                  onClick={copyClaimsSql}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copiedClaimsSql ? (
                     <>
                       <Check className="w-4 h-4" />
                       <span>Copied to Clipboard!</span>

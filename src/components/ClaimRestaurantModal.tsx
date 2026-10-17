@@ -99,7 +99,7 @@ export const ClaimRestaurantModal: React.FC<ClaimRestaurantModalProps> = ({
           continue;
         }
 
-        const compressed = await compressImageFile(file, 1600, 950 * 1024);
+        const compressed = await compressImageFile(file, 1200, 180 * 1024);
         newItems.push({
           dataUrl: compressed.dataUrl,
           name: file.name,
@@ -473,7 +473,7 @@ export const ClaimRestaurantModal: React.FC<ClaimRestaurantModalProps> = ({
                         {compressing ? 'Compressing & preparing image...' : 'Click to Upload Evidence Photos from Phone/PC'}
                       </span>
                       <span className="text-[10px] text-stone-400">
-                        Auto-compressed under 950KB for fast verification
+                        Auto-compressed under 180KB for fast verification & high clarity
                       </span>
                     </label>
                   </div>

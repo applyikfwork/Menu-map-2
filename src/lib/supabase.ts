@@ -212,10 +212,29 @@ function loadTable<T>(table: string): T[] {
 function saveTable<T>(table: string, data: T[]): void {
   try {
     localStorage.setItem(`${STORAGE_PREFIX}tbl_${table}`, JSON.stringify(data));
-  } catch (e) {
+  } catch (e: any) {
+    if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+      console.warn(`LocalStorage quota exceeded saving ${table}. Pruning payloads to fit...`);
+      try {
+        if (table === 'restaurant_claims') {
+          // Keep base64 evidence images only on the newest 3 claims to preserve space
+          const pruned = (data as any[]).map((item, idx) => {
+            if (idx > 2 && item.evidence_images && item.evidence_images.length > 0) {
+              return { ...item, evidence_images: [] };
+            }
+            return item;
+          });
+          localStorage.setItem(`${STORAGE_PREFIX}tbl_${table}`, JSON.stringify(pruned));
+          return;
+        }
+      } catch (innerErr) {
+        console.error('Failed to save even pruned data:', innerErr);
+      }
+    }
     console.error(`Error saving table ${table}:`, e);
   }
 }
+
 
 // Default settings
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -1804,8 +1823,9 @@ export const api = {
     evidence_images: string[];
     message?: string;
   }): Promise<RestaurantClaim> {
+    const claimId = ensureUUID();
     const newClaim: RestaurantClaim = {
-      id: crypto.randomUUID(),
+      id: claimId,
       restaurant_id: claimData.restaurant_id,
       restaurant_name: claimData.restaurant_name,
       owner_name: claimData.owner_name.trim(),
@@ -1824,48 +1844,188 @@ export const api = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('restaurant_claims').insert(newClaim);
-      } catch (e) {
-        console.warn('Supabase claim insert warning:', e);
+        // Attempt 1: Full insert with all columns
+        const { error: fullError } = await supabase.from('restaurant_claims').insert(newClaim);
+        if (fullError) {
+          console.warn('Supabase claim full insert note, attempting schema-adaptive fallback:', fullError.message);
+
+          // Build adaptive payload using baseline columns that always exist
+          const fallbackPayload: Record<string, any> = {
+            id: newClaim.id,
+            restaurant_name: newClaim.restaurant_name,
+            owner_name: newClaim.owner_name,
+            phone_number: newClaim.phone_number || 'N/A',
+            proof_type: newClaim.proof_type || 'fssai',
+            proof_reference: newClaim.proof_reference || '',
+            message: `[Email: ${newClaim.owner_email}] [Role: ${newClaim.designation}] ${newClaim.message || ''}`,
+            status: newClaim.status,
+            created_at: newClaim.created_at,
+            updated_at: newClaim.updated_at,
+          };
+
+          // Attach restaurant_id only if it looks like a valid UUID
+          if (newClaim.restaurant_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(newClaim.restaurant_id)) {
+            fallbackPayload.restaurant_id = newClaim.restaurant_id;
+          }
+
+          const { error: fallbackError } = await supabase.from('restaurant_claims').insert(fallbackPayload);
+          if (fallbackError) {
+            console.warn('Supabase fallback claim insert warning:', fallbackError.message);
+          } else {
+            console.info('✓ Successfully persisted claim via adaptive schema fallback in Supabase.');
+          }
+        } else {
+          console.info('✓ Successfully persisted full claim with evidence in Supabase.');
+        }
+      } catch (cloudErr) {
+        console.warn('Supabase cloud network or client error during claim insert:', cloudErr);
       }
     }
 
+    // Save to local storage safely
     const list = loadTable<RestaurantClaim>('restaurant_claims');
-    list.unshift(newClaim);
+    const existingIdx = list.findIndex((c) => c.id === newClaim.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = newClaim;
+    } else {
+      list.unshift(newClaim);
+    }
     saveTable('restaurant_claims', list);
+
+    // Broadcast update across windows & tabs
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('menumap_claim_updated', { detail: newClaim }));
+        localStorage.setItem(`${STORAGE_PREFIX}claim_broadcast`, Date.now().toString());
+      } catch (e) {}
+    }
 
     return newClaim;
   },
 
   async getRestaurantClaims(restaurantId?: string): Promise<RestaurantClaim[]> {
+    const localList = loadTable<RestaurantClaim>('restaurant_claims');
+    const localMap = new Map<string, RestaurantClaim>();
+    localList.forEach((c) => localMap.set(c.id, c));
+
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         let query = supabase.from('restaurant_claims').select('*');
         if (restaurantId) query = query.eq('restaurant_id', restaurantId);
         const { data, error } = await query.order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) return data as RestaurantClaim[];
-      } catch (e) {}
+
+        if (!error && Array.isArray(data)) {
+          const cloudClaims: RestaurantClaim[] = data.map((row: any) => {
+            let email = row.owner_email;
+            let designation = row.designation || 'Owner';
+            let message = row.message || '';
+
+            // If owner_email was not in its own column, parse from packed message
+            if (!email && message) {
+              const emailMatch = message.match(/\[Email:\s*([^\]]+)\]/i);
+              if (emailMatch) email = emailMatch[1].trim();
+              const desigMatch = message.match(/\[Role:\s*([^\]]+)\]/i);
+              if (desigMatch) designation = desigMatch[1].trim();
+            }
+
+            let images: string[] = [];
+            if (Array.isArray(row.evidence_images)) {
+              images = row.evidence_images;
+            } else if (typeof row.evidence_images === 'string') {
+              try {
+                images = JSON.parse(row.evidence_images);
+              } catch (e) {
+                images = row.evidence_images ? [row.evidence_images] : [];
+              }
+            }
+
+            // If cloud didn't have images or email, enrich from local copy if available
+            const localCopy = localMap.get(row.id);
+            if ((!images || images.length === 0) && localCopy?.evidence_images?.length) {
+              images = localCopy.evidence_images;
+            }
+            if (!email && localCopy?.owner_email) {
+              email = localCopy.owner_email;
+            }
+
+            return {
+              id: row.id,
+              restaurant_id: row.restaurant_id,
+              restaurant_name: row.restaurant_name,
+              owner_name: row.owner_name,
+              owner_email: email || '',
+              phone_number: row.phone_number || '',
+              designation: designation,
+              proof_type: row.proof_type || 'fssai',
+              proof_reference: row.proof_reference || '',
+              evidence_images: images,
+              message: message,
+              status: (row.status as ClaimStatus) || 'pending_admin_approval',
+              admin_notes: row.admin_notes || '',
+              activation_token: row.activation_token || localCopy?.activation_token,
+              activation_token_expires_at: row.activation_token_expires_at || localCopy?.activation_token_expires_at,
+              activation_link: row.activation_link || localCopy?.activation_link,
+              created_at: row.created_at || new Date().toISOString(),
+              updated_at: row.updated_at || new Date().toISOString(),
+            };
+          });
+
+          // Merge: Cloud claims are primary, local claims that are pending/new get added
+          const mergedMap = new Map<string, RestaurantClaim>();
+          // 1. Add all local claims
+          localList.forEach((c) => mergedMap.set(c.id, c));
+          // 2. Overwrite / merge with cloud claims
+          cloudClaims.forEach((c) => mergedMap.set(c.id, c));
+
+          const merged = Array.from(mergedMap.values()).sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
+          saveTable('restaurant_claims', merged);
+
+          return restaurantId ? merged.filter((c) => c.restaurant_id === restaurantId) : merged;
+        }
+      } catch (e) {
+        console.warn('Supabase fetch claims error:', e);
+      }
     }
-    const list = loadTable<RestaurantClaim>('restaurant_claims');
-    return restaurantId ? list.filter((c) => c.restaurant_id === restaurantId) : list;
+
+    return restaurantId ? localList.filter((c) => c.restaurant_id === restaurantId) : localList;
   },
 
   async updateClaimStatus(id: string, status: ClaimStatus, adminNotes?: string): Promise<RestaurantClaim | null> {
     const list = loadTable<RestaurantClaim>('restaurant_claims');
-    const idx = list.findIndex((c) => c.id === id);
-    if (idx === -1) return null;
-
-    const updated: RestaurantClaim = {
-      ...list[idx],
-      status,
-      admin_notes: adminNotes !== undefined ? adminNotes : list[idx].admin_notes,
-      updated_at: new Date().toISOString(),
-    };
-    list[idx] = updated;
-    saveTable('restaurant_claims', list);
+    let idx = list.findIndex((c) => c.id === id);
+    let claimToUpdate: RestaurantClaim | null = idx >= 0 ? list[idx] : null;
 
     const supabase = getSupabaseClient();
+    if (!claimToUpdate && supabase) {
+      try {
+        const { data } = await supabase.from('restaurant_claims').select('*').eq('id', id).maybeSingle();
+        if (data) {
+          claimToUpdate = data as RestaurantClaim;
+          list.push(claimToUpdate);
+          idx = list.length - 1;
+        }
+      } catch (e) {}
+    }
+
+    if (!claimToUpdate) return null;
+
+    const updated: RestaurantClaim = {
+      ...claimToUpdate,
+      status,
+      admin_notes: adminNotes !== undefined ? adminNotes : claimToUpdate.admin_notes,
+      updated_at: new Date().toISOString(),
+    };
+    if (idx >= 0) {
+      list[idx] = updated;
+    } else {
+      list.push(updated);
+    }
+    saveTable('restaurant_claims', list);
+
     if (supabase) {
       try {
         await supabase.from('restaurant_claims').update({
@@ -1875,21 +2035,43 @@ export const api = {
         }).eq('id', id);
       } catch (e) {}
     }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('menumap_claim_updated', { detail: updated }));
+        localStorage.setItem(`${STORAGE_PREFIX}claim_broadcast`, Date.now().toString());
+      } catch (e) {}
+    }
+
     return updated;
   },
 
   async approveRestaurantClaim(claimId: string, adminNotes?: string): Promise<RestaurantClaim | null> {
-    const list = loadTable<RestaurantClaim>('restaurant_claims');
-    const idx = list.findIndex((c) => c.id === claimId);
-    if (idx === -1) return null;
+    // 1. Check local table
+    let list = loadTable<RestaurantClaim>('restaurant_claims');
+    let claim = list.find((c) => c.id === claimId);
+
+    // 2. If not found in local table, check Supabase
+    const supabase = getSupabaseClient();
+    if (!claim && supabase) {
+      try {
+        const { data } = await supabase.from('restaurant_claims').select('*').eq('id', claimId).maybeSingle();
+        if (data) {
+          claim = data as RestaurantClaim;
+          list.push(claim);
+        }
+      } catch (e) {}
+    }
+
+    if (!claim) return null;
 
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://menumaps.in';
-    const activationToken = crypto.randomUUID();
+    const activationToken = ensureUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
     const activationLink = `${origin}/claim-verify?token=${activationToken}`;
 
     const updated: RestaurantClaim = {
-      ...list[idx],
+      ...claim,
       status: 'approved',
       admin_notes: adminNotes || 'Approved by administrator. Verification link generated.',
       activation_token: activationToken,
@@ -1898,13 +2080,18 @@ export const api = {
       updated_at: new Date().toISOString(),
     };
 
-    list[idx] = updated;
+    const idx = list.findIndex((c) => c.id === claimId);
+    if (idx >= 0) {
+      list[idx] = updated;
+    } else {
+      list.push(updated);
+    }
     saveTable('restaurant_claims', list);
 
-    const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('restaurant_claims').update({
+        // Attempt full update
+        const { error: updateErr } = await supabase.from('restaurant_claims').update({
           status: 'approved',
           admin_notes: updated.admin_notes,
           activation_token: updated.activation_token,
@@ -1913,7 +2100,17 @@ export const api = {
           updated_at: updated.updated_at,
         }).eq('id', claimId);
 
-        // Attempt Supabase Edge Function email dispatch
+        if (updateErr) {
+          console.warn('Full claim approval update note, attempting fallback:', updateErr.message);
+          // If columns like activation_token don't exist yet, pack token into admin_notes
+          await supabase.from('restaurant_claims').update({
+            status: 'approved',
+            admin_notes: `${updated.admin_notes} [Token: ${activationToken}] [Link: ${activationLink}]`,
+            updated_at: updated.updated_at,
+          }).eq('id', claimId);
+        }
+
+        // Attempt Supabase Edge Function email dispatch if configured
         try {
           await supabase.functions.invoke('send-claim-email', {
             body: {
@@ -1929,6 +2126,13 @@ export const api = {
       } catch (e) {
         console.warn('Supabase claim update warning:', e);
       }
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('menumap_claim_updated', { detail: updated }));
+        localStorage.setItem(`${STORAGE_PREFIX}claim_broadcast`, Date.now().toString());
+      } catch (e) {}
     }
 
     return updated;
@@ -1948,14 +2152,23 @@ export const api = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data } = await supabase.from('restaurant_claims').select('*').eq('activation_token', token).maybeSingle();
-        if (data) claim = data as RestaurantClaim;
+        // Query direct activation_token
+        const { data, error } = await supabase.from('restaurant_claims').select('*').eq('activation_token', token).maybeSingle();
+        if (!error && data) {
+          claim = data as RestaurantClaim;
+        } else {
+          // Fallback: check admin_notes containing token
+          const { data: fallbackData } = await supabase.from('restaurant_claims').select('*').like('admin_notes', `%${token}%`).maybeSingle();
+          if (fallbackData) {
+            claim = fallbackData as RestaurantClaim;
+          }
+        }
       } catch (e) {}
     }
 
     if (!claim) {
       const list = loadTable<RestaurantClaim>('restaurant_claims');
-      claim = list.find((c) => c.activation_token === token);
+      claim = list.find((c) => c.activation_token === token || c.admin_notes?.includes(token));
     }
 
     if (!claim) {
@@ -1963,7 +2176,7 @@ export const api = {
     }
 
     if (claim.status === 'ownership_active') {
-      return { valid: false, error: 'This restaurant ownership has already been activated. Please log in.' };
+      return { valid: false, error: 'This restaurant ownership has already been activated. Please log in with your registered email.' };
     }
 
     if (claim.status !== 'approved') {
@@ -1971,14 +2184,20 @@ export const api = {
     }
 
     if (claim.activation_token_expires_at && new Date(claim.activation_token_expires_at) < new Date()) {
-      return { valid: false, error: 'This activation link has expired. Please contact support or request a new approval.' };
+      return { valid: false, error: 'This activation link has expired (valid for 7 days). Please contact support for a new approval link.' };
     }
 
     // Retrieve matching restaurant
-    const rests = loadTable<Restaurant>('restaurants');
-    const restaurant = rests.find((r) => r.id === claim?.restaurant_id);
+    let restaurant: Restaurant | null = null;
+    if (claim.restaurant_id) {
+      restaurant = await this.getRestaurantById(claim.restaurant_id);
+    }
+    if (!restaurant) {
+      const rests = loadTable<Restaurant>('restaurants');
+      restaurant = rests.find((r) => r.id === claim?.restaurant_id || r.name.toLowerCase() === claim?.restaurant_name.toLowerCase()) || null;
+    }
 
-    return { valid: true, claim, restaurant };
+    return { valid: true, claim, restaurant: restaurant || undefined };
   },
 
   async activateOwnershipWithToken(
@@ -1997,23 +2216,30 @@ export const api = {
     const claim = validation.claim;
     const passwordHash = await hashPassword(password);
 
-    // Retrieve restaurant slug
-    const rests = loadTable<Restaurant>('restaurants');
-    const restIdx = rests.findIndex((r) => r.id === claim.restaurant_id);
-    const rest = restIdx >= 0 ? rests[restIdx] : null;
+    // Retrieve restaurant
+    let rest = validation.restaurant;
+    if (!rest && claim.restaurant_id) {
+      rest = (await this.getRestaurantById(claim.restaurant_id)) || undefined;
+    }
     const slug = rest?.slug || slugify(claim.restaurant_name);
 
-    if (restIdx >= 0) {
-      rests[restIdx].is_claimed = true;
-      rests[restIdx].is_verified = true;
-      saveTable('restaurants', rests);
+    if (rest) {
+      rest.is_claimed = true;
+      rest.is_verified = true;
+      const rests = loadTable<Restaurant>('restaurants');
+      const rIdx = rests.findIndex((r) => r.id === rest?.id);
+      if (rIdx >= 0) {
+        rests[rIdx].is_claimed = true;
+        rests[rIdx].is_verified = true;
+        saveTable('restaurants', rests);
+      }
     }
 
     // Create owner account
     const ownerAccount: RestaurantOwnerAccount = {
-      id: crypto.randomUUID(),
+      id: ensureUUID(),
       owner_email: claim.owner_email,
-      phone_number: claim.phone_number.replace(/\D/g, '').slice(-10),
+      phone_number: claim.phone_number.replace(/\D/g, '').slice(-10) || '0000000000',
       owner_name: claim.owner_name,
       restaurant_id: claim.restaurant_id,
       restaurant_slug: slug,
@@ -2046,16 +2272,43 @@ export const api = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('restaurant_owners').upsert(ownerAccount);
+        // Try upserting owner with owner_email
+        const { error: ownerErr } = await supabase.from('restaurant_owners').upsert(ownerAccount);
+        if (ownerErr) {
+          console.warn('Supabase owner upsert note, trying fallback without email column:', ownerErr.message);
+          const fallbackOwner: Record<string, any> = {
+            id: ownerAccount.id,
+            phone_number: ownerAccount.phone_number,
+            owner_name: ownerAccount.owner_name,
+            restaurant_id: ownerAccount.restaurant_id,
+            restaurant_slug: ownerAccount.restaurant_slug,
+            restaurant_name: ownerAccount.restaurant_name,
+            password_hash: ownerAccount.password_hash,
+            created_at: ownerAccount.created_at,
+            last_login_at: ownerAccount.last_login_at,
+          };
+          await supabase.from('restaurant_owners').upsert(fallbackOwner);
+        }
+
         await supabase.from('restaurant_claims').update({
           status: 'ownership_active',
           verified_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           activation_token: null,
         }).eq('id', claim.id);
-        if (rest) {
+
+        if (rest?.id) {
           await supabase.from('restaurants').update({ is_claimed: true, is_verified: true }).eq('id', rest.id);
         }
+      } catch (e) {
+        console.warn('Supabase activation sync warning:', e);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('menumap_claim_updated', { detail: { id: claim.id, status: 'ownership_active' } }));
+        localStorage.setItem(`${STORAGE_PREFIX}claim_broadcast`, Date.now().toString());
       } catch (e) {}
     }
 
@@ -2075,13 +2328,36 @@ export const api = {
     const isEmail = trimmed.includes('@');
     const rawDigits = trimmed.replace(/\D/g, '').slice(-10);
 
-    const owners = loadTable<RestaurantOwnerAccount>('restaurant_owners');
-    const matched = owners.find((o) => {
+    let owners = loadTable<RestaurantOwnerAccount>('restaurant_owners');
+    let matched = owners.find((o) => {
       if (isEmail && o.owner_email) {
         return o.owner_email.toLowerCase() === trimmed.toLowerCase();
       }
       return rawDigits.length >= 10 && o.phone_number.endsWith(rawDigits);
     });
+
+    // If not found in local cache, query Supabase cloud!
+    if (!matched) {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        try {
+          let query = supabase.from('restaurant_owners').select('*');
+          if (isEmail) {
+            query = query.ilike('owner_email', trimmed.toLowerCase());
+          } else if (rawDigits.length >= 10) {
+            query = query.like('phone_number', `%${rawDigits}%`);
+          }
+          const { data, error } = await query.maybeSingle();
+          if (!error && data) {
+            matched = data as RestaurantOwnerAccount;
+            owners.push(matched);
+            saveTable('restaurant_owners', owners);
+          }
+        } catch (e) {
+          console.warn('Supabase owner fetch failed:', e);
+        }
+      }
+    }
 
     if (!matched) {
       return {
@@ -2099,6 +2375,13 @@ export const api = {
 
     matched.last_login_at = new Date().toISOString();
     saveTable('restaurant_owners', owners);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('restaurant_owners').update({ last_login_at: matched.last_login_at }).eq('id', matched.id);
+      } catch (e) {}
+    }
 
     setOwnerSession(matched);
     return { success: true, owner: matched };
