@@ -31,7 +31,7 @@ export const TopPicksSpotlight: React.FC<TopPicksSpotlightProps> = ({
     const picks = sorted.slice(0, 3).map((item, index) => {
       let tagLabel = '⭐ Crowd Legend';
       let tagStyle = 'bg-amber-100 text-amber-900 border-amber-300';
-      let statText = 'Ordered by ~72% of walk-in diners';
+      let statText = 'Verified in-store crowd recommendation';
 
       if (index === 0) {
         tagLabel = '👑 #1 Most Ordered';
@@ -85,7 +85,7 @@ export const TopPicksSpotlight: React.FC<TopPicksSpotlightProps> = ({
                 Crowd-Voted Top 3 Must-Orders
               </h3>
               <p className="text-xs text-stone-500 font-medium">
-                Skip menu paralysis • Verified counter bestsellers ordered by 80%+ walk-in foodies
+                Skip menu paralysis • Verified counter bestsellers & crowd favorites
               </p>
             </div>
           </div>

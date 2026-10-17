@@ -682,7 +682,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Owner: <strong className="text-slate-200">{session.owner_name}</strong> • Phone: {session.phone_number} • {cleanPublicUrl}
+                Owner: <strong className="text-slate-200">{session.owner_name}</strong> {session.owner_email ? `• ${session.owner_email}` : ''} {session.phone_number ? `• ${session.phone_number}` : ''} • {cleanPublicUrl}
               </p>
             </div>
           </div>

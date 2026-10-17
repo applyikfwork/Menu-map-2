@@ -1789,13 +1789,19 @@ export const api = {
   // --------------------------------------------------------------------------
   // RESTAURANT CLAIMS & OWNERSHIP ENGINE
   // --------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // RESTAURANT CLAIMS & OWNERSHIP ENGINE (EVIDENCE & EMAIL ACTIVATION)
+  // --------------------------------------------------------------------------
   async submitRestaurantClaim(claimData: {
     restaurant_id: string;
     restaurant_name: string;
     owner_name: string;
+    owner_email: string;
     phone_number: string;
+    designation?: string;
     proof_type: 'fssai' | 'gst' | 'business_card' | 'electricity_bill' | 'menu_card' | 'manager_id';
     proof_reference?: string;
+    evidence_images: string[];
     message?: string;
   }): Promise<RestaurantClaim> {
     const newClaim: RestaurantClaim = {
@@ -1803,12 +1809,14 @@ export const api = {
       restaurant_id: claimData.restaurant_id,
       restaurant_name: claimData.restaurant_name,
       owner_name: claimData.owner_name.trim(),
+      owner_email: claimData.owner_email.trim().toLowerCase(),
       phone_number: claimData.phone_number.trim(),
+      designation: claimData.designation?.trim() || 'Owner',
       proof_type: claimData.proof_type,
       proof_reference: claimData.proof_reference?.trim() || '',
+      evidence_images: claimData.evidence_images || [],
       message: claimData.message?.trim() || '',
       status: 'pending_admin_approval',
-      otp_attempts_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -1870,120 +1878,141 @@ export const api = {
     return updated;
   },
 
-  async sendClaimOtp(claimId: string): Promise<{ success: boolean; attemptsLeft: number; error?: string }> {
+  async approveRestaurantClaim(claimId: string, adminNotes?: string): Promise<RestaurantClaim | null> {
     const list = loadTable<RestaurantClaim>('restaurant_claims');
-    const claim = list.find((c) => c.id === claimId);
-    if (!claim) {
-      return { success: false, attemptsLeft: 0, error: 'Claim request not found.' };
-    }
+    const idx = list.findIndex((c) => c.id === claimId);
+    if (idx === -1) return null;
 
-    // STRICT CHECK 1: Must be approved by admin before OTP can be sent!
-    if (claim.status !== 'approved') {
-      return {
-        success: false,
-        attemptsLeft: Math.max(0, 2 - claim.otp_attempts_count),
-        error: claim.status === 'pending_admin_approval'
-          ? 'Your claim request is awaiting administrator approval. You can only verify via OTP once the admin reviews and approves your ownership in the Admin Panel.'
-          : `Claim status is ${claim.status}. OTP verification is not permitted.`,
-      };
-    }
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://menumaps.in';
+    const activationToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+    const activationLink = `${origin}/claim-verify?token=${activationToken}`;
 
-    // STRICT CHECK 2: Allowed maximum of 2 OTP attempts ("only have to send 2 times otp after they not able to send otp")
-    if (claim.otp_attempts_count >= 2) {
-      return {
-        success: false,
-        attemptsLeft: 0,
-        error: 'Maximum 2 OTP attempts exceeded. For security, please contact the administrator.',
-      };
-    }
+    const updated: RestaurantClaim = {
+      ...list[idx],
+      status: 'approved',
+      admin_notes: adminNotes || 'Approved by administrator. Verification link generated.',
+      activation_token: activationToken,
+      activation_token_expires_at: expiresAt,
+      activation_link: activationLink,
+      updated_at: new Date().toISOString(),
+    };
 
-    claim.otp_attempts_count += 1;
-    claim.last_otp_sent_at = new Date().toISOString();
-    claim.updated_at = new Date().toISOString();
+    list[idx] = updated;
     saveTable('restaurant_claims', list);
 
-    const attemptsLeft = Math.max(0, 2 - claim.otp_attempts_count);
-
-    // Generate secure 6-digit verification code
-    const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-    sessionStorage.setItem(`menumap_otp_${claim.id}`, generatedCode);
-
-    // Call Supabase Phone Auth (configured with Twilio in Supabase Dashboard)
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const rawDigits = claim.phone_number.replace(/\D/g, '');
-        const formattedPhone = claim.phone_number.startsWith('+') ? claim.phone_number : `+91${rawDigits.slice(-10)}`;
-        const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
-        if (error) {
-          console.warn('Supabase Twilio SMS response:', error.message);
+        await supabase.from('restaurant_claims').update({
+          status: 'approved',
+          admin_notes: updated.admin_notes,
+          activation_token: updated.activation_token,
+          activation_token_expires_at: updated.activation_token_expires_at,
+          activation_link: updated.activation_link,
+          updated_at: updated.updated_at,
+        }).eq('id', claimId);
+
+        // Attempt Supabase Edge Function email dispatch
+        try {
+          await supabase.functions.invoke('send-claim-email', {
+            body: {
+              to: updated.owner_email,
+              owner_name: updated.owner_name,
+              restaurant_name: updated.restaurant_name,
+              activation_link: activationLink,
+            },
+          });
+        } catch (funcErr) {
+          console.info('Supabase email function invocation note:', funcErr);
         }
       } catch (e) {
-        console.warn('Twilio SMS invocation warning:', e);
+        console.warn('Supabase claim update warning:', e);
       }
     }
 
-    if ((import.meta as any).env?.DEV) {
-      console.info(`[Dev OTP] Verification code dispatched for claim ${claim.id}: ${generatedCode}`);
-    }
-
-    return {
-      success: true,
-      attemptsLeft,
-    };
+    return updated;
   },
 
-  async verifyClaimOtp(claimId: string, otpCode: string, newPassword: string): Promise<{ success: boolean; error?: string; owner?: RestaurantOwnerAccount }> {
-    const list = loadTable<RestaurantClaim>('restaurant_claims');
-    const claim = list.find((c) => c.id === claimId);
-    if (!claim) {
-      return { success: false, error: 'Claim request not found.' };
+  async validateClaimToken(token: string): Promise<{
+    valid: boolean;
+    claim?: RestaurantClaim;
+    restaurant?: Restaurant;
+    error?: string;
+  }> {
+    if (!token) {
+      return { valid: false, error: 'Missing activation token.' };
     }
 
-    if (claim.status !== 'approved') {
-      return { success: false, error: 'Claim must be approved by admin to verify.' };
-    }
-
-    if (!newPassword || newPassword.length < 6) {
-      return { success: false, error: 'Password must be at least 6 characters.' };
-    }
-
-    // Verify OTP code
-    const storedCode = sessionStorage.getItem(`menumap_otp_${claim.id}`);
-    let isValidOtp = Boolean(storedCode && storedCode === otpCode.trim());
-
-    // Also check Supabase verifyOtp
+    let claim: RestaurantClaim | undefined;
     const supabase = getSupabaseClient();
-    if (supabase && !isValidOtp) {
+    if (supabase) {
       try {
-        const rawDigits = claim.phone_number.replace(/\D/g, '');
-        const formattedPhone = claim.phone_number.startsWith('+') ? claim.phone_number : `+91${rawDigits.slice(-10)}`;
-        const { data, error } = await supabase.auth.verifyOtp({
-          phone: formattedPhone,
-          token: otpCode.trim(),
-          type: 'sms',
-        });
-        if (!error && data?.session) {
-          isValidOtp = true;
-        }
+        const { data } = await supabase.from('restaurant_claims').select('*').eq('activation_token', token).maybeSingle();
+        if (data) claim = data as RestaurantClaim;
       } catch (e) {}
     }
 
-    if (!isValidOtp) {
-      return { success: false, error: 'Invalid or expired OTP code. Please check the digits and try again.' };
+    if (!claim) {
+      const list = loadTable<RestaurantClaim>('restaurant_claims');
+      claim = list.find((c) => c.activation_token === token);
     }
 
-    // Password hashing
-    const passwordHash = await hashPassword(newPassword);
+    if (!claim) {
+      return { valid: false, error: 'Invalid or unrecognized activation link.' };
+    }
 
-    // Find restaurant slug
+    if (claim.status === 'ownership_active') {
+      return { valid: false, error: 'This restaurant ownership has already been activated. Please log in.' };
+    }
+
+    if (claim.status !== 'approved') {
+      return { valid: false, error: `This claim status is currently "${claim.status}".` };
+    }
+
+    if (claim.activation_token_expires_at && new Date(claim.activation_token_expires_at) < new Date()) {
+      return { valid: false, error: 'This activation link has expired. Please contact support or request a new approval.' };
+    }
+
+    // Retrieve matching restaurant
     const rests = loadTable<Restaurant>('restaurants');
-    const rest = rests.find((r) => r.id === claim.restaurant_id);
+    const restaurant = rests.find((r) => r.id === claim?.restaurant_id);
+
+    return { valid: true, claim, restaurant };
+  },
+
+  async activateOwnershipWithToken(
+    token: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string; owner?: RestaurantOwnerAccount }> {
+    const validation = await this.validateClaimToken(token);
+    if (!validation.valid || !validation.claim) {
+      return { success: false, error: validation.error || 'Invalid or expired token.' };
+    }
+
+    if (!password || password.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters.' };
+    }
+
+    const claim = validation.claim;
+    const passwordHash = await hashPassword(password);
+
+    // Retrieve restaurant slug
+    const rests = loadTable<Restaurant>('restaurants');
+    const restIdx = rests.findIndex((r) => r.id === claim.restaurant_id);
+    const rest = restIdx >= 0 ? rests[restIdx] : null;
     const slug = rest?.slug || slugify(claim.restaurant_name);
+
+    if (restIdx >= 0) {
+      rests[restIdx].is_claimed = true;
+      rests[restIdx].is_verified = true;
+      saveTable('restaurants', rests);
+    }
 
     // Create owner account
     const ownerAccount: RestaurantOwnerAccount = {
       id: crypto.randomUUID(),
+      owner_email: claim.owner_email,
       phone_number: claim.phone_number.replace(/\D/g, '').slice(-10),
       owner_name: claim.owner_name,
       restaurant_id: claim.restaurant_id,
@@ -1995,7 +2024,7 @@ export const api = {
     };
 
     const owners = loadTable<RestaurantOwnerAccount>('restaurant_owners');
-    const existingIdx = owners.findIndex((o) => o.restaurant_id === claim.restaurant_id || o.phone_number === ownerAccount.phone_number);
+    const existingIdx = owners.findIndex((o) => o.restaurant_id === claim.restaurant_id || (claim.owner_email && o.owner_email === claim.owner_email));
     if (existingIdx >= 0) {
       owners[existingIdx] = ownerAccount;
     } else {
@@ -2003,20 +2032,30 @@ export const api = {
     }
     saveTable('restaurant_owners', owners);
 
-    // Update claim status to ownership_active
-    claim.status = 'ownership_active';
-    claim.verified_at = new Date().toISOString();
-    claim.updated_at = new Date().toISOString();
-    saveTable('restaurant_claims', list);
+    // Mark claim as ownership_active & invalidate single-use token
+    const list = loadTable<RestaurantClaim>('restaurant_claims');
+    const claimIdx = list.findIndex((c) => c.id === claim.id);
+    if (claimIdx >= 0) {
+      list[claimIdx].status = 'ownership_active';
+      list[claimIdx].verified_at = new Date().toISOString();
+      list[claimIdx].updated_at = new Date().toISOString();
+      delete list[claimIdx].activation_token;
+      saveTable('restaurant_claims', list);
+    }
 
+    const supabase = getSupabaseClient();
     if (supabase) {
       try {
         await supabase.from('restaurant_owners').upsert(ownerAccount);
         await supabase.from('restaurant_claims').update({
           status: 'ownership_active',
-          verified_at: claim.verified_at,
-          updated_at: claim.updated_at,
+          verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          activation_token: null,
         }).eq('id', claim.id);
+        if (rest) {
+          await supabase.from('restaurants').update({ is_claimed: true, is_verified: true }).eq('id', rest.id);
+        }
       } catch (e) {}
     }
 
@@ -2024,22 +2063,32 @@ export const api = {
     return { success: true, owner: ownerAccount };
   },
 
-  async loginRestaurantOwner(phoneNumber: string, password: string): Promise<{ success: boolean; error?: string; owner?: RestaurantOwnerAccount }> {
-    const rawDigits = phoneNumber.replace(/\D/g, '').slice(-10);
-    if (!rawDigits || rawDigits.length < 10) {
-      return { success: false, error: 'Please enter a valid 10-digit mobile number.' };
+  async loginRestaurantOwner(identifier: string, password: string): Promise<{ success: boolean; error?: string; owner?: RestaurantOwnerAccount }> {
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      return { success: false, error: 'Please enter your registered email address or mobile number.' };
     }
     if (!password) {
       return { success: false, error: 'Please enter your password.' };
     }
 
+    const isEmail = trimmed.includes('@');
+    const rawDigits = trimmed.replace(/\D/g, '').slice(-10);
+
     const owners = loadTable<RestaurantOwnerAccount>('restaurant_owners');
-    const matched = owners.find((o) => o.phone_number.endsWith(rawDigits));
+    const matched = owners.find((o) => {
+      if (isEmail && o.owner_email) {
+        return o.owner_email.toLowerCase() === trimmed.toLowerCase();
+      }
+      return rawDigits.length >= 10 && o.phone_number.endsWith(rawDigits);
+    });
 
     if (!matched) {
       return {
         success: false,
-        error: 'No verified restaurant owner found with this phone number. Please submit an ownership claim request first.',
+        error: isEmail 
+          ? 'No verified restaurant owner found with this email. Please claim your restaurant first.'
+          : 'No verified restaurant owner found with this mobile number. Please claim your restaurant first.',
       };
     }
 

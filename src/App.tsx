@@ -24,6 +24,7 @@ const StaticPage = React.lazy(() => import('./pages/StaticPages').then((m) => ({
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
 const OwnerLogin = React.lazy(() => import('./pages/OwnerLogin').then((m) => ({ default: m.OwnerLogin })));
 const OwnerDashboard = React.lazy(() => import('./pages/OwnerDashboard').then((m) => ({ default: m.OwnerDashboard })));
+const ClaimVerify = React.lazy(() => import('./pages/ClaimVerify').then((m) => ({ default: m.ClaimVerify })));
 const NotFound = React.lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 import { ADMIN_EMAIL, getCurrentAdminSession, api } from './lib/supabase';
@@ -196,6 +197,11 @@ function AppContent() {
     }
     if (currentPath === '/privacy') {
       return <StaticPage type="privacy" navigate={navigate} />;
+    }
+
+    // 11.5. Exclusive Cafe Ownership Activation Route: /claim-verify
+    if (currentPath === '/claim-verify') {
+      return <ClaimVerify navigate={navigate} searchParams={searchParams} />;
     }
 
     // 12. Direct Clean Restaurant Slug Route: /:slug (e.g. /the-pizza-family)

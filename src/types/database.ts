@@ -272,13 +272,19 @@ export interface RestaurantClaim {
   restaurant_id: string;
   restaurant_name: string;
   owner_name: string;
+  owner_email: string;
   phone_number: string;
+  designation?: string;
   proof_type: 'fssai' | 'gst' | 'business_card' | 'electricity_bill' | 'menu_card' | 'manager_id';
   proof_reference?: string;
+  evidence_images: string[]; // 1 to 3 verified documents/counter photos
   message?: string;
   status: ClaimStatus;
   admin_notes?: string;
-  otp_attempts_count: number; // strictly max 2
+  activation_token?: string;
+  activation_token_expires_at?: string;
+  activation_link?: string;
+  otp_attempts_count?: number;
   last_otp_sent_at?: string;
   verified_at?: string;
   created_at: string;
@@ -287,6 +293,7 @@ export interface RestaurantClaim {
 
 export interface RestaurantOwnerAccount {
   id: string;
+  owner_email?: string;
   phone_number: string;
   owner_name: string;
   restaurant_id: string;

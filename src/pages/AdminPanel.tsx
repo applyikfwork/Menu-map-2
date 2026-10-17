@@ -43,7 +43,11 @@ import {
   Utensils,
   Code2,
   Globe,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Mail,
+  Send,
+  Share2,
+  FileCheck
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -126,6 +130,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const [analytics, setAnalytics] = useState<SearchAnalytic[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [claims, setClaims] = useState<RestaurantClaim[]>([]);
+  const [evidencePreviewImage, setEvidencePreviewImage] = useState<string | null>(null);
+  const [copiedClaimLinkId, setCopiedClaimLinkId] = useState<string | null>(null);
+  const [claimFilterTab, setClaimFilterTab] = useState<'all' | 'pending' | 'approved' | 'active' | 'rejected'>('all');
 
   // Selected Restaurant for Menu Management
   const [selectedRestId, setSelectedRestId] = useState<string>('');
@@ -706,11 +713,11 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
 
   const handleApproveClaim = async (claimId: string) => {
     try {
-      const updated = await api.updateClaimStatus(claimId, 'approved', 'Approved by administrator');
+      const updated = await api.approveRestaurantClaim(claimId, 'Approved by administrator');
       if (updated) {
         setClaims((prev) => prev.map((c) => (c.id === claimId ? updated : c)));
         showToast(
-          `✓ Approved claim for "${updated.restaurant_name}"! Owner can now verify via Twilio OTP (Max 2 attempts).`,
+          `🎉 Approved claim for "${updated.restaurant_name}"! Activation link generated for ${updated.owner_email}.`,
           'success'
         );
       }
@@ -3294,19 +3301,52 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                 Restaurant Ownership Claims
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-                Review business credentials submitted by restaurant owners. Once you click <strong>Approve Claim</strong>, the owner is authorized to send up to 2 Twilio verification OTPs to their registered phone number and set their permanent password to log into their Owner Portal.
+                Review submitted business credentials and 1 to 3 evidence photos. Once you click <strong>Approve Claim & Generate Link</strong>, an exclusive activation link is generated and dispatched to the owner's email address, allowing them to take ownership and set their password without SMS OTP.
               </p>
             </div>
 
             {/* Claims Table / List */}
-            <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-                <h3 className="font-heading font-black text-base text-slate-900">
-                  All Ownership Requests ({claims.length})
-                </h3>
-                <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl">
-                  {claims.filter(c => c.status === 'pending_admin_approval').length} Pending Approval
-                </span>
+            <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-5">
+              {/* Header & Filter Tabs */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
+                <div>
+                  <h3 className="font-heading font-black text-base text-slate-900">
+                    All Ownership Requests ({claims.length})
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Evidence-based verification with dedicated email activation links
+                  </p>
+                </div>
+
+                {/* Filter Tabs */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(['all', 'pending', 'approved', 'active', 'rejected'] as const).map((tab) => {
+                    const count = tab === 'all' 
+                      ? claims.length 
+                      : tab === 'pending'
+                      ? claims.filter(c => c.status === 'pending_admin_approval').length
+                      : tab === 'approved'
+                      ? claims.filter(c => c.status === 'approved').length
+                      : tab === 'active'
+                      ? claims.filter(c => c.status === 'ownership_active').length
+                      : claims.filter(c => c.status === 'rejected').length;
+
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setClaimFilterTab(tab)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          claimFilterTab === tab
+                            ? 'bg-[#1C1917] text-white shadow-xs'
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                        }`}
+                      >
+                        <span className="capitalize">{tab}</span> ({count})
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {claims.length === 0 ? (
@@ -3314,88 +3354,220 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                   <ShieldCheck className="w-10 h-10 mx-auto text-slate-300" />
                   <p className="font-heading font-bold text-sm text-slate-600">No ownership claims yet</p>
                   <p className="text-xs max-w-sm mx-auto">
-                    When restaurant owners click "Claim Ownership" on their restaurant page, their requests will appear here for your approval.
+                    When restaurant owners click "Claim Ownership" on their restaurant page, their requests with 1 to 3 evidence images will appear here for verification.
                   </p>
                 </div>
               ) : (
                 <div className="divide-y divide-stone-100">
-                  {claims.map((claim) => (
-                    <div key={claim.id} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1.5 max-w-xl">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-heading font-black text-sm text-slate-900">
-                            {claim.restaurant_name}
-                          </h4>
-                          {/* Status Badge */}
-                          {claim.status === 'pending_admin_approval' && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-300">
-                              Pending Approval
-                            </span>
-                          )}
-                          {claim.status === 'approved' && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-100 text-blue-800 border border-blue-300">
-                              Approved (Awaiting OTP)
-                            </span>
-                          )}
-                          {claim.status === 'ownership_active' && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                              ✓ Ownership Active
-                            </span>
-                          )}
-                          {claim.status === 'rejected' && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-red-100 text-red-800 border border-red-300">
-                              Rejected
-                            </span>
-                          )}
-                        </div>
+                  {claims
+                    .filter((c) => {
+                      if (claimFilterTab === 'all') return true;
+                      if (claimFilterTab === 'pending') return c.status === 'pending_admin_approval';
+                      if (claimFilterTab === 'approved') return c.status === 'approved';
+                      if (claimFilterTab === 'active') return c.status === 'ownership_active';
+                      if (claimFilterTab === 'rejected') return c.status === 'rejected';
+                      return true;
+                    })
+                    .map((claim) => {
+                      const cleanPhone = (claim.phone_number || '').replace(/\D/g, '');
+                      const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+                      const activationUrl = claim.activation_link || (typeof window !== 'undefined' ? `${window.location.origin}/claim-verify?token=${claim.activation_token}` : '');
 
-                        <p className="text-xs text-slate-600">
-                          <strong>Claimant:</strong> {claim.owner_name} • <strong>Phone:</strong> {claim.phone_number} • <strong>Proof:</strong> {claim.proof_type.toUpperCase()} ({claim.proof_reference || 'N/A'})
-                        </p>
-                        {claim.message && (
-                          <p className="text-[11px] text-slate-500 italic bg-stone-50 p-2 rounded-lg border border-stone-200">
-                            "{claim.message}"
-                          </p>
-                        )}
-                        <p className="text-[11px] text-slate-400">
-                          Submitted on {new Date(claim.created_at).toLocaleString()} • OTP Attempts: {claim.otp_attempts_count}/2
-                        </p>
-                      </div>
+                      const mailtoUrl = `mailto:${claim.owner_email}?subject=${encodeURIComponent(`Approved: Claim your cafe ownership for ${claim.restaurant_name} on MenuMaps`)}&body=${encodeURIComponent(
+                        `Dear ${claim.owner_name},\n\nCongratulations! Your ownership claim for ${claim.restaurant_name} has been verified and approved by the MenuMaps team.\n\nClick your exclusive activation link below to set your password and access your verified cafe dashboard:\n${activationUrl}\n\nThis link is securely tied to ${claim.restaurant_name} and will allow you to update digital menus, manage live announcements, view customer order trays, and print QR codes.\n\nBest regards,\nMenuMaps Verification Team\nhttps://menumaps.in`
+                      )}`;
 
-                      {/* Admin Actions */}
-                      <div className="flex items-center gap-2 self-start md:self-auto">
-                        {claim.status === 'pending_admin_approval' && (
-                          <>
-                            <button
-                              onClick={() => handleApproveClaim(claim.id)}
-                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Approve Claim</span>
-                            </button>
-                            <button
-                              onClick={() => handleRejectClaim(claim.id)}
-                              className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-red-50 text-red-600 border border-stone-200 font-bold text-xs transition-colors"
-                            >
-                              <span>Reject</span>
-                            </button>
-                          </>
-                        )}
-                        {claim.status === 'approved' && (
-                          <div className="text-right">
-                            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 inline-block">
-                              Approved • Owner Can Send OTP ({2 - claim.otp_attempts_count} left)
-                            </span>
+                      const waShareUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(
+                        `Hello ${claim.owner_name}! 🎉 Your ownership claim for *${claim.restaurant_name}* on MenuMaps has been approved!\n\nClick your exclusive link to set your password and take ownership of your cafe:\n${activationUrl}`
+                      )}`;
+
+                      return (
+                        <div key={claim.id} className="py-5 flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+                          <div className="space-y-2.5 max-w-2xl flex-1">
+                            {/* Title & Status Badge */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-heading font-black text-base text-slate-900">
+                                {claim.restaurant_name}
+                              </h4>
+                              {claim.status === 'pending_admin_approval' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                                  Pending Verification
+                                </span>
+                              )}
+                              {claim.status === 'approved' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-100 text-blue-800 border border-blue-300">
+                                  Approved • Activation Link Ready
+                                </span>
+                              )}
+                              {claim.status === 'ownership_active' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  ✓ Ownership Active
+                                </span>
+                              )}
+                              {claim.status === 'rejected' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-red-100 text-red-800 border border-red-300">
+                                  Rejected
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Claimant Info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 bg-stone-50 p-3 rounded-2xl border border-stone-200/80">
+                              <div>
+                                <span className="text-stone-400 font-semibold block text-[10px] uppercase tracking-wider">Owner / Claimant</span>
+                                <strong className="text-[#1C1917] font-extrabold">{claim.owner_name}</strong>
+                                {claim.designation && <span className="text-stone-500 ml-1">({claim.designation})</span>}
+                              </div>
+
+                              <div>
+                                <span className="text-stone-400 font-semibold block text-[10px] uppercase tracking-wider">Email Address</span>
+                                <a href={`mailto:${claim.owner_email}`} className="text-[#0F766E] font-bold underline truncate block">
+                                  {claim.owner_email}
+                                </a>
+                              </div>
+
+                              <div>
+                                <span className="text-stone-400 font-semibold block text-[10px] uppercase tracking-wider">Mobile / WhatsApp</span>
+                                <a href={`https://wa.me/${waPhone}`} target="_blank" rel="noopener noreferrer" className="text-emerald-700 font-bold hover:underline">
+                                  {claim.phone_number}
+                                </a>
+                              </div>
+
+                              <div>
+                                <span className="text-stone-400 font-semibold block text-[10px] uppercase tracking-wider">Document Type</span>
+                                <span className="font-bold text-stone-800 uppercase">{claim.proof_type}</span>
+                                {claim.proof_reference && <span className="text-stone-500 ml-1">({claim.proof_reference})</span>}
+                              </div>
+                            </div>
+
+                            {/* 1 to 3 Evidence Images Preview */}
+                            {claim.evidence_images && claim.evidence_images.length > 0 && (
+                              <div className="space-y-1.5 pt-1">
+                                <span className="text-[11px] font-black uppercase tracking-wider text-stone-500 flex items-center gap-1">
+                                  <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Uploaded Evidence Documents ({claim.evidence_images.length}) - Tap to Inspect</span>
+                                </span>
+                                <div className="flex items-center gap-2.5 overflow-x-auto py-1">
+                                  {claim.evidence_images.map((imgUrl, imgIdx) => (
+                                    <div
+                                      key={imgIdx}
+                                      onClick={() => setEvidencePreviewImage(imgUrl)}
+                                      className="relative w-24 h-18 rounded-xl overflow-hidden border-2 border-stone-200 hover:border-[#0F766E] cursor-pointer group shadow-2xs shrink-0 bg-stone-100 transition-all"
+                                    >
+                                      <img
+                                        src={imgUrl}
+                                        alt={`Proof ${imgIdx + 1}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                      />
+                                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Eye className="w-4 h-4 text-white" />
+                                      </div>
+                                      <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/75 text-[9px] font-bold text-white">
+                                        Doc #{imgIdx + 1}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {claim.message && (
+                              <p className="text-[11px] text-slate-600 italic bg-amber-50/60 p-2.5 rounded-xl border border-amber-200">
+                                "{claim.message}"
+                              </p>
+                            )}
+
+                            {/* Active Link Box for Approved Claims */}
+                            {claim.status === 'approved' && activationUrl && (
+                              <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 space-y-2">
+                                <div className="flex items-center justify-between text-xs font-black text-teal-950">
+                                  <span>Dedicated Activation Link for {claim.owner_name}:</span>
+                                  <span className="text-[10px] text-teal-700 bg-white px-2 py-0.5 rounded-md border border-teal-200 font-bold">
+                                    Single-Use Cafe Lock
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-teal-200 text-xs text-stone-700 font-mono truncate">
+                                  <span className="truncate flex-1">{activationUrl}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(activationUrl);
+                                      setCopiedClaimLinkId(claim.id);
+                                      showToast('Activation link copied!', 'success');
+                                      setTimeout(() => setCopiedClaimLinkId(null), 2500);
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-[#0F766E] hover:bg-[#0D9488] text-white text-[11px] font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+                                  >
+                                    {copiedClaimLinkId === claim.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                    <span>{copiedClaimLinkId === claim.id ? 'Copied' : 'Copy Link'}</span>
+                                  </button>
+                                </div>
+
+                                {/* Direct Dispatch Shortcuts */}
+                                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                  <a
+                                    href={mailtoUrl}
+                                    className="px-3 py-1.5 rounded-xl bg-white border border-teal-300 text-teal-950 font-bold text-xs flex items-center gap-1.5 hover:bg-teal-100 transition-colors"
+                                  >
+                                    <Mail className="w-3.5 h-3.5 text-[#0F766E]" />
+                                    <span>Send Link via Email ({claim.owner_email})</span>
+                                  </a>
+                                  <a
+                                    href={waShareUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+                                  >
+                                    <MessageSquare className="w-3.5 h-3.5 fill-white" />
+                                    <span>Send via WhatsApp</span>
+                                  </a>
+                                </div>
+                              </div>
+                            )}
+
+                            <p className="text-[11px] text-slate-400">
+                              Submitted on {new Date(claim.created_at).toLocaleString()}
+                              {claim.admin_notes && ` • Notes: ${claim.admin_notes}`}
+                            </p>
                           </div>
-                        )}
-                        {claim.status === 'ownership_active' && (
-                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 inline-block">
-                            Active & Logged In
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+
+                          {/* Admin Actions */}
+                          <div className="flex items-center gap-2 self-start lg:self-auto shrink-0 pt-2 lg:pt-0">
+                            {claim.status === 'pending_admin_approval' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveClaim(claim.id)}
+                                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Approve & Generate Link</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectClaim(claim.id)}
+                                  className="px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-red-50 text-red-600 border border-stone-200 font-bold text-xs transition-colors cursor-pointer"
+                                >
+                                  <span>Reject</span>
+                                </button>
+                              </>
+                            )}
+                            {claim.status === 'approved' && (
+                              <div className="flex flex-col gap-1 items-end">
+                                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 inline-block">
+                                  Approved • Invitation Active
+                                </span>
+                              </div>
+                            )}
+                            {claim.status === 'ownership_active' && (
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 inline-block">
+                                Active & Logged In
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
@@ -5513,6 +5685,40 @@ Return ONLY a valid JSON object matching the exact MenuMap database schema below
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Evidence Full-Screen Lightbox Preview */}
+      {evidencePreviewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          onClick={() => setEvidencePreviewImage(null)}
+        >
+          <div
+            className="max-w-4xl w-full bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-4 border-b border-white/10">
+              <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-emerald-400" />
+                <span>Submitted Ownership Evidence Document</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setEvidencePreviewImage(null)}
+                className="text-stone-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[80vh] flex items-center justify-center p-3 bg-black">
+              <img
+                src={evidencePreviewImage}
+                alt="Evidence Fullscreen"
+                className="max-h-[75vh] w-auto object-contain rounded-xl"
+              />
             </div>
           </div>
         </div>
