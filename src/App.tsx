@@ -102,31 +102,33 @@ function AppContent() {
     }
   }, [currentPath]);
 
-  // Route Dispatcher
+  // Route Dispatcher with normalized path matching (handles trailing slashes & case-insensitivity)
   const renderRoute = () => {
+    const normPath = (currentPath.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/').toLowerCase();
+
     // 1. Admin panel
-    if (currentPath === '/admin-secure-panel2010') {
+    if (normPath === '/admin-secure-panel2010') {
       return <AdminPanel navigate={navigate} />;
     }
 
     // 1b. Restaurant Owner Portal & Login
-    if (currentPath === '/owner/login') {
+    if (normPath === '/owner/login') {
       return <OwnerLogin navigate={navigate} />;
     }
-    if (currentPath === '/owner/dashboard') {
+    if (normPath === '/owner/dashboard') {
       return <OwnerDashboard navigate={navigate} />;
     }
-    if (currentPath === '/list-cafe' || currentPath === '/create-cafe') {
+    if (normPath === '/list-cafe' || normPath === '/create-cafe') {
       return <ListCafe navigate={navigate} />;
     }
 
     // 2. Home
-    if (currentPath === '/' || currentPath === '') {
+    if (normPath === '/' || normPath === '') {
       return <Home navigate={navigate} />;
     }
 
     // 3. Search
-    if (currentPath === '/search') {
+    if (normPath === '/search') {
       return (
         <Search
           navigate={navigate}
@@ -137,81 +139,83 @@ function AppContent() {
     }
 
     // 4. Restaurants Directory & Unified Explore
-    if (currentPath === '/restaurants') {
+    if (normPath === '/restaurants') {
       return <RestaurantsList navigate={navigate} initialMode="explore" />;
     }
 
     // 5. Restaurant Detail: /restaurant/[slug] (Full backward compatibility for all previously shared links)
-    if (currentPath.startsWith('/restaurant/')) {
-      const cleanPart = currentPath.slice('/restaurant/'.length).split('/')[0].split('?')[0].split('#')[0];
-      const slug = decodeURIComponent(cleanPart.trim());
+    if (normPath.startsWith('/restaurant/')) {
+      const slug = normPath.slice('/restaurant/'.length).split('/')[0].trim();
       if (slug) {
         return <RestaurantDetail slug={slug} navigate={navigate} />;
       }
     }
 
     // 6. Food Detail: /food/[itemSlug]
-    if (currentPath.startsWith('/food/')) {
-      const cleanPart = currentPath.slice('/food/'.length).split('/')[0].split('?')[0].split('#')[0];
-      const slug = decodeURIComponent(cleanPart.trim());
+    if (normPath.startsWith('/food/')) {
+      const slug = normPath.slice('/food/'.length).split('/')[0].trim();
       return <FoodDetail slug={slug} navigate={navigate} />;
     }
 
     // 7. Iconic Area Food Guides (/iconic-area, /iconic-areas & legacy /collections)
-    if (currentPath === '/iconic-area' || currentPath === '/iconic-areas' || currentPath === '/collections') {
+    if (normPath === '/iconic-area' || normPath === '/iconic-areas' || normPath === '/collections') {
       return <CollectionsList navigate={navigate} />;
     }
 
     // 8. Iconic Area Detail: /iconic-area/[slug], /iconic-areas/[slug], /collection/[slug]
-    if (currentPath.startsWith('/iconic-area/')) {
-      const cleanPart = currentPath.slice('/iconic-area/'.length).split('/')[0].split('?')[0].split('#')[0];
-      const slug = decodeURIComponent(cleanPart.trim());
+    if (normPath.startsWith('/iconic-area/')) {
+      const slug = normPath.slice('/iconic-area/'.length).split('/')[0].trim();
       return <CollectionDetail slug={slug} navigate={navigate} />;
     }
-    if (currentPath.startsWith('/iconic-areas/')) {
-      const cleanPart = currentPath.slice('/iconic-areas/'.length).split('/')[0].split('?')[0].split('#')[0];
-      const slug = decodeURIComponent(cleanPart.trim());
+    if (normPath.startsWith('/iconic-areas/')) {
+      const slug = normPath.slice('/iconic-areas/'.length).split('/')[0].trim();
       return <CollectionDetail slug={slug} navigate={navigate} />;
     }
-    if (currentPath.startsWith('/collection/')) {
-      const cleanPart = currentPath.slice('/collection/'.length).split('/')[0].split('?')[0].split('#')[0];
-      const slug = decodeURIComponent(cleanPart.trim());
+    if (normPath.startsWith('/collection/')) {
+      const slug = normPath.slice('/collection/'.length).split('/')[0].trim();
       return <CollectionDetail slug={slug} navigate={navigate} />;
     }
 
     // 9. Nearby (Unified with Explore Discovery)
-    if (currentPath === '/nearby') {
+    if (normPath === '/nearby') {
       return <RestaurantsList navigate={navigate} initialMode="near_me" />;
     }
 
     // 10. Bookmarks
-    if (currentPath === '/bookmarks') {
+    if (normPath === '/bookmarks') {
       return <Bookmarks navigate={navigate} />;
     }
 
     // 11. Static Pages
-    if (currentPath === '/about') {
+    if (normPath === '/about') {
       return <StaticPage type="about" navigate={navigate} />;
     }
-    if (currentPath === '/contact') {
+    if (normPath === '/contact') {
       return <StaticPage type="contact" navigate={navigate} />;
     }
-    if (currentPath === '/terms') {
+    if (normPath === '/terms') {
       return <StaticPage type="terms" navigate={navigate} />;
     }
-    if (currentPath === '/privacy') {
+    if (normPath === '/privacy') {
       return <StaticPage type="privacy" navigate={navigate} />;
     }
 
     // 11.5. Exclusive Cafe Ownership Activation Route: /claim-verify
-    if (currentPath === '/claim-verify') {
+    if (normPath === '/claim-verify') {
       return <ClaimVerify navigate={navigate} searchParams={searchParams} />;
     }
 
     // 12. Direct Clean Restaurant Slug Route: /:slug (e.g. /the-pizza-family)
-    const directSlugRaw = currentPath.replace(/^\/+/, '').split('/')[0].split('?')[0].split('#')[0];
-    const directSlug = decodeURIComponent(directSlugRaw.trim());
-    if (directSlug && directSlug.length > 0) {
+    const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
+    const RESERVED_ROUTES = new Set([
+      'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
+      'restaurants', 'restaurant', 'food', 'iconic-area', 'iconic-areas',
+      'collections', 'collection', 'nearby', 'bookmarks', 'about', 'contact',
+      'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
+      'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
+    ]);
+
+    if (directSlug && !RESERVED_ROUTES.has(directSlug)) {
       return <RestaurantDetail slug={directSlug} navigate={navigate} />;
     }
 

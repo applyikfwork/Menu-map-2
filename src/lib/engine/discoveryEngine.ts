@@ -135,7 +135,10 @@ export class CentralDiscoveryEngine {
     this.restaurantsBySlug.clear();
     for (const r of restaurants) {
       this.restaurantsById.set(r.id, r);
-      if (r.slug) this.restaurantsBySlug.set(r.slug, r);
+      if (r.slug) {
+        this.restaurantsBySlug.set(r.slug, r);
+        this.restaurantsBySlug.set(r.slug.toLowerCase().trim(), r);
+      }
     }
 
     this.dishesById.clear();
@@ -169,12 +172,22 @@ export class CentralDiscoveryEngine {
     return this.isHydrated;
   }
 
+  public upsertRestaurant(r: Restaurant): void {
+    this.restaurantsById.set(r.id, r);
+    if (r.slug) {
+      this.restaurantsBySlug.set(r.slug, r);
+      this.restaurantsBySlug.set(r.slug.toLowerCase().trim(), r);
+    }
+  }
+
   public getRestaurantById(id: string): Restaurant | undefined {
     return this.restaurantsById.get(id);
   }
 
   public getRestaurantBySlug(slug: string): Restaurant | undefined {
-    return this.restaurantsBySlug.get(slug);
+    if (!slug) return undefined;
+    const clean = slug.toLowerCase().trim();
+    return this.restaurantsBySlug.get(slug) || this.restaurantsBySlug.get(clean);
   }
 
   public getDishById(id: string): MenuItem | undefined {

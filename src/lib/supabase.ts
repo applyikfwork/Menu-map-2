@@ -25,6 +25,7 @@ import {
   GalleryCategory,
 } from '../types/database';
 import { AREA_FOOD_GUIDES } from './areaGuidesData';
+import { discoveryEngine } from './engine/discoveryEngine';
 
 export const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
 
@@ -158,12 +159,20 @@ export async function ensureSeedInitialized(): Promise<void> {
         const data = generateSeedData();
         // Retain any existing map_profile_done progress during re-seed
         const doneIds = new Set(getStoredMapDoneIds());
+        // Preserve any custom user-created restaurants already in localStorage
+        const customCafes = Array.isArray(parsed)
+          ? parsed.filter((r) => r && (r.is_claimed || r.email || !data.restaurants.some((sr) => sr.id === r.id)))
+          : [];
         const seededRestaurants = data.restaurants.map((r) => ({
           ...enrichRestaurant(r),
           map_profile_done: Boolean(r.map_profile_done || doneIds.has(r.id)),
         }));
+        const combinedRestaurants = [
+          ...customCafes,
+          ...seededRestaurants.filter((sr) => !customCafes.some((cr) => cr.id === sr.id)),
+        ];
 
-        localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(seededRestaurants));
+        localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(combinedRestaurants));
         localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_categories`, JSON.stringify(data.categories));
         localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(data.menuItems.map((i) => enrichMenuItem(i))));
         localStorage.setItem(`${STORAGE_PREFIX}tbl_collections`, JSON.stringify(data.collections));
@@ -518,35 +527,68 @@ export const api = {
   },
 
   async getRestaurantBySlug(slug: string): Promise<Restaurant | null> {
+    if (!slug) return null;
     await ensureSeedInitialized();
+    const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('restaurants').select('*').eq('slug', slug).single();
-        if (!error && data && data.id) return enrichRestaurant(data as Restaurant);
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .ilike('slug', cleanSlug)
+          .maybeSingle();
+        if (!error && data && data.id) {
+          const enriched = enrichRestaurant(data as Restaurant);
+          discoveryEngine.upsertRestaurant(enriched);
+          return enriched;
+        }
       } catch (e) {
         // fallback
       }
     }
     const list = loadTable<Restaurant>('restaurants');
-    const match = list.find((r) => r.slug === slug);
-    return match ? enrichRestaurant(match) : null;
+    const match = list.find((r) => {
+      const rSlug = (r.slug || '').toLowerCase().trim();
+      return rSlug === cleanSlug || r.id === cleanSlug || r.slug === slug;
+    });
+    if (match) {
+      const enriched = enrichRestaurant(match);
+      discoveryEngine.upsertRestaurant(enriched);
+      return enriched;
+    }
+    return null;
   },
 
   async getRestaurantById(id: string): Promise<Restaurant | null> {
+    if (!id) return null;
     await ensureSeedInitialized();
+    const cleanId = id.trim();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('restaurants').select('*').eq('id', id).single();
-        if (!error && data && data.id) return enrichRestaurant(data as Restaurant);
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', cleanId)
+          .maybeSingle();
+        if (!error && data && data.id) {
+          const enriched = enrichRestaurant(data as Restaurant);
+          discoveryEngine.upsertRestaurant(enriched);
+          return enriched;
+        }
       } catch (e) {
         // fallback
       }
     }
     const list = loadTable<Restaurant>('restaurants');
-    const match = list.find((r) => r.id === id);
-    return match ? enrichRestaurant(match) : null;
+    const match = list.find((r) => r.id === cleanId);
+    if (match) {
+      const enriched = enrichRestaurant(match);
+      discoveryEngine.upsertRestaurant(enriched);
+      return enriched;
+    }
+    return null;
   },
 
   async saveRestaurant(restaurant: Partial<Restaurant>): Promise<Restaurant> {
@@ -681,6 +723,14 @@ export const api = {
     } catch (e) {
       // non-blocking
     }
+
+    // Sync in-memory CentralDiscoveryEngine cache immediately
+    try {
+      discoveryEngine.upsertRestaurant(enrichRestaurant(record));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('menumap_restaurant_saved', { detail: record }));
+      }
+    } catch (e) {}
 
     return record;
   },
@@ -2687,6 +2737,8 @@ export const api = {
       dine_in_available: true,
       takeaway_available: true,
       delivery_available: true,
+      known_for_dishes: [cafeName + ' House Special', 'Counter Signature Combo'],
+      specialty_dishes: [cafeName + ' Chef Platter'],
       rating_avg: 4.5,
       rating_count: 1,
     };
@@ -2769,6 +2821,103 @@ export const api = {
       restaurant: savedRestaurant,
       owner: ownerAccount,
     };
+  },
+
+  // --------------------------------------------------------------------------
+  // MANDATORY EMAIL OTP VERIFICATION FOR CAFE ONBOARDING
+  // --------------------------------------------------------------------------
+  async sendOwnerEmailVerificationOtp(email: string): Promise<{ success: boolean; error?: string; devOtp?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins validity
+    const record = {
+      id: crypto.randomUUID(),
+      email: cleanEmail,
+      otp_code: otpCode,
+      is_verified: false,
+      expires_at: expiresAt,
+      created_at: new Date().toISOString(),
+    };
+
+    // Store in localStorage for instant offline/browser fallback
+    const key = `${STORAGE_PREFIX}email_otp_${cleanEmail}`;
+    try {
+      localStorage.setItem(key, JSON.stringify(record));
+    } catch (e) {}
+
+    // Store in Supabase email_verifications table
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('email_verifications').insert(record);
+      } catch (e) {
+        console.warn('Supabase email_verifications insert notice:', e);
+      }
+    }
+
+    console.log(`[MenuMaps Auth] Verification OTP for ${cleanEmail}: ${otpCode}`);
+    return { success: true, devOtp: otpCode };
+  },
+
+  async verifyOwnerEmailOtp(email: string, code: string): Promise<{ success: boolean; error?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    if (!cleanCode || cleanCode.length < 4) {
+      return { success: false, error: 'Please enter a valid verification code.' };
+    }
+
+    const key = `${STORAGE_PREFIX}email_otp_${cleanEmail}`;
+    let matched = false;
+
+    // Check localStorage
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const stored = JSON.parse(raw);
+        if (stored.otp_code === cleanCode) {
+          const isExpired = new Date(stored.expires_at).getTime() < Date.now();
+          if (!isExpired) {
+            matched = true;
+            stored.is_verified = true;
+            localStorage.setItem(key, JSON.stringify(stored));
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Check Supabase
+    const supabase = getSupabaseClient();
+    if (!matched && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('email_verifications')
+          .select('*')
+          .ilike('email', cleanEmail)
+          .eq('otp_code', cleanCode)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) {
+          const isExpired = new Date(data.expires_at).getTime() < Date.now();
+          if (!isExpired) {
+            matched = true;
+            await supabase.from('email_verifications').update({ is_verified: true }).eq('id', data.id);
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (matched) {
+      return { success: true };
+    } else {
+      return { success: false, error: 'Invalid or expired verification code. Please check or request a new code.' };
+    }
   },
 };
 

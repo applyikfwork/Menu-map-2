@@ -685,8 +685,8 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
     );
   }
 
-  // Direct clean root URL: https://menumaps.in/${slug}
-  const cleanPublicUrl = `${window.location.origin}/${restaurant.slug}`;
+  // Canonical verified URL: https://menumaps.in/restaurant/${slug}
+  const cleanPublicUrl = `${window.location.origin}/restaurant/${restaurant.slug}`;
 
   // Filtered dishes for menu list
   const filteredDishes = menuItems.filter((item) => {

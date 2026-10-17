@@ -70,13 +70,30 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
   const [submitting, setSubmitting] = useState(false);
 
   // --------------------------------------------------------------------------
-  // STEP 1: OWNER EMAIL AUTHENTICATION
+  // STEP 1: OWNER EMAIL AUTHENTICATION & MANDATORY OTP VERIFICATION
   // --------------------------------------------------------------------------
   const [ownerName, setOwnerName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPhone, setOwnerPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Mandatory Email Verification State
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [inputOtp, setInputOtp] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    let timer: any;
+    if (otpCountdown > 0) {
+      timer = setInterval(() => setOtpCountdown((c) => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpCountdown]);
 
   // --------------------------------------------------------------------------
   // STEP 2: CORE CAFE DETAILS ONLY (NO MENU REQUIRED)
@@ -114,6 +131,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
     const active = getCurrentOwnerSession();
     if (active) {
       setExistingSession(active);
+      setIsEmailVerified(true);
       setOwnerName(active.owner_name || '');
       setOwnerEmail(active.owner_email || '');
       setOwnerPhone(active.phone_number || '');
@@ -121,6 +139,54 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
       setWhatsappOrderNumber(active.phone_number || '');
     }
   }, []);
+
+  const handleSendOtp = async () => {
+    const clean = ownerEmail.trim().toLowerCase();
+    if (!clean || !clean.includes('@') || !clean.includes('.')) {
+      showToast('Please enter a valid email address before requesting OTP.', 'error');
+      return;
+    }
+    setSendingOtp(true);
+    setDevOtpHint(null);
+    try {
+      const res = await api.sendOwnerEmailVerificationOtp(clean);
+      if (res.success) {
+        setOtpSent(true);
+        setOtpCountdown(60);
+        if (res.devOtp) {
+          setDevOtpHint(res.devOtp);
+        }
+        showToast(`Verification code sent to ${clean}. Check your inbox or spam folder.`, 'success');
+      } else {
+        showToast(res.error || 'Failed to send OTP code. Try again.', 'error');
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Error sending verification code.', 'error');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!inputOtp.trim()) {
+      showToast('Please enter the 6-digit verification code.', 'error');
+      return;
+    }
+    setVerifyingOtp(true);
+    try {
+      const res = await api.verifyOwnerEmailOtp(ownerEmail, inputOtp);
+      if (res.success) {
+        setIsEmailVerified(true);
+        showToast('✓ Official email successfully verified!', 'success');
+      } else {
+        showToast(res.error || 'Invalid or expired verification code.', 'error');
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Error verifying OTP code.', 'error');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +201,13 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
     }
     if (!ownerEmail.trim() || !ownerEmail.includes('@') || !ownerEmail.includes('.')) {
       showToast('Please enter a valid business or personal email address.', 'error');
+      return;
+    }
+    if (!isEmailVerified) {
+      showToast('Mandatory email verification: Please verify your email with the 6-digit OTP code before proceeding.', 'error');
+      if (!otpSent) {
+        handleSendOtp();
+      }
       return;
     }
     if (!ownerPhone.trim() || ownerPhone.replace(/\D/g, '').length < 10) {
@@ -203,6 +276,11 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
 
   const handleCreateCafe = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!existingSession && !isEmailVerified) {
+      showToast('Mandatory email verification: Please verify your email in Step 1 first.', 'error');
+      setStep(1);
+      return;
+    }
     if (!cafeName.trim()) {
       showToast('Please enter your cafe or restaurant name.', 'error');
       return;
@@ -361,20 +439,89 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-wider text-stone-700 mb-1.5">
-                    Official Email Address <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-stone-400 absolute left-4 top-3.5" />
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-black uppercase tracking-wider text-stone-700">
+                      Official Email Address <span className="text-rose-500">*</span>
+                    </label>
+                    {isEmailVerified ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        Verified
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        OTP Verification Required
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative flex items-center">
+                    <Mail className="w-4 h-4 text-stone-400 absolute left-4" />
                     <input
                       type="email"
                       required
+                      disabled={isEmailVerified}
                       placeholder="owner@cafe.com"
                       value={ownerEmail}
-                      onChange={(e) => setOwnerEmail(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 rounded-2xl border border-stone-300 focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 text-sm font-semibold outline-hidden"
+                      onChange={(e) => {
+                        setOwnerEmail(e.target.value);
+                        setIsEmailVerified(false);
+                        setOtpSent(false);
+                        setInputOtp('');
+                      }}
+                      className={`w-full pl-11 pr-26 py-3 rounded-2xl border text-sm font-semibold outline-hidden ${
+                        isEmailVerified
+                          ? 'bg-emerald-50/50 border-emerald-300 text-emerald-950 font-bold'
+                          : 'border-stone-300 focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20'
+                      }`}
                     />
+                    {!isEmailVerified && (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={sendingOtp || !ownerEmail.includes('@') || otpCountdown > 0}
+                        className="absolute right-2 px-3 py-1.5 rounded-xl bg-[#1C1917] hover:bg-black text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {sendingOtp ? 'Sending…' : otpCountdown > 0 ? `${otpCountdown}s` : otpSent ? 'Resend' : 'Send OTP'}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Interactive OTP Verification Box */}
+                  {otpSent && !isEmailVerified && (
+                    <div className="mt-3 p-3.5 bg-orange-50 border border-orange-200 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-stone-800">
+                          Enter 6-Digit OTP:
+                        </span>
+                        {devOtpHint && (
+                          <span className="text-[11px] font-mono font-bold text-orange-700 bg-white px-2 py-0.5 rounded border border-orange-200">
+                            Code: {devOtpHint}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          placeholder="123456"
+                          value={inputOtp}
+                          onChange={(e) => setInputOtp(e.target.value.replace(/\D/g, ''))}
+                          className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded-xl text-center font-mono font-black text-base tracking-widest focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={verifyingOtp || inputOtp.length < 4}
+                          className="px-4 py-2 rounded-xl bg-[#FF5A36] hover:bg-[#e04826] text-white text-xs font-black transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                          {verifyingOtp ? 'Verifying…' : 'Verify'}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-stone-500">
+                        Check your email inbox or spam folder. {otpCountdown > 0 && `Resend available in ${otpCountdown}s.`}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -444,9 +591,13 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
 
                 <button
                   type="submit"
-                  className="px-7 py-3.5 rounded-full bg-[#1C1917] hover:bg-black text-white font-black text-sm flex items-center gap-2 shadow-lg transition-all hover:scale-102 active:scale-95 cursor-pointer"
+                  className={`px-7 py-3.5 rounded-full font-black text-sm flex items-center gap-2 shadow-lg transition-all ${
+                    isEmailVerified
+                      ? 'bg-[#1C1917] hover:bg-black text-white hover:scale-102 active:scale-95 cursor-pointer'
+                      : 'bg-[#1C1917] text-white hover:bg-black cursor-pointer'
+                  }`}
                 >
-                  <span>Continue to Cafe Details</span>
+                  <span>{isEmailVerified ? 'Continue to Cafe Details' : 'Verify Email & Continue'}</span>
                   <ArrowRight className="w-4 h-4 text-[#FF5A36]" />
                 </button>
               </div>

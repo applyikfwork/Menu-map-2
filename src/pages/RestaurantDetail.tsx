@@ -157,9 +157,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   }, [slug]);
 
   const loadRestaurantData = async () => {
+    const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
     // Fast in-memory discovery engine cache lookup
-    const cachedRest = engine.getRestaurantBySlug(slug);
-    if (cachedRest && !restaurant) {
+    const cachedRest = engine.getRestaurantBySlug(cleanSlug) || engine.getRestaurantBySlug(slug);
+    if (cachedRest) {
       setRestaurant(cachedRest);
       setBookmarked(isBookmarked('restaurant', cachedRest.id));
       trackView('restaurant', cachedRest.id, cachedRest.name, cachedRest.slug);
@@ -168,7 +169,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     }
 
     try {
-      const rest = await api.getRestaurantBySlug(slug);
+      const rest = (await api.getRestaurantBySlug(cleanSlug)) || (await api.getRestaurantBySlug(slug)) || cachedRest;
       if (!rest) {
         setRestaurant(null);
         return;

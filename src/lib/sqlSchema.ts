@@ -384,11 +384,79 @@ CREATE TABLE IF NOT EXISTS public.restaurant_owners (
 -- Ensure owner columns exist and allow email login
 ALTER TABLE public.restaurant_owners ADD COLUMN IF NOT EXISTS owner_email TEXT;
 ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
-ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
+CREATE INDEX IF NOT EXISTS idx_restaurant_owners_rest_id ON public.restaurant_owners (restaurant_id);
 
+-- 14. Restaurant Announcements Table
+CREATE TABLE IF NOT EXISTS public.restaurant_announcements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  badge TEXT DEFAULT 'Today''s Special',
+  action_label TEXT,
+  action_url TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  starts_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_restaurant_announcements_rest_id ON public.restaurant_announcements (restaurant_id);
+
+-- 15. Restaurant Gallery & Menu Pages Table
+CREATE TABLE IF NOT EXISTS public.restaurant_gallery (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  caption TEXT,
+  category TEXT DEFAULT 'ambiance',
+  uploaded_by TEXT DEFAULT 'owner',
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_restaurant_gallery_rest_id ON public.restaurant_gallery (restaurant_id);
+
+-- 16. Mandatory Email OTP Verifications Table
+CREATE TABLE IF NOT EXISTS public.email_verifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL,
+  otp_code TEXT NOT NULL,
+  is_verified BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON public.email_verifications (LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_email_verifications_code ON public.email_verifications (otp_code);
+
+-- 17. Ensure restaurants table has all ground policies, logo, and verified flags
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS map_profile_done BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS google_maps_url TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS is_claimed BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS metro_station TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS metro_gate TEXT;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS service_charge_percent NUMERIC DEFAULT 0;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS water_policy TEXT DEFAULT 'free_ro';
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS cake_policy TEXT DEFAULT 'free';
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS cake_fee NUMERIC DEFAULT 0;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS wifi_available BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS plug_points_available BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS menu_pages TEXT[] DEFAULT '{}';
+
+-- 18. Enable Row-Level Security
 ALTER TABLE public.restaurant_claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.restaurant_owners ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.restaurant_announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.restaurant_gallery ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.email_verifications ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public and Admin full access on restaurant_claims" ON public.restaurant_claims;
 CREATE POLICY "Public and Admin full access on restaurant_claims" ON public.restaurant_claims
@@ -397,6 +465,32 @@ CREATE POLICY "Public and Admin full access on restaurant_claims" ON public.rest
 DROP POLICY IF EXISTS "Public and Admin full access on restaurant_owners" ON public.restaurant_owners;
 CREATE POLICY "Public and Admin full access on restaurant_owners" ON public.restaurant_owners
   FOR ALL USING (TRUE) WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Public and Admin full access on restaurant_announcements" ON public.restaurant_announcements;
+CREATE POLICY "Public and Admin full access on restaurant_announcements" ON public.restaurant_announcements
+  FOR ALL USING (TRUE) WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Public and Admin full access on restaurant_gallery" ON public.restaurant_gallery;
+CREATE POLICY "Public and Admin full access on restaurant_gallery" ON public.restaurant_gallery
+  FOR ALL USING (TRUE) WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Public and Admin full access on email_verifications" ON public.email_verifications;
+CREATE POLICY "Public and Admin full access on email_verifications" ON public.email_verifications
+  FOR ALL USING (TRUE) WITH CHECK (TRUE);
+
+-- 19. Supabase Storage Buckets for Images & Claim Proofs
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('restaurant-assets', 'restaurant-assets', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('claim-evidence', 'claim-evidence', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Public bucket access restaurant-assets" ON storage.objects;
+CREATE POLICY "Public bucket access restaurant-assets" ON storage.objects
+  FOR ALL USING (bucket_id IN ('restaurant-assets', 'claim-evidence'))
+  WITH CHECK (bucket_id IN ('restaurant-assets', 'claim-evidence'));
 `;
 
 export const OWNERSHIP_CLAIMS_SQL_FEATURE = `-- ========================================================
@@ -463,7 +557,12 @@ CREATE TABLE IF NOT EXISTS public.restaurant_owners (
 -- 5. Upgrade existing restaurant_owners table with email support
 ALTER TABLE public.restaurant_owners ADD COLUMN IF NOT EXISTS owner_email TEXT;
 ALTER TABLE public.restaurant_owners ALTER COLUMN phone_number DROP NOT NULL;
-ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE public.restaurant_owners DROP CONSTRAINT IF EXISTS restaurant_owners_phone_number_key CASCADE;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_email ON public.restaurant_owners (LOWER(owner_email));
 CREATE INDEX IF NOT EXISTS idx_restaurant_owners_rest_id ON public.restaurant_owners (restaurant_id);
 
