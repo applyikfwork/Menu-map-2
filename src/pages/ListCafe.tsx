@@ -20,7 +20,7 @@ import {
   Clock,
   Coffee
 } from 'lucide-react';
-import { api, getCurrentOwnerSession, logoutRestaurantOwner } from '../lib/supabase';
+import { api, getCurrentOwnerSession, logoutRestaurantOwner, getSupabaseClient } from '../lib/supabase';
 import { compressImageFile, CompressionResult } from '../lib/imageCompressor';
 import { useToast } from '../components/Toast';
 import { DietaryOption, RestaurantOwnerAccount } from '../types/database';
@@ -85,7 +85,6 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
-  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
 
   useEffect(() => {
     let timer: any;
@@ -94,6 +93,34 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
     }
     return () => clearInterval(timer);
   }, [otpCountdown]);
+
+  // Listen for Supabase email confirmation link or session updates
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    // Check if user confirmed their email via link
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        if (!ownerEmail || ownerEmail.toLowerCase() === session.user.email.toLowerCase()) {
+          setOwnerEmail(session.user.email);
+          setIsEmailVerified(true);
+        }
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email) {
+        setOwnerEmail(session.user.email);
+        setIsEmailVerified(true);
+        showToast('✓ Email confirmed via Supabase link!', 'success');
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [ownerEmail]);
 
   // --------------------------------------------------------------------------
   // STEP 2: CORE CAFE DETAILS ONLY (NO MENU REQUIRED)
@@ -147,16 +174,12 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
       return;
     }
     setSendingOtp(true);
-    setDevOtpHint(null);
     try {
-      const res = await api.sendOwnerEmailVerificationOtp(clean);
+      const res = await api.sendOwnerEmailVerificationOtp(clean, password);
       if (res.success) {
         setOtpSent(true);
         setOtpCountdown(60);
-        if (res.devOtp) {
-          setDevOtpHint(res.devOtp);
-        }
-        showToast(`Verification code sent to ${clean}. Check your inbox or spam folder.`, 'success');
+        showToast(`✓ Verification code sent to ${clean} via Supabase. Check your inbox.`, 'success');
       } else {
         showToast(res.error || 'Failed to send OTP code. Try again.', 'error');
       }
@@ -177,7 +200,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
       const res = await api.verifyOwnerEmailOtp(ownerEmail, inputOtp);
       if (res.success) {
         setIsEmailVerified(true);
-        showToast('✓ Official email successfully verified!', 'success');
+        showToast('✓ Official email successfully verified via Supabase!', 'success');
       } else {
         showToast(res.error || 'Invalid or expired verification code.', 'error');
       }
@@ -486,40 +509,55 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
                     )}
                   </div>
 
-                  {/* Interactive OTP Verification Box */}
+                  {/* Real Supabase Email OTP Verification Prompt */}
                   {otpSent && !isEmailVerified && (
-                    <div className="mt-3 p-3.5 bg-orange-50 border border-orange-200 rounded-2xl space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-stone-800">
-                          Enter 6-Digit OTP:
-                        </span>
-                        {devOtpHint && (
-                          <span className="text-[11px] font-mono font-bold text-orange-700 bg-white px-2 py-0.5 rounded border border-orange-200">
-                            Code: {devOtpHint}
-                          </span>
-                        )}
+                    <div className="mt-3 p-4 bg-orange-50/70 border border-orange-200/90 rounded-2xl space-y-2.5">
+                      <div className="flex items-start gap-2">
+                        <Mail className="w-4 h-4 text-[#FF5A36] shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-bold text-stone-900 leading-snug">
+                            Supabase sent a 6-digit verification code to <span className="text-[#FF5A36] font-mono">{ownerEmail}</span>
+                          </p>
+                          <p className="text-[11px] text-stone-600 mt-0.5">
+                            Please check your email inbox (and spam/junk folder). Enter the code below or click the confirmation link in your email.
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
+
+                      <div className="flex gap-2 pt-1">
                         <input
                           type="text"
                           maxLength={6}
                           placeholder="123456"
                           value={inputOtp}
                           onChange={(e) => setInputOtp(e.target.value.replace(/\D/g, ''))}
-                          className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded-xl text-center font-mono font-black text-base tracking-widest focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden"
+                          className="flex-1 px-4 py-2.5 bg-white border border-stone-300 rounded-xl text-center font-mono font-black text-base tracking-widest focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden shadow-xs"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyOtp}
                           disabled={verifyingOtp || inputOtp.length < 4}
-                          className="px-4 py-2 rounded-xl bg-[#FF5A36] hover:bg-[#e04826] text-white text-xs font-black transition-all disabled:opacity-50 cursor-pointer"
+                          className="px-5 py-2.5 rounded-xl bg-[#FF5A36] hover:bg-[#e04826] text-white text-xs font-black transition-all disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
                         >
-                          {verifyingOtp ? 'Verifying…' : 'Verify'}
+                          {verifyingOtp ? 'Verifying…' : 'Verify Code'}
                         </button>
                       </div>
-                      <p className="text-[11px] text-stone-500">
-                        Check your email inbox or spam folder. {otpCountdown > 0 && `Resend available in ${otpCountdown}s.`}
-                      </p>
+
+                      <div className="flex items-center justify-between text-[11px] text-stone-500 pt-0.5">
+                        <span>Didn't get the email? Check spam folder</span>
+                        {otpCountdown > 0 ? (
+                          <span className="font-semibold text-stone-600">Resend in {otpCountdown}s</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendOtp}
+                            disabled={sendingOtp}
+                            className="font-bold text-[#FF5A36] hover:underline cursor-pointer"
+                          >
+                            Resend Code
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

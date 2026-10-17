@@ -2824,43 +2824,68 @@ export const api = {
   },
 
   // --------------------------------------------------------------------------
-  // MANDATORY EMAIL OTP VERIFICATION FOR CAFE ONBOARDING
+  // MANDATORY EMAIL OTP VERIFICATION FOR CAFE ONBOARDING (POWERED BY SUPABASE AUTH)
   // --------------------------------------------------------------------------
-  async sendOwnerEmailVerificationOtp(email: string): Promise<{ success: boolean; error?: string; devOtp?: string }> {
+  async sendOwnerEmailVerificationOtp(email: string, passwordCandidate?: string): Promise<{ success: boolean; error?: string }> {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
       return { success: false, error: 'Please enter a valid email address.' };
     }
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins validity
-    const record = {
-      id: crypto.randomUUID(),
-      email: cleanEmail,
-      otp_code: otpCode,
-      is_verified: false,
-      expires_at: expiresAt,
-      created_at: new Date().toISOString(),
-    };
-
-    // Store in localStorage for instant offline/browser fallback
-    const key = `${STORAGE_PREFIX}email_otp_${cleanEmail}`;
-    try {
-      localStorage.setItem(key, JSON.stringify(record));
-    } catch (e) {}
-
-    // Store in Supabase email_verifications table
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('email_verifications').insert(record);
-      } catch (e) {
-        console.warn('Supabase email_verifications insert notice:', e);
+        const pass = passwordCandidate && passwordCandidate.length >= 6
+          ? passwordCandidate
+          : 'MenuMapsOwner2026!#' + Math.random().toString(36).slice(2, 8);
+
+        // 1. Trigger Supabase Auth to send genuine confirmation email with OTP code / verification link
+        const signUpRes = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: pass,
+        });
+
+        if (signUpRes.error) {
+          const errMsg = signUpRes.error.message.toLowerCase();
+          // If already registered or unconfirmed, resend confirmation code
+          if (errMsg.includes('already registered') || errMsg.includes('already in use') || errMsg.includes('exists')) {
+            const resendRes = await supabase.auth.resend({
+              type: 'signup',
+              email: cleanEmail,
+            });
+            if (resendRes.error) {
+              const otpFallback = await supabase.auth.signInWithOtp({
+                email: cleanEmail,
+                options: { shouldCreateUser: true },
+              });
+              if (otpFallback.error) {
+                return { success: false, error: resendRes.error.message || otpFallback.error.message };
+              }
+            }
+          } else {
+            return { success: false, error: signUpRes.error.message };
+          }
+        }
+
+        // Store active verification attempt in email_verifications table for audit
+        try {
+          await supabase.from('email_verifications').insert({
+            id: crypto.randomUUID(),
+            email: cleanEmail,
+            otp_code: 'SUPABASE_AUTH_DISPATCHED',
+            is_verified: false,
+            expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+            created_at: new Date().toISOString(),
+          });
+        } catch (dbErr) {}
+
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Failed to send Supabase verification email.' };
       }
     }
 
-    console.log(`[MenuMaps Auth] Verification OTP for ${cleanEmail}: ${otpCode}`);
-    return { success: true, devOtp: otpCode };
+    return { success: false, error: 'Supabase cloud client is not connected.' };
   },
 
   async verifyOwnerEmailOtp(email: string, code: string): Promise<{ success: boolean; error?: string }> {
@@ -2868,56 +2893,51 @@ export const api = {
     const cleanCode = code.trim();
 
     if (!cleanCode || cleanCode.length < 4) {
-      return { success: false, error: 'Please enter a valid verification code.' };
+      return { success: false, error: 'Please enter the verification code sent to your email.' };
     }
 
-    const key = `${STORAGE_PREFIX}email_otp_${cleanEmail}`;
-    let matched = false;
-
-    // Check localStorage
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const stored = JSON.parse(raw);
-        if (stored.otp_code === cleanCode) {
-          const isExpired = new Date(stored.expires_at).getTime() < Date.now();
-          if (!isExpired) {
-            matched = true;
-            stored.is_verified = true;
-            localStorage.setItem(key, JSON.stringify(stored));
-          }
-        }
-      }
-    } catch (e) {}
-
-    // Check Supabase
     const supabase = getSupabaseClient();
-    if (!matched && supabase) {
+    if (supabase) {
       try {
-        const { data, error } = await supabase
-          .from('email_verifications')
-          .select('*')
-          .ilike('email', cleanEmail)
-          .eq('otp_code', cleanCode)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // 1. Verify via Supabase Auth signup type (matches signUp and resend)
+        let { data, error } = await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: cleanCode,
+          type: 'signup',
+        });
 
-        if (!error && data) {
-          const isExpired = new Date(data.expires_at).getTime() < Date.now();
-          if (!isExpired) {
-            matched = true;
-            await supabase.from('email_verifications').update({ is_verified: true }).eq('id', data.id);
+        // 2. If signup type returned an error, attempt email type (matches signInWithOtp)
+        if (error) {
+          const retry = await supabase.auth.verifyOtp({
+            email: cleanEmail,
+            token: cleanCode,
+            type: 'email',
+          });
+          if (!retry.error && (retry.data?.user || retry.data?.session)) {
+            data = retry.data;
+            error = null;
           }
         }
-      } catch (e) {}
+
+        if (!error && (data?.user || data?.session)) {
+          // Mark verification in audit table
+          try {
+            await supabase.from('email_verifications').update({ is_verified: true }).ilike('email', cleanEmail);
+          } catch (e) {}
+
+          return { success: true };
+        }
+
+        return {
+          success: false,
+          error: error?.message || 'Invalid or expired verification code. Please check your email or click Resend OTP.',
+        };
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Error verifying code with Supabase.' };
+      }
     }
 
-    if (matched) {
-      return { success: true };
-    } else {
-      return { success: false, error: 'Invalid or expired verification code. Please check or request a new code.' };
-    }
+    return { success: false, error: 'Supabase client unavailable.' };
   },
 };
 
