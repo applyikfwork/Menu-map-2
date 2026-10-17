@@ -2933,7 +2933,7 @@ export const api = {
     const cleanCode = code.trim();
 
     if (!cleanCode || cleanCode.length < 4) {
-      return { success: false, error: 'Please enter the 6-digit verification code.' };
+      return { success: false, error: 'Please enter the verification code sent to your email.' };
     }
 
     const supabase = getSupabaseClient();

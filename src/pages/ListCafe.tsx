@@ -192,7 +192,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
 
   const handleVerifyOtp = async () => {
     if (!inputOtp.trim()) {
-      showToast('Please enter the 6-digit verification code.', 'error');
+      showToast('Please enter the verification code sent to your email.', 'error');
       return;
     }
     setVerifyingOtp(true);
@@ -227,7 +227,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
       return;
     }
     if (!isEmailVerified) {
-      showToast('Mandatory email verification: Please verify your email with the 6-digit OTP code before proceeding.', 'error');
+      showToast('Mandatory email verification: Please enter the verification code sent to your email before proceeding.', 'error');
       if (!otpSent) {
         handleSendOtp();
       }
@@ -519,7 +519,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
                             Supabase confirmation email sent to <span className="text-[#FF5A36] font-mono">{ownerEmail}</span>
                           </p>
                           <p className="text-[11px] text-stone-600 mt-1">
-                            Please check your email inbox (and spam/junk folder) for your 6-digit verification code or click the confirmation link.
+                            Please check your email inbox (and spam/junk folder) for your verification code or click the confirmation link.
                           </p>
                         </div>
                       </div>
@@ -527,11 +527,11 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
                       <div className="flex gap-2 pt-1">
                         <input
                           type="text"
-                          maxLength={6}
-                          placeholder="123456"
+                          maxLength={10}
+                          placeholder="Enter Code"
                           value={inputOtp}
-                          onChange={(e) => setInputOtp(e.target.value.replace(/\D/g, ''))}
-                          className="flex-1 px-4 py-2.5 bg-white border border-stone-300 rounded-xl text-center font-mono font-black text-base tracking-widest focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden shadow-xs"
+                          onChange={(e) => setInputOtp(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          className="flex-1 px-4 py-2.5 bg-white border border-stone-300 rounded-xl text-center font-mono font-black text-lg tracking-widest focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden shadow-xs"
                         />
                         <button
                           type="button"
