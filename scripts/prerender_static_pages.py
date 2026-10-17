@@ -35,7 +35,6 @@ def main():
     # 1. EXTRACT ALL RESTAURANTS FROM VENUE REPOSITORIES
     # -------------------------------------------------------------
     venue_files = [
-        'src/lib/sample50Cafes.ts',
         'src/lib/northCampusDuVenues.ts',
         'src/lib/extraZoneVenues.ts',
         'src/lib/newDelhiVenues.ts',

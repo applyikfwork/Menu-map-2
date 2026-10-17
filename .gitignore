@@ -7,3 +7,8 @@ coverage/
 .env*
 !.env.example
 temp_zip/
+__pycache__/
+*.pyc
+*.pyo
+.cache/
+scratch/

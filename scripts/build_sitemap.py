@@ -7,7 +7,6 @@ DOMAIN = "https://menumaps.in"
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
 venue_files = [
-    'src/lib/sample50Cafes.ts',
     'src/lib/northCampusDuVenues.ts',
     'src/lib/extraZoneVenues.ts',
     'src/lib/newDelhiVenues.ts',
