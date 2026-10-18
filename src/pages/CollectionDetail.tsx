@@ -73,6 +73,35 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedSpotlightDish, setSelectedSpotlightDish] = useState<FamousDishSpotlight | null>(null);
 
+  // Distance from user's current GPS to this area
+  const userDistanceKm = useMemo(() => {
+    if (!userCoords || !collection?.area_metadata?.latitude || !collection?.area_metadata?.longitude) {
+      return null;
+    }
+    return calculateDistanceKm(
+      userCoords.latitude,
+      userCoords.longitude,
+      collection.area_metadata.latitude,
+      collection.area_metadata.longitude
+    );
+  }, [userCoords, collection]);
+
+  // Other nearby iconic areas sorted by distance
+  const otherGuides = useMemo(() => {
+    return AREA_FOOD_GUIDES.filter((g) => g.slug !== slug).map((g) => {
+      let dist: number | undefined = undefined;
+      if (userCoords && g.area_metadata?.latitude && g.area_metadata?.longitude) {
+        dist = calculateDistanceKm(userCoords.latitude, userCoords.longitude, g.area_metadata.latitude, g.area_metadata.longitude);
+      }
+      return { ...g, distanceKm: dist };
+    }).sort((a, b) => {
+      if (typeof a.distanceKm === 'number' && typeof b.distanceKm === 'number') {
+        return a.distanceKm - b.distanceKm;
+      }
+      return 0;
+    });
+  }, [userCoords, slug]);
+
   useEffect(() => {
     loadCollectionData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -427,6 +456,13 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
         </button>
 
         <div className="flex items-center gap-2">
+          {userDistanceKm !== null && (
+            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100/90 text-[#D8350F] text-xs font-bold border border-orange-200 shadow-2xs">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{formatDistance(userDistanceKm)} away</span>
+            </span>
+          )}
+
           <button
             type="button"
             onClick={handleBookmarkToggle}
@@ -452,6 +488,38 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
       </div>
 
       {/* ========================================================================= */}
+      {/* QUICK-SWITCHER STRIP: JUMP TO OTHER NEARBY HUBS */}
+      {/* ========================================================================= */}
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-2 overflow-x-auto no-scrollbar flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate('/iconic-area')}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#D8350F] text-xs font-bold transition-all cursor-pointer shadow-2xs"
+        >
+          <Compass className="w-3.5 h-3.5" />
+          <span>Living Food Guides Hub</span>
+        </button>
+
+        <span className="text-stone-300 font-bold text-xs shrink-0">|</span>
+
+        {otherGuides.slice(0, 6).map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => navigate(`/iconic-area/${g.slug}`)}
+            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white hover:bg-stone-100 border border-[#E7E2DA] text-stone-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          >
+            <span>{g.area_metadata?.area_name || g.title.split('&')[0]}</span>
+            {typeof (g as any).distanceKm === 'number' && (
+              <span className="text-[10px] text-stone-500 font-mono">
+                · {formatDistance((g as any).distanceKm)}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ========================================================================= */}
       {/* 2. COMPACT HERO BANNER (MOBILE-FIRST, NO NEGATIVE MARGIN OVERLAP) */}
       {/* ========================================================================= */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -469,6 +537,12 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
               <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-[11px] font-black uppercase tracking-wider text-amber-200">
                 {meta?.zone || 'Delhi NCR'}
               </span>
+              {userDistanceKm !== null && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/80 backdrop-blur-md text-[11px] font-bold text-white shadow-2xs">
+                  <MapPin className="w-3 h-3" />
+                  <span>{formatDistance(userDistanceKm)} away</span>
+                </span>
+              )}
               {meta?.nearest_metro && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-900/60 backdrop-blur-md text-[11px] font-bold text-teal-200 border border-teal-500/30">
                   <Train className="w-3.5 h-3.5" />

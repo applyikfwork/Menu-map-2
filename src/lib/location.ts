@@ -234,6 +234,46 @@ export function getNearestDelhiLocation(coords: GeoCoordinates): { location: Del
   return { location: closestLoc, distanceKm: closestDist };
 }
 
+/**
+ * Find the single closest Iconic Area Food Guide to given coordinates
+ */
+export function getNearestAreaGuide<T extends { slug: string; area_metadata?: { latitude?: number; longitude?: number } }>(
+  coords: GeoCoordinates | null,
+  guides: T[]
+): { guide: T | null; distanceKm: number | null } {
+  if (!guides || guides.length === 0) {
+    return { guide: null, distanceKm: null };
+  }
+
+  if (!coords) {
+    // Default to premier hub: Connaught Place or Hudson Lane or first guide
+    const defaultGuide =
+      guides.find((g) => g.slug.includes('connaught') || g.slug.includes('cp')) ||
+      guides.find((g) => g.slug.includes('hudson')) ||
+      guides[0];
+    return { guide: defaultGuide, distanceKm: null };
+  }
+
+  let minDistance = Infinity;
+  let closestGuide: T = guides[0];
+
+  for (const guide of guides) {
+    const meta = guide.area_metadata;
+    if (meta?.latitude && meta?.longitude) {
+      const dist = calculateDistanceKm(coords.latitude, coords.longitude, meta.latitude, meta.longitude);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestGuide = guide;
+      }
+    }
+  }
+
+  return {
+    guide: closestGuide,
+    distanceKm: minDistance === Infinity ? null : minDistance,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Backward Compatibility Layer: PopularFoodHub
 // ---------------------------------------------------------------------------

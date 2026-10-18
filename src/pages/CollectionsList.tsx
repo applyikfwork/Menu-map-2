@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Sparkles, 
   MapPin, 
@@ -11,18 +11,28 @@ import {
   ChevronRight,
   Compass,
   UtensilsCrossed,
-  Layers,
   CheckCircle2,
   Bookmark,
   Crosshair,
-  ArrowUpDown,
   Utensils,
   ExternalLink,
   MessageCircle,
   Copy,
-  Train
+  Train,
+  Share2,
+  X,
+  ChevronDown,
+  ArrowUpRight,
+  ShieldCheck,
+  Footprints,
+  Filter,
+  Check,
+  Heart,
+  Info,
+  Calendar,
+  Layers
 } from 'lucide-react';
-import { Collection, AreaGuideMetadata, FamousDishSpotlight } from '../types/database';
+import { Collection, AreaGuideMetadata, FamousDishSpotlight, FoodCrawlStop, Restaurant, MenuItem, CollectionItem } from '../types/database';
 import { api } from '../lib/supabase';
 import { AREA_FOOD_GUIDES } from '../lib/areaGuidesData';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
@@ -32,15 +42,17 @@ import {
   saveCachedUserCoordinates, 
   calculateDistanceKm, 
   formatDistance, 
-  GeoCoordinates 
+  GeoCoordinates,
+  getNearestAreaGuide
 } from '../lib/location';
 import { 
   DELHI_LOCATIONS, 
   DELHI_ZONES, 
   DelhiLocation 
 } from '../lib/delhiLocationsData';
+import { RestaurantCard } from '../components/RestaurantCard';
 import { useToast } from '../components/Toast';
-import { updatePageSeo } from '../lib/seo';
+import { updatePageSeo, buildAreaGuideSchema } from '../lib/seo';
 
 interface CollectionsListProps {
   navigate: (path: string) => void;
@@ -52,62 +64,125 @@ interface EnrichedAreaGuide extends Collection {
 
 export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedZone, setSelectedZone] = useState('all');
-  const [selectedCraving, setSelectedCraving] = useState<string | null>(null);
-  const [savedGuideIds, setSavedGuideIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'areas' | 'delhi_hubs' | 'famous_dishes'>('areas');
 
-  // Automatic Live GPS State (no manual location input required!)
+  const [loading, setLoading] = useState(true);
+  const [guides, setGuides] = useState<Collection[]>([]);
+  const [activeGuide, setActiveGuide] = useState<Collection | null>(null);
+
+  // Active Area Cafes & Items
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [collectionItems, setCollectionItems] = useState<CollectionItem[]>([]);
+  const [loadingCafes, setLoadingCafes] = useState(false);
+
+  // Live GPS Coordinates (Automatic & Silent)
   const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const [sortByDistance, setSortByDistance] = useState(true);
 
-  // Selected Dish for Spotlight Modal
+  // Active Area Filters
+  const [cafeFilter, setCafeFilter] = useState<'all' | 'veg' | 'budget' | 'date' | 'open_now'>('all');
+  const [cafeSearchQuery, setCafeSearchQuery] = useState('');
+
+  // All Areas Explorer Modal State
+  const [isExplorerOpen, setIsExplorerOpen] = useState(false);
+  const [explorerSearch, setExplorerSearch] = useState('');
+  const [selectedZone, setSelectedZone] = useState('all');
+
+  // Spotlight Dish Modal
   const [selectedSpotlightDish, setSelectedSpotlightDish] = useState<{
     dish: FamousDishSpotlight;
     areaName: string;
     areaSlug: string;
-    distanceKm?: number;
   } | null>(null);
 
-  // Auto-detect live GPS location systematically on mount
-  useEffect(() => {
-    const isIconicArea = window.location.pathname.includes('iconic');
-    updatePageSeo({
-      title: isIconicArea
-        ? 'Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs'
-        : 'Menu Maps Collections – Handpicked Delhi Cafes, Rooftops & Eats',
-      description: isIconicArea
-        ? 'Explore Delhi’s iconic food destinations: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas, Khan Market, Cyber Hub & more with authentic menu prices.'
-        : 'Discover handpicked dining collections across Delhi NCR: Aesthetic cafes, budget eats, romantic date spots, and regional delicacies.',
-      keywords: isIconicArea
-        ? ['menu maps iconic areas', 'iconic food areas delhi', 'hudson lane food guide', 'majnu ka tilla cafes', 'connaught place food map']
-        : ['menu maps collections', 'best cafes delhi', 'aesthetic cafes delhi', 'budget eats delhi', 'rooftop restaurants delhi'],
-      canonicalUrl: isIconicArea ? 'https://menumaps.in/iconic-area' : 'https://menumaps.in/collections',
-      ogType: 'website',
-    });
+  // Share Modal
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
-    // 1. Check cached or silent background detect
-    const cached = getCachedUserCoordinates();
-    if (cached) {
-      setUserCoords(cached);
-    } else {
-      // Automatic silent live GPS check
-      getUserLocation()
-        .then((coords) => {
-          setUserCoords(coords);
-          saveCachedUserCoordinates(coords);
-        })
-        .catch(() => {
-          // Geolocation silently fallback
-        });
+  // Bookmarking
+  const [isGuideBookmarked, setIsGuideBookmarked] = useState(false);
+
+  // Ref for smooth scroll to guide
+  const guideTopRef = useRef<HTMLDivElement>(null);
+
+  // 1. Initial Load & Automatic Live Location Resolution
+  useEffect(() => {
+    let isMounted = true;
+
+    async function init() {
+      setLoading(true);
+      try {
+        // Load collections from Supabase with fallback to curated AREA_FOOD_GUIDES
+        const data = await api.getCollections(true).catch(() => []);
+        const mergedMap = new Map<string, Collection>();
+
+        for (const g of AREA_FOOD_GUIDES) {
+          mergedMap.set(g.slug, g);
+        }
+        for (const item of data) {
+          if (mergedMap.has(item.slug)) {
+            const base = mergedMap.get(item.slug)!;
+            mergedMap.set(item.slug, {
+              ...base,
+              ...item,
+              area_metadata: item.area_metadata || base.area_metadata,
+            });
+          } else {
+            mergedMap.set(item.slug, item);
+          }
+        }
+
+        const mergedList = Array.from(mergedMap.values());
+        if (!isMounted) return;
+        setGuides(mergedList);
+
+        // Check if there is an area requested via URL or query
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedSlug = urlParams.get('area');
+
+        let targetGuide: Collection | null = null;
+        if (requestedSlug) {
+          targetGuide = mergedList.find((g) => g.slug === requestedSlug || g.id === requestedSlug) || null;
+        }
+
+        // Silent Location Detection if no target slug
+        let currentCoords = getCachedUserCoordinates();
+        if (!currentCoords && typeof navigator !== 'undefined' && navigator.geolocation) {
+          try {
+            currentCoords = await getUserLocation();
+            if (isMounted) {
+              setUserCoords(currentCoords);
+              saveCachedUserCoordinates(currentCoords);
+            }
+          } catch (e) {
+            // User denied or timed out; safe fallback
+          }
+        }
+
+        if (!targetGuide) {
+          const nearestResult = getNearestAreaGuide(currentCoords, mergedList);
+          targetGuide = nearestResult.guide || mergedList[0] || null;
+        }
+
+        if (isMounted && targetGuide) {
+          setActiveGuide(targetGuide);
+          setIsGuideBookmarked(isBookmarked('collection', targetGuide.id));
+          updateAreaSeo(targetGuide);
+        }
+      } catch (err) {
+        console.error('Failed to initialize iconic areas:', err);
+        if (isMounted && AREA_FOOD_GUIDES.length > 0) {
+          const fallback = AREA_FOOD_GUIDES[0];
+          setGuides(AREA_FOOD_GUIDES);
+          setActiveGuide(fallback);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
 
-    // 2. Listen to live GPS location updates from Navbar or anywhere in the app
+    init();
+
+    // Listen to global GPS updates
     const handleLocationUpdate = (e: any) => {
       if (e.detail) {
         setUserCoords(e.detail);
@@ -115,153 +190,236 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
     };
     window.addEventListener('menumap_location_updated', handleLocationUpdate);
 
-    loadGuides();
-
     return () => {
+      isMounted = false;
       window.removeEventListener('menumap_location_updated', handleLocationUpdate);
     };
   }, []);
 
-  const loadGuides = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getCollections(true);
-      const mergedMap = new Map<string, Collection>();
+  // 2. Fetch Cafes whenever activeGuide changes
+  useEffect(() => {
+    if (!activeGuide) return;
 
-      // Seed with AREA_FOOD_GUIDES
-      for (const guide of AREA_FOOD_GUIDES) {
-        mergedMap.set(guide.slug, guide);
+    let isMounted = true;
+    setLoadingCafes(true);
+
+    async function loadActiveGuideCafes() {
+      try {
+        const [items, allRests, allDishes] = await Promise.all([
+          api.getCollectionItems(activeGuide!.id).catch(() => []),
+          api.getRestaurants(true).catch(() => []),
+          api.getMenuItems().catch(() => []),
+        ]);
+
+        if (!isMounted) return;
+        setCollectionItems(items);
+        setRestaurants(allRests);
+        setMenuItems(allDishes);
+        setIsGuideBookmarked(isBookmarked('collection', activeGuide!.id));
+        updateAreaSeo(activeGuide!);
+      } catch (e) {
+        console.warn('Could not load restaurants for active guide:', e);
+      } finally {
+        if (isMounted) setLoadingCafes(false);
       }
-
-      // Overlay database collections
-      for (const item of data) {
-        if (mergedMap.has(item.slug)) {
-          const base = mergedMap.get(item.slug)!;
-          mergedMap.set(item.slug, {
-            ...base,
-            ...item,
-            area_metadata: item.area_metadata || base.area_metadata,
-          });
-        } else {
-          mergedMap.set(item.slug, item);
-        }
-      }
-
-      const mergedList = Array.from(mergedMap.values());
-      setCollections(mergedList);
-
-      // Load restaurant counts
-      const countMap: Record<string, number> = {};
-      for (const col of mergedList) {
-        try {
-          const items = await api.getCollectionItems(col.id);
-          countMap[col.id] = items.length;
-        } catch (e) {
-          countMap[col.id] = 4;
-        }
-      }
-      setCounts(countMap);
-    } catch (e) {
-      console.error('Error loading collections:', e);
-      setCollections(AREA_FOOD_GUIDES);
-    } finally {
-      setLoading(false);
     }
+
+    loadActiveGuideCafes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeGuide?.id]);
+
+  // Update SEO for Active Area
+  const updateAreaSeo = (guide: Collection) => {
+    const areaName = guide.area_metadata?.area_name || guide.title;
+    const colUrl = `https://menumaps.in/iconic-area/${guide.slug}`;
+    const schema = buildAreaGuideSchema({ name: guide.title, description: guide.description }, colUrl);
+
+    updatePageSeo({
+      title: `${areaName} Food Guide & Real Menus | MenuMaps Delhi`,
+      description: guide.description || `Explore ${areaName}'s verified cafes, signature dishes, metro routes & 3-stop food crawls on MenuMaps.`,
+      canonicalUrl: colUrl,
+      ogImage: guide.cover_image_url,
+      ogType: 'website',
+      jsonLd: schema,
+    });
   };
 
-  const handleManualLiveGpsTrigger = async () => {
+  // Re-run live GPS detection on user click
+  const handleRecalibrateGps = async () => {
     setIsDetectingLocation(true);
     try {
       const coords = await getUserLocation();
       setUserCoords(coords);
       saveCachedUserCoordinates(coords);
       window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-      showToast('Live GPS updated! Closest iconic food areas reordered automatically.', 'success');
+
+      // Automatically switch to nearest guide
+      if (guides.length > 0) {
+        const { guide, distanceKm } = getNearestAreaGuide(coords, guides);
+        if (guide) {
+          setActiveGuide(guide);
+          showToast(`📍 Switched to your nearest area: ${guide.area_metadata?.area_name || guide.title} (${formatDistance(distanceKm || 0)} away)`, 'success');
+        }
+      }
     } catch (e) {
-      showToast('Could not access live GPS. Showing all iconic Delhi NCR areas.', 'info');
+      showToast('Could not access live GPS. Showing nearest Delhi NCR hub.', 'info');
     } finally {
       setIsDetectingLocation(false);
     }
   };
 
-  const handleBookmark = (e: React.MouseEvent, colId: string) => {
-    e.stopPropagation();
-    const next = toggleBookmark('collection', colId);
-    setSavedGuideIds((prev) => 
-      next ? [...prev, colId] : prev.filter((id) => id !== colId)
-    );
-    showToast(next ? 'Saved iconic area guide to bookmarks!' : 'Removed from bookmarks.', 'success');
+  // Switch Active Area smoothly
+  const handleSelectArea = (guide: Collection) => {
+    setActiveGuide(guide);
+    setIsExplorerOpen(false);
+    setCafeFilter('all');
+    setCafeSearchQuery('');
+    
+    // Update URL smoothly without full reload
+    try {
+      window.history.pushState(null, '', `/iconic-area/${guide.slug}`);
+    } catch (e) {}
+
+    // Scroll to top of guide
+    if (guideTopRef.current) {
+      guideTopRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
-  // Enrich collections with distance from user's live GPS
-  const enrichedGuides: EnrichedAreaGuide[] = useMemo(() => {
-    return collections.map((col) => {
-      const meta = col.area_metadata;
-      let dist: number | undefined = undefined;
+  // Bookmark Toggle
+  const handleBookmarkToggle = () => {
+    if (!activeGuide) return;
+    const next = toggleBookmark('collection', activeGuide.id);
+    setIsGuideBookmarked(next);
+    showToast(next ? `Saved ${activeGuide.area_metadata?.area_name || activeGuide.title} to bookmarks!` : 'Removed from bookmarks.', 'success');
+  };
 
-      if (userCoords && meta?.latitude && meta?.longitude) {
+  // Distance to Active Guide
+  const activeGuideDistance = useMemo(() => {
+    if (!userCoords || !activeGuide?.area_metadata?.latitude || !activeGuide?.area_metadata?.longitude) {
+      return null;
+    }
+    return calculateDistanceKm(
+      userCoords.latitude,
+      userCoords.longitude,
+      activeGuide.area_metadata.latitude,
+      activeGuide.area_metadata.longitude
+    );
+  }, [userCoords, activeGuide]);
+
+  // All Guides Enriched with Distance (Sorted Closest to User)
+  const enrichedGuides: EnrichedAreaGuide[] = useMemo(() => {
+    return guides.map((g) => {
+      let dist: number | undefined = undefined;
+      if (userCoords && g.area_metadata?.latitude && g.area_metadata?.longitude) {
         dist = calculateDistanceKm(
           userCoords.latitude,
           userCoords.longitude,
-          meta.latitude,
-          meta.longitude
+          g.area_metadata.latitude,
+          g.area_metadata.longitude
         );
       }
-      return { ...col, distanceKm: dist };
+      return { ...g, distanceKm: dist };
+    }).sort((a, b) => {
+      if (typeof a.distanceKm === 'number' && typeof b.distanceKm === 'number') {
+        return a.distanceKm - b.distanceKm;
+      }
+      return (a.sort_order || 99) - (b.sort_order || 99);
     });
-  }, [collections, userCoords]);
+  }, [guides, userCoords]);
 
-  // Identify the closest iconic neighborhood to user's live GPS
-  const nearestGuide = useMemo(() => {
-    if (!userCoords) return null;
-    const sorted = [...enrichedGuides].filter((g) => typeof g.distanceKm === 'number');
-    if (sorted.length === 0) return null;
-    sorted.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
-    return sorted[0];
-  }, [enrichedGuides, userCoords]);
+  // Nearby Guide Pills for Horizontal Switcher (Excluding Active Guide)
+  const nearbyGuidePills = useMemo(() => {
+    return enrichedGuides.filter((g) => g.id !== activeGuide?.id);
+  }, [enrichedGuides, activeGuide?.id]);
 
-  // Filter and sort guides
-  const filteredGuides = useMemo(() => {
-    let result = enrichedGuides.filter((c) => {
-      const meta = c.area_metadata;
-      const q = searchQuery.toLowerCase().trim();
+  // Active Area Metadata
+  const meta: AreaGuideMetadata | undefined = activeGuide?.area_metadata;
 
-      const matchesSearch = 
-        !q ||
-        c.title.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q) ||
-        meta?.area_name.toLowerCase().includes(q) ||
-        meta?.vibe_badge.toLowerCase().includes(q) ||
-        meta?.nearest_metro.toLowerCase().includes(q) ||
-        meta?.famous_dishes?.some((d) => 
-          d.name.toLowerCase().includes(q) || 
-          d.why_famous.toLowerCase().includes(q) ||
-          d.restaurant_name.toLowerCase().includes(q)
-        );
+  // Active Area Famous Dishes
+  const famousDishes: FamousDishSpotlight[] = useMemo(() => {
+    if (meta?.famous_dishes && meta.famous_dishes.length > 0) {
+      return meta.famous_dishes;
+    }
+    return [];
+  }, [meta]);
 
-      if (!matchesSearch) return false;
+  // Active Area Food Crawl
+  const crawlStops: FoodCrawlStop[] = useMemo(() => {
+    if (meta?.food_crawl_stops && meta.food_crawl_stops.length > 0) {
+      return meta.food_crawl_stops;
+    }
+    return [];
+  }, [meta]);
 
-      if (selectedZone === 'all') return true;
-      if (selectedZone === 'north') return meta?.zone?.toLowerCase().includes('north') || /hudson|campus/i.test(c.title);
-      if (selectedZone === 'west') return meta?.zone?.toLowerCase().includes('west') || /nangloi|rajouri|punjabi/i.test(c.title);
-      if (selectedZone === 'central') return meta?.zone?.toLowerCase().includes('central') || /connaught|cp|old delhi|chandni/i.test(c.title);
-      if (selectedZone === 'south') return meta?.zone?.toLowerCase().includes('south') || /hauz khas|south|saket/i.test(c.title);
-      if (selectedZone === 'northwest') return meta?.zone?.toLowerCase().includes('northwest') || /nsp|pitampura|rohini|model town/i.test(c.title);
-      if (selectedZone === 'southwest') return meta?.zone?.toLowerCase().includes('southwest') || /dwarka|aerocity|vasant|janakpuri/i.test(c.title);
-      if (selectedZone === 'east') return meta?.zone?.toLowerCase().includes('east') || /laxmi|mayur|preet|trans/i.test(c.title);
-      if (selectedZone === 'ncr') return meta?.zone?.toLowerCase().includes('ncr') || /cyber|gurgaon|noida|indirapuram/i.test(c.title);
+  // 1-Click Google Maps Crawl URL
+  const googleMapsRouteUrl = useMemo(() => {
+    if (!crawlStops || crawlStops.length === 0) {
+      const dest = encodeURIComponent(`${meta?.area_name || activeGuide?.title || 'Delhi'} food market`);
+      return `https://www.google.com/maps/search/?api=1&query=${dest}`;
+    }
+    const origin = encodeURIComponent(`${crawlStops[0].venue_name}, ${meta?.area_name || 'Delhi'}`);
+    const dest = encodeURIComponent(`${crawlStops[crawlStops.length - 1].venue_name}, ${meta?.area_name || 'Delhi'}`);
+    const waypoints = crawlStops.slice(1, -1).map(s => encodeURIComponent(`${s.venue_name}, ${meta?.area_name || 'Delhi'}`)).join('|');
+
+    if (waypoints) {
+      return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypoints}&travelmode=walking`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=walking`;
+  }, [crawlStops, meta, activeGuide]);
+
+  // Filtered Cafes for Active Area
+  const activeAreaCafes = useMemo(() => {
+    if (!activeGuide) return [];
+
+    let list: Restaurant[] = [];
+    if (collectionItems.length > 0) {
+      const restIds = collectionItems.map((ci) => ci.restaurant_id).filter(Boolean);
+      list = restaurants.filter((r) => restIds.includes(r.id));
+    }
+
+    if (list.length === 0) {
+      const areaKeywords = (meta?.area_name || activeGuide.title)
+        .toLowerCase()
+        .split(/[\s,&/()]+/);
+      list = restaurants.filter((r) => {
+        const fullAddr = `${r.name} ${r.landmark || ''} ${r.address_line1 || ''}`.toLowerCase();
+        return areaKeywords.some((kw) => kw.length > 3 && fullAddr.includes(kw));
+      });
+    }
+
+    // Geolocation fallback: closest restaurants to area coordinates
+    if (list.length === 0 && meta?.latitude && meta?.longitude) {
+      list = [...restaurants].sort((a, b) => {
+        const distA = calculateDistanceKm(meta.latitude!, meta.longitude!, a.latitude, a.longitude);
+        const distB = calculateDistanceKm(meta.latitude!, meta.longitude!, b.latitude, b.longitude);
+        return distA - distB;
+      }).slice(0, 12);
+    }
+
+    // Apply Live Filters
+    return list.filter((r) => {
+      // 1. Text Search
+      if (cafeSearchQuery.trim()) {
+        const q = cafeSearchQuery.toLowerCase();
+        const matchesName = r.name.toLowerCase().includes(q);
+        const matchesCuisine = (r.cuisine_types || []).some((c) => c.toLowerCase().includes(q));
+        const matchesDishes = (r.known_for_dishes || []).some((d) => d.toLowerCase().includes(q));
+        if (!matchesName && !matchesCuisine && !matchesDishes) return false;
+      }
+
+      // 2. Chip Filters
+      if (cafeFilter === 'veg' && !r.dietary_options?.includes('Pure Veg')) return false;
+      if (cafeFilter === 'budget' && (r.average_cost_for_two || 0) > 400) return false;
+      if (cafeFilter === 'date' && !r.ambience_tags?.some((a) => /date|romantic|aesthetic|cozy|rooftop/i.test(a))) return false;
+      if (cafeFilter === 'open_now' && r.is_active === false) return false;
 
       return true;
     });
-
-    if (sortByDistance && userCoords) {
-      result = [...result].sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
-    } else {
-      result = [...result].sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99));
-    }
-
-    return result;
-  }, [enrichedGuides, searchQuery, selectedZone, sortByDistance, userCoords]);
+  }, [activeGuide, collectionItems, restaurants, cafeSearchQuery, cafeFilter, meta]);
 
   // Color-coded metro line styling
   const getMetroLineBadgeClass = (line: string) => {
@@ -277,851 +435,828 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
     return 'bg-stone-100 text-stone-700 border-stone-200';
   };
 
-  // Filtered and sorted 60+ Delhi Localities & Metro Hubs
-  const filteredDelhiHubs = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return DELHI_LOCATIONS.filter((loc) => {
-      if (selectedZone !== 'all' && loc.zoneKey !== selectedZone) {
-        return false;
-      }
-      if (!q) return true;
-      return (
-        loc.name.toLowerCase().includes(q) ||
-        loc.shortName.toLowerCase().includes(q) ||
-        loc.metroStation.toLowerCase().includes(q) ||
-        loc.metroLines.some((l) => l.toLowerCase().includes(q)) ||
-        loc.famousSpecialties.some((s) => s.toLowerCase().includes(q)) ||
-        loc.tagline.toLowerCase().includes(q) ||
-        loc.zone.toLowerCase().includes(q)
-      );
-    }).map((loc) => {
-      const dist = userCoords
-        ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, loc.latitude, loc.longitude)
-        : undefined;
-      return { ...loc, distanceKm: dist };
-    }).sort((a, b) => {
-      if (sortByDistance && userCoords) {
-        return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
-      }
-      return 0;
-    });
-  }, [searchQuery, selectedZone, userCoords, sortByDistance]);
-
-  const handleSelectDelhiHub = (loc: DelhiLocation) => {
-    const coords = {
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      accuracy: 50,
-    };
-    saveCachedUserCoordinates(coords);
-    window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-    showToast(`Switched active area to ${loc.shortName}! Showing menus.`, 'success');
-    navigate('/restaurants');
-  };
-
-  // Flatten all famous dishes across all iconic areas for direct search
-  const allFamousDishes = useMemo(() => {
-    const list: Array<{
-      dish: FamousDishSpotlight;
-      areaName: string;
-      areaSlug: string;
-      zone?: string;
-      distanceKm?: number;
-    }> = [];
-
-    for (const guide of enrichedGuides) {
-      const meta = guide.area_metadata;
-      if (meta?.famous_dishes) {
-        for (const dish of meta.famous_dishes) {
-          list.push({
-            dish,
-            areaName: meta.area_name,
-            areaSlug: guide.slug,
-            zone: meta.zone,
-            distanceKm: guide.distanceKm,
-          });
-        }
-      }
+  // Time-of-Day Smart Vibe Recommendation
+  const timeOfDayVibe = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) {
+      return {
+        badge: 'Morning Brews & Bakeries',
+        desc: 'Ideal morning coffee, fresh artisan toasts, and peaceful breakfast courtyards.',
+      };
     }
-    return list;
-  }, [enrichedGuides]);
+    if (hour >= 12 && hour < 16) {
+      return {
+        badge: 'College Lunches & Budget Bowls',
+        desc: 'Vibrant afternoon crowd: budget student platters, cooling iced teas, and quick bites.',
+      };
+    }
+    if (hour >= 16 && hour < 20) {
+      return {
+        badge: 'Golden Hour Crawl & Rooftops',
+        desc: 'Sunset hours: buzzing neon streets, signature milkshakes, and open-air seating.',
+      };
+    }
+    return {
+      badge: 'Late-Night Adda & Desserts',
+      desc: 'Late-night cravings: hot tandoori momos, warm Belgian waffles, and midnight chai.',
+    };
+  }, []);
 
-  // Filter famous dishes for the "Search What's Famous" view
-  const filteredFamousDishes = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    const craving = selectedCraving?.toLowerCase() || '';
-
-    return allFamousDishes.filter(({ dish, areaName, zone }) => {
-      const matchesText = 
+  // Filtered Guides in Explorer Modal
+  const modalFilteredGuides = useMemo(() => {
+    const q = explorerSearch.toLowerCase().trim();
+    return enrichedGuides.filter((g) => {
+      const m = g.area_metadata;
+      const matchesSearch =
         !q ||
-        dish.name.toLowerCase().includes(q) ||
-        dish.why_famous.toLowerCase().includes(q) ||
-        dish.restaurant_name.toLowerCase().includes(q) ||
-        areaName.toLowerCase().includes(q) ||
-        (zone && zone.toLowerCase().includes(q));
+        g.title.toLowerCase().includes(q) ||
+        g.description.toLowerCase().includes(q) ||
+        m?.area_name.toLowerCase().includes(q) ||
+        m?.nearest_metro.toLowerCase().includes(q) ||
+        m?.famous_dishes?.some((d) => d.name.toLowerCase().includes(q) || d.restaurant_name.toLowerCase().includes(q));
 
-      if (!matchesText) return false;
+      if (!matchesSearch) return false;
 
-      if (!craving) return true;
-      if (craving === 'shakes') return /shake|beverage|cold|coffee|waffle/i.test(dish.name + ' ' + dish.why_famous);
-      if (craving === 'momos') return /momo|dumpling|starter|kurkure/i.test(dish.name + ' ' + dish.why_famous);
-      if (craving === 'naan') return /naan|kulcha|chole|thali|paratha/i.test(dish.name + ' ' + dish.why_famous);
-      if (craving === 'dal') return /dal|makhani|bukhara|paneer|gravy/i.test(dish.name + ' ' + dish.why_famous);
-      if (craving === 'jalebi') return /jalebi|rabri|sweet|dessert|gulab/i.test(dish.name + ' ' + dish.why_famous);
-      if (craving === 'chaap') return /chaap|soya|tandoori|afghani|kebab/i.test(dish.name + ' ' + dish.why_famous);
-      if (craving === 'nonveg') return !dish.is_veg || /mutton|chicken|rogan/i.test(dish.name);
+      if (selectedZone === 'all') return true;
+      if (selectedZone === 'north') return m?.zone?.toLowerCase().includes('north') || /hudson|campus|model/i.test(g.title);
+      if (selectedZone === 'west') return m?.zone?.toLowerCase().includes('west') || /nangloi|rajouri|punjabi/i.test(g.title);
+      if (selectedZone === 'central') return m?.zone?.toLowerCase().includes('central') || /connaught|cp|chandni/i.test(g.title);
+      if (selectedZone === 'south') return m?.zone?.toLowerCase().includes('south') || /hauz|gk|defence|cr park/i.test(g.title);
+      if (selectedZone === 'ncr') return m?.zone?.toLowerCase().includes('ncr') || /cyber|gurgaon|noida/i.test(g.title);
 
       return true;
     });
-  }, [allFamousDishes, searchQuery, selectedCraving]);
+  }, [enrichedGuides, explorerSearch, selectedZone]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center min-h-[60vh] flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#FF5A36] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-bold text-stone-600">Detecting your location &amp; loading nearest foodie hub…</p>
+      </div>
+    );
+  }
+
+  if (!activeGuide) {
+    return (
+      <div className="max-w-md mx-auto px-6 py-24 text-center">
+        <Compass className="w-12 h-12 text-[#FF5A36] mx-auto mb-3" />
+        <h2 className="text-2xl font-black text-stone-900">Iconic Food Guides</h2>
+        <p className="text-sm text-stone-600 mt-1">Select an iconic Delhi foodie neighborhood to explore.</p>
+        <button
+          type="button"
+          onClick={() => setActiveGuide(guides[0])}
+          className="mt-4 px-6 py-2.5 rounded-full bg-[#1C1917] text-white font-bold text-sm"
+        >
+          View First Guide
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 font-sans">
-      
+    <div className="w-full bg-[#FAF8F5] text-[#1C1917] min-h-screen pb-24 font-sans" ref={guideTopRef}>
+
       {/* ========================================================================= */}
-      {/* 1. CLEAN, MODERN HEADER (MOBILE OPTIMIZED) */}
+      {/* 1. HERO BANNER: ACTIVE AREA AUTO-LOADED WITH LIVE LOCATION CONTEXT */}
       {/* ========================================================================= */}
-      <div className="text-center max-w-2xl mx-auto space-y-2.5">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-[#D8350F] text-xs font-black uppercase tracking-wider">
-          <Compass className="w-3.5 h-3.5" />
-          <span>Delhi Living Food Guides</span>
-        </div>
+      <section className="relative overflow-hidden bg-linear-to-b from-[#1C1917] via-[#24201E] to-[#1C1917] text-white pt-8 pb-10 sm:pb-12 border-b border-stone-800">
+        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#FF5A36_1px,transparent_1px)] [background-size:18px_18px] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
+          
+          {/* Top Pill Row: Location Beacon & Time-of-Day */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-800/90 border border-stone-700/80 shadow-xs">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FF5A36] animate-pulse" />
+              {activeGuideDistance !== null ? (
+                <span className="text-xs font-bold text-orange-200">
+                  📍 Nearest to your location • <strong>{formatDistance(activeGuideDistance)} away</strong>
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-stone-300">
+                  📍 Delhi NCR Living Food Guide
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleRecalibrateGps}
+                disabled={isDetectingLocation}
+                title="Recalibrate GPS"
+                className="ml-1 p-1 hover:bg-stone-700 rounded-full text-stone-300 hover:text-white transition-colors cursor-pointer"
+              >
+                <Crosshair className={`w-3.5 h-3.5 ${isDetectingLocation ? 'animate-spin text-[#FF5A36]' : ''}`} />
+              </button>
+            </div>
 
-        <h1 className="hd text-3xl sm:text-5xl font-black text-[#1C1917] tracking-tight leading-tight">
-          Iconic foodie neighbourhoods &amp; trails
-        </h1>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>{timeOfDayVibe.badge}</span>
+            </div>
+          </div>
 
-        <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed max-w-xl mx-auto">
-          Pick a neighbourhood. We map the whole evening: tested 3-stop food crawls, nearest metro gates, landmark signature dishes &amp; exact counter prices.
-        </p>
+          {/* Area Headline & Vibe */}
+          <div className="space-y-3 max-w-3xl">
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+              {activeGuide.title}
+            </h1>
+            <p className="text-sm sm:text-base text-stone-300 leading-relaxed">
+              {meta?.vibe_badge || activeGuide.description}
+            </p>
+          </div>
 
-        {/* ========================================================================= */}
-        {/* COMPACT LIVE GPS NEAREST BANNER (SLEEK, NON-INTRUSIVE) */}
-        {/* ========================================================================= */}
-        {nearestGuide && typeof nearestGuide.distanceKm === 'number' && (
-          <div className="pt-1 max-w-xl mx-auto">
-            <div className="bg-gradient-to-r from-teal-50/90 via-stone-50 to-orange-50/70 border border-teal-200/80 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 text-left shadow-2xs">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-[#0F766E] text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#0F766E] uppercase tracking-wide">
-                    <span>Nearest Area</span>
-                    <span className="text-stone-300">·</span>
-                    <span>{formatDistance(nearestGuide.distanceKm)} away</span>
-                  </div>
-                  <h3 className="font-heading font-black text-sm text-[#1C1917] truncate">
-                    {nearestGuide.area_metadata?.area_name || nearestGuide.title}
-                  </h3>
-                </div>
+          {/* Key Metrics Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 pt-2">
+            {/* Metro */}
+            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0">
+                <Train className="w-4 h-4" />
               </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Nearest Metro</p>
+                <p className="text-xs font-extrabold text-stone-100 truncate">
+                  {meta?.nearest_metro?.split('(')[0] || 'Rajiv Chowk'}
+                </p>
+              </div>
+            </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/iconic-area/${nearestGuide.slug}`)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
-                >
-                  <span>Open Guide</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleManualLiveGpsTrigger}
-                  disabled={isDetectingLocation}
-                  title="Recalibrate GPS"
-                  className="p-1.5 rounded-xl bg-white hover:bg-stone-100 border border-[#E7E2DA] text-[#57534E] cursor-pointer"
-                >
-                  <Crosshair className={`w-3.5 h-3.5 ${isDetectingLocation ? 'animate-spin text-[#FF5A36]' : ''}`} />
-                </button>
+            {/* Budget */}
+            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Avg Cost For Two</p>
+                <p className="text-xs font-extrabold text-stone-100">
+                  ₹{meta?.avg_cost_for_two || 450}
+                </p>
+              </div>
+            </div>
+
+            {/* Cafes Count */}
+            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center shrink-0">
+                <UtensilsCrossed className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Verified Cafes</p>
+                <p className="text-xs font-extrabold text-stone-100">
+                  {activeAreaCafes.length || 10}+ Listed
+                </p>
+              </div>
+            </div>
+
+            {/* Dishes */}
+            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                <Flame className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Iconic Dishes</p>
+                <p className="text-xs font-extrabold text-stone-100">
+                  {famousDishes.length || 5} Must-Tries
+                </p>
               </div>
             </div>
           </div>
-        )}
 
-        {/* ========================================================================= */}
-        {/* COMPACT SEARCH & SEGMENTED VIEW SWITCHER */}
-        {/* ========================================================================= */}
-        <div className="pt-2 space-y-3 max-w-xl mx-auto">
-          {/* Main Search Input */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search colony, metro, or food (e.g. NSP, Momos, Yellow Line)..."
-              className="w-full pl-10 pr-16 py-2.5 sm:py-3 bg-white border border-[#E7E2DA] rounded-2xl text-xs sm:text-sm font-medium text-[#1C1917] shadow-2xs focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/15 outline-none transition-all"
-            />
-            {searchQuery && (
+          {/* Quick Actions Row */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-2">
+            <a
+              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Let's explore ${activeGuide.area_metadata?.area_name || activeGuide.title}! Check out the verified food crawl, signature dishes & real menu prices on MenuMaps: ${window.location.origin}/iconic-area/${activeGuide.slug}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
+            >
+              <MessageCircle className="w-3.5 h-3.5 fill-white" />
+              <span>Plan with Friends on WhatsApp</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={handleBookmarkToggle}
+              className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer border ${
+                isGuideBookmarked
+                  ? 'bg-[#FF5A36] text-white border-[#FF5A36]'
+                  : 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isGuideBookmarked ? 'fill-white' : ''}`} />
+              <span>{isGuideBookmarked ? 'Saved to Bookmarks' : 'Bookmark Area'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('area-cafes-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Utensils className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <span>Jump to Cafes ({activeAreaCafes.length})</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 2. STICKY QUICK-SWITCHER BAR: EFFORTLESSLY JUMP TO OTHER AREAS */}
+      {/* ========================================================================= */}
+      <div className="sticky top-14 sm:top-16 z-30 bg-white/95 backdrop-blur-md border-b border-[#E7E2DA] shadow-xs py-2.5 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
+          
+          {/* Active Area Pill */}
+          <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1C1917] text-white text-xs font-black shadow-xs">
+            <MapPin className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <span>{meta?.area_name || activeGuide.title.split(' ')[0]}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+          </div>
+
+          <span className="text-stone-300 font-bold text-xs shrink-0">|</span>
+
+          {/* Search All Areas Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsExplorerOpen(true)}
+            className="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#D8350F] text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Search All 14+ Areas &amp; 60+ Hubs</span>
+            <ChevronDown className="w-3 h-3 ml-0.5" />
+          </button>
+
+          {/* Nearby Area Pills Sorted by Distance */}
+          {nearbyGuidePills.slice(0, 6).map((guide) => {
+            const areaShort = guide.area_metadata?.area_name || guide.title.split('&')[0].trim();
+            const dist = (guide as any).distanceKm;
+            return (
               <button
+                key={guide.id}
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
+                onClick={() => handleSelectArea(guide)}
+                className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white hover:bg-stone-100 border border-[#E7E2DA] text-stone-700 hover:text-stone-900 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
               >
-                Clear
+                <span>{areaShort}</span>
+                {typeof dist === 'number' && (
+                  <span className="text-[10px] text-stone-500 font-mono">
+                    · {formatDistance(dist)}
+                  </span>
+                )}
               </button>
-            )}
-          </div>
-
-          {/* 3-Tab Segmented View Switcher (Swipeable on narrow mobile, prevents text crushing) */}
-          <div className="bg-[#F5F1EB] p-1 rounded-2xl border border-[#E7E2DA] flex w-full sm:w-auto overflow-x-auto no-scrollbar whitespace-nowrap justify-start sm:justify-center gap-1">
-            <button
-              type="button"
-              onClick={() => setActiveTab('areas')}
-              className={`shrink-0 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] ${
-                activeTab === 'areas'
-                  ? 'bg-white text-[#1C1917] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
-              <span>Area Guides ({filteredGuides.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('delhi_hubs')}
-              className={`shrink-0 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] ${
-                activeTab === 'delhi_hubs'
-                  ? 'bg-white text-[#1C1917] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <MapPin className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
-              <span>All 60+ Localities</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('famous_dishes')}
-              className={`shrink-0 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] ${
-                activeTab === 'famous_dishes'
-                  ? 'bg-white text-[#1C1917] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#D8350F] shrink-0" />
-              <span>Famous Dishes</span>
-            </button>
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 2. TAB A: ICONIC NEIGHBORHOODS DIRECTORY (WITH LIVE GPS DISTANCES) */}
-      {/* ========================================================================= */}
-      {activeTab === 'areas' && (
-        <div className="space-y-6">
-          
-          {/* Delhi Zones Quick Filter Pills (Horizontal swipe on mobile) */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full py-1">
-              {DELHI_ZONES.map((zone) => {
-                const isSelected = selectedZone === zone.key;
-                return (
-                  <button
-                    key={zone.key}
-                    type="button"
-                    onClick={() => setSelectedZone(zone.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer border shrink-0 ${
-                      isSelected
-                        ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-xs'
-                        : 'bg-white text-[#57534E] border-[#E7E2DA] hover:border-stone-400 hover:bg-stone-50'
-                    }`}
-                  >
-                    <span>{zone.icon}</span>
-                    <span>{zone.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+      {/* Main Content Sections for Active Area */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
 
-            {userCoords && (
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setSortByDistance(!sortByDistance)}
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
-                    sortByDistance ? 'bg-teal-50 text-[#0F766E] border-teal-200' : 'bg-white text-stone-500 border-stone-200'
-                  }`}
-                >
-                  <ArrowUpDown className="w-3 h-3" />
-                  <span>{sortByDistance ? 'Sorted by Proximity' : 'Default Order'}</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-
-          {/* Grid of Iconic Area Guides */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <div key={n} className="h-96 bg-stone-200 rounded-[28px]" />
-              ))}
-            </div>
-          ) : filteredGuides.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredGuides.map((col) => {
-                const meta = col.area_metadata;
-                const isSaved = isBookmarked('collection', col.id) || savedGuideIds.includes(col.id);
-
-                return (
-                  <div
-                    key={col.id}
-                    onClick={() => navigate(`/iconic-area/${col.slug}`)}
-                    className="lift bg-white rounded-[28px] overflow-hidden border border-[#EFEAE2] flex flex-col justify-between cursor-pointer"
-                  >
-                    <div>
-                      {/* Image Banner */}
-                      <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden">
-                        <img
-                          src={col.cover_image_url}
-                          alt={col.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
-
-                        {/* Top Badges */}
-                        <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/20 shadow-xs">
-                              {meta?.zone || 'Delhi NCR'}
-                            </span>
-                            {typeof col.distanceKm === 'number' && (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/90 text-white shadow-xs backdrop-blur-xs flex items-center gap-1">
-                                <span>📍 {formatDistance(col.distanceKm)}</span>
-                              </span>
-                            )}
-                          </div>
-
-                          <button
-                            onClick={(e) => handleBookmark(e, col.id)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-90 ${
-                              isSaved
-                                ? 'bg-rose-500 text-white shadow-md'
-                                : 'bg-black/40 hover:bg-black/60 text-white backdrop-blur-xs'
-                            }`}
-                            title="Save guide"
-                          >
-                            <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-white' : ''}`} />
-                          </button>
-                        </div>
-
-                        {/* Vibe Badge */}
-                        {meta?.vibe_badge && (
-                          <div className="absolute bottom-3 inset-x-3">
-                            <span className="inline-block px-2.5 py-1 rounded-xl bg-orange-500/90 backdrop-blur-xs text-[11px] font-bold text-white shadow-xs line-clamp-1">
-                              🔥 {meta.vibe_badge}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content Body */}
-                      <div className="p-5 space-y-3">
-                        <div>
-                          <h3 className="hd text-lg sm:text-xl font-bold text-[#14110F] group-hover:text-[#FF5A36] transition-colors">
-                            {col.title}
-                          </h3>
-                          <p className="text-xs text-[#57534E] line-clamp-2 leading-relaxed mt-1">
-                            {col.description}
-                          </p>
-                        </div>
-
-                        {/* Famous Dishes Spotlight pills */}
-                        {meta?.famous_dishes && meta.famous_dishes.length > 0 && (
-                          <div className="space-y-1.5 pt-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
-                              Famous In This Place:
-                            </span>
-                            <div className="flex flex-wrap gap-1">
-                              {meta.famous_dishes.slice(0, 3).map((dish, idx) => (
-                                <span
-                                  key={idx}
-                                  className="text-[11px] font-semibold bg-[#FAF8F5] text-[#14110F] px-2.5 py-0.5 rounded-lg border border-[#EFEAE2]"
-                                >
-                                  {dish.name}
-                                </span>
-                              ))}
-                              {meta.famous_dishes.length > 3 && (
-                                <span className="text-[10px] font-bold text-[#D8350F] px-1.5 py-0.5">
-                                  +{meta.famous_dishes.length - 3} more
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Transit & Cost Details */}
-                        <div className="pt-2 border-t border-[#EFEAE2] grid grid-cols-2 gap-2 text-[11px] text-[#57534E]">
-                          {meta?.nearest_metro && (
-                            <div className="flex items-center gap-1.5 truncate" title={meta.nearest_metro}>
-                              <Navigation className="w-3.5 h-3.5 text-[#D8350F] shrink-0" />
-                              <span className="truncate">{meta.nearest_metro.split(',')[0]}</span>
-                            </div>
-                          )}
-                          {meta?.avg_cost_for_two && (
-                            <div className="flex items-center gap-1.5">
-                              <DollarSign className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
-                              <span>~₹{meta.avg_cost_for_two} for two</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer CTA */}
-                    <div className="p-5 pt-0">
-                      <div className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl bg-[#FAF8F5] group-hover:bg-[#FFE9E2] border border-[#EFEAE2] group-hover:border-[#FF5A36]/30 text-xs font-bold text-[#14110F] group-hover:text-[#D8350F] transition-colors">
-                        <span className="flex items-center gap-1.5">
-                          <Compass className="w-3.5 h-3.5" />
-                          <span>{counts[col.id] || 4} Verified Dining Cafes</span>
-                        </span>
-                        <span className="flex items-center gap-1 text-[#D8350F]">
-                          <span>Explore Area</span>
-                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl p-16 text-center space-y-3">
-              <Search className="w-12 h-12 text-stone-400 mx-auto" />
-              <h3 className="font-heading font-extrabold text-xl text-slate-800">
-                No Iconic Areas Match "{searchQuery}"
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                Try searching for "Nangloi", "Hudson Lane", "Connaught Place", or clear search to browse all guides.
-              </p>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedZone('all');
-                }}
-                className="px-5 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-xs cursor-pointer"
-              >
-                Reset Search Filters
-              </button>
-            </div>
-          )}
-
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 2B. TAB B: ALL 60+ DELHI LOCALITIES & METRO HUBS (COMPREHENSIVE DIRECTORY) */}
-      {/* ========================================================================= */}
-      {activeTab === 'delhi_hubs' && (
-        <div className="space-y-6">
-          {/* Delhi Zones Quick Filter Pills */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E7E2DA] pb-4">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-1">
-              {DELHI_ZONES.map((zone) => (
-                <button
-                  key={zone.key}
-                  onClick={() => setSelectedZone(zone.key)}
-                  className={`chipl text-xs min-h-[36px] px-3.5 font-bold shrink-0 ${
-                    selectedZone === zone.key ? 'on' : ''
-                  }`}
-                >
-                  <span className="mr-1">{zone.icon}</span>
-                  <span>{zone.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {userCoords && (
-              <span className="text-xs font-bold text-[#0F766E] flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse" />
-                <span>Sorted by GPS Proximity</span>
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDelhiHubs.map((loc) => (
-              <div
-                key={loc.id}
-                className="bg-white rounded-[28px] border border-[#EFEAE2] p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
-              >
+        {/* ========================================================================= */}
+        {/* 3. SECTION 1: LIVE TRANSIT & METRO DIRECTIONS */}
+        {/* ========================================================================= */}
+        {meta?.nearest_metro && (
+          <section className="bg-white rounded-3xl border border-[#E7E2DA] p-5 sm:p-7 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                  <Train className="w-5 h-5" />
+                </div>
                 <div>
-                  {/* Badges */}
-                  <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
-                      {loc.zone}
-                    </span>
-                    {loc.isPopularHub && (
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-100 text-[#D8350F]">
-                        ★ Top Hub
-                      </span>
-                    )}
-                    {loc.pincode && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-stone-50 text-stone-500 border border-stone-200/50">
-                        PIN: {loc.pincode}
-                      </span>
-                    )}
-                    {loc.distanceKm !== undefined && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] border border-teal-100">
-                        {formatDistance(loc.distanceKm)} away
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-heading font-black text-lg sm:text-xl text-[#1C1917] group-hover:text-[#D8350F] transition-colors">
-                    {loc.name}
+                  <h3 className="text-base sm:text-lg font-black text-stone-900">
+                    Delhi Metro &amp; Transit Guide
                   </h3>
-
-                  {/* Tagline */}
-                  <p className="mt-1 text-xs text-[#57534E] leading-relaxed line-clamp-2">
-                    {loc.tagline}
+                  <p className="text-xs text-stone-500">
+                    Recommended station exits, walking times &amp; parking realities
                   </p>
-
-                  {/* Metro Station & Lines */}
-                  <div className="mt-3.5 pt-3 border-t border-[#E7E2DA]/80 flex flex-wrap items-center gap-1.5 text-xs text-stone-600">
-                    <span className="inline-flex items-center gap-1 text-[#0F766E] font-bold">
-                      <Train className="w-3.5 h-3.5 shrink-0" />
-                      <span>{loc.metroStation}</span>
-                    </span>
-                    {loc.metroLines.map((line) => (
-                      <span
-                        key={line}
-                        className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded border ${getMetroLineBadgeClass(line)}`}
-                      >
-                        {line}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Food Highlights */}
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {loc.famousSpecialties.map((dish) => (
-                      <span
-                        key={dish}
-                        className="text-[10px] font-medium bg-[#FAF8F5] text-stone-600 px-2 py-0.5 rounded-lg border border-stone-200/60"
-                      >
-                        {dish}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Footer with Avg Cost and Action */}
-                <div className="mt-5 pt-3.5 border-t border-[#E7E2DA] flex items-center justify-between gap-2">
-                  <div className="text-xs font-bold text-stone-600 truncate">
-                    <span className="text-stone-400 font-normal">Avg: </span>
-                    <span>₹{loc.avgCostForTwo}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/iconic-area/${loc.id}`)}
-                      className="px-2.5 py-1.5 rounded-xl border border-stone-200 hover:border-[#D8350F] hover:text-[#D8350F] text-xs font-bold text-stone-600 bg-stone-50 transition-all cursor-pointer active:scale-95"
-                      title="Open full Food Guide & 3-Stop Trail"
-                    >
-                      Guide
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectDelhiHub(loc)}
-                      className="btn bg-[#1C1917] hover:bg-[#D8350F] text-white text-xs font-bold px-3 py-1.5 min-h-[34px] rounded-xl transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
-                    >
-                      <span>Menus</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {filteredDelhiHubs.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-3xl border border-[#E7E2DA] p-6 space-y-3">
-              <p className="text-base font-bold text-[#1C1917]">No Delhi locality found matching your filters</p>
-              <button
-                type="button"
-                onClick={() => { setSelectedZone('all'); setSearchQuery(''); }}
-                className="btn bg-[#D8350F] text-white text-xs px-4 py-2 rounded-xl font-bold cursor-pointer"
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${meta.nearest_metro}, ${meta.area_name || 'Delhi'}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
               >
-                Clear all filters
-              </button>
+                <Navigation className="w-3.5 h-3.5 fill-white" />
+                <span>Open Directions in Google Maps</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* 3. TAB C: WHAT'S FAMOUS DIRECTORY (INSTANT FOOD SEARCH ACROSS ALL LOCALITIES) */}
-      {/* ========================================================================= */}
-      {activeTab === 'famous_dishes' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-4">
-            <div>
-              <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-slate-900">
-                What’s Famous in Delhi NCR Neighborhoods
-              </h2>
-              <p className="text-xs text-slate-500">
-                Browse iconic signature dishes, counter prices, and the exact cafes serving them.
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-2">
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1.5">
+                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide flex items-center gap-1">
+                  <Train className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Metro Route &amp; Exit Gate</span>
+                </span>
+                <p className="text-sm font-bold text-stone-900 leading-snug">
+                  {meta.nearest_metro}
+                </p>
+                <p className="text-xs text-stone-600">
+                  Fastest commute to {meta.area_name}. Avoid Delhi traffic and take the exit gate indicated above.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1.5">
+                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide flex items-center gap-1">
+                  <Navigation className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Parking &amp; Cab Reality</span>
+                </span>
+                <p className="text-sm font-bold text-stone-900 leading-snug">
+                  {meta.parking_tips || 'Designated market or multilevel metro parking recommended during peak hours.'}
+                </p>
+                <p className="text-xs text-stone-600">
+                  Peak evening rush: {meta.best_time_to_visit?.split('(')[0] || '4:00 PM – 9:00 PM'}.
+                </p>
+              </div>
             </div>
-            <span className="text-xs font-bold text-slate-500 bg-stone-100 px-3 py-1.5 rounded-full">
-              Showing {filteredFamousDishes.length} famous specialties
-            </span>
-          </div>
+          </section>
+        )}
 
-          {filteredFamousDishes.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFamousDishes.map(({ dish, areaName, areaSlug, distanceKm }, i) => (
+        {/* ========================================================================= */}
+        {/* 4. SECTION 2: FAMOUS LANDMARK DISHES OF THIS AREA */}
+        {/* ========================================================================= */}
+        {famousDishes.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF5A36] uppercase tracking-wider mb-1">
+                  <Flame className="w-3.5 h-3.5" />
+                  <span>Local Signature Specialties</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+                  Must-Try Dishes of {meta?.area_name || activeGuide.title.split(' ')[0]}
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
+                  Voted by locals: the dishes you cannot leave this neighborhood without tasting.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {famousDishes.map((dish, i) => (
                 <div
                   key={i}
-                  onClick={() => setSelectedSpotlightDish({ dish, areaName, areaSlug, distanceKm })}
-                  className="group bg-white rounded-3xl overflow-hidden border border-stone-200/90 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer hover:-translate-y-1"
+                  onClick={() => setSelectedSpotlightDish({
+                    dish,
+                    areaName: meta?.area_name || activeGuide.title,
+                    areaSlug: activeGuide.slug,
+                  })}
+                  className="group bg-white rounded-2xl border border-[#E7E2DA] p-3.5 flex gap-3.5 cursor-pointer hover:border-[#FF5A36] hover:shadow-md transition-all text-left"
                 >
-                  <div>
-                    {/* Dish Photo */}
-                    <div className="relative aspect-[16/10] bg-stone-100 overflow-hidden">
-                      <img
-                        src={dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80'}
-                        alt={dish.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                  <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-stone-100 relative">
+                    <img
+                      src={dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}
+                      alt={dish.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-1.5 left-1.5">
+                      <span className={`w-3.5 h-3.5 rounded-full border border-white flex items-center justify-center ${dish.is_veg ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      </span>
+                    </div>
+                  </div>
 
-                      <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs ${dish.is_veg ? 'bg-emerald-600' : 'bg-rose-600'}`}>
-                          {dish.is_veg ? 'Veg' : 'Non-Veg'}
-                        </span>
-                        {typeof distanceKm === 'number' && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-emerald-400 backdrop-blur-xs">
-                            📍 {formatDistance(distanceKm)}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="absolute bottom-3 inset-x-3 flex items-center justify-between text-white">
-                        <span className="font-heading font-extrabold text-lg text-amber-300">
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start justify-between gap-1">
+                        <h4 className="font-black text-sm text-stone-900 group-hover:text-[#FF5A36] transition-colors line-clamp-1">
+                          {dish.name}
+                        </h4>
+                        <span className="font-mono font-black text-sm text-[#FF5A36] shrink-0">
                           ₹{dish.price}
                         </span>
-                        <span className="text-xs font-semibold text-stone-200 bg-black/60 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
-                          {dish.restaurant_name}
-                        </span>
                       </div>
-                    </div>
-
-                    {/* Dish Info */}
-                    <div className="p-5 space-y-2">
-                      <div className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-[#D8350F]">
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{areaName}</span>
-                      </div>
-                      <h3 className="hd text-base sm:text-lg font-bold text-[#14110F] group-hover:text-[#FF5A36] transition-colors">
-                        {dish.name}
-                      </h3>
-                      <p className="text-xs text-[#57534E] leading-relaxed line-clamp-2">
+                      <p className="text-[11px] font-bold text-stone-600 truncate mt-0.5">
+                        at {dish.restaurant_name}
+                      </p>
+                      <p className="text-[11px] text-stone-500 line-clamp-2 mt-1 leading-snug">
                         {dish.why_famous}
                       </p>
                     </div>
-                  </div>
 
-                  <div className="p-5 pt-0">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/iconic-area/${areaSlug}`);
-                      }}
-                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FAF8F5] hover:bg-[#FFE9E2] text-[#14110F] hover:text-[#D8350F] text-xs font-bold border border-[#EFEAE2] hover:border-[#FF5A36]/30 transition-all cursor-pointer"
-                    >
-                      <span>Explore in {areaName} Guide</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="pt-2 flex items-center text-[11px] font-bold text-[#FF5A36]">
+                      <span>View Story &amp; Details</span>
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 5. SECTION 3: TESTED 3-STOP FOOD CRAWL TIMELINE */}
+        {/* ========================================================================= */}
+        {crawlStops.length > 0 && (
+          <section className="bg-gradient-to-br from-stone-900 via-stone-900 to-[#2A2320] text-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF5A36] uppercase tracking-wider mb-1">
+                  <Footprints className="w-3.5 h-3.5" />
+                  <span>Tested Evening Walking Trail</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  3-Stop Food Crawl in {meta?.area_name || activeGuide.title.split(' ')[0]}
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-xl">
+                  Follow this exact tested walking route: starters to comfort mains to famous monster shakes without getting stuck in traffic.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={googleMapsRouteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 rounded-xl bg-[#FF5A36] hover:bg-[#e04826] text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
+                >
+                  <Navigation className="w-3.5 h-3.5 fill-white" />
+                  <span>Start Walking Route in Google Maps</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {crawlStops.map((stop, i) => (
+                <div
+                  key={i}
+                  className="bg-stone-800/90 border border-stone-700/80 rounded-2xl p-5 space-y-3 flex flex-col justify-between relative"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-full bg-[#FF5A36]/20 text-[#FF5A36] font-mono font-black text-xs">
+                        Stop {stop.stop_number || i + 1}
+                      </span>
+                      <span className="text-xs font-bold text-stone-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-stone-400" />
+                        <span>{stop.time}</span>
+                      </span>
+                    </div>
+
+                    <h4 className="text-base font-extrabold text-white">
+                      {stop.venue_name}
+                    </h4>
+
+                    <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-800">
+                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wide block">
+                        Must-Order
+                      </span>
+                      <p className="text-xs font-bold text-orange-200 mt-0.5">
+                        {stop.recommended_dish}
+                      </p>
+                    </div>
+
+                    {stop.note && (
+                      <p className="text-xs text-stone-400 leading-relaxed">
+                        {stop.note}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-400">
+                    <span className="flex items-center gap-1">
+                      <Footprints className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{stop.distance_to_next}</span>
+                    </span>
+                    <span className="font-bold text-stone-300">
+                      {stop.type}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 6. SECTION 4: CURATED VERIFIED CAFES IN THIS AREA */}
+        {/* ========================================================================= */}
+        <section id="area-cafes-section" className="space-y-6 pt-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF5A36] uppercase tracking-wider mb-1">
+                <Utensils className="w-3.5 h-3.5" />
+                <span>Verified Dining Directory</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+                Cafes &amp; Restaurants in {meta?.area_name || activeGuide.title.split(' ')[0]}
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
+                Authentic dine-in menus, 0% app markups &amp; direct WhatsApp table orders.
+              </p>
+            </div>
+
+            {/* In-Area Search Input */}
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder={`Search cafes or dishes in ${meta?.area_name || 'area'}…`}
+                value={cafeSearchQuery}
+                onChange={(e) => setCafeSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-white border border-[#E7E2DA] rounded-xl text-xs font-medium focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden shadow-2xs"
+              />
+            </div>
+          </div>
+
+          {/* Quick Filter Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            {[
+              { id: 'all', label: `All Cafes (${activeAreaCafes.length})` },
+              { id: 'veg', label: '🥗 Pure Veg Only' },
+              { id: 'budget', label: '💰 Budget (Under ₹400 for Two)' },
+              { id: 'date', label: '✨ Aesthetic & Date Spots' },
+              { id: 'open_now', label: '🟢 Open & Serving' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setCafeFilter(f.id as any)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                  cafeFilter === f.id
+                    ? 'bg-[#1C1917] text-white shadow-xs'
+                    : 'bg-white hover:bg-stone-100 text-stone-700 border border-[#E7E2DA]'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Cafes Grid */}
+          {loadingCafes ? (
+            <div className="py-16 text-center">
+              <div className="w-8 h-8 border-3 border-[#FF5A36] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-stone-500 font-bold">Loading verified venues…</p>
+            </div>
+          ) : activeAreaCafes.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeAreaCafes.map((rest) => {
+                const dist = userCoords && rest.latitude && rest.longitude
+                  ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, rest.latitude, rest.longitude)
+                  : undefined;
+                return (
+                  <RestaurantCard
+                    key={rest.id}
+                    restaurant={rest}
+                    navigate={navigate}
+                    userDistanceKm={dist}
+                  />
+                );
+              })}
+            </div>
           ) : (
-            <div className="bg-white border-2 border-dashed border-[#E7E2DA] rounded-3xl p-10 sm:p-16 text-center space-y-3">
-              <Sparkles className="w-12 h-12 text-stone-300 mx-auto" />
-              <h3 className="hd font-bold text-xl text-[#14110F]">
-                No Famous Dishes Match "{searchQuery}"
-              </h3>
-              <p className="text-xs sm:text-sm text-[#57534E] max-w-md mx-auto">
-                Try searching for "Monster Shake", "Chur Chur Naan", "Dal Bukhara", "Jalebi", or "Chaap".
+            <div className="bg-white rounded-2xl border border-[#E7E2DA] p-10 text-center space-y-3">
+              <Utensils className="w-8 h-8 text-stone-400 mx-auto" />
+              <h4 className="text-base font-bold text-stone-800">
+                No cafes match "{cafeSearchQuery || cafeFilter}"
+              </h4>
+              <p className="text-xs text-stone-500">
+                Try resetting your filters or search query to see all venues.
               </p>
               <button
+                type="button"
                 onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCraving(null);
+                  setCafeFilter('all');
+                  setCafeSearchQuery('');
                 }}
-                className="px-5 py-2.5 rounded-xl bg-[#D8350F] hover:bg-[#FF5A36] text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
+                className="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold"
               >
-                Reset Search
+                Reset Filters
               </button>
             </div>
           )}
+        </section>
+
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 7. ALL AREAS & HUBS EXPLORER MODAL / DRAWER */}
+      {/* ========================================================================= */}
+      {isExplorerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-left border border-[#E7E2DA]">
+            
+            {/* Modal Header */}
+            <div className="p-4 sm:p-6 border-b border-[#E7E2DA] flex items-center justify-between shrink-0 bg-stone-50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#FF5A36] text-white flex items-center justify-center shadow-xs">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-stone-900">
+                    Explore All Iconic Food Areas &amp; Hubs
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Sorted by live GPS distance from where you stand
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsExplorerOpen(false)}
+                className="p-2 rounded-full hover:bg-stone-200 text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search & Zone Filter Bar */}
+            <div className="p-4 border-b border-[#E7E2DA] space-y-3 bg-white shrink-0">
+              <div className="relative">
+                <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by area name, metro station, landmark dish (e.g. Hudson Lane, CP, Momos)…"
+                  value={explorerSearch}
+                  onChange={(e) => setExplorerSearch(e.target.value)}
+                  autoFocus
+                  className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20 outline-hidden shadow-2xs"
+                />
+              </div>
+
+              {/* Zone Filter Chips */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'all', label: 'All Delhi NCR' },
+                  { id: 'north', label: 'North Campus & Model Town' },
+                  { id: 'central', label: 'Central Delhi & CP' },
+                  { id: 'south', label: 'South Delhi & HKV' },
+                  { id: 'west', label: 'West Delhi & Nangloi' },
+                  { id: 'ncr', label: 'Cyber Hub & NCR' },
+                ].map((z) => (
+                  <button
+                    key={z.id}
+                    type="button"
+                    onClick={() => setSelectedZone(z.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                      selectedZone === z.id
+                        ? 'bg-[#FF5A36] text-white shadow-2xs'
+                        : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                    }`}
+                  >
+                    {z.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Cards Grid (Scrollable) */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {modalFilteredGuides.map((guide) => {
+                  const isActive = guide.id === activeGuide.id;
+                  const dist = (guide as any).distanceKm;
+                  const m = guide.area_metadata;
+
+                  return (
+                    <div
+                      key={guide.id}
+                      onClick={() => handleSelectArea(guide)}
+                      className={`group rounded-2xl border p-3 flex flex-col justify-between cursor-pointer transition-all ${
+                        isActive
+                          ? 'border-[#FF5A36] bg-orange-50/60 ring-2 ring-[#FF5A36]/30 shadow-md'
+                          : 'border-[#E7E2DA] bg-white hover:border-stone-400 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        {/* Cover image & distance badge */}
+                        <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-stone-100">
+                          <img
+                            src={guide.cover_image_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80'}
+                            alt={guide.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold">
+                            <MapPin className="w-2.5 h-2.5 text-[#FF5A36]" />
+                            <span>{typeof dist === 'number' ? `${formatDistance(dist)} away` : 'Delhi NCR'}</span>
+                          </div>
+                          {isActive && (
+                            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[#FF5A36] text-white text-[10px] font-black shadow-xs">
+                              Active
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title & Metro */}
+                        <div>
+                          <h4 className="font-black text-sm text-stone-900 group-hover:text-[#FF5A36] transition-colors line-clamp-1">
+                            {m?.area_name || guide.title}
+                          </h4>
+                          <p className="text-[11px] text-stone-500 line-clamp-2 mt-0.5 leading-snug">
+                            {m?.vibe_badge || guide.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 mt-2 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-stone-600 flex items-center gap-1">
+                          <Train className="w-3 h-3 text-sky-600" />
+                          <span className="truncate max-w-[120px]">{m?.nearest_metro?.split('(')[0] || 'Metro'}</span>
+                        </span>
+                        <span className="font-bold text-[#FF5A36] flex items-center gap-0.5">
+                          <span>Open Guide</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {modalFilteredGuides.length === 0 && (
+                <div className="text-center py-12 space-y-2">
+                  <Compass className="w-8 h-8 text-stone-400 mx-auto" />
+                  <p className="text-sm font-bold text-stone-800">No area guides match "{explorerSearch}"</p>
+                  <p className="text-xs text-stone-500">Try searching for Connaught Place, Hudson Lane, Hauz Khas, or Nangloi.</p>
+                </div>
+              )}
+            </div>
+
+          </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 4. DISH SPOTLIGHT PREVIEW MODAL (Mobile Bottom-Sheet Compatible) */}
+      {/* 8. DISH SPOTLIGHT MODAL */}
       {/* ========================================================================= */}
       {selectedSpotlightDish && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-t-[32px] sm:rounded-3xl overflow-hidden max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-[#EFEAE2] space-y-0 relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
-            {/* Modal Image */}
-            <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl text-left border border-[#E7E2DA]">
+            <div className="relative aspect-[16/10] bg-stone-100">
               <img
                 src={selectedSpotlightDish.dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80'}
                 alt={selectedSpotlightDish.dish.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
-
               <button
+                type="button"
                 onClick={() => setSelectedSpotlightDish(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 text-white font-bold flex items-center justify-center transition-colors z-20 cursor-pointer"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black transition-colors cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
-
-              <div className="absolute top-4 left-4 flex items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-xs ${selectedSpotlightDish.dish.is_veg ? 'bg-emerald-600' : 'bg-rose-600'}`}>
-                  {selectedSpotlightDish.dish.is_veg ? 'Pure Veg' : 'Non-Veg'}
-                </span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-black bg-amber-400 text-stone-950 shadow-xs flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Famous Specialty</span>
-                </span>
-              </div>
-
-              <div className="absolute bottom-4 inset-x-4 flex items-end justify-between text-white">
-                <div>
-                  <span className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block">
-                    Counter Price
-                  </span>
-                  <span className="hd font-black text-2xl sm:text-3xl text-amber-300">
-                    ₹{selectedSpotlightDish.dish.price}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-stone-300 font-semibold block">Exclusively Served At</span>
-                  <span className="text-xs sm:text-sm font-bold text-white bg-black/60 px-3 py-1 rounded-xl backdrop-blur-xs">
-                    {selectedSpotlightDish.dish.restaurant_name}
-                  </span>
-                </div>
+              <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-xs text-white text-xs font-bold">
+                📍 {selectedSpotlightDish.areaName}
               </div>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              <div>
-                <h3 className="hd font-black text-xl sm:text-2xl text-[#14110F]">
-                  {selectedSpotlightDish.dish.name}
-                </h3>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0F766E] mt-1">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Located in {selectedSpotlightDish.areaName}</span>
-                  {typeof selectedSpotlightDish.distanceKm === 'number' && (
-                    <span className="text-[#57534E] font-normal">
-                      • {formatDistance(selectedSpotlightDish.distanceKm)} from your live GPS
-                    </span>
-                  )}
+            <div className="p-5 sm:p-6 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-black text-stone-900">
+                    {selectedSpotlightDish.dish.name}
+                  </h3>
+                  <p className="text-xs font-bold text-stone-600 mt-0.5">
+                    Served fresh at <strong>{selectedSpotlightDish.dish.restaurant_name}</strong>
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-xl font-mono font-black text-[#FF5A36]">
+                    ₹{selectedSpotlightDish.dish.price}
+                  </span>
+                  <span className="block text-[10px] text-stone-500 font-bold">Counter Price</span>
                 </div>
               </div>
 
-              <div className="bg-[#FAF8F5] rounded-2xl p-4 border border-[#EFEAE2] space-y-1.5">
-                <div className="text-[11px] font-black uppercase tracking-wider text-[#D8350F] flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5" />
-                  <span>Why This Dish is Famous</span>
-                </div>
-                <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed font-normal">
+              <div className="p-3 rounded-2xl bg-orange-50/70 border border-orange-200/80">
+                <span className="text-[10px] font-bold text-[#FF5A36] uppercase tracking-wide block">
+                  Why It's Famous
+                </span>
+                <p className="text-xs text-stone-700 mt-1 leading-relaxed">
                   {selectedSpotlightDish.dish.why_famous}
                 </p>
               </div>
 
-              {/* Actions */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-                <button
-                  onClick={() => {
-                    const slug = selectedSpotlightDish.areaSlug;
-                    setSelectedSpotlightDish(null);
-                    navigate(`/iconic-area/${slug}`);
-                  }}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                >
-                  <Utensils className="w-4 h-4" />
-                  <span>View Full {selectedSpotlightDish.areaName} Guide & Menus</span>
-                </button>
-
+              <div className="flex gap-2 pt-2">
                 <a
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this famous ${selectedSpotlightDish.dish.name} at ${selectedSpotlightDish.dish.restaurant_name} in ${selectedSpotlightDish.areaName} for ₹${selectedSpotlightDish.dish.price} on MenuMap: ${window.location.origin}/iconic-area/${selectedSpotlightDish.areaSlug}`)}`}
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this famous ${selectedSpotlightDish.dish.name} at ${selectedSpotlightDish.dish.restaurant_name} in ${selectedSpotlightDish.areaName} for ₹${selectedSpotlightDish.dish.price} on MenuMaps: ${window.location.origin}/iconic-area/${selectedSpotlightDish.areaSlug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Share</span>
+                  <MessageCircle className="w-4 h-4 fill-white" />
+                  <span>Share on WhatsApp</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSpotlightDish(null)}
+                  className="px-5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* ========================================================================= */}
-      {/* 5. SYSTEMATIC LOCAL LOGISTICS GUIDE */}
-      {/* ========================================================================= */}
-      <section className="bg-stone-50 rounded-3xl p-6 sm:p-10 border border-stone-200 space-y-6">
-        <div className="space-y-1">
-          <span className="text-xs font-black uppercase tracking-wider text-rose-600">
-            Delhi Metro & Systematic GPS Know-How
-          </span>
-          <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-slate-900">
-            Systematic Neighborhood Discovery on MenuMap
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-700 leading-relaxed">
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-              <Crosshair className="w-4 h-4 text-emerald-500" />
-              <span>Zero Manual Typing Needed</span>
-            </div>
-            <p>
-              Your browser's live GPS automatically detects whether you're in Nangloi, North Campus, CP, or South Delhi. Iconic areas are dynamically sorted by live distance from where you stand.
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-              <UtensilsCrossed className="w-4 h-4 text-rose-500" />
-              <span>Instant "What’s Famous" Search</span>
-            </div>
-            <p>
-              Looking for a specific dish rather than a locality? Search any food item (e.g. "Chur Chur Naan" or "Monster Shake") to immediately see which area and cafe serves it with verified counter prices.
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-              <Navigation className="w-4 h-4 text-orange-500" />
-              <span>Exact Metro Gates & 3-Stop Crawls</span>
-            </div>
-            <p>
-              Every iconic area guide includes the exact Delhi Metro line, exit gate number, parking realities, and an interactive 3-stop food crawl walking itinerary.
-            </p>
-          </div>
-        </div>
-      </section>
 
     </div>
   );
