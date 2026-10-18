@@ -47,7 +47,13 @@ import {
   Mail,
   Send,
   Share2,
-  FileCheck
+  FileCheck,
+  UserPlus,
+  Calendar,
+  Clock,
+  ArrowUpRight,
+  PhoneCall,
+  ArrowRight
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -65,7 +71,8 @@ import {
   RestaurantClaim,
   ClaimStatus,
   FamousDishSpotlight,
-  FoodCrawlStop
+  FoodCrawlStop,
+  RestaurantOwnerAccount
 } from '../types/database';
 import { 
   api, 
@@ -124,6 +131,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const [analytics, setAnalytics] = useState<SearchAnalytic[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [claims, setClaims] = useState<RestaurantClaim[]>([]);
+  const [owners, setOwners] = useState<RestaurantOwnerAccount[]>([]);
+  const [todayActivityTab, setTodayActivityTab] = useState<'today' | 'week' | 'all'>('today');
+  const [todayActivitySearch, setTodayActivitySearch] = useState('');
   const [evidencePreviewImage, setEvidencePreviewImage] = useState<string | null>(null);
   const [copiedClaimLinkId, setCopiedClaimLinkId] = useState<string | null>(null);
   const [claimFilterTab, setClaimFilterTab] = useState<'all' | 'pending' | 'approved' | 'active' | 'rejected'>('all');
@@ -245,7 +255,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const loadAllAdminData = async () => {
     setLoading(true);
     try {
-      const [rests, items, revs, cols, anl, sets, allClaims] = await Promise.all([
+      const [rests, items, revs, cols, anl, sets, allClaims, allOwners] = await Promise.all([
         api.getRestaurants(false),
         api.getMenuItems(),
         api.getReviews(undefined, false),
@@ -253,6 +263,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
         api.getSearchAnalytics(),
         api.getSettings(),
         api.getRestaurantClaims(),
+        api.getRestaurantOwners ? api.getRestaurantOwners() : Promise.resolve([]),
       ]);
 
       setRestaurants(rests);
@@ -262,6 +273,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
       setAnalytics(anl);
       setSettings(sets);
       setClaims(allClaims || []);
+      setOwners(allOwners || []);
 
       if (rests.length > 0 && !selectedRestId) {
         setSelectedRestId(rests[0].id);
@@ -857,6 +869,145 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const currentRestaurant = restaurants.find((r) => r.id === selectedRestId);
   const currentMenuItems = menuItems.filter((i) => i.restaurant_id === selectedRestId);
 
+  // --------------------------------------------------------------------------
+  // TODAY'S NEW RESTAURANTS & ONBOARDED OWNERS TRACKER COMPUTATIONS
+  // --------------------------------------------------------------------------
+  const isCreatedToday = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isSameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    const isLast24h = now.getTime() - d.getTime() <= 24 * 60 * 60 * 1000 && d.getTime() <= now.getTime();
+    return isSameDay || isLast24h;
+  };
+
+  const isCreatedThisWeek = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr).getTime();
+    const now = Date.now();
+    return now - d <= 7 * 24 * 60 * 60 * 1000;
+  };
+
+  const formatJoinDate = (isoStr?: string) => {
+    if (!isoStr) return 'Recently';
+    const d = new Date(isoStr);
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) {
+      return 'Today';
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatJoinTime = (isoStr?: string) => {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
+  const recentOnboardedList = React.useMemo(() => {
+    const list: Array<{
+      id: string;
+      uniqueKey: string;
+      type: 'new_restaurant' | 'claim';
+      restaurant_name: string;
+      restaurant_slug: string;
+      restaurant_id: string;
+      locality: string;
+      owner_name: string;
+      owner_email: string;
+      owner_phone: string;
+      created_at: string;
+      status_badge: string;
+      status_label: string;
+    }> = [];
+
+    // 1. Process restaurants created by owners or added to system
+    restaurants.forEach((r) => {
+      const matchedOwner = owners.find(
+        (o) => o.restaurant_id === r.id || (o.restaurant_slug && o.restaurant_slug === r.slug)
+      );
+      const date = r.created_at || matchedOwner?.created_at;
+      if (!date) return;
+
+      list.push({
+        id: r.id,
+        uniqueKey: `rest-${r.id}`,
+        type: 'new_restaurant',
+        restaurant_name: r.name,
+        restaurant_slug: r.slug,
+        restaurant_id: r.id,
+        locality: r.city || r.address_line1 || 'Delhi NCR',
+        owner_name: matchedOwner?.owner_name || (r.is_claimed ? 'Verified Owner' : 'Direct Listed Cafe'),
+        owner_email: matchedOwner?.owner_email || r.email || '',
+        owner_phone: matchedOwner?.phone_number || r.phone || '',
+        created_at: date,
+        status_badge: r.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-stone-100 text-stone-600 border-stone-200',
+        status_label: r.is_active ? 'Live on Site' : 'Draft / Inactive',
+      });
+    });
+
+    // 2. Process claims submitted by users/owners
+    claims.forEach((c) => {
+      list.push({
+        id: c.id,
+        uniqueKey: `claim-${c.id}`,
+        type: 'claim',
+        restaurant_name: c.restaurant_name,
+        restaurant_slug: c.restaurant_slug || '',
+        restaurant_id: c.restaurant_id,
+        locality: 'Delhi NCR',
+        owner_name: c.owner_name,
+        owner_email: c.owner_email,
+        owner_phone: c.phone_number,
+        created_at: c.created_at,
+        status_badge: c.status === 'ownership_active'
+          ? 'bg-teal-50 text-teal-700 border-teal-200'
+          : c.status === 'pending_admin_approval'
+          ? 'bg-amber-50 text-amber-700 border-amber-200'
+          : 'bg-rose-50 text-rose-700 border-rose-200',
+        status_label: c.status === 'ownership_active'
+          ? 'Ownership Active'
+          : c.status === 'pending_admin_approval'
+          ? 'Claim Pending Approval'
+          : c.status,
+      });
+    });
+
+    // Sort newest first
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [restaurants, owners, claims]);
+
+  const todayJoinedCount = recentOnboardedList.filter((item) => isCreatedToday(item.created_at)).length;
+  const weekJoinedCount = recentOnboardedList.filter((item) => isCreatedThisWeek(item.created_at)).length;
+
+  const displayedOnboardedItems = React.useMemo(() => {
+    let base = recentOnboardedList;
+    if (todayActivityTab === 'today') {
+      base = recentOnboardedList.filter((item) => isCreatedToday(item.created_at));
+    } else if (todayActivityTab === 'week') {
+      base = recentOnboardedList.filter((item) => isCreatedThisWeek(item.created_at));
+    }
+
+    if (!todayActivitySearch.trim()) return base;
+    const q = todayActivitySearch.toLowerCase().trim();
+    return base.filter(
+      (item) =>
+        item.restaurant_name.toLowerCase().includes(q) ||
+        item.locality.toLowerCase().includes(q) ||
+        item.owner_name.toLowerCase().includes(q) ||
+        item.owner_email.toLowerCase().includes(q) ||
+        item.owner_phone.includes(q)
+    );
+  }, [recentOnboardedList, todayActivityTab, todayActivitySearch]);
+
   return (
     <div className="min-h-screen bg-stone-50/60 pb-20">
       
@@ -944,13 +1095,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
           <div className="space-y-8">
             
             {/* Quick KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+              <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-1 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500">Joined Today</span>
+                  {todayJoinedCount > 0 ? (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      LIVE
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-stone-400">0h-24h</span>
+                  )}
+                </div>
+                <div className="text-3xl font-heading font-black text-emerald-600">
+                  {todayJoinedCount}
+                </div>
+                <div className="text-[11px] text-stone-500 font-semibold truncate">
+                  {weekJoinedCount} new joins this week
+                </div>
+              </div>
+
               <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-1">
                 <span className="text-xs font-bold text-slate-500">Total Cafes & Venues</span>
                 <div className="text-3xl font-heading font-black text-slate-900">
                   {restaurants.length}
                 </div>
-                <div className="text-[11px] text-emerald-600 font-semibold">
+                <div className="text-[11px] text-emerald-600 font-semibold truncate">
                   {restaurants.filter((r) => r.is_active).length} active on live site
                 </div>
               </div>
@@ -960,7 +1131,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                 <div className="text-3xl font-heading font-black text-slate-900">
                   {menuItems.length}
                 </div>
-                <div className="text-[11px] text-teal-600 font-semibold">
+                <div className="text-[11px] text-teal-600 font-semibold truncate">
                   {menuItems.filter((i) => i.is_available).length} available to order
                 </div>
               </div>
@@ -970,7 +1141,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                 <div className="text-3xl font-heading font-black text-slate-900">
                   {reviews.length}
                 </div>
-                <div className="text-[11px] text-amber-600 font-semibold">
+                <div className="text-[11px] text-amber-600 font-semibold truncate">
                   {reviews.filter((r) => r.is_approved).length} approved
                 </div>
               </div>
@@ -980,7 +1151,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                 <div className="text-3xl font-heading font-black text-slate-900">
                   {collections.length}
                 </div>
-                <div className="text-[11px] text-purple-600 font-semibold">
+                <div className="text-[11px] text-purple-600 font-semibold truncate">
                   {collections.filter((c) => c.is_featured).length} featured on homepage
                 </div>
               </div>
@@ -1033,6 +1204,253 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                   <span>New Area Guide</span>
                 </button>
               </div>
+            </div>
+
+            {/* ================================================================ */}
+            {/* LIVE NEW RESTAURANTS & ONBOARDED CAFE OWNERS LEDGER */}
+            {/* ================================================================ */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200 shadow-xs space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
+                    <UserPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-heading font-extrabold text-lg sm:text-xl text-slate-900">
+                        New Restaurants & Onboarded Owners
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        {todayJoinedCount} Joined Today
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Live real-time feed of cafe owners and venues newly registered or claimed on Menu Maps.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Filter and Search Controls */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Period Filter Tabs */}
+                  <div className="inline-flex p-1 bg-stone-100 rounded-2xl border border-stone-200 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setTodayActivityTab('today')}
+                      className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                        todayActivityTab === 'today'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-stone-500 hover:text-stone-900'
+                      }`}
+                    >
+                      Today ({todayJoinedCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTodayActivityTab('week')}
+                      className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                        todayActivityTab === 'week'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-stone-500 hover:text-stone-900'
+                      }`}
+                    >
+                      Last 7 Days ({weekJoinedCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTodayActivityTab('all')}
+                      className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                        todayActivityTab === 'all'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-stone-500 hover:text-stone-900'
+                      }`}
+                    >
+                      All ({recentOnboardedList.length})
+                    </button>
+                  </div>
+
+                  {/* Search Filter */}
+                  <div className="relative min-w-[200px]">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      type="text"
+                      placeholder="Filter by cafe, name, phone..."
+                      value={todayActivitySearch}
+                      onChange={(e) => setTodayActivitySearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Table / List */}
+              {displayedOnboardedItems.length === 0 ? (
+                <div className="text-center py-10 px-4 bg-stone-50/70 border border-dashed border-stone-200 rounded-2xl space-y-3">
+                  <div className="w-10 h-10 mx-auto rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+                    <UserPlus className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-heading font-bold text-sm text-stone-700">
+                      {todayActivityTab === 'today'
+                        ? 'No new restaurant pages created yet today.'
+                        : 'No records matching your search filter.'}
+                    </p>
+                    <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                      {todayActivityTab === 'today'
+                        ? "Check back as cafe owners register via /list-cafe or claim their pages, or switch to view past week's joins."
+                        : 'Try searching by a different name, locality, or clear the search input.'}
+                    </p>
+                  </div>
+                  {todayActivityTab === 'today' && weekJoinedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setTodayActivityTab('week')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-stone-200 text-xs font-bold text-slate-700 hover:bg-stone-50 shadow-2xs cursor-pointer"
+                    >
+                      <span>View {weekJoinedCount} joins from this week</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-stone-400" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-stone-200 bg-stone-50/60 text-stone-500 font-bold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-4 rounded-l-xl">Restaurant / Cafe</th>
+                        <th className="py-3 px-4">Owner / Contact</th>
+                        <th className="py-3 px-4">Registration Type</th>
+                        <th className="py-3 px-4">Joined At</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 rounded-r-xl text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {displayedOnboardedItems.map((item) => (
+                        <tr key={item.uniqueKey} className="hover:bg-stone-50/70 transition-colors">
+                          {/* Cafe Info */}
+                          <td className="py-3.5 px-4 font-medium">
+                            <div className="font-heading font-extrabold text-slate-900 text-sm">
+                              {item.restaurant_name}
+                            </div>
+                            <div className="text-[11px] text-stone-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
+                              <span>{item.locality}</span>
+                              {item.restaurant_slug && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-mono text-[10px] text-stone-400">/{item.restaurant_slug}</span>
+                                </>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Owner Contact */}
+                          <td className="py-3.5 px-4">
+                            <div className="font-semibold text-slate-800">
+                              {item.owner_name}
+                            </div>
+                            <div className="flex flex-col gap-0.5 mt-0.5 text-[11px]">
+                              {item.owner_email && (
+                                <a
+                                  href={`mailto:${item.owner_email}`}
+                                  className="text-stone-500 hover:text-rose-600 flex items-center gap-1 truncate max-w-[200px]"
+                                  title={item.owner_email}
+                                >
+                                  <Mail className="w-3 h-3 text-stone-400 shrink-0" />
+                                  <span className="truncate">{item.owner_email}</span>
+                                </a>
+                              )}
+                              {item.owner_phone && (
+                                <a
+                                  href={`tel:${item.owner_phone}`}
+                                  className="text-stone-500 hover:text-emerald-600 flex items-center gap-1 font-mono"
+                                >
+                                  <PhoneCall className="w-3 h-3 text-stone-400 shrink-0" />
+                                  <span>{item.owner_phone}</span>
+                                </a>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Type */}
+                          <td className="py-3.5 px-4">
+                            {item.type === 'new_restaurant' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <Sparkles className="w-3 h-3 text-emerald-600" />
+                                <span>New Cafe Created</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                <ShieldCheck className="w-3 h-3 text-amber-600" />
+                                <span>Cafe Claimed</span>
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Joined At */}
+                          <td className="py-3.5 px-4 text-stone-600">
+                            <div className="font-semibold text-slate-800">
+                              {formatJoinDate(item.created_at)}
+                            </div>
+                            <div className="text-[10px] text-stone-400 font-mono mt-0.5">
+                              {formatJoinTime(item.created_at)}
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-3.5 px-4">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${item.status_badge}`}>
+                              {item.status_label}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="inline-flex items-center gap-1.5 justify-end">
+                              {item.restaurant_slug && (
+                                <a
+                                  href={`/restaurant/${item.restaurant_slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium transition-colors"
+                                  title="View Live Page in New Tab"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                              {item.type === 'new_restaurant' && item.restaurant_id && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const target = restaurants.find(r => r.id === item.restaurant_id);
+                                    if (target) handleOpenEditRestaurant(target);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium transition-colors cursor-pointer"
+                                  title="Edit Restaurant in Admin"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {item.type === 'claim' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveSection('owner_claims')}
+                                  className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium transition-colors cursor-pointer"
+                                  title="Review Claim in Owner Claims Section"
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             {/* Recent Search Queries & Top Items from Analytics */}

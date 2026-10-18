@@ -621,17 +621,36 @@ def main():
             f_out.write(html)
 
     # C) /nearby (High-Intent "Best Cafes Near Me")
+    top_nearby_cafes_html = ""
+    for r in restaurants[:24]:
+        top_nearby_cafes_html += f"""
+        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 20px;">
+            <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 6px 0;">
+                <a href="/restaurant/{r['slug']}" style="color: #1C1917; text-decoration: none;">{escape_html(r['name'])}</a>
+            </h3>
+            <p style="color: #78716C; font-size: 14px; margin: 0 0 8px 0;">📍 {escape_html(r['address_line1'])}, {escape_html(r['city'])}</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                <span style="font-weight: 700; color: #FF5A36;">₹{r['average_cost_for_two']} for two</span>
+                <a href="/restaurant/{r['slug']}" style="color: #0D9488; font-weight: 700; text-decoration: none;">View Counter Menu &rarr;</a>
+            </div>
+        </div>
+        """
+
     nearby_fallback = f"""
     <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
         <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
             <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
             <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
         </a>
-        <nav style="display: flex; gap: 24px; font-weight: 600; font-size: 15px;">
+        <nav style="display: flex; flex-wrap: wrap; gap: 20px; font-weight: 600; font-size: 14px;">
             <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
+            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
             <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
             <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
-            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
+            <a href="/list-cafe" style="color: #0D9488; text-decoration: none;">List Cafe</a>
+            <a href="/search" style="color: #44403C; text-decoration: none;">Search</a>
+            <a href="/about" style="color: #44403C; text-decoration: none;">About</a>
+            <a href="/contact" style="color: #44403C; text-decoration: none;">Contact</a>
         </nav>
     </header>
     <main style="max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
@@ -655,6 +674,13 @@ def main():
                 <a href="/iconic-area/model-town-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Model Town</a>
             </div>
         </section>
+
+        <section style="margin-bottom: 48px;">
+            <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 20px 0;">Top-Rated Cafes & Restaurants Nearby in Delhi NCR</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                {top_nearby_cafes_html}
+            </div>
+        </section>
     </main>
     """
 
@@ -667,6 +693,53 @@ def main():
     html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: '<meta property="og:title" content="Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR" />', html)
     html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: '<meta property="og:description" content="Find the best cafes near you right now with real verified menus, prices, distance, ratings, and dine-in photos across Delhi NCR." />', html)
     html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{DOMAIN}/nearby" />', html)
+
+    nearby_schema = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "CollectionPage",
+                "@id": f"{DOMAIN}/nearby#webpage",
+                "name": "Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR",
+                "description": "Find top-rated cafes and restaurants near your current location across Delhi NCR with authentic counter prices and direct WhatsApp ordering.",
+                "url": f"{DOMAIN}/nearby",
+                "mainEntity": {
+                    "@type": "ItemList",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": idx + 1,
+                            "item": {
+                                "@type": "Restaurant",
+                                "name": r["name"],
+                                "url": f"{DOMAIN}/restaurant/{r['slug']}",
+                                "priceRange": f"₹{r['average_cost_for_two']} for two",
+                                "address": {
+                                    "@type": "PostalAddress",
+                                    "streetAddress": r["address_line1"],
+                                    "addressLocality": r["city"],
+                                    "addressRegion": "Delhi",
+                                    "addressCountry": "IN"
+                                }
+                            }
+                        }
+                        for idx, r in enumerate(restaurants[:25])
+                    ]
+                }
+            },
+            {
+                "@type": "BreadcrumbList",
+                "@id": f"{DOMAIN}/nearby#breadcrumbs",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Best Cafes Near Me", "item": f"{DOMAIN}/nearby"}
+                ]
+            }
+        ]
+    }
+
+    schema_tag = f'<script type="application/ld+json">{json.dumps(nearby_schema)}</script>\n  </head>'
+    html = html.replace('</head>', schema_tag)
     html = replace_root(html, nearby_fallback)
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
         f_out.write(html)
@@ -711,8 +784,9 @@ def main():
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
         f_out.write(html)
 
-    # E) Other Core Pages (search, about, contact, terms, privacy)
+    # E) Other Core Pages (search, about, contact, terms, privacy, list-cafe)
     simple_pages = {
+        "list-cafe": ("List & Claim Your Cafe | 0% Commission Partner Network – Menu Maps", "Join Menu Maps partner network: Get 100% price control, zero-commission customer orders, direct WhatsApp ordering, and reach thousands of daily Delhi foodies."),
         "search": ("Search Cafes, Restaurants & Dishes | Menu Maps Delhi NCR", "Search verified menus, dishes, cafes, and restaurants across Delhi NCR on Menu Maps."),
         "about": ("About Menu Maps – Verified Food Discovery & 0% Markup Menus", "Menu Maps is Delhi NCR's premier food discovery platform offering 100% real dine-in menus, verified prices, and zero delivery app markups."),
         "contact": ("Contact Menu Maps – Support, Partnerships & Restaurant Onboarding", "Get in touch with the Menu Maps team at contact@menumaps.in for restaurant onboarding, partnership inquiries, and diner support."),

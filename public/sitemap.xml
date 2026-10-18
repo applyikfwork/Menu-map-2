@@ -29,6 +29,12 @@
     <loc>https://menumaps.in/nearby</loc>
     <lastmod>2026-10-18</lastmod>
     <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/list-cafe</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
@@ -64,31 +70,85 @@
 
   <!-- Iconic Area Food Guides -->
   <url>
-    <loc>https://menumaps.in/iconic-area/majnu-ka-tilla-mkt-food-guide</loc>
+    <loc>https://menumaps.in/iconic-area/bengali-market-mandi-house-food-guide</loc>
     <lastmod>2026-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://menumaps.in/iconic-area/malviya-nagar-saket-food-guide</loc>
+    <loc>https://menumaps.in/iconic-area/chandni-chowk-old-delhi-heritage-trail</loc>
     <lastmod>2026-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://menumaps.in/iconic-area/mukherjee-nagar-coaching-hub-food-guide</loc>
+    <loc>https://menumaps.in/iconic-area/connaught-place-cp-food-guide</loc>
     <lastmod>2026-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://menumaps.in/iconic-area/rajendra-nagar-karol-bagh-food-guide</loc>
+    <loc>https://menumaps.in/iconic-area/cr-park-food-guide</loc>
     <lastmod>2026-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://menumaps.in/iconic-area/satya-niketan-south-campus-food-guide</loc>
+    <loc>https://menumaps.in/iconic-area/defence-colony-def-col-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/epicuria-nehru-place-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/greater-kailash-gk-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/hauz-khas-village-south-delhi-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/hudson-lane-north-campus-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/model-town-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/nangloi-west-delhi-dining-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/punjabi-bagh-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/rajouri-garden-food-guide</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/rajouri-garden-west-delhi-food-guide</loc>
     <lastmod>2026-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>

@@ -2055,6 +2055,48 @@ export const api = {
     return restaurantId ? localList.filter((c) => c.restaurant_id === restaurantId) : localList;
   },
 
+  async getRestaurantOwners(): Promise<RestaurantOwnerAccount[]> {
+    const localList = loadTable<RestaurantOwnerAccount>('restaurant_owners');
+    const localMap = new Map<string, RestaurantOwnerAccount>();
+    localList.forEach((o) => localMap.set(o.id, o));
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('restaurant_owners').select('*').order('created_at', { ascending: false });
+        if (!error && Array.isArray(data)) {
+          const cloudOwners: RestaurantOwnerAccount[] = data.map((row: any) => ({
+            id: row.id,
+            owner_email: row.owner_email || '',
+            phone_number: row.phone_number || '',
+            owner_name: row.owner_name || '',
+            restaurant_id: row.restaurant_id || '',
+            restaurant_slug: row.restaurant_slug || '',
+            restaurant_name: row.restaurant_name || '',
+            password_hash: row.password_hash || '',
+            created_at: row.created_at || new Date().toISOString(),
+            last_login_at: row.last_login_at || row.created_at,
+          }));
+
+          const mergedMap = new Map<string, RestaurantOwnerAccount>();
+          localList.forEach((o) => mergedMap.set(o.id, o));
+          cloudOwners.forEach((o) => mergedMap.set(o.id, o));
+
+          const merged = Array.from(mergedMap.values()).sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
+          saveTable('restaurant_owners', merged);
+          return merged;
+        }
+      } catch (e) {
+        console.warn('Supabase fetch restaurant_owners error:', e);
+      }
+    }
+
+    return localList;
+  },
+
   async updateClaimStatus(id: string, status: ClaimStatus, adminNotes?: string): Promise<RestaurantClaim | null> {
     const list = loadTable<RestaurantClaim>('restaurant_claims');
     let idx = list.findIndex((c) => c.id === id);

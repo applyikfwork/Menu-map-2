@@ -75,36 +75,48 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                 Discover
               </div>
               <div className="mt-4 flex flex-col gap-2.5 text-[15px]">
-                <button
-                  onClick={() => navigate('/restaurants')}
+                <a
+                  href="/restaurants"
+                  onClick={(e) => { e.preventDefault(); navigate('/restaurants'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
-                  Restaurants
-                </button>
-                <button
-                  onClick={() => navigate('/iconic-area')}
-                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
-                >
-                  Iconic Areas
-                </button>
-                <button
-                  onClick={() => navigate('/nearby')}
+                  Restaurants & Cafes
+                </a>
+                <a
+                  href="/nearby"
+                  onClick={(e) => { e.preventDefault(); navigate('/nearby'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Best Cafes Near Me
-                </button>
-                <button
-                  onClick={() => navigate('/collections')}
+                </a>
+                <a
+                  href="/iconic-area"
+                  onClick={(e) => { e.preventDefault(); navigate('/iconic-area'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
+                >
+                  Iconic Areas
+                </a>
+                <a
+                  href="/collections"
+                  onClick={(e) => { e.preventDefault(); navigate('/collections'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Curated Collections
-                </button>
-                <button
-                  onClick={() => navigate('/bookmarks')}
+                </a>
+                <a
+                  href="/search"
+                  onClick={(e) => { e.preventDefault(); navigate('/search'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
+                >
+                  Search Dishes
+                </a>
+                <a
+                  href="/bookmarks"
+                  onClick={(e) => { e.preventDefault(); navigate('/bookmarks'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Saved Bookmarks
-                </button>
+                </a>
               </div>
             </div>
 
@@ -114,38 +126,43 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                 Owners
               </div>
               <div className="mt-4 flex flex-col gap-2.5 text-[15px]">
-                <button
-                  onClick={() => navigate('/list-cafe')}
+                <a
+                  href="/list-cafe"
+                  onClick={(e) => { e.preventDefault(); navigate('/list-cafe'); }}
                   className="nl text-left font-bold text-[#FF8A6B] hover:text-[#FF5A36] flex items-center gap-1.5"
                 >
                   <span>List your cafe</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#FF5A36]/20 text-[#FF8A6B] font-black uppercase">Free</span>
-                </button>
-                <button
-                  onClick={() => navigate('/contact')}
+                </a>
+                <a
+                  href="/list-cafe"
+                  onClick={(e) => { e.preventDefault(); navigate('/list-cafe'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Claim your page
-                </button>
-                <button
-                  onClick={() => navigate('/owner/login')}
+                </a>
+                <a
+                  href="/owner/login"
+                  onClick={(e) => { e.preventDefault(); navigate('/owner/login'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Owner login
-                </button>
-                <button
-                  onClick={() => navigate('/contact')}
+                </a>
+                <a
+                  href="/contact"
+                  onClick={(e) => { e.preventDefault(); navigate('/contact'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Free QR standee
-                </button>
-                <button
-                  onClick={() => navigate('/admin-secure-panel2010')}
+                </a>
+                <a
+                  href="/admin-secure-panel2010"
+                  onClick={(e) => { e.preventDefault(); navigate('/admin-secure-panel2010'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B] flex items-center gap-1 text-xs text-stone-500"
                 >
                   <Lock className="w-3 h-3" />
                   <span>Admin portal</span>
-                </button>
+                </a>
               </div>
             </div>
 
@@ -155,30 +172,34 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                 MenuMap
               </div>
               <div className="mt-4 flex flex-col gap-2.5 text-[15px]">
-                <button
-                  onClick={() => navigate('/about')}
+                <a
+                  href="/about"
+                  onClick={(e) => { e.preventDefault(); navigate('/about'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   About us
-                </button>
-                <button
-                  onClick={() => navigate('/contact')}
+                </a>
+                <a
+                  href="/contact"
+                  onClick={(e) => { e.preventDefault(); navigate('/contact'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Contact & Support
-                </button>
-                <button
-                  onClick={() => navigate('/privacy')}
+                </a>
+                <a
+                  href="/privacy"
+                  onClick={(e) => { e.preventDefault(); navigate('/privacy'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Privacy policy
-                </button>
-                <button
-                  onClick={() => navigate('/terms')}
+                </a>
+                <a
+                  href="/terms"
+                  onClick={(e) => { e.preventDefault(); navigate('/terms'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"
                 >
                   Terms of service
-                </button>
+                </a>
               </div>
             </div>
           </div>

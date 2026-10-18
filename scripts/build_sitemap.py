@@ -57,7 +57,7 @@ area_guide_slugs = set()
 if os.path.exists('src/lib/areaGuidesData.ts'):
     with open('src/lib/areaGuidesData.ts', 'r', encoding='utf-8', errors='ignore') as f:
         text = f.read()
-    for s in re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', text):
+    for s in re.findall(r'(?:^|\s)slug\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', text):
         area_guide_slugs.add(s)
 
 core_pages = [
@@ -65,7 +65,8 @@ core_pages = [
     ("restaurants", "daily", "0.9"),
     ("iconic-area", "weekly", "0.9"),
     ("collections", "weekly", "0.9"),
-    ("nearby", "daily", "0.85"),
+    ("nearby", "daily", "0.9"),
+    ("list-cafe", "weekly", "0.85"),
     ("search", "daily", "0.8"),
     ("about", "monthly", "0.6"),
     ("contact", "monthly", "0.6"),

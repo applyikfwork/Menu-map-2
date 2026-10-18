@@ -93,9 +93,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
                 (link.path === '/bookmarks' && currentPath === '/bookmarks');
 
               return (
-                <button
+                <a
                   key={link.label}
-                  onClick={() => handleLinkClick(link.path)}
+                  href={link.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLinkClick(link.path);
+                  }}
                   className={`font-semibold text-[15px] transition-colors relative py-1 cursor-pointer ${
                     isActive
                       ? 'text-[#D8350F]'
@@ -108,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
                       {link.badge}
                     </span>
                   )}
-                </button>
+                </a>
               );
             })}
           </nav>
