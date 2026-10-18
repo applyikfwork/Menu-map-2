@@ -190,8 +190,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const [copiedSchema, setCopiedSchema] = useState(false);
   const [writeTestStatus, setWriteTestStatus] = useState<{ checked: boolean; canWrite: boolean; error?: string } | null>(null);
   const [checkingWrite, setCheckingWrite] = useState(false);
-
-
+  const [syncingCloud, setSyncingCloud] = useState(false);
 
   useEffect(() => {
     checkAdminGuard();
@@ -731,8 +730,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
     showToast('Admin settings saved successfully!', 'success');
   };
 
-  const [syncingCloud, setSyncingCloud] = useState(false);
-
   const handleSyncCloud = async () => {
     setSyncingCloud(true);
     try {
@@ -775,103 +772,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   };
 
   // --------------------------------------------------------------------------
-  // UN-AUTHENTICATED LOGIN SCREEN
-  // --------------------------------------------------------------------------
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-stone-100 via-stone-50 to-orange-50/40">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-stone-200 space-y-6">
-          
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-3xl bg-white p-2 flex items-center justify-center mx-auto shadow-md shadow-orange-500/20 border border-orange-100">
-              <MenuMapLogo className="w-full h-full" />
-            </div>
-            <h1 className="font-heading font-black text-2xl text-slate-900 tracking-tight">
-              Admin Access Gate
-            </h1>
-            <p className="text-xs text-slate-500">
-              Restricted portal. Only authorized management credentials may proceed.
-            </p>
-          </div>
-
-          {loginError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 shrink-0" />
-              <span>{loginError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Admin Email
-              </label>
-              <input
-                type="email"
-                required
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700">
-                  Password
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-[11px] font-semibold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  <span>{showPassword ? 'Hide' : 'Show'}</span>
-                </button>
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loginLoading}
-              className="w-full py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-bold text-sm rounded-2xl shadow-md transition-all active:scale-95 disabled:opacity-50"
-            >
-              {loginLoading ? 'Verifying Credentials...' : 'Authenticate Admin'}
-            </button>
-          </form>
-
-          <div className="pt-4 border-t border-stone-100 text-center">
-            <button
-              onClick={() => navigate('/')}
-              className="text-xs font-bold text-slate-400 hover:text-slate-600"
-            >
-              ← Return to Home
-            </button>
-          </div>
-
-        </div>
-      </div>
-    );
-  }
-
-  // --------------------------------------------------------------------------
-  // AUTHENTICATED ADMIN DASHBOARD
+  // AUTHENTICATED ADMIN DASHBOARD COMPUTATIONS & HOOKS
+  // (Must be declared before any early return to satisfy React Rules of Hooks)
   // --------------------------------------------------------------------------
   const currentRestaurant = restaurants.find((r) => r.id === selectedRestId);
   const currentMenuItems = menuItems.filter((i) => i.restaurant_id === selectedRestId);
 
-  // --------------------------------------------------------------------------
-  // TODAY'S NEW RESTAURANTS & ONBOARDED OWNERS TRACKER COMPUTATIONS
-  // --------------------------------------------------------------------------
   const isCreatedToday = (dateStr?: string) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
@@ -1007,6 +913,95 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
         item.owner_phone.includes(q)
     );
   }, [recentOnboardedList, todayActivityTab, todayActivitySearch]);
+
+  // --------------------------------------------------------------------------
+  // UN-AUTHENTICATED LOGIN SCREEN
+  // --------------------------------------------------------------------------
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-stone-100 via-stone-50 to-orange-50/40">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-stone-200 space-y-6">
+          
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-3xl bg-white p-2 flex items-center justify-center mx-auto shadow-md shadow-orange-500/20 border border-orange-100">
+              <MenuMapLogo className="w-full h-full" />
+            </div>
+            <h1 className="font-heading font-black text-2xl text-slate-900 tracking-tight">
+              Admin Access Gate
+            </h1>
+            <p className="text-xs text-slate-500">
+              Restricted portal. Only authorized management credentials may proceed.
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Admin Email
+              </label>
+              <input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[11px] font-semibold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showPassword ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-hidden focus:border-rose-500 font-medium"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-bold text-sm rounded-2xl shadow-md transition-all active:scale-95 disabled:opacity-50"
+            >
+              {loginLoading ? 'Verifying Credentials...' : 'Authenticate Admin'}
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-stone-100 text-center">
+            <button
+              onClick={() => navigate('/')}
+              className="text-xs font-bold text-slate-400 hover:text-slate-600"
+            >
+              ← Return to Home
+            </button>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50/60 pb-20">
