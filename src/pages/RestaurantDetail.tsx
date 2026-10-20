@@ -34,7 +34,10 @@ import {
   Dices,
   Utensils,
   Wifi,
-  Copy
+  Copy,
+  ArrowLeft,
+  Building2,
+  PhoneCall
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -555,163 +558,283 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       )}
 
       {/* ========================================================
-          1. HERO BANNER (MATCHES restaurant_template.html)
+          1. REDESIGNED HERO SECTION & CINEMA VISUAL STAGE
       ======================================================== */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-4">
-        <div
-          className="ph rounded-[36px] sm:rounded-[44px] min-h-[400px] sm:min-h-[440px] flex items-end relative overflow-hidden bg-stone-900"
-          style={{
-            backgroundImage: `url(${restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80'})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#14110F] via-[#14110F]/70 to-transparent" />
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-4 space-y-4">
+        {/* 1.1 CINEMA VISUAL CANVAS (UNCLUTTERED PHOTOGRAPHY) */}
+        <div className="relative rounded-[32px] sm:rounded-[40px] overflow-hidden bg-stone-900 border border-stone-200/80 shadow-md group">
+          <div
+            className="w-full h-[260px] sm:h-[360px] lg:h-[420px] transition-transform duration-700 group-hover:scale-105"
+            style={{
+              backgroundImage: `url(${restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80'})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
 
-          {/* Content inside Hero */}
-          <div className="relative z-10 w-full p-6 sm:p-10 flex flex-wrap gap-6 justify-between items-end">
-            <div className="text-white min-w-0 max-w-2xl">
-              {/* Badges */}
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 rounded-full bg-white text-[#0F766E] text-xs font-extrabold shadow-sm flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  Counter menu verified
+          {/* Subtle Top & Bottom Cinematic Edge Gradients (Does not obscure food photography) */}
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+
+          {/* Top Floating Controls Overlay */}
+          <div className="absolute top-4 inset-x-4 sm:inset-x-6 flex items-center justify-between pointer-events-auto">
+            {/* Left: Back / Breadcrumb Pill & Verified Tag */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/restaurants')}
+                className="px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer shadow-sm"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">All Cafes</span>
+              </button>
+
+              <span className="px-3 py-1.5 rounded-full bg-emerald-600/90 backdrop-blur-md text-white text-xs font-black flex items-center gap-1 shadow-sm border border-emerald-400/30">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Verified Menu</span>
+              </span>
+
+              {isPureVeg && (
+                <span className="px-3 py-1.5 rounded-full bg-emerald-500/90 text-white text-xs font-extrabold shadow-sm">
+                  Pure Veg
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-white">
-                  {restaurant.is_open ? 'Open now' : 'Opens 11 AM'}
-                </span>
-                {restaurant.metro_station && (
-                  <span className="px-3 py-1 rounded-full bg-indigo-600/80 backdrop-blur-md text-xs font-bold text-white flex items-center gap-1">
-                    <span>🚇 {restaurant.metro_station}{restaurant.metro_gate ? ` (Gate ${restaurant.metro_gate})` : ''}</span>
-                  </span>
-                )}
-                {isPureVeg && (
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-extrabold">
-                    Pure Veg
-                  </span>
-                )}
-              </div>
-
-              {/* Title & Brand Logo */}
-              <div className="flex items-center gap-4 mt-3">
-                {restaurant.logo_url && (
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl border-2 border-white/90 bg-white p-1 shadow-2xl shrink-0 overflow-hidden">
-                    <img
-                      src={restaurant.logo_url}
-                      alt={`${restaurant.name} logo`}
-                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
-                    />
-                  </div>
-                )}
-                <h1 className="hd text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[0.98] tracking-tight">
-                  {restaurant.name}
-                </h1>
-              </div>
-
-              {/* Subhead / Address */}
-              <p className="mt-2.5 text-base sm:text-lg text-stone-200 leading-relaxed max-w-xl">
-                {restaurant.short_description || `${restaurant.address_line1}, ${restaurant.city}`}
-              </p>
+              )}
             </div>
 
-            {/* Hero Action Buttons */}
-            <div className="flex flex-wrap gap-2.5 items-center">
+            {/* Right: Quick Action Buttons (Bookmark, Share, Gallery Pill) */}
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  const rawPhone = restaurant.whatsapp_number || restaurant.phone;
-                  if (rawPhone) {
-                    const phone = rawPhone.replace(/[^0-9]/g, '');
-                    window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on MenuMap.`)}`, '_blank');
-                  } else {
-                    showToast('Direct counter WhatsApp active for orders below.', 'info');
-                  }
-                }}
-                className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white min-h-[48px] px-6 text-sm cursor-pointer"
+                onClick={() => setActiveMainTab('gallery')}
+                className="px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer shadow-sm"
+                title="View Photo Gallery & Paper Menu"
               >
-                <MessageSquare className="w-4 h-4 mr-1.5" />
-                WhatsApp
+                <Camera className="w-3.5 h-3.5 text-amber-300" />
+                <span className="hidden xs:inline">Gallery</span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => setShowPhysicalMenuModal(true)}
-                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-5 text-sm font-bold cursor-pointer"
-              >
-                <FileText className="w-4 h-4 mr-1.5 text-emerald-600" />
-                Paper Menu
-              </button>
-
-              {/* Dynamic In-Restaurant Mode Toggle vs Clean Outside View */}
-              {isTableDineIn ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsTableDineIn(false);
-                    setTableNumber(null);
-                    showToast('Exited table mode. Switched to public discovery.', 'info');
-                  }}
-                  className="btn bg-amber-400 hover:bg-amber-500 text-stone-950 font-black min-h-[48px] px-5 text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-amber-500 cursor-pointer"
-                  title="Click to exit in-restaurant table mode"
-                >
-                  <Gift className="w-4 h-4 text-stone-950" />
-                  <span>Table #{tableNumber || '1'} (Exit Mode)</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsTableDineIn(true);
-                    setTableNumber('1');
-                    setActiveMainTab('menu');
-                    showToast('Activated In-Restaurant Table Mode for Table #1', 'success');
-                    if (!tablePerk) setShowTablePerkWheel(true);
-                  }}
-                  className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-4 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                  title="Seated inside the cafe? Switch to in-restaurant table mode"
-                >
-                  <QrCode className="w-4 h-4 text-[#FF5A36]" />
-                  <span>Dining In?</span>
-                </button>
-              )}
-
-              <a
-                href={
-                  restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5
-                    ? restaurant.google_maps_url
-                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        `${restaurant.name}, ${restaurant.address_line1}, ${restaurant.city}`
-                      )}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-6 text-sm font-bold"
-              >
-                <Navigation className="w-4 h-4 mr-1.5 text-rose-500" />
-                Directions
-              </a>
 
               <button
                 type="button"
                 onClick={handleBookmarkToggle}
                 aria-label="Save"
-                className={`btn w-12 h-12 p-0 rounded-full transition-transform active:scale-90 shadow-md border cursor-pointer ${
-                  bookmarked ? 'bg-[#FF5A36] text-white border-[#FF5A36]' : 'bg-white text-[#1C1917] hover:bg-stone-100 border-stone-200'
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90 cursor-pointer shadow-sm ${
+                  bookmarked
+                    ? 'bg-[#FF5A36] text-white border-[#FF5A36]'
+                    : 'bg-black/40 hover:bg-black/60 text-white border-white/20'
                 }`}
               >
-                <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-white' : 'text-[#1C1917]'}`} />
+                <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-white' : 'text-white'}`} />
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowSocialModal(true)}
                 aria-label="Share"
-                className="btn w-12 h-12 p-0 rounded-full bg-white text-[#1C1917] hover:bg-stone-100 border border-stone-200 shadow-md transition-transform active:scale-90 cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-90 cursor-pointer shadow-sm"
               >
-                <Share2 className="w-5 h-5 text-[#1C1917]" />
+                <Share2 className="w-4 h-4 text-white" />
               </button>
             </div>
+          </div>
+
+          {/* Bottom Floating Bar on Hero (Ratings & Open Status Only) */}
+          <div className="absolute bottom-4 inset-x-4 sm:inset-x-6 flex items-center justify-between pointer-events-auto">
+            {/* Open / Timing Status Pill */}
+            <div className="flex items-center gap-2">
+              <span className={`px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-extrabold flex items-center gap-1.5 shadow-sm border ${
+                restaurant.is_open
+                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
+                  : 'bg-stone-900/80 text-stone-300 border-stone-600/40'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${restaurant.is_open ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'}`} />
+                <span>{restaurant.is_open ? 'Open Now' : 'Closed'}</span>
+                <span className="text-white/60">·</span>
+                <span className="text-white font-medium">{formatOpeningHours(restaurant.opening_hours)}</span>
+              </span>
+            </div>
+
+            {/* Rating & Diner Count Pill */}
+            <div className="flex items-center gap-2">
+              <div className="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-black flex items-center gap-1.5 border border-white/20 shadow-sm">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>{restaurant.rating ? restaurant.rating.toFixed(1) : '4.6'}</span>
+                <span className="text-stone-300 font-normal">({reviews.length || restaurant.rating_count || 120}+ reviews)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 1.2 DEDICATED RESTAURANT DOSSIER CARD (ELEVATED CLEAN WHITE SURFACE) */}
+        <div className="bg-white rounded-[32px] sm:rounded-[36px] p-6 sm:p-8 border border-[#EFEAE2] shadow-sm space-y-6">
+          {/* Main Title, Brand Logo & Key Badges */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="flex items-start sm:items-center gap-4">
+              {restaurant.logo_url && (
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl border border-stone-200 bg-white p-1.5 shadow-md shrink-0 overflow-hidden">
+                  <img
+                    src={restaurant.logo_url}
+                    alt={`${restaurant.name} logo`}
+                    className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
+                  />
+                </div>
+              )}
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="hd text-3xl sm:text-4xl lg:text-5xl font-black text-[#1C1917] tracking-tight">
+                    {restaurant.name}
+                  </h1>
+                  {restaurant.is_claimed ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-extrabold" title="Claimed and managed directly by the cafe owner">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Verified Owner</span>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowClaimModal(true)}
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold cursor-pointer transition-colors"
+                      title="Are you the owner of this cafe? Claim your profile"
+                    >
+                      <Building2 className="w-3 h-3 text-[#FF5A36]" />
+                      <span>Claim Cafe</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Subtitle / Cuisine tags */}
+                <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
+                  {restaurant.short_description || `${restaurant.cuisine_types?.join(' · ') || 'Multi-Cuisine Cafe'} in ${restaurant.city}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Pricing Badge */}
+            <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-stone-100">
+              <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">Average Cost</span>
+              <div className="text-xl sm:text-2xl font-black text-[#1C1917] flex items-center gap-1">
+                <span>₹{restaurant.average_cost_for_two || 500}</span>
+                <span className="text-xs font-bold text-stone-600">for two</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hyperlocal Address & Transit Intel Bar */}
+          <div className="flex flex-wrap items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-stone-50 border border-stone-200/70 text-xs sm:text-sm text-stone-700">
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0" />
+              <span className="font-medium truncate">{restaurant.address_line1}, {restaurant.city}</span>
+            </div>
+
+            {restaurant.metro_station && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold shrink-0">
+                <span>🚇 {restaurant.metro_station}</span>
+                {restaurant.metro_gate && <span className="text-indigo-600 font-medium">Gate {restaurant.metro_gate}</span>}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(`${restaurant.name}, ${restaurant.address_line1}, ${restaurant.city}`);
+                showToast('Address copied to clipboard', 'success');
+              }}
+              className="text-xs font-bold text-[#FF5A36] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
+            >
+              <Copy className="w-3 h-3" />
+              <span>Copy</span>
+            </button>
+          </div>
+
+          {/* Comprehensive Action Bar (All actions clean, organized, prominent) */}
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            {/* Primary Action: Direct WhatsApp Counter Order */}
+            <button
+              type="button"
+              onClick={() => {
+                const rawPhone = restaurant.whatsapp_number || restaurant.phone;
+                if (rawPhone) {
+                  const phone = rawPhone.replace(/[^0-9]/g, '');
+                  window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on MenuMap.`)}`, '_blank');
+                } else {
+                  showToast('Direct counter WhatsApp active for orders below.', 'info');
+                }
+              }}
+              className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white min-h-[48px] px-6 text-sm font-extrabold flex items-center gap-2 shadow-sm flex-1 sm:flex-initial cursor-pointer"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>WhatsApp Menu & Order</span>
+            </button>
+
+            {/* Directions Link */}
+            <a
+              href={
+                restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5
+                  ? restaurant.google_maps_url
+                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      `${restaurant.name}, ${restaurant.address_line1}, ${restaurant.city}`
+                    )}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-5 text-sm font-bold flex items-center gap-2 cursor-pointer"
+            >
+              <Navigation className="w-4 h-4 text-rose-500" />
+              <span>Directions</span>
+            </a>
+
+            {/* Paper Flipbook Modal */}
+            <button
+              type="button"
+              onClick={() => setShowPhysicalMenuModal(true)}
+              className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-5 text-sm font-bold flex items-center gap-2 cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-emerald-600" />
+              <span>Paper Menu</span>
+            </button>
+
+            {/* Call Button */}
+            {restaurant.phone && (
+              <a
+                href={`tel:${restaurant.phone.replace(/[^0-9+]/g, '')}`}
+                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-5 text-sm font-bold flex items-center gap-2 cursor-pointer"
+              >
+                <PhoneCall className="w-4 h-4 text-sky-600" />
+                <span>Call</span>
+              </a>
+            )}
+
+            {/* Dynamic In-Restaurant Mode Toggle */}
+            {isTableDineIn ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTableDineIn(false);
+                  setTableNumber(null);
+                  showToast('Exited table mode. Switched to public discovery.', 'info');
+                }}
+                className="btn bg-amber-400 hover:bg-amber-500 text-stone-950 font-black min-h-[48px] px-5 text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-amber-500 cursor-pointer ml-auto"
+                title="Click to exit in-restaurant table mode"
+              >
+                <Gift className="w-4 h-4 text-stone-950" />
+                <span>Table #{tableNumber || '1'} (Exit Mode)</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTableDineIn(true);
+                  setTableNumber('1');
+                  setActiveMainTab('menu');
+                  showToast('Activated In-Restaurant Table Mode for Table #1', 'success');
+                  if (!tablePerk) setShowTablePerkWheel(true);
+                }}
+                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-4 text-xs font-bold flex items-center gap-1.5 cursor-pointer ml-auto"
+                title="Seated inside the cafe? Switch to in-restaurant table mode"
+              >
+                <QrCode className="w-4 h-4 text-[#FF5A36]" />
+                <span>Dining In?</span>
+              </button>
+            )}
           </div>
         </div>
       </section>

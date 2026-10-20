@@ -53,8 +53,10 @@ import {
   Clock,
   ArrowUpRight,
   PhoneCall,
-  ArrowRight
+  ArrowRight,
+  Terminal
 } from 'lucide-react';
+import { SystemIntelVault } from '../components/admin/SystemIntelVault';
 import { 
   Restaurant, 
   MenuCategory, 
@@ -104,7 +106,8 @@ export type AdminSection =
   | 'collections'
   | 'reviews'
   | 'analytics'
-  | 'settings';
+  | 'settings'
+  | 'system_intel';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const { showToast } = useToast();
@@ -1059,6 +1062,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             { id: 'reviews', label: `Reviews (${reviews.length})`, icon: MessageSquare },
             { id: 'analytics', label: 'Search Analytics', icon: BarChart3 },
             { id: 'settings', label: 'Settings & Supabase', icon: Settings },
+            { id: 'system_intel', label: 'Website Vault & Timeline', icon: Terminal },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSection === tab.id;
@@ -2926,6 +2930,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
               )}
             </div>
           </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* 9. SYSTEM INTEL & ARCHITECTURE VAULT */}
+        {/* ================================================================ */}
+        {activeSection === 'system_intel' && (
+          <SystemIntelVault
+            restaurants={restaurants}
+            menuItems={menuItems}
+            collections={collections}
+            claims={claims}
+            owners={owners}
+            reviews={reviews}
+            analytics={analytics}
+          />
         )}
 
       </main>
