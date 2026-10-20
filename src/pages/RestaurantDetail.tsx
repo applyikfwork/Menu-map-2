@@ -133,6 +133,9 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [showDishRoulette, setShowDishRoulette] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState<'menu' | 'table_perks' | 'gallery' | 'intel' | 'reviews'>('menu');
   const [selectedDishPreview, setSelectedDishPreview] = useState<MenuItem | null>(null);
+
+  // Guarantee clear separation: When outside the restaurant, table_perks tab is never active
+  const effectiveMainTab = (!isTableDineIn && activeMainTab === 'table_perks') ? 'menu' : activeMainTab;
   const [qrConfig, setQrConfig] = useState<RestaurantQrConfig>(() =>
     getRestaurantQrConfig(restaurant?.id || '', restaurant?.whatsapp_number || restaurant?.phone)
   );
@@ -625,33 +628,38 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 Paper Menu
               </button>
 
-              <button
-                type="button"
-                onClick={() => setShowQrModal(true)}
-                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-5 text-sm font-bold flex items-center gap-1.5 cursor-pointer"
-                title="Get Table Standee QR & Wi-Fi Card"
-              >
-                <QrCode className="w-4 h-4 text-[#FF5A36]" />
-                <span>Table QR</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsTableDineIn(true);
-                  setActiveMainTab('table_perks');
-                  if (!tablePerk) setShowTablePerkWheel(true);
-                }}
-                className={`btn min-h-[48px] px-5 text-sm font-bold flex items-center gap-1.5 shadow-md border cursor-pointer ${
-                  isTableDineIn
-                    ? 'bg-amber-400 text-stone-950 border-amber-500 font-extrabold shadow-amber-200/50'
-                    : 'bg-white hover:bg-stone-100 text-[#1C1917] border-stone-200'
-                }`}
-                title="In-restaurant table dine-in gamified session"
-              >
-                <Gift className="w-4 h-4 text-amber-600" />
-                <span>{isTableDineIn ? `Table #${tableNumber || 'Dine-In'}` : 'Dine-In Perks'}</span>
-              </button>
+              {/* Dynamic In-Restaurant Mode Toggle vs Clean Outside View */}
+              {isTableDineIn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsTableDineIn(false);
+                    setTableNumber(null);
+                    showToast('Exited table mode. Switched to public discovery.', 'info');
+                  }}
+                  className="btn bg-amber-400 hover:bg-amber-500 text-stone-950 font-black min-h-[48px] px-5 text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-amber-500 cursor-pointer"
+                  title="Click to exit in-restaurant table mode"
+                >
+                  <Gift className="w-4 h-4 text-stone-950" />
+                  <span>Table #{tableNumber || '1'} (Exit Mode)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsTableDineIn(true);
+                    setTableNumber('1');
+                    setActiveMainTab('menu');
+                    showToast('Activated In-Restaurant Table Mode for Table #1', 'success');
+                    if (!tablePerk) setShowTablePerkWheel(true);
+                  }}
+                  className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-md min-h-[48px] px-4 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  title="Seated inside the cafe? Switch to in-restaurant table mode"
+                >
+                  <QrCode className="w-4 h-4 text-[#FF5A36]" />
+                  <span>Dining In?</span>
+                </button>
+              )}
 
               <a
                 href={
@@ -835,7 +843,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       )}
 
       {/* ========================================================
-          1.4. MASTER TABBED NAVIGATION (ORGANIZES ALL INTEL & DIGITAL MENU)
+          1.4. MASTER TABBED NAVIGATION (SEPARATED FOR OUTSIDE VS IN-RESTAURANT)
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
         <div className="bg-white border border-[#E7E2DA] rounded-[24px] p-2 shadow-xs flex items-center gap-2 overflow-x-auto no-scrollbar">
@@ -843,38 +851,41 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             type="button"
             onClick={() => setActiveMainTab('menu')}
             className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeMainTab === 'menu'
+              effectiveMainTab === 'menu'
                 ? 'bg-[#1C1917] text-white shadow-sm'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
             }`}
           >
             <span>🍽️</span>
-            <span>Digital Menu ({menuItems.length})</span>
+            <span>{isTableDineIn ? `Table #${tableNumber || '1'} Menu` : 'Digital Menu'} ({menuItems.length})</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveMainTab('table_perks')}
-            className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeMainTab === 'table_perks'
-                ? 'bg-[#1C1917] text-white shadow-sm'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-            }`}
-          >
-            <span>🎡</span>
-            <span>Table Perks & Buzzer</span>
-            {tablePerk ? (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            ) : (
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">New</span>
-            )}
-          </button>
+          {/* In-Restaurant Only Tab: Table Facilities & Buzzers */}
+          {isTableDineIn && (
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('table_perks')}
+              className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+                effectiveMainTab === 'table_perks'
+                  ? 'bg-[#1C1917] text-white shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+              }`}
+            >
+              <span>🎡</span>
+              <span>Table Facilities & Buzzers</span>
+              {tablePerk ? (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              ) : (
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">VIP</span>
+              )}
+            </button>
+          )}
 
           <button
             type="button"
             onClick={() => setActiveMainTab('gallery')}
             className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeMainTab === 'gallery'
+              effectiveMainTab === 'gallery'
                 ? 'bg-[#1C1917] text-white shadow-sm'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
             }`}
@@ -883,30 +894,33 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             <span>Photos & Flipbook ({galleryImages.length})</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveMainTab('intel')}
-            className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeMainTab === 'intel'
-                ? 'bg-[#1C1917] text-white shadow-sm'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-            }`}
-          >
-            <span>ℹ️</span>
-            <span>Honest Bill & Intel</span>
-          </button>
+          {/* Outside Discovery Only Tab: Honest Bill & Intel */}
+          {!isTableDineIn && (
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('intel')}
+              className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+                effectiveMainTab === 'intel'
+                  ? 'bg-[#1C1917] text-white shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+              }`}
+            >
+              <span>ℹ️</span>
+              <span>Honest Bill & Intel</span>
+            </button>
+          )}
 
           <button
             type="button"
             onClick={() => setActiveMainTab('reviews')}
             className={`px-4 sm:px-6 py-3 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeMainTab === 'reviews'
+              effectiveMainTab === 'reviews'
                 ? 'bg-[#1C1917] text-white shadow-sm'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
             }`}
           >
             <span>⭐</span>
-            <span>Diner Reviews ({reviews.length || restaurant.rating_count || 120})</span>
+            <span>{isTableDineIn ? 'Dine-In Reviews' : 'Diner Reviews'} ({reviews.length || restaurant.rating_count || 120})</span>
           </button>
         </div>
       </section>
@@ -921,7 +935,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           {/* ==========================================
               TAB 1: DIGITAL MENU
           ========================================== */}
-          {activeMainTab === 'menu' && (
+          {effectiveMainTab === 'menu' && (
             <div className="space-y-6">
               {/* Owner Announcement Capsule */}
               {activeAnnouncement && (
@@ -1187,7 +1201,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           {/* ==========================================
               TAB 2: TABLE PERKS & BUZZER SUITE
           ========================================== */}
-          {activeMainTab === 'table_perks' && (
+          {isTableDineIn && effectiveMainTab === 'table_perks' && (
             <div className="space-y-6">
               {/* Table Luck Wheel Interactive Hero */}
               <div className="bg-gradient-to-br from-stone-900 via-[#1C1917] to-stone-900 border-2 border-amber-400/80 rounded-[32px] p-6 sm:p-8 text-white shadow-xl">
@@ -1366,7 +1380,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           {/* ==========================================
               TAB 3: PHOTOS & PAPER FLIPBOOK
           ========================================== */}
-          {activeMainTab === 'gallery' && (
+          {effectiveMainTab === 'gallery' && (
             <div className="space-y-6">
               {/* Paper Flipbook Banner */}
               <div className="bg-gradient-to-r from-emerald-900 via-stone-900 to-emerald-950 text-white rounded-[32px] p-6 sm:p-8 border border-emerald-500/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
@@ -1461,7 +1475,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           {/* ==========================================
               TAB 4: HONEST BILL & INTEL
           ========================================== */}
-          {activeMainTab === 'intel' && (
+          {effectiveMainTab === 'intel' && (
             <div className="space-y-6">
               {/* Quick Fact Bar */}
               <div className="bg-white border border-[#EFEAE2] rounded-[28px] shadow-sm p-6 sm:p-7 grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -1544,7 +1558,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           {/* ==========================================
               TAB 5: DINER REVIEWS
           ========================================== */}
-          {activeMainTab === 'reviews' && (
+          {effectiveMainTab === 'reviews' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="hd text-3xl font-extrabold text-[#1C1917]">Diner reviews</h2>
@@ -1632,11 +1646,19 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           {/* Order Tray Box */}
           <div className="bg-white border border-[#EFEAE2] rounded-[32px] p-7 shadow-[0_30px_60px_-34px_rgba(28,25,23,0.35)]">
             <div className="flex justify-between items-center">
-              <h2 className="hd text-2xl font-bold text-[#1C1917]">Your order</h2>
+              <h2 className="hd text-2xl font-bold text-[#1C1917]">
+                {isTableDineIn ? `Table #${tableNumber || '1'} Order` : 'Your order'}
+              </h2>
               <span className="px-3 py-1 rounded-full bg-[#E6F4F1] text-[#0F766E] text-xs font-extrabold">
-                0% commission
+                {isTableDineIn ? '0% Dine-In' : '0% commission'}
               </span>
             </div>
+            {isTableDineIn && tablePerk && (
+              <div className="mt-2 px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-900 text-xs font-bold flex items-center gap-1.5">
+                <Gift className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
+                <span>Active Table Perk: <strong>{tablePerk}</strong></span>
+              </div>
+            )}
 
             <div className="my-4 border-t-2 border-dashed border-[#E7E2DA]" />
 
@@ -1704,7 +1726,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               }`}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
-              <span>Review Order (or 🚶 15-Min Pickup)</span>
+              <span>{isTableDineIn ? `Send Table #${tableNumber || '1'} Order via WhatsApp` : 'Review Order (or 🚶 15-Min Pickup)'}</span>
             </button>
           </div>
 
