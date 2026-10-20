@@ -3,6 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Self-healing handler for Vite dynamic chunk updates across app deployments
+      window.addEventListener('vite:preloadError', function(event) {
+        var key = 'menumaps_early_preload_reload';
+        var last = parseInt(sessionStorage.getItem(key) || '0', 10);
+        var now = Date.now();
+        if (now - last > 12000) {
+          sessionStorage.setItem(key, String(now));
+          try {
+            var url = new URL(window.location.href);
+            url.searchParams.set('_r', String(now));
+            window.location.replace(url.toString());
+          } catch(e) {
+            window.location.reload();
+          }
+        }
+      });
+    </script>
     <title>Menu Maps – Real Menus, Cafes & Restaurant Discovery</title>
     <meta name="description" content="Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections." />
     <link rel="canonical" href="https://menumaps.in/" />

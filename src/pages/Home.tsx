@@ -53,15 +53,22 @@ import { AREA_FOOD_GUIDES } from '../lib/areaGuidesData';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { useToast } from '../components/Toast';
 import { toggleBookmark, isBookmarked } from '../lib/bookmarks';
+import { lazyWithRetry } from '../lib/lazyWithRetry';
 
-const SpinWheelModal = React.lazy(() =>
-  import('../components/interactive/SpinWheelModal').then((m) => ({ default: m.SpinWheelModal }))
+const SpinWheelModal = lazyWithRetry(
+  () => import('../components/interactive/SpinWheelModal'),
+  'SpinWheelModal',
+  'SpinWheelModal'
 );
-const FoodQuizModal = React.lazy(() =>
-  import('../components/interactive/FoodQuizModal').then((m) => ({ default: m.FoodQuizModal }))
+const FoodQuizModal = lazyWithRetry(
+  () => import('../components/interactive/FoodQuizModal'),
+  'FoodQuizModal',
+  'FoodQuizModal'
 );
-const DayPlannerModal = React.lazy(() =>
-  import('../components/interactive/DayPlannerModal').then((m) => ({ default: m.DayPlannerModal }))
+const DayPlannerModal = lazyWithRetry(
+  () => import('../components/interactive/DayPlannerModal'),
+  'DayPlannerModal',
+  'DayPlannerModal'
 );
 
 interface HomeProps {

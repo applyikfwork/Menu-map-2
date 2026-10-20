@@ -11,22 +11,23 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Home } from './pages/Home';
+import { lazyWithRetry } from './lib/lazyWithRetry';
 
-// Lazy-loaded routes for optimal bundle splitting and fast mobile FCP
-const Search = React.lazy(() => import('./pages/Search').then((m) => ({ default: m.Search })));
-const RestaurantsList = React.lazy(() => import('./pages/RestaurantsList').then((m) => ({ default: m.RestaurantsList })));
-const RestaurantDetail = React.lazy(() => import('./pages/RestaurantDetail').then((m) => ({ default: m.RestaurantDetail })));
-const FoodDetail = React.lazy(() => import('./pages/FoodDetail').then((m) => ({ default: m.FoodDetail })));
-const CollectionsList = React.lazy(() => import('./pages/CollectionsList').then((m) => ({ default: m.CollectionsList })));
-const CollectionDetail = React.lazy(() => import('./pages/CollectionDetail').then((m) => ({ default: m.CollectionDetail })));
-const Bookmarks = React.lazy(() => import('./pages/Bookmarks').then((m) => ({ default: m.Bookmarks })));
-const StaticPage = React.lazy(() => import('./pages/StaticPages').then((m) => ({ default: m.StaticPage })));
-const AdminPanel = React.lazy(() => import('./pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
-const OwnerLogin = React.lazy(() => import('./pages/OwnerLogin').then((m) => ({ default: m.OwnerLogin })));
-const OwnerDashboard = React.lazy(() => import('./pages/OwnerDashboard').then((m) => ({ default: m.OwnerDashboard })));
-const ListCafe = React.lazy(() => import('./pages/ListCafe').then((m) => ({ default: m.ListCafe })));
-const ClaimVerify = React.lazy(() => import('./pages/ClaimVerify').then((m) => ({ default: m.ClaimVerify })));
-const NotFound = React.lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
+// Lazy-loaded routes with auto-retry and smooth deployment self-healing
+const Search = lazyWithRetry(() => import('./pages/Search'), 'Search', 'Search');
+const RestaurantsList = lazyWithRetry(() => import('./pages/RestaurantsList'), 'RestaurantsList', 'RestaurantsList');
+const RestaurantDetail = lazyWithRetry(() => import('./pages/RestaurantDetail'), 'RestaurantDetail', 'RestaurantDetail');
+const FoodDetail = lazyWithRetry(() => import('./pages/FoodDetail'), 'FoodDetail', 'FoodDetail');
+const CollectionsList = lazyWithRetry(() => import('./pages/CollectionsList'), 'CollectionsList', 'CollectionsList');
+const CollectionDetail = lazyWithRetry(() => import('./pages/CollectionDetail'), 'CollectionDetail', 'CollectionDetail');
+const Bookmarks = lazyWithRetry(() => import('./pages/Bookmarks'), 'Bookmarks', 'Bookmarks');
+const StaticPage = lazyWithRetry(() => import('./pages/StaticPages'), 'StaticPage', 'StaticPage');
+const AdminPanel = lazyWithRetry(() => import('./pages/AdminPanel'), 'AdminPanel', 'AdminPanel');
+const OwnerLogin = lazyWithRetry(() => import('./pages/OwnerLogin'), 'OwnerLogin', 'OwnerLogin');
+const OwnerDashboard = lazyWithRetry(() => import('./pages/OwnerDashboard'), 'OwnerDashboard', 'OwnerDashboard');
+const ListCafe = lazyWithRetry(() => import('./pages/ListCafe'), 'ListCafe', 'ListCafe');
+const ClaimVerify = lazyWithRetry(() => import('./pages/ClaimVerify'), 'ClaimVerify', 'ClaimVerify');
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound', 'NotFound');
 
 import { ADMIN_EMAIL, getCurrentAdminSession, api } from './lib/supabase';
 import { getCachedUserCoordinates, detectAreaContext, GeoCoordinates } from './lib/location';

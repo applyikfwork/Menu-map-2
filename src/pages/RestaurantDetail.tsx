@@ -63,27 +63,42 @@ import { TopPicksSpotlight } from '../components/restaurant/TopPicksSpotlight';
 import { UpsellPairingPrompt } from '../components/restaurant/UpsellPairingPrompt';
 import { NeighborStealBanner } from '../components/restaurant/NeighborStealBanner';
 import { SmartReviewShield } from '../components/restaurant/SmartReviewShield';
+import { lazyWithRetry } from '../lib/lazyWithRetry';
 
-const RestaurantQrModal = React.lazy(() =>
-  import('../components/RestaurantQrModal').then((m) => ({ default: m.RestaurantQrModal }))
+const RestaurantQrModal = lazyWithRetry(
+  () => import('../components/RestaurantQrModal'),
+  'RestaurantQrModal',
+  'RestaurantQrModal'
 );
-const DishRouletteModal = React.lazy(() =>
-  import('../components/interactive/DishRouletteModal').then((m) => ({ default: m.DishRouletteModal }))
+const DishRouletteModal = lazyWithRetry(
+  () => import('../components/interactive/DishRouletteModal'),
+  'DishRouletteModal',
+  'DishRouletteModal'
 );
-const TablePerkWheelModal = React.lazy(() =>
-  import('../components/interactive/TablePerkWheelModal').then((m) => ({ default: m.TablePerkWheelModal }))
+const TablePerkWheelModal = lazyWithRetry(
+  () => import('../components/interactive/TablePerkWheelModal'),
+  'TablePerkWheelModal',
+  'TablePerkWheelModal'
 );
-const TableReservationModal = React.lazy(() =>
-  import('../components/TableReservationModal').then((m) => ({ default: m.TableReservationModal }))
+const TableReservationModal = lazyWithRetry(
+  () => import('../components/TableReservationModal'),
+  'TableReservationModal',
+  'TableReservationModal'
 );
-const SocialShareModal = React.lazy(() =>
-  import('../components/SocialShareModal').then((m) => ({ default: m.SocialShareModal }))
+const SocialShareModal = lazyWithRetry(
+  () => import('../components/SocialShareModal'),
+  'SocialShareModal',
+  'SocialShareModal'
 );
-const ClaimRestaurantModal = React.lazy(() =>
-  import('../components/ClaimRestaurantModal').then((m) => ({ default: m.ClaimRestaurantModal }))
+const ClaimRestaurantModal = lazyWithRetry(
+  () => import('../components/ClaimRestaurantModal'),
+  'ClaimRestaurantModal',
+  'ClaimRestaurantModal'
 );
-const PhysicalMenuModal = React.lazy(() =>
-  import('../components/PhysicalMenuModal').then((m) => ({ default: m.PhysicalMenuModal }))
+const PhysicalMenuModal = lazyWithRetry(
+  () => import('../components/PhysicalMenuModal'),
+  'PhysicalMenuModal',
+  'PhysicalMenuModal'
 );
 
 interface RestaurantDetailProps {

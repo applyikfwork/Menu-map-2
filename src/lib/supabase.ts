@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { safeDynamicImport } from './lazyWithRetry';
 import {
   Restaurant,
   MenuCategory,
@@ -155,7 +156,7 @@ export async function ensureSeedInitialized(): Promise<void> {
 
     if (!seedInitPromise) {
       seedInitPromise = (async () => {
-        const { generateSeedData } = await import('./seedData');
+        const { generateSeedData } = await safeDynamicImport(() => import('./seedData'));
         const data = generateSeedData();
         // Retain any existing map_profile_done progress during re-seed
         const doneIds = new Set(getStoredMapDoneIds());
@@ -1794,7 +1795,7 @@ export const api = {
     const localCols = await this.getCollections(false);
     const localCollectionItems = loadTable<CollectionItem>('collection_items');
 
-    const { generateSeedData } = await import('./seedData');
+    const { generateSeedData } = await safeDynamicImport(() => import('./seedData'));
     const seed = generateSeedData();
     const restaurantsToSync = localRests.length > 0 ? localRests : seed.restaurants;
     const categoriesToSync = localCats.length > 0 ? localCats : seed.categories;
