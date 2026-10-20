@@ -32,6 +32,8 @@ interface WhatsAppOrderDrawerProps {
   onClose: () => void;
   menuItems?: MenuItem[];
   onAddToCart?: (item: MenuItem) => void;
+  tableNumber?: string | number;
+  tablePerk?: string | null;
 }
 
 export const WhatsAppOrderDrawer: React.FC<WhatsAppOrderDrawerProps> = ({
@@ -43,10 +45,12 @@ export const WhatsAppOrderDrawer: React.FC<WhatsAppOrderDrawerProps> = ({
   onClose,
   menuItems = [],
   onAddToCart,
+  tableNumber,
+  tablePerk,
 }) => {
   const { showToast } = useToast();
   const [customerName, setCustomerName] = useState('');
-  const [orderType, setOrderType] = useState<'Self-Pickup' | 'Dine-in' | 'Takeaway' | 'Delivery'>('Self-Pickup');
+  const [orderType, setOrderType] = useState<'Self-Pickup' | 'Dine-in' | 'Takeaway' | 'Delivery'>(() => tableNumber ? 'Dine-in' : 'Self-Pickup');
   const [customerNote, setCustomerNote] = useState('');
   const [splitCount, setSplitCount] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [copiedSplit, setCopiedSplit] = useState(false);
@@ -98,9 +102,17 @@ export const WhatsAppOrderDrawer: React.FC<WhatsAppOrderDrawerProps> = ({
     const liveUrl = window.location.href;
 
     // Build formatted message
-    let message = `🍽️ *NEW ORDER via Menu Maps*\n`;
+    let message = tableNumber 
+      ? `🍽️ *[TABLE #${tableNumber} DINE-IN ORDER] via Menu Maps*\n`
+      : `🍽️ *NEW ORDER via Menu Maps*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n`;
     message += `📍 *Restaurant:* ${restaurant.name}\n`;
+    if (tableNumber) {
+      message += `🪑 *Dine-in Table:* Table #${tableNumber}\n`;
+    }
+    if (tablePerk) {
+      message += `🎁 *Table Perk:* ${tablePerk}\n`;
+    }
     message += `🔗 *Live Menu:* ${liveUrl}\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
