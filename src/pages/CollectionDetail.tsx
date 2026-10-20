@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Compass,
   ArrowRight,
+  ArrowUpRight,
   TrendingDown
 } from 'lucide-react';
 import { Collection, Restaurant, MenuItem, CollectionItem, FamousDishSpotlight, FoodCrawlStop } from '../types/database';
@@ -524,14 +525,14 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
       {/* ========================================================================= */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden min-h-[300px] sm:min-h-[380px] flex items-end text-white shadow-sm"
+          className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden min-h-[320px] sm:min-h-[400px] flex items-end text-white shadow-md"
           style={{
             background: collection.cover_image_url
-              ? `linear-gradient(to top, rgba(16,14,13,0.95) 0%, rgba(16,14,13,0.55) 55%, rgba(16,14,13,0.2) 100%), url(${collection.cover_image_url}) center/cover no-repeat`
+              ? `linear-gradient(to top, rgba(16,14,13,0.96) 0%, rgba(16,14,13,0.75) 50%, rgba(16,14,13,0.3) 100%), url(${collection.cover_image_url}) center/cover no-repeat`
               : 'linear-gradient(150deg,#F4A261 0%,#C2410C 50%,#431407 100%)',
           }}
         >
-          <div className="relative z-10 w-full p-5 sm:p-8 lg:p-10 space-y-2.5">
+          <div className="relative z-10 w-full p-5 sm:p-8 lg:p-10 space-y-3">
             {/* Badges */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-[11px] font-black uppercase tracking-wider text-amber-200">
@@ -556,30 +557,83 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
               {collection.title}
             </h1>
 
-            {/* Description */}
-            <p className="text-xs sm:text-base text-stone-200 leading-relaxed font-medium max-w-2xl line-clamp-2 sm:line-clamp-none">
-              {collection.description || 'Buzzing student adda, late-night waffles and pocket-friendly platters.'}
+            {/* Punchy 1-line Hook (No Essay) */}
+            <p className="text-xs sm:text-base text-stone-200 leading-relaxed font-medium max-w-3xl">
+              {meta?.vibe_badge || meta?.famous_for_summary || collection.description || 'Buzzing student adda, late-night waffles and pocket-friendly platters.'}
             </p>
+
+            {/* INSTANT VIBE DECISION ENGINE (HERO PILLS) */}
+            <div className="pt-1">
+              <div className="text-[11px] font-black uppercase tracking-wider text-[#FF8A6B] mb-2 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Choose Your Dining Mood • 1-Tap Filter</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: 'all', label: `🔥 All Spots (${guideRestaurants.length})` },
+                  { id: 'Budget', label: '💰 Budget (< ₹400)' },
+                  { id: 'Pure Veg', label: '🌱 Pure Veg' },
+                  { id: 'Study', label: '💻 Study & Wi-Fi' },
+                  { id: 'Rooftops', label: '🌇 Rooftops' },
+                  { id: 'Late Night', label: '🌙 Late Night' },
+                ].map((pill) => (
+                  <button
+                    key={pill.id}
+                    type="button"
+                    onClick={() => {
+                      setVibeFilter(pill.id);
+                      scrollToAnchor('section-cafes', 'cafes');
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 ${
+                      vibeFilter === pill.id
+                        ? 'bg-[#FF5A36] text-white ring-2 ring-white/30'
+                        : 'bg-black/60 hover:bg-black/80 text-stone-200 border border-white/20'
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. GLANCE FACT BAR (CLEAN, TOUCH-FRIENDLY, NO OVERLAPPING BUGS) */}
+        {/* 3. GLANCE FACT BAR (ACTIONABLE & TOUCH-FRIENDLY) */}
         {/* ========================================================================= */}
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Card 1: Nearest Metro */}
-          <div className="bg-white rounded-2xl border border-[#EFEAE2] p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-[#0F766E] mb-1">
-              <Train className="w-4 h-4 shrink-0" />
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-stone-400">Metro Station</span>
+          {meta?.nearest_metro ? (
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${meta.nearest_metro}, ${meta.area_name || 'Delhi'}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white hover:bg-stone-50 rounded-2xl border border-[#EFEAE2] hover:border-teal-400 p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between transition-all group cursor-pointer"
+            >
+              <div className="flex items-center justify-between text-[#0F766E] mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Train className="w-4 h-4 shrink-0" />
+                  <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-stone-400">Metro Station</span>
+                </div>
+                <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-teal-600 transition-colors" />
+              </div>
+              <div className="text-xs sm:text-sm font-extrabold text-[#1C1917] group-hover:text-teal-700 truncate transition-colors">
+                {meta.nearest_metro.split('(')[0].trim()}
+              </div>
+              <div className="text-[10px] text-stone-500 truncate mt-0.5">
+                {meta.nearest_metro.includes('Exit') ? meta.nearest_metro.slice(meta.nearest_metro.indexOf('Exit')) : 'Short walk or e-rickshaw (₹10–₹20)'}
+              </div>
+            </a>
+          ) : (
+            <div className="bg-white rounded-2xl border border-[#EFEAE2] p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center gap-2 text-[#0F766E] mb-1">
+                <Train className="w-4 h-4 shrink-0" />
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-stone-400">Metro Station</span>
+              </div>
+              <div className="text-xs sm:text-sm font-extrabold text-[#1C1917] truncate">Metro Connected</div>
+              <div className="text-[10px] text-stone-500 truncate mt-0.5">Accessible via Delhi Metro</div>
             </div>
-            <div className="text-xs sm:text-sm font-extrabold text-[#1C1917] truncate">
-              {meta?.nearest_metro ? meta.nearest_metro.split('(')[0].trim() : 'Metro Connected'}
-            </div>
-            <div className="text-[10px] text-stone-500 truncate mt-0.5">
-              {meta?.nearest_metro?.includes('Exit') ? meta.nearest_metro.slice(meta.nearest_metro.indexOf('Exit')) : 'Short walk or e-rickshaw'}
-            </div>
-          </div>
+          )}
 
           {/* Card 2: Cost For Two */}
           <div className="bg-white rounded-2xl border border-[#EFEAE2] p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
@@ -605,7 +659,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
               {meta?.best_time_to_visit ? meta.best_time_to_visit.split('(')[0].trim() : '3:30 – 8:30 PM'}
             </div>
             <div className="text-[10px] text-stone-500 truncate mt-0.5">
-              Evening crowd & best vibe
+              Evening crowd &amp; best vibe
             </div>
           </div>
 
@@ -693,27 +747,27 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
 
         {/* ========================================================================= */}
-        {/* BLOCK 1: TRANSIT & VISITOR INTEL */}
+        {/* BLOCK 1: FAST TRANSIT & ARRIVAL INTEL */}
         {/* ========================================================================= */}
         <section id="section-transit" className="scroll-mt-28 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[11px] font-black uppercase tracking-wider text-[#0F766E]">
-                Arrival &amp; Local Navigation
+                Arrival &amp; Transit Reality
               </div>
               <h2 className="hd text-xl sm:text-2xl font-black text-[#1C1917]">
-                Get there without the guesswork
+                Fast Arrival &amp; Commute Intel
               </h2>
             </div>
 
-            {meta?.latitude && meta?.longitude && (
+            {meta?.nearest_metro && (
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((meta.area_name || collection.title) + ' Delhi')}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${meta.nearest_metro}, ${meta.area_name || 'Delhi'}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#0F766E] hover:underline"
               >
-                <span>Google Maps View</span>
+                <span>Google Maps Directions</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
@@ -721,50 +775,67 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Metro Transit */}
-            <div className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-5 shadow-2xs space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0F766E] flex items-center justify-center">
-                <Train className="w-5 h-5" />
+            <div className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-5 shadow-2xs space-y-2 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0F766E] flex items-center justify-center">
+                  <Train className="w-5 h-5" />
+                </div>
+                <h3 className="font-heading font-black text-base text-[#1C1917]">
+                  Metro Station &amp; Exit
+                </h3>
+                <p className="text-sm font-extrabold text-stone-900 leading-snug">
+                  {meta?.nearest_metro?.split('(')[0]?.trim() || 'Connected via Delhi Metro'}
+                </p>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  {meta?.nearest_metro?.includes('(') ? meta.nearest_metro.slice(meta.nearest_metro.indexOf('(') + 1).replace(')', '') : 'Short walk or e-rickshaw (₹10–₹20)'}
+                </p>
               </div>
-              <h3 className="font-heading font-black text-base text-[#1C1917]">
-                Nearest Metro Station
-              </h3>
-              <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
-                {meta?.nearest_metro || 'Directly accessible via Delhi Metro network. Take a quick e-rickshaw or walk from the nearest exit.'}
-              </p>
-              <div className="pt-2 text-[11px] font-bold text-[#0F766E] flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" />
-                <span>Last-mile: E-Rickshaws usually ₹10–₹20</span>
-              </div>
+
+              {meta?.nearest_metro && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${meta.nearest_metro}, ${meta.area_name || 'Delhi'}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pt-2 text-xs font-extrabold text-[#0F766E] hover:underline flex items-center gap-1"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Navigate Station on Maps</span>
+                </a>
+              )}
             </div>
 
             {/* Parking & Lanes */}
-            <div className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-5 shadow-2xs space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#D8350F] flex items-center justify-center">
-                <Car className="w-5 h-5" />
+            <div className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-5 shadow-2xs space-y-2 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#D8350F] flex items-center justify-center">
+                  <Car className="w-5 h-5" />
+                </div>
+                <h3 className="font-heading font-black text-base text-[#1C1917]">
+                  Parking &amp; Cab Drop
+                </h3>
+                <p className="text-xs font-semibold text-stone-800 leading-relaxed">
+                  {meta?.parking_tips || 'Paid municipal parking or metro multilevel lot recommended. Avoid narrow inner lanes in cars.'}
+                </p>
               </div>
-              <h3 className="font-heading font-black text-base text-[#1C1917]">
-                Parking &amp; Cab Drop
-              </h3>
-              <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
-                {meta?.parking_tips || 'Paid municipal parking or metro multilevel lot recommended. Lanes can be congested during evening rush.'}
-              </p>
               <div className="pt-2 text-[11px] font-bold text-amber-700 flex items-center gap-1">
                 <Info className="w-3.5 h-3.5" />
-                <span>Tip: Set cab drop at main road or metro exit</span>
+                <span>Tip: Set drop at main road or metro exit</span>
               </div>
             </div>
 
             {/* Timing & Crowd */}
-            <div className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-5 shadow-2xs space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#B45309] flex items-center justify-center">
-                <Clock className="w-5 h-5" />
+            <div className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-5 shadow-2xs space-y-2 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#B45309] flex items-center justify-center">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <h3 className="font-heading font-black text-base text-[#1C1917]">
+                  Best Visiting Hours
+                </h3>
+                <p className="text-xs font-semibold text-stone-800 leading-relaxed">
+                  {meta?.best_time_to_visit || '4:00 PM – 9:00 PM for peak dining vibrancy & live evening crowd.'}
+                </p>
               </div>
-              <h3 className="font-heading font-black text-base text-[#1C1917]">
-                Best Visiting Window
-              </h3>
-              <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
-                {meta?.best_time_to_visit || '4:00 PM – 9:00 PM for the vibrant food walk atmosphere.'} Visit early afternoons for quiet study seating with Wi-Fi.
-              </p>
               <div className="pt-2 text-[11px] font-bold text-teal-700 flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" />
                 <span>Most counters open till 11:00 PM</span>
@@ -774,16 +845,16 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
         </section>
 
         {/* ========================================================================= */}
-        {/* BLOCK 2: LOCALITY SIGNATURES STRIP (WHAT THIS LANE IS FAMOUS FOR) */}
+        {/* BLOCK 2: VISUAL DISH SHOWCASE (KILL LONG ARTICLES, SHOW FOOD) */}
         {/* ========================================================================= */}
         <section id="section-dishes" className="scroll-mt-28 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5">
             <div>
               <div className="text-[11px] font-black uppercase tracking-wider text-[#D8350F]">
-                Locality Signatures
+                Must-Eat Signatures
               </div>
               <h2 className="hd text-xl sm:text-2xl font-black text-[#1C1917]">
-                What this neighbourhood is legendary for
+                Iconic Bites of {collection.title.replace(' Food Guide', '').replace(' Food Map', '')}
               </h2>
             </div>
             <p className="text-xs text-stone-500 font-medium">
@@ -791,7 +862,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {famousDishes.map((dish, idx) => {
               const estimatedAppPrice = Math.round(dish.price * 1.25) + 35;
               const savings = estimatedAppPrice - dish.price;
@@ -800,49 +871,56 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
                 <div
                   key={idx}
                   onClick={() => setSelectedSpotlightDish(dish)}
-                  className="bg-white rounded-2xl sm:rounded-[24px] border border-[#EFEAE2] p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
+                  className="bg-white rounded-3xl border border-[#EFEAE2] overflow-hidden shadow-2xs hover:border-[#FF5A36] hover:shadow-lg transition-all duration-300 flex flex-col justify-between group cursor-pointer"
                 >
-                  <div className="space-y-2">
-                    {/* Top Row: Dish Name + Price */}
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full ${dish.is_veg === false ? 'bg-red-600' : 'bg-green-600'}`} />
-                          <h3 className="font-heading font-black text-base text-[#1C1917] group-hover:text-[#D8350F] transition-colors leading-tight">
-                            {dish.name}
-                          </h3>
-                        </div>
-                        <div className="text-xs font-bold text-[#0F766E] mt-0.5">
-                          at {dish.restaurant_name}
-                        </div>
+                  <div>
+                    {/* Full-bleed Photo with floating Badges */}
+                    <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+                      <img
+                        src={dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}
+                        alt={dish.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      {/* Veg / Non-veg indicator */}
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md">
+                        <span className={`w-2.5 h-2.5 rounded-full ${dish.is_veg === false ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                        <span className="text-[10px] font-bold text-white uppercase">{dish.is_veg === false ? 'Non-Veg' : 'Pure Veg'}</span>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <div className="text-lg font-black text-[#D8350F]">
-                          ₹{dish.price}
-                        </div>
-                        <div className="text-[10px] text-stone-400 line-through">
-                          app ₹{estimatedAppPrice}
-                        </div>
+                      {/* Floating Price Badge */}
+                      <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-white/95 text-stone-900 font-mono font-black text-sm shadow-md flex items-center gap-1">
+                        <span>₹{dish.price}</span>
                       </div>
                     </div>
 
-                    {/* Why famous explanation */}
-                    <p className="text-xs text-[#57534E] leading-relaxed line-clamp-2">
-                      {dish.why_famous}
-                    </p>
+                    {/* Content Block */}
+                    <div className="p-4 sm:p-5 space-y-2">
+                      <h3 className="font-heading font-black text-base sm:text-lg text-[#1C1917] group-hover:text-[#D8350F] transition-colors leading-tight line-clamp-1">
+                        {dish.name}
+                      </h3>
+
+                      <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#0F766E]">
+                        <Utensils className="w-3.5 h-3.5" />
+                        <span>at {dish.restaurant_name}</span>
+                      </div>
+
+                      {/* Crisp 1-line hook (no long article) */}
+                      <p className="text-xs text-[#57534E] leading-relaxed line-clamp-2">
+                        {dish.why_famous}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Savings Tag */}
-                  <div className="mt-4 pt-3 border-t border-[#E7E2DA]/80 flex items-center justify-between text-[11px] font-bold">
-                    <span className="inline-flex items-center gap-1 text-[#0F766E] bg-teal-50 px-2 py-0.5 rounded-md">
-                      <TrendingDown className="w-3.5 h-3.5" />
-                      <span>Save ~₹{savings} at counter</span>
+                  {/* Savings & Action Tag */}
+                  <div className="px-4 sm:px-5 pb-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold bg-stone-50/60">
+                    <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md text-[11px]">
+                      Save ~₹{savings} vs Apps
                     </span>
 
-                    <span className="text-[#D8350F] group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                      <span>Details</span>
-                      <ChevronRight className="w-3 h-3" />
+                    <span className="text-[#D8350F] group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                      <span>View Details</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
                 </div>
@@ -852,10 +930,10 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
         </section>
 
         {/* ========================================================================= */}
-        {/* BLOCK 3: CURATED 3-STOP FOOD CRAWL (VISUAL WALKING TIMELINE) */}
+        {/* BLOCK 3: VISUAL 3-STOP FOOD CRAWL ROADMAP */}
         {/* ========================================================================= */}
         <section id="section-crawl" className="scroll-mt-28">
-          <div className="bg-[#14110F] text-white rounded-[28px] sm:rounded-[36px] p-6 sm:p-9 lg:p-11 relative overflow-hidden shadow-lg">
+          <div className="bg-[#14110F] text-white rounded-[28px] sm:rounded-[36px] p-6 sm:p-9 lg:p-11 relative overflow-hidden shadow-xl border border-stone-800">
             {/* Glowing Accent */}
             <div
               aria-hidden="true"
@@ -882,10 +960,10 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
                   key={idx}
                   className="bg-white/6 hover:bg-white/10 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md transition-all flex flex-col justify-between"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="px-2.5 py-0.5 rounded-lg bg-[#2DD4BF]/20 text-[#2DD4BF] text-[11px] font-black">
-                        {stop.time}
+                        Stop #{stop.stop_number || idx + 1} • {stop.time}
                       </span>
                       {stop.distance_to_next && (
                         <span className="text-[11px] text-stone-400">
@@ -898,18 +976,32 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
                       {stop.type}
                     </h4>
 
-                    <div className="text-xs font-bold text-[#FF8A6B]">
-                      Must-Order: {stop.recommended_dish}
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10">
+                      <span className="text-[10px] font-black text-[#FF8A6B] uppercase tracking-wider block">
+                        Must-Order
+                      </span>
+                      <p className="text-xs font-bold text-white mt-0.5">
+                        {stop.recommended_dish}
+                      </p>
                     </div>
 
                     <div className="text-xs text-stone-300 flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-[#2DD4BF] shrink-0" />
                       <span className="truncate">{stop.venue_name}</span>
                     </div>
+
+                    {stop.note && (
+                      <p className="text-xs text-stone-400 leading-snug">
+                        {stop.note}
+                      </p>
+                    )}
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-stone-400 flex items-center justify-between">
-                    <span>Stop #{stop.stop_number}</span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1">
+                      <Footprints className="w-3 h-3" />
+                      <span>{stop.distance_to_next || 'Walk to next'}</span>
+                    </span>
                     <span className="text-stone-300">Verified Trail</span>
                   </div>
                 </div>
@@ -922,11 +1014,11 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
                 href={googleMapsRouteUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white text-xs sm:text-sm font-bold min-h-[46px] shadow-sm"
+                className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white text-xs sm:text-sm font-extrabold min-h-[46px] shadow-sm flex items-center justify-center gap-2"
               >
-                <Navigation className="w-4 h-4 mr-1.5" />
+                <Navigation className="w-4 h-4" />
                 <span>Open Walking Route in Google Maps</span>
-                <ExternalLink className="w-3.5 h-3.5 ml-1" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
 
               <a
@@ -937,9 +1029,9 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
                 )}`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold min-h-[46px]"
+                className="btn bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold min-h-[46px] flex items-center justify-center gap-2"
               >
-                <MessageCircle className="w-4 h-4 mr-1.5 text-emerald-400" />
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
                 <span>Share Crawl with Friends</span>
               </a>
             </div>

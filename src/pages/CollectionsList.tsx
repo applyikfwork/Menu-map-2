@@ -520,7 +520,14 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
       {/* ========================================================================= */}
       {/* 1. HERO BANNER: ACTIVE AREA AUTO-LOADED WITH LIVE LOCATION CONTEXT */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden bg-linear-to-b from-[#1C1917] via-[#24201E] to-[#1C1917] text-white pt-8 pb-10 sm:pb-12 border-b border-stone-800">
+      <section 
+        className="relative overflow-hidden text-white pt-8 pb-10 sm:pb-12 border-b border-stone-800"
+        style={{
+          background: activeGuide.cover_image_url
+            ? `linear-gradient(to bottom, rgba(28,25,23,0.92) 0%, rgba(28,25,23,0.86) 55%, rgba(24,22,20,0.98) 100%), url(${activeGuide.cover_image_url}) center/cover no-repeat`
+            : 'linear-gradient(to bottom, #1C1917, #24201E, #1C1917)',
+        }}
+      >
         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#FF5A36_1px,transparent_1px)] [background-size:18px_18px] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
@@ -555,30 +562,51 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
             </div>
           </div>
 
-          {/* Area Headline & Vibe */}
-          <div className="space-y-3 max-w-3xl">
+          {/* Area Headline & Punchy Hook (No long text) */}
+          <div className="space-y-2 max-w-3xl">
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
               {activeGuide.title}
             </h1>
-            <p className="text-sm sm:text-base text-stone-300 leading-relaxed">
-              {meta?.vibe_badge || activeGuide.description}
+            <p className="text-sm sm:text-base text-stone-300 font-medium leading-relaxed">
+              {meta?.vibe_badge || meta?.famous_for_summary || activeGuide.description}
             </p>
           </div>
 
-          {/* Key Metrics Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 pt-2">
+          {/* Key Metrics Strip (Actionable & Clickable) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 pt-1">
             {/* Metro */}
-            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0">
-                <Train className="w-4 h-4" />
+            {meta?.nearest_metro ? (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${meta.nearest_metro}, ${meta.area_name || 'Delhi'}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Click to open Metro route in Google Maps"
+                className="bg-stone-900/80 hover:bg-stone-900 border border-stone-800 hover:border-sky-500/40 rounded-2xl p-3 flex items-center gap-2.5 transition-all group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
+                  <Train className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1">
+                    <span>Nearest Metro</span>
+                    <ArrowUpRight className="w-2.5 h-2.5 text-sky-400 opacity-70" />
+                  </p>
+                  <p className="text-xs font-extrabold text-stone-100 truncate group-hover:text-sky-300 transition-colors">
+                    {meta.nearest_metro.split('(')[0] || 'Rajiv Chowk'}
+                  </p>
+                </div>
+              </a>
+            ) : (
+              <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0">
+                  <Train className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Transit</p>
+                  <p className="text-xs font-extrabold text-stone-100 truncate">Metro Connected</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Nearest Metro</p>
-                <p className="text-xs font-extrabold text-stone-100 truncate">
-                  {meta?.nearest_metro?.split('(')[0] || 'Rajiv Chowk'}
-                </p>
-              </div>
-            </div>
+            )}
 
             {/* Budget */}
             <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
@@ -586,42 +614,90 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                 <DollarSign className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Avg Cost For Two</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Budget For Two</p>
                 <p className="text-xs font-extrabold text-stone-100">
-                  ₹{meta?.avg_cost_for_two || 450}
+                  ₹{meta?.avg_cost_for_two || 450} <span className="text-[10px] font-medium text-stone-400">(~₹{Math.round((meta?.avg_cost_for_two || 450) / 2)}/ea)</span>
                 </p>
               </div>
             </div>
 
             {/* Cafes Count */}
-            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('area-cafes-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-stone-900/80 hover:bg-stone-900 border border-stone-800 hover:border-orange-500/40 rounded-2xl p-3 flex items-center gap-2.5 text-left transition-all cursor-pointer group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-400 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
                 <UtensilsCrossed className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Verified Cafes</p>
-                <p className="text-xs font-extrabold text-stone-100">
-                  {activeAreaCafes.length || 10}+ Listed
+                <p className="text-xs font-extrabold text-stone-100 group-hover:text-orange-300 transition-colors">
+                  {activeAreaCafes.length || 10}+ Listed ↓
                 </p>
               </div>
-            </div>
+            </button>
 
             {/* Dishes */}
-            <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-3 flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('signature-dishes-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-stone-900/80 hover:bg-stone-900 border border-stone-800 hover:border-purple-500/40 rounded-2xl p-3 flex items-center gap-2.5 text-left transition-all cursor-pointer group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
                 <Flame className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Iconic Dishes</p>
-                <p className="text-xs font-extrabold text-stone-100">
-                  {famousDishes.length || 5} Must-Tries
+                <p className="text-xs font-extrabold text-stone-100 group-hover:text-purple-300 transition-colors">
+                  {famousDishes.length || 5} Must-Tries ↓
                 </p>
               </div>
+            </button>
+          </div>
+
+          {/* INSTANT VIBE DECISION ENGINE (HERO PILLS) */}
+          <div className="pt-2">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#FF8A6B] mb-2.5 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Choose Your Dining Mood • 1-Tap Filter</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: 'all', label: `🔥 All Spots (${activeAreaCafes.length})` },
+                { id: 'date', label: '💖 Date & Aesthetic' },
+                { id: 'budget', label: '💰 Budget (< ₹400 for 2)' },
+                { id: 'veg', label: '🥗 Pure Veg Only' },
+                { id: 'open_now', label: '🟢 Open Now' },
+              ].map((vibe) => (
+                <button
+                  key={vibe.id}
+                  type="button"
+                  onClick={() => {
+                    setCafeFilter(vibe.id as any);
+                    const el = document.getElementById('area-cafes-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 ${
+                    cafeFilter === vibe.id
+                      ? 'bg-[#FF5A36] text-white ring-2 ring-white/30'
+                      : 'bg-stone-900/90 hover:bg-stone-800 text-stone-200 border border-stone-700'
+                  }`}
+                >
+                  {vibe.label}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Quick Actions Row */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-2">
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
             <a
               href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Let's explore ${activeGuide.area_metadata?.area_name || activeGuide.title}! Check out the verified food crawl, signature dishes & real menu prices on MenuMaps: ${window.location.origin}/iconic-area/${activeGuide.slug}`)}`}
               target="_blank"
@@ -629,7 +705,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
             >
               <MessageCircle className="w-3.5 h-3.5 fill-white" />
-              <span>Plan with Friends on WhatsApp</span>
+              <span>Plan on WhatsApp</span>
             </a>
 
             <button
@@ -647,14 +723,11 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
 
             <button
               type="button"
-              onClick={() => {
-                const el = document.getElementById('area-cafes-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
+              onClick={() => setIsExplorerOpen(true)}
               className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <Utensils className="w-3.5 h-3.5 text-[#FF5A36]" />
-              <span>Jump to Cafes ({activeAreaCafes.length})</span>
+              <Compass className="w-3.5 h-3.5 text-orange-400" />
+              <span>Explore All 14+ Areas</span>
             </button>
           </div>
         </div>
@@ -713,10 +786,10 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
 
         {/* ========================================================================= */}
-        {/* 3. SECTION 1: LIVE TRANSIT & METRO DIRECTIONS */}
+        {/* 3. SECTION 1: FAST TRANSIT & INTEL STRIP (NO FLUFF) */}
         {/* ========================================================================= */}
         {meta?.nearest_metro && (
-          <section className="bg-white rounded-3xl border border-[#E7E2DA] p-5 sm:p-7 shadow-xs space-y-4">
+          <section className="bg-white rounded-3xl border border-[#E7E2DA] p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
@@ -724,10 +797,10 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-stone-900">
-                    Delhi Metro &amp; Transit Guide
+                    Fast Transit &amp; Arrival Intel
                   </h3>
                   <p className="text-xs text-stone-500">
-                    Recommended station exits, walking times &amp; parking realities
+                    Exit gate, parking reality &amp; best arrival hours
                   </p>
                 </div>
               </div>
@@ -736,7 +809,7 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${meta.nearest_metro}, ${meta.area_name || 'Delhi'}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
               >
                 <Navigation className="w-3.5 h-3.5 fill-white" />
                 <span>Open Directions in Google Maps</span>
@@ -744,126 +817,162 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
               </a>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-2">
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1.5">
-                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide flex items-center gap-1">
-                  <Train className="w-3.5 h-3.5 text-sky-600" />
-                  <span>Metro Route &amp; Exit Gate</span>
-                </span>
-                <p className="text-sm font-bold text-stone-900 leading-snug">
-                  {meta.nearest_metro}
-                </p>
-                <p className="text-xs text-stone-600">
-                  Fastest commute to {meta.area_name}. Avoid Delhi traffic and take the exit gate indicated above.
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+              {/* Card 1: Metro */}
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex flex-col justify-between space-y-1.5">
+                <div>
+                  <span className="text-[11px] font-black text-sky-700 uppercase tracking-wide flex items-center gap-1">
+                    <Train className="w-3.5 h-3.5" />
+                    <span>Metro Exit Gate</span>
+                  </span>
+                  <p className="text-sm font-extrabold text-stone-900 mt-1">
+                    {meta.nearest_metro.split('(')[0].trim()}
+                  </p>
+                  <p className="text-xs text-stone-600 mt-0.5">
+                    {meta.nearest_metro.includes('(') ? meta.nearest_metro.slice(meta.nearest_metro.indexOf('(') + 1).replace(')', '') : 'Short walk or e-rickshaw (₹10–₹20)'}
+                  </p>
+                </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1.5">
-                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide flex items-center gap-1">
-                  <Navigation className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Parking &amp; Cab Reality</span>
-                </span>
-                <p className="text-sm font-bold text-stone-900 leading-snug">
-                  {meta.parking_tips || 'Designated market or multilevel metro parking recommended during peak hours.'}
-                </p>
-                <p className="text-xs text-stone-600">
-                  Peak evening rush: {meta.best_time_to_visit?.split('(')[0] || '4:00 PM – 9:00 PM'}.
-                </p>
+              {/* Card 2: Parking */}
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex flex-col justify-between space-y-1.5">
+                <div>
+                  <span className="text-[11px] font-black text-amber-700 uppercase tracking-wide flex items-center gap-1">
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>Parking Reality</span>
+                  </span>
+                  <p className="text-xs font-semibold text-stone-800 leading-snug mt-1">
+                    {meta.parking_tips || 'Multilevel metro parking recommended. Avoid narrow inner market lanes in 4-wheelers.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 3: Best Hours */}
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex flex-col justify-between space-y-1.5">
+                <div>
+                  <span className="text-[11px] font-black text-emerald-700 uppercase tracking-wide flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Golden Hour Vibe</span>
+                  </span>
+                  <p className="text-xs font-semibold text-stone-800 leading-snug mt-1">
+                    {meta.best_time_to_visit || '4:00 PM – 9:00 PM for peak dining vibrancy & live evening crowd.'}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
         )}
 
         {/* ========================================================================= */}
-        {/* 4. SECTION 2: FAMOUS LANDMARK DISHES OF THIS AREA */}
+        {/* 4. SECTION 2: VISUAL DISH SHOWCASE (KILL LONG ARTICLES, SHOW FOOD) */}
         {/* ========================================================================= */}
         {famousDishes.length > 0 && (
-          <section className="space-y-4">
+          <section id="signature-dishes-section" className="space-y-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF5A36] uppercase tracking-wider mb-1">
                   <Flame className="w-3.5 h-3.5" />
-                  <span>Local Signature Specialties</span>
+                  <span>Must-Eat Signatures</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-                  Must-Try Dishes of {meta?.area_name || activeGuide.title.split(' ')[0]}
+                  Iconic Bites of {meta?.area_name || activeGuide.title.split(' ')[0]}
                 </h2>
                 <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
-                  Voted by locals: the dishes you cannot leave this neighborhood without tasting.
+                  Voted by locals • Real counter rates with 0% delivery app markups
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {famousDishes.map((dish, i) => (
-                <div
-                  key={i}
-                  onClick={() => setSelectedSpotlightDish({
-                    dish,
-                    areaName: meta?.area_name || activeGuide.title,
-                    areaSlug: activeGuide.slug,
-                  })}
-                  className="group bg-white rounded-2xl border border-[#E7E2DA] p-3.5 flex gap-3.5 cursor-pointer hover:border-[#FF5A36] hover:shadow-md transition-all text-left"
-                >
-                  <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-stone-100 relative">
-                    <img
-                      src={dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}
-                      alt={dish.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-1.5 left-1.5">
-                      <span className={`w-3.5 h-3.5 rounded-full border border-white flex items-center justify-center ${dish.is_veg ? 'bg-emerald-600' : 'bg-rose-600'}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {famousDishes.map((dish, i) => {
+                const estimatedAppPrice = Math.round(dish.price * 1.25) + 35;
+                const savings = estimatedAppPrice - dish.price;
+
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setSelectedSpotlightDish({
+                      dish,
+                      areaName: meta?.area_name || activeGuide.title,
+                      areaSlug: activeGuide.slug,
+                    })}
+                    className="group bg-white rounded-3xl border border-[#E7E2DA] overflow-hidden cursor-pointer hover:border-[#FF5A36] hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Full-bleed Photo with floating Badges */}
+                      <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+                        <img
+                          src={dish.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}
+                          alt={dish.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        {/* Veg / Non-veg indicator */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md">
+                          <span className={`w-2.5 h-2.5 rounded-full ${dish.is_veg ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                          <span className="text-[10px] font-bold text-white uppercase">{dish.is_veg ? 'Pure Veg' : 'Non-Veg'}</span>
+                        </div>
+
+                        {/* Floating Price Badge */}
+                        <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-white/95 text-stone-900 font-mono font-black text-sm shadow-md flex items-center gap-1">
+                          <span>₹{dish.price}</span>
+                        </div>
+                      </div>
+
+                      {/* Content Block */}
+                      <div className="p-4 sm:p-5 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-heading font-black text-base sm:text-lg text-stone-900 group-hover:text-[#FF5A36] transition-colors leading-tight line-clamp-1">
+                            {dish.name}
+                          </h4>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#0F766E]">
+                          <Utensils className="w-3.5 h-3.5" />
+                          <span>at {dish.restaurant_name}</span>
+                        </div>
+
+                        {/* Crisp 1-line hook (no long article) */}
+                        <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                          {dish.why_famous}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action & Savings Bar */}
+                    <div className="px-4 sm:px-5 pb-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-bold bg-stone-50/60">
+                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md text-[11px]">
+                        Save ~₹{savings} vs Apps
+                      </span>
+
+                      <span className="text-[#FF5A36] group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                        <span>View Dish Details</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </div>
-
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between gap-1">
-                        <h4 className="font-black text-sm text-stone-900 group-hover:text-[#FF5A36] transition-colors line-clamp-1">
-                          {dish.name}
-                        </h4>
-                        <span className="font-mono font-black text-sm text-[#FF5A36] shrink-0">
-                          ₹{dish.price}
-                        </span>
-                      </div>
-                      <p className="text-[11px] font-bold text-stone-600 truncate mt-0.5">
-                        at {dish.restaurant_name}
-                      </p>
-                      <p className="text-[11px] text-stone-500 line-clamp-2 mt-1 leading-snug">
-                        {dish.why_famous}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 flex items-center text-[11px] font-bold text-[#FF5A36]">
-                      <span>View Story &amp; Details</span>
-                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
 
         {/* ========================================================================= */}
-        {/* 5. SECTION 3: TESTED 3-STOP FOOD CRAWL TIMELINE */}
+        {/* 5. SECTION 3: VISUAL 3-STOP FOOD CRAWL ROADMAP */}
         {/* ========================================================================= */}
         {crawlStops.length > 0 && (
-          <section className="bg-gradient-to-br from-stone-900 via-stone-900 to-[#2A2320] text-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
+          <section className="bg-gradient-to-br from-stone-950 via-[#1C1917] to-stone-900 text-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl border border-stone-800">
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF5A36] uppercase tracking-wider mb-1">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-black text-[#FF5A36] uppercase tracking-wider">
                   <Footprints className="w-3.5 h-3.5" />
                   <span>Tested Evening Walking Trail</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   3-Stop Food Crawl in {meta?.area_name || activeGuide.title.split(' ')[0]}
                 </h2>
-                <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-xl">
-                  Follow this exact tested walking route: starters to comfort mains to famous monster shakes without getting stuck in traffic.
+                <p className="text-xs sm:text-sm text-stone-300 max-w-xl leading-relaxed">
+                  The tested 3-stop food sequence: starters ➔ comfort feast ➔ sweet monster desserts in one smooth walking route.
                 </p>
               </div>
 
@@ -872,59 +981,64 @@ export const CollectionsList: React.FC<CollectionsListProps> = ({ navigate }) =>
                   href={googleMapsRouteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2.5 rounded-xl bg-[#FF5A36] hover:bg-[#e04826] text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
+                  className="px-5 py-3 rounded-2xl bg-[#FF5A36] hover:bg-[#e04826] text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95 cursor-pointer"
                 >
-                  <Navigation className="w-3.5 h-3.5 fill-white" />
+                  <Navigation className="w-4 h-4 fill-white" />
                   <span>Start Walking Route in Google Maps</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <ArrowUpRight className="w-4 h-4" />
                 </a>
               </div>
             </div>
 
+            {/* Stepper Roadmap Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               {crawlStops.map((stop, i) => (
                 <div
                   key={i}
-                  className="bg-stone-800/90 border border-stone-700/80 rounded-2xl p-5 space-y-3 flex flex-col justify-between relative"
+                  className="bg-stone-900/90 border border-stone-800 hover:border-stone-700 rounded-2xl p-5 space-y-3 flex flex-col justify-between transition-all"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-full bg-[#FF5A36]/20 text-[#FF5A36] font-mono font-black text-xs">
+                      <span className="px-3 py-1 rounded-full bg-[#FF5A36]/20 border border-[#FF5A36]/40 text-[#FF5A36] font-mono font-black text-xs">
                         Stop {stop.stop_number || i + 1}
                       </span>
-                      <span className="text-xs font-bold text-stone-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-stone-400" />
+                      <span className="text-xs font-bold text-stone-300 flex items-center gap-1 bg-stone-800 px-2.5 py-0.5 rounded-md">
+                        <Clock className="w-3 h-3 text-amber-400" />
                         <span>{stop.time}</span>
                       </span>
                     </div>
 
-                    <h4 className="text-base font-extrabold text-white">
+                    <div className="text-xs font-extrabold uppercase tracking-wide text-stone-400">
+                      {stop.type}
+                    </div>
+
+                    <h4 className="text-base font-black text-white">
                       {stop.venue_name}
                     </h4>
 
-                    <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-800">
-                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wide block">
+                    <div className="p-3 rounded-xl bg-black/40 border border-stone-800">
+                      <span className="text-[10px] font-black text-[#FF8A6B] uppercase tracking-wider block">
                         Must-Order
                       </span>
-                      <p className="text-xs font-bold text-orange-200 mt-0.5">
+                      <p className="text-xs font-bold text-white mt-0.5">
                         {stop.recommended_dish}
                       </p>
                     </div>
 
                     {stop.note && (
-                      <p className="text-xs text-stone-400 leading-relaxed">
+                      <p className="text-xs text-stone-400 leading-snug">
                         {stop.note}
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-2 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-400">
-                    <span className="flex items-center gap-1">
-                      <Footprints className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{stop.distance_to_next}</span>
+                  <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
+                    <span className="flex items-center gap-1 font-bold text-emerald-400">
+                      <Footprints className="w-3.5 h-3.5" />
+                      <span>{stop.distance_to_next || 'Walk to next'}</span>
                     </span>
-                    <span className="font-bold text-stone-300">
-                      {stop.type}
+                    <span className="text-[11px] text-stone-400">
+                      Verified Sequence
                     </span>
                   </div>
                 </div>
