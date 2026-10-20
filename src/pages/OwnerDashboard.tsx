@@ -40,8 +40,13 @@ import {
   Droplets,
   Cake,
   Navigation,
-  Store
+  Store,
+  Wifi,
+  Copy,
+  Gift,
+  Download
 } from 'lucide-react';
+import { getRestaurantQrConfig, saveRestaurantQrConfig, RestaurantQrConfig, DEFAULT_PERK_IDS } from '../lib/qrConfig';
 import { 
   Restaurant, 
   MenuCategory, 
@@ -104,8 +109,18 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   // Active Section Tab (Default to structured Overview)
   const [activeTab, setActiveTab] = useState<OwnerTab>('overview');
 
-  // QR Modal
+  // QR Modal & In-Cafe Table Configuration
   const [showQrModal, setShowQrModal] = useState(false);
+  const [qrConfig, setQrConfig] = useState<RestaurantQrConfig>(() => ({
+    wifiSsid: '',
+    wifiPassword: '',
+    showWifiOnStandee: true,
+    buzzerPhone: '',
+    enabledPerks: DEFAULT_PERK_IDS,
+    customPerkNote: 'Valid on direct WhatsApp counter orders',
+    tableCount: 20,
+  }));
+  const [selectedPreviewTable, setSelectedPreviewTable] = useState<string>('1');
 
   // Filter / Search inside dishes
   const [dishSearch, setDishSearch] = useState('');
@@ -197,6 +212,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       if (rest) {
         setRestaurant(rest);
         setProfileData({ ...rest });
+        setQrConfig(getRestaurantQrConfig(rest.id, rest.whatsapp_number || rest.phone));
 
         const [cats, items, anns, gallery] = await Promise.all([
           api.getCategories(rest.id),
@@ -670,6 +686,13 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
     } finally {
       setSavingProfile(false);
     }
+  };
+
+  const handleSaveQrConfig = (updates: Partial<RestaurantQrConfig>) => {
+    if (!restaurant) return;
+    const updated = saveRestaurantQrConfig(restaurant.id, updates);
+    setQrConfig(updated);
+    showToast('Saved Table QR & In-Cafe Settings!', 'success');
   };
 
   if (loading || !restaurant || !session) {
@@ -2229,56 +2252,343 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         )}
 
         {/* ================================================================ */}
-        {/* TAB 4: TABLE STANDEE & MARKETING */}
+        {/* TAB 4: TABLE STANDEE & IN-CAFE FACILITIES COMMAND CENTER */}
         {/* ================================================================ */}
         {activeTab === 'standee' && (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-xs space-y-6">
-            <div>
-              <h2 className="font-heading font-black text-xl text-slate-900">
-                Official Table QR Standee
-              </h2>
-              <p className="text-xs text-slate-500">
-                Print high-resolution table tent cards for your dine-in tables. Guests scan the QR code to open your contactless digital menu directly at <strong className="text-slate-800">{cleanPublicUrl}</strong>.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-3xl bg-amber-50/60 border border-amber-200/60">
-              <div className="w-40 h-40 bg-white p-3 rounded-2xl shadow-md border border-amber-200 shrink-0">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(
-                    cleanPublicUrl
-                  )}`}
-                  alt="QR Code"
-                  className="w-full h-full object-contain"
-                />
+          <div className="space-y-6">
+            {/* Top Overview & Standee Studio Hero */}
+            <div className="bg-gradient-to-r from-stone-900 via-[#1C1917] to-stone-900 rounded-3xl p-6 sm:p-8 text-white border border-amber-400/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-stone-950 text-xs font-black uppercase tracking-wider">
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>Cafe In-Store Table QR Manager</span>
+                </div>
+                <h2 className="font-heading font-black text-2xl sm:text-3xl text-amber-200">
+                  Table Standees & VIP In-Cafe Facilities
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+                  Generate customized tabletop acrylic standees for Table 1–25. When diners scan, they instantly unlock high-speed Wi-Fi credentials, 1-tap WhatsApp table buzzers, and the gamified Table Luck Wheel!
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <h3 className="font-heading font-black text-lg text-amber-950">
-                  {restaurant.name} Table Tent Card
-                </h3>
-                <p className="text-xs text-amber-900/80 leading-relaxed">
-                  Includes your restaurant logo, address, "Scan for Menu & WhatsApp Order", and zero commission direct ordering for maximum profit.
-                </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowQrModal(true)}
+                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-stone-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Launch Standee Studio 🖨️</span>
+                </button>
 
-                <div className="flex items-center gap-3 pt-2">
+                <a
+                  href={`/${restaurant.slug}?table=1&mode=dine_in`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <Eye className="w-4 h-4 text-cyan-400" />
+                  <span>Simulate Table #1 Scan</span>
+                  <ExternalLink className="w-3 h-3 text-stone-400" />
+                </a>
+              </div>
+            </div>
+
+            {/* Grid: Wi-Fi Credentials & Table Buzzer WhatsApp */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1: In-Store Wi-Fi Credentials */}
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-xs space-y-4">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-stone-100">
+                  <div className="w-9 h-9 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0">
+                    <Wifi className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-base text-slate-900">
+                      Cafe Table Wi-Fi Credentials
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Printed directly on acrylic table standees and shown in customer table mode
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Wi-Fi Network Name (SSID)
+                    </label>
+                    <input
+                      type="text"
+                      value={qrConfig.wifiSsid}
+                      onChange={(e) => setQrConfig({ ...qrConfig, wifiSsid: e.target.value })}
+                      placeholder="e.g. TheBigChill_Guest"
+                      className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Wi-Fi Password
+                    </label>
+                    <input
+                      type="text"
+                      value={qrConfig.wifiPassword || ''}
+                      onChange={(e) => setQrConfig({ ...qrConfig, wifiPassword: e.target.value })}
+                      placeholder="e.g. coffee2026 (Leave blank if open Wi-Fi)"
+                      className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-semibold text-slate-900 focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={qrConfig.showWifiOnStandee}
+                        onChange={(e) => setQrConfig({ ...qrConfig, showWifiOnStandee: e.target.checked })}
+                        className="rounded border-stone-300 text-orange-600 focus:ring-orange-500"
+                      />
+                      <span>Display Wi-Fi on Table QR & Customer Screen</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSaveQrConfig(qrConfig)}
+                      className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                    >
+                      Save Wi-Fi
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Table Buzzer WhatsApp Alerts Routing */}
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-xs space-y-4">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-stone-100">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-base text-slate-900">
+                      Table Buzzer WhatsApp Routing
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Target WhatsApp number for Waiter, Water, Bill & Cutlery table alerts
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Manager or Server WhatsApp Number
+                    </label>
+                    <input
+                      type="text"
+                      value={qrConfig.buzzerPhone || ''}
+                      onChange={(e) => setQrConfig({ ...qrConfig, buzzerPhone: e.target.value })}
+                      placeholder={restaurant.whatsapp_number || restaurant.phone || '919876543210'}
+                      className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-semibold text-slate-900 focus:outline-hidden"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Include country code without + or spaces (e.g. 919876543210)
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const phone = (qrConfig.buzzerPhone || restaurant.whatsapp_number || restaurant.phone || '').replace(/[^0-9]/g, '');
+                        if (phone) {
+                          window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`🛎️ [TABLE #1 TEST] Alert: Hello ${restaurant.name}, table buzzers are working properly!`)}`, '_blank');
+                        } else {
+                          showToast('Please enter a valid WhatsApp phone number.', 'info');
+                        }
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-800 text-xs font-bold border border-stone-200 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Bell className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Test Buzzer Alert</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSaveQrConfig(qrConfig)}
+                      className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                    >
+                      Save Routing
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Table Dine-In Perks Manager (Luck Wheel Controls) */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                    <Gift className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-black text-base text-slate-900">
+                      Table Luck Wheel & Perks Manager
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Control which rewards customers can win when spinning the table wheel at their seats
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveQrConfig(qrConfig)}
+                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  Save Perk Rules
+                </button>
+              </div>
+
+              {/* Perk Checklist */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { id: 'discount5', label: '5% Counter Discount', desc: 'Deducted directly from table counter bill' },
+                  { id: 'freedip', label: 'Free House Dip / Chutney', desc: 'Served complimentary with starter order' },
+                  { id: 'chaiupgrade', label: 'Free Masala Chai / Drink Upgrade', desc: 'Upgrade regular drink to chef brew' },
+                  { id: 'desserttreat', label: 'Complimentary Sweet Treat', desc: 'Mini dessert or sweet chocolate bite' },
+                  { id: 'extraportion', label: 'Chef’s Loaded Portion', desc: 'Kitchen adds extra toppings/cheese' },
+                  { id: 'secretdeal', label: 'Chef’s Secret Recipe Perk', desc: 'Unlock chef recommendation bite' },
+                ].map((perk) => {
+                  const isChecked = qrConfig.enabledPerks.includes(perk.id);
+                  return (
+                    <div
+                      key={perk.id}
+                      onClick={() => {
+                        const next = isChecked
+                          ? qrConfig.enabledPerks.filter((id) => id !== perk.id)
+                          : [...qrConfig.enabledPerks, perk.id];
+                        setQrConfig({ ...qrConfig, enabledPerks: next.length > 0 ? next : [perk.id] });
+                      }}
+                      className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                        isChecked
+                          ? 'bg-orange-50/70 border-orange-300 shadow-xs'
+                          : 'bg-stone-50 border-stone-200 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-900">{perk.label}</span>
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-bold ${isChecked ? 'bg-orange-600' : 'bg-stone-300'}`}>
+                          {isChecked ? '✓' : ''}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-snug">{perk.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Custom Perk Policy Note */}
+              <div className="pt-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Perk Ground Policy / Note (Shown to Diners)
+                </label>
+                <input
+                  type="text"
+                  value={qrConfig.customPerkNote || ''}
+                  onChange={(e) => setQrConfig({ ...qrConfig, customPerkNote: e.target.value })}
+                  placeholder="e.g. Valid on direct WhatsApp counter orders above ₹200"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden"
+                />
+              </div>
+            </div>
+
+            {/* Table QR Kit & Standee Generator */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-100">
+                <div>
+                  <h3 className="font-heading font-black text-base text-slate-900">
+                    Table Standee Generator & QR Pack
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Preview and download individual Table QR codes (Table 1 through 25)
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-600">Select Table:</span>
+                  <select
+                    value={selectedPreviewTable}
+                    onChange={(e) => setSelectedPreviewTable(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 text-xs font-black text-slate-800 outline-none cursor-pointer"
+                  >
+                    {[...Array(25)].map((_, i) => (
+                      <option key={i + 1} value={String(i + 1)}>
+                        Table #{i + 1}
+                      </option>
+                    ))}
+                    <option value="master">Master QR (Counter / Takeaway)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Live Table Preview Row */}
+              <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 bg-white p-2 rounded-xl shadow-xs border border-stone-200 shrink-0">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(
+                        `${window.location.origin}/${restaurant.slug}?${selectedPreviewTable === 'master' ? '' : `table=${selectedPreviewTable}&`}mode=dine_in`
+                      )}`}
+                      alt={`Table ${selectedPreviewTable} QR`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-black text-[10px] uppercase tracking-wider">
+                      {selectedPreviewTable === 'master' ? 'Counter Standee' : `Table #${selectedPreviewTable} Standee`}
+                    </span>
+                    <h4 className="font-heading font-black text-base text-slate-900 mt-1">
+                      {restaurant.name} – Table #{selectedPreviewTable}
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      URL: <code className="text-orange-700 bg-orange-50 px-1 py-0.5 rounded">/{restaurant.slug}?table={selectedPreviewTable}&mode=dine_in</code>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => setShowQrModal(true)}
-                    className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs flex items-center gap-2 shadow-md transition-all active:scale-95"
+                    className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer"
                   >
-                    <Printer className="w-4 h-4" />
-                    <span>Open Standee & Print</span>
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Standee</span>
                   </button>
 
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(cleanPublicUrl);
-                      showToast('Copied direct restaurant link!', 'success');
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-slate-800 font-bold text-xs border border-amber-200"
+                  <a
+                    href={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=15&data=${encodeURIComponent(
+                      `${window.location.origin}/${restaurant.slug}?${selectedPreviewTable === 'master' ? '' : `table=${selectedPreviewTable}&`}mode=dine_in`
+                    )}`}
+                    download={`${restaurant.slug}-table-${selectedPreviewTable}-qr.png`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-xl bg-white hover:bg-stone-100 text-slate-800 font-bold text-xs border border-stone-200 flex items-center gap-1.5 cursor-pointer"
                   >
-                    Copy Link
-                  </button>
+                    <Download className="w-3.5 h-3.5 text-orange-600" />
+                    <span>Download PNG</span>
+                  </a>
+
+                  <a
+                    href={`/${restaurant.slug}?table=${selectedPreviewTable}&mode=dine_in`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Test Table View</span>
+                  </a>
                 </div>
               </div>
             </div>

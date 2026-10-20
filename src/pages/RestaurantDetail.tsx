@@ -32,7 +32,9 @@ import {
   Droplets,
   Receipt,
   Dices,
-  Utensils
+  Utensils,
+  Wifi,
+  Copy
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -46,6 +48,7 @@ import {
   GalleryCategory
 } from '../types/database';
 import { api, getCurrentOwnerSession } from '../lib/supabase';
+import { getRestaurantQrConfig, RestaurantQrConfig } from '../lib/qrConfig';
 import { compressImageFile } from '../lib/imageCompressor';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
 import { RestaurantCard } from '../components/RestaurantCard';
@@ -129,6 +132,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [showTablePerkWheel, setShowTablePerkWheel] = useState(false);
   const [showDishRoulette, setShowDishRoulette] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState<'menu' | 'table_perks' | 'gallery' | 'intel' | 'reviews'>('menu');
+  const [selectedDishPreview, setSelectedDishPreview] = useState<MenuItem | null>(null);
+  const [qrConfig, setQrConfig] = useState<RestaurantQrConfig>(() =>
+    getRestaurantQrConfig(restaurant?.id || '', restaurant?.whatsapp_number || restaurant?.phone)
+  );
 
   // WhatsApp Order Tray State
   const [cartMap, setCartMap] = useState<Record<string, number>>({});
@@ -171,6 +178,12 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     if (tbl) {
       setTableNumber(tbl);
       setIsTableDineIn(true);
+      // Auto-prompt table luck wheel on table scan if perk not yet spun
+      const sessionKey = `perk_prompted_${tbl}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, 'true');
+        setTimeout(() => setShowTablePerkWheel(true), 700);
+      }
     } else if (mode === 'dine_in' || mode === 'true') {
       setIsTableDineIn(true);
     }
@@ -178,7 +191,15 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     loadRestaurantData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    const handleQrConfigUpdated = (e: any) => {
+      if (restaurant?.id && e.detail?.restaurantId === restaurant.id) {
+        setQrConfig(e.detail.config);
+      }
+    };
+    window.addEventListener('menumaps_qr_config_updated', handleQrConfigUpdated);
+
     return () => {
+      window.removeEventListener('menumaps_qr_config_updated', handleQrConfigUpdated);
       updatePageSeo({
         title: 'Menu Maps – Real Menus, Cafes & Restaurant Discovery',
         description: 'Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.',
@@ -226,6 +247,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       setActiveAnnouncement(liveAnn);
       setGalleryImages(gallery);
       setOwnerSession(getCurrentOwnerSession());
+      setQrConfig(getRestaurantQrConfig(rest.id, rest.whatsapp_number || rest.phone));
 
       // SEO & AEO Graph
       const pageUrl = `https://menumaps.in/restaurant/${rest.slug}`;
@@ -677,11 +699,11 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       {isTableDineIn && (
         <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
           <div className="bg-gradient-to-r from-stone-900 via-[#1C1917] to-stone-900 border-2 border-amber-400/80 rounded-[32px] p-5 sm:p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                   <span>🍽️</span>
-                  <span>Table #{tableNumber || 'Dine-In'} Session Active</span>
+                  <span>Table #{tableNumber || 'Dine-In'} VIP Session</span>
                 </span>
                 {tablePerk ? (
                   <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-extrabold text-xs flex items-center gap-1">
@@ -693,12 +715,33 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                     Wheel Spin Available
                   </span>
                 )}
+                {/* 1-Tap Cafe Wi-Fi Info */}
+                {qrConfig.wifiSsid && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs text-stone-200">
+                    <Wifi className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>Wi-Fi: <strong className="text-white">{qrConfig.wifiSsid}</strong></span>
+                    {qrConfig.wifiPassword && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(qrConfig.wifiPassword || '');
+                          showToast(`Copied Wi-Fi password: "${qrConfig.wifiPassword}"`, 'success');
+                        }}
+                        className="ml-1 text-[11px] font-mono font-bold text-amber-300 hover:text-white flex items-center gap-0.5 cursor-pointer underline"
+                        title="Copy Wi-Fi Password"
+                      >
+                        <span>({qrConfig.wifiPassword})</span>
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               <h3 className="font-heading text-lg sm:text-xl font-black text-amber-200">
-                Welcome to {restaurant.name}! Dine-In VIP Perks Active
+                Welcome to {restaurant.name}! Dine-In VIP Perks & Facilities Active
               </h3>
-              <p className="text-xs sm:text-sm text-stone-300 max-w-2xl">
-                Order directly to your table via WhatsApp with zero commission markup. Use the instant buzzer buttons below to summon service without waiting.
+              <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+                Order directly to your table via WhatsApp with zero commission markup. Use the instant buzzers below to alert staff directly to Table #{tableNumber || 'our table'}.
               </p>
             </div>
 
@@ -717,7 +760,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <button
                   type="button"
                   onClick={() => {
-                    const rawPhone = restaurant.whatsapp_number || restaurant.phone;
+                    const rawPhone = qrConfig.buzzerPhone || restaurant.whatsapp_number || restaurant.phone;
                     if (rawPhone) {
                       const phone = rawPhone.replace(/[^0-9]/g, '');
                       window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`🛎️ [TABLE #${tableNumber || 'Dine-In'}] Call Waiter: Hello ${restaurant.name}, please send someone to assist our table.`)}`, '_blank');
@@ -735,7 +778,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <button
                   type="button"
                   onClick={() => {
-                    const rawPhone = restaurant.whatsapp_number || restaurant.phone;
+                    const rawPhone = qrConfig.buzzerPhone || restaurant.whatsapp_number || restaurant.phone;
                     if (rawPhone) {
                       const phone = rawPhone.replace(/[^0-9]/g, '');
                       window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`💧 [TABLE #${tableNumber || 'Dine-In'}] Extra Water: Hello ${restaurant.name}, please bring fresh drinking water to Table #${tableNumber || 'our table'}.`)}`, '_blank');
@@ -753,7 +796,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 <button
                   type="button"
                   onClick={() => {
-                    const rawPhone = restaurant.whatsapp_number || restaurant.phone;
+                    const rawPhone = qrConfig.buzzerPhone || restaurant.whatsapp_number || restaurant.phone;
                     if (rawPhone) {
                       const phone = rawPhone.replace(/[^0-9]/g, '');
                       window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`🧾 [TABLE #${tableNumber || 'Dine-In'}] Request Bill: Hello ${restaurant.name}, please prepare and bring the bill for Table #${tableNumber || 'our table'}.${tablePerk ? ` (Applied Perk: ${tablePerk})` : ''}`)}`, '_blank');
@@ -766,6 +809,24 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 >
                   <Receipt className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Bill</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rawPhone = qrConfig.buzzerPhone || restaurant.whatsapp_number || restaurant.phone;
+                    if (rawPhone) {
+                      const phone = rawPhone.replace(/[^0-9]/g, '');
+                      window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`🍴 [TABLE #${tableNumber || 'Dine-In'}] Extra Cutlery: Hello ${restaurant.name}, please send extra spoons, forks, and tissues to Table #${tableNumber || 'our table'}.`)}`, '_blank');
+                    } else {
+                      showToast('Cutlery request sent to counter.', 'info');
+                    }
+                  }}
+                  className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-stone-100 text-xs font-bold border border-white/15 flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Request Extra Cutlery"
+                >
+                  <Utensils className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Cutlery</span>
                 </button>
               </div>
             </div>
@@ -1011,12 +1072,11 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                       return (
                         <div key={item.id} className="item group flex flex-col sm:flex-row items-stretch sm:items-center">
                           <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                            {/* Thumbnail Photo / Gradient */}
+                            {/* Thumbnail Photo / Gradient (Clean, no .ph texture overlay) */}
                             <div
-                              onClick={() => item.slug && navigate(`/dish/${item.slug}`)}
-                              className={`ph w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 ${
-                                item.slug ? 'cursor-pointer hover:opacity-95' : ''
-                              }`}
+                              onClick={() => setSelectedDishPreview(item)}
+                              className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 cursor-pointer hover:opacity-95 border border-stone-200/80 shadow-xs relative"
+                              title={`View ${item.name} details & nutrition`}
                             >
                               {item.image_url ? (
                                 <img
@@ -1064,10 +1124,9 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                               </div>
 
                               <h3
-                                onClick={() => item.slug && navigate(`/dish/${item.slug}`)}
-                                className={`hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-2 ${
-                                  item.slug ? 'cursor-pointer hover:text-[#0F766E] transition-colors' : ''
-                                }`}
+                                onClick={() => setSelectedDishPreview(item)}
+                                className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-2 cursor-pointer hover:text-[#0F766E] transition-colors"
+                                title={`Click to view ${item.name} details`}
                               >
                                 {item.name}
                               </h3>
@@ -1809,6 +1868,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             tableNumber={tableNumber || undefined}
             onPerkUnlocked={(perk) => setTablePerk(perk)}
             activePerk={tablePerk}
+            enabledPerkIds={qrConfig.enabledPerks}
           />
         )}
       </React.Suspense>
@@ -2125,6 +2185,183 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             <span>Order WhatsApp</span>
           </button>
         </aside>
+      )}
+
+      
+      {/* ========================================================
+          DISH QUICK VIEW MODAL (DELIGHTFUL PREVIEW WITHOUT NAVIGATING AWAY)
+      ======================================================== */}
+      {selectedDishPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedDishPreview(null)}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-stone-200 overflow-hidden text-left animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Dish Large Image Header */}
+            <div className="relative h-56 sm:h-64 w-full bg-stone-100 overflow-hidden shrink-0">
+              {selectedDishPreview.image_url ? (
+                <img
+                  src={selectedDishPreview.image_url}
+                  alt={selectedDishPreview.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 flex items-center justify-center text-white text-5xl">
+                  🍽️
+                </div>
+              )}
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedDishPreview(null)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center transition-colors cursor-pointer z-10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Veg / Non-Veg badge overlay */}
+              <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-black shadow-md flex items-center gap-1.5 ${
+                    selectedDishPreview.dietary_tags?.includes('Veg')
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-rose-600 text-white'
+                  }`}
+                >
+                  <span>{selectedDishPreview.dietary_tags?.includes('Veg') ? '🟢 Pure Veg' : '🔴 Non-Veg'}</span>
+                </span>
+
+                {(selectedDishPreview.is_featured || selectedDishPreview.is_must_try) && (
+                  <span className="px-3 py-1 rounded-full bg-[#FF5A36] text-white text-xs font-black uppercase tracking-wider shadow-md">
+                    ⭐ Bestseller
+                  </span>
+                )}
+
+                {selectedDishPreview.spice_level && selectedDishPreview.spice_level > 1 && (
+                  <span className="px-3 py-1 rounded-full bg-amber-500 text-stone-950 text-xs font-black shadow-md">
+                    🌶️ Spicy Level {selectedDishPreview.spice_level}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Dish Details Body */}
+            <div className="p-6 sm:p-7 space-y-4 overflow-y-auto flex-1">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-heading font-black text-2xl sm:text-3xl text-stone-900 leading-tight">
+                    {selectedDishPreview.name}
+                  </h3>
+                  {selectedDishPreview.cuisine_types && selectedDishPreview.cuisine_types.length > 0 && (
+                    <p className="text-xs font-bold text-[#0F766E] uppercase tracking-wider mt-1">
+                      {selectedDishPreview.cuisine_types.join(' • ')}
+                    </p>
+                  )}
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="font-heading font-black text-2xl sm:text-3xl text-stone-950 block">
+                    ₹{selectedDishPreview.price}
+                  </span>
+                  {(() => {
+                    const savings = calculateSavings(selectedDishPreview.price);
+                    return savings.totalSavings > 0 ? (
+                      <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 inline-block mt-0.5">
+                        Save ₹{savings.totalSavings} vs apps
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
+
+              {selectedDishPreview.description && (
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                  {selectedDishPreview.description}
+                </p>
+              )}
+
+              {/* Smart Pairing Suggestion */}
+              {(() => {
+                const pairing = getSmartPairingForItem(selectedDishPreview, menuItems);
+                if (!pairing) return null;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">
+                        ✨ The Perfect Bite Combo
+                      </span>
+                      <span className="text-xs font-bold text-stone-900 truncate block">
+                        Pairs with {pairing.name} (+₹{pairing.price})
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAddToCart(pairing);
+                        showToast(`Added ${pairing.name} combo to tray!`, 'success');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-extrabold shrink-0 cursor-pointer active:scale-95"
+                    >
+                      + Add Combo
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* Dietary Tags */}
+              {selectedDishPreview.dietary_tags && selectedDishPreview.dietary_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {selectedDishPreview.dietary_tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 text-[11px] font-bold"
+                    >
+                      ✓ {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 sm:p-5 bg-stone-50 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+              {selectedDishPreview.slug && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDishPreview(null);
+                    navigate(`/food/${selectedDishPreview.slug}`);
+                  }}
+                  className="text-xs font-bold text-stone-500 hover:text-stone-900 hover:underline flex items-center gap-1 cursor-pointer order-2 sm:order-1"
+                >
+                  <span>View Full Dish Profile & Delhi Ranking</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleAddToCart(selectedDishPreview);
+                  showToast(`Added ${selectedDishPreview.name} to order tray!`, 'success');
+                  setSelectedDishPreview(null);
+                }}
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#0F766E] hover:bg-[#0d6962] text-white font-black text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95 order-1 sm:order-2 ml-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add to Order Tray • ₹{selectedDishPreview.price}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* WhatsApp Order Drawer (15-min self-pickup, split bill & direct order) */}

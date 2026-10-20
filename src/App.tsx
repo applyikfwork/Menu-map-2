@@ -151,9 +151,13 @@ function AppContent() {
       }
     }
 
-    // 6. Food Detail: /food/[itemSlug]
+    // 6. Food Detail: /food/[itemSlug] or /dish/[itemSlug]
     if (normPath.startsWith('/food/')) {
       const slug = normPath.slice('/food/'.length).split('/')[0].trim();
+      return <FoodDetail slug={slug} navigate={navigate} />;
+    }
+    if (normPath.startsWith('/dish/')) {
+      const slug = normPath.slice('/dish/'.length).split('/')[0].trim();
       return <FoodDetail slug={slug} navigate={navigate} />;
     }
 
@@ -209,7 +213,7 @@ function AppContent() {
     const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
-      'restaurants', 'restaurant', 'food', 'iconic-area', 'iconic-areas',
+      'restaurants', 'restaurant', 'food', 'dish', 'iconic-area', 'iconic-areas',
       'collections', 'collection', 'nearby', 'bookmarks', 'about', 'contact',
       'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'

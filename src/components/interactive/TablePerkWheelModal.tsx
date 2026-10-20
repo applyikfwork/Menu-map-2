@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, Sparkles, Gift, Check, Trophy, PartyPopper } from 'lucide-react';
 
 interface TablePerkWheelModalProps {
@@ -8,6 +8,7 @@ interface TablePerkWheelModalProps {
   tableNumber?: string | number;
   onPerkUnlocked: (perk: string) => void;
   activePerk?: string | null;
+  enabledPerkIds?: string[];
 }
 
 interface PerkOption {
@@ -34,9 +35,19 @@ export const TablePerkWheelModal: React.FC<TablePerkWheelModalProps> = ({
   tableNumber = 1,
   onPerkUnlocked,
   activePerk,
+  enabledPerkIds,
 }) => {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
+
+  const availablePerks = useMemo(() => {
+    if (enabledPerkIds && enabledPerkIds.length > 0) {
+      const filtered = TABLE_PERKS.filter((p) => enabledPerkIds.includes(p.id));
+      return filtered.length > 0 ? filtered : TABLE_PERKS;
+    }
+    return TABLE_PERKS;
+  }, [enabledPerkIds]);
+
   const [wonPerk, setWonPerk] = useState<PerkOption | null>(() => {
     if (activePerk) {
       return TABLE_PERKS.find((p) => p.label === activePerk) || {
@@ -53,20 +64,20 @@ export const TablePerkWheelModal: React.FC<TablePerkWheelModalProps> = ({
   if (!isOpen) return null;
 
   const handleSpin = () => {
-    if (spinning) return;
+    if (spinning || availablePerks.length === 0) return;
     setSpinning(true);
     setWonPerk(null);
 
     const extraRounds = 5 + Math.floor(Math.random() * 4); // 5 to 8 full spins
-    const randomIndex = Math.floor(Math.random() * TABLE_PERKS.length);
-    const sliceAngle = 360 / TABLE_PERKS.length;
-    const targetAngle = extraRounds * 360 + (TABLE_PERKS.length - randomIndex - 0.5) * sliceAngle;
+    const randomIndex = Math.floor(Math.random() * availablePerks.length);
+    const sliceAngle = 360 / availablePerks.length;
+    const targetAngle = extraRounds * 360 + (availablePerks.length - randomIndex - 0.5) * sliceAngle;
 
     setRotation((prev) => prev + targetAngle);
 
     setTimeout(() => {
       setSpinning(false);
-      const chosen = TABLE_PERKS[randomIndex];
+      const chosen = availablePerks[randomIndex];
       setWonPerk(chosen);
       onPerkUnlocked(chosen.label);
     }, 3800);
@@ -113,8 +124,8 @@ export const TablePerkWheelModal: React.FC<TablePerkWheelModalProps> = ({
             }}
           >
             <svg viewBox="0 0 100 100" className="w-full h-full">
-              {TABLE_PERKS.map((opt, i) => {
-                const total = TABLE_PERKS.length;
+              {availablePerks.map((opt, i) => {
+                const total = availablePerks.length;
                 const angle = 360 / total;
                 const startAngle = i * angle;
                 const endAngle = (i + 1) * angle;

@@ -15,6 +15,7 @@ import {
   Gift
 } from 'lucide-react';
 import { Restaurant } from '../types/database';
+import { getRestaurantQrConfig, saveRestaurantQrConfig } from '../lib/qrConfig';
 
 interface RestaurantQrModalProps {
   restaurant: Restaurant;
@@ -31,11 +32,12 @@ export const RestaurantQrModal: React.FC<RestaurantQrModalProps> = ({
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
+  const savedConfig = getRestaurantQrConfig(restaurant.id);
   const [selectedTable, setSelectedTable] = useState<string>(
     defaultTableNumber ? String(defaultTableNumber) : '1'
   );
-  const [wifiSsid, setWifiSsid] = useState<string>('');
-  const [wifiPass, setWifiPass] = useState<string>('');
+  const [wifiSsid, setWifiSsid] = useState<string>(() => savedConfig.wifiSsid || '');
+  const [wifiPass, setWifiPass] = useState<string>(() => savedConfig.wifiPassword || '');
   const [standeeTheme, setStandeeTheme] = useState<'dark' | 'white'>('white');
 
   if (!isOpen) return null;
