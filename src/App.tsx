@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastProvider, useToast } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscoveryProvider } from './context/DiscoveryContext';
+import { LocationProvider } from './context/LocationContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -236,7 +237,6 @@ function AppContent() {
         <Navbar
           currentPath={currentPath}
           navigate={navigate}
-          city={detectedCity}
         />
       )}
       

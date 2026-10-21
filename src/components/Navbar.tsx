@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Compass,
-  MapPin,
-  Bookmark,
-  UtensilsCrossed,
-  Sparkles,
-  Search,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { MenuMapLogo } from './Logo';
 import { getBookmarks } from '../lib/bookmarks';
 import { LocationPickerModal } from './LocationPickerModal';
+import { useLocationContext } from '../context/LocationContext';
 
 interface NavbarProps {
   currentPath: string;
@@ -18,10 +14,10 @@ interface NavbarProps {
   city?: string;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'Delhi NCR' }) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate }) => {
+  const { currentLocation, openLocationModal } = useLocationContext();
   const [scrolled, setScrolled] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
-  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const isHome = currentPath === '/' || currentPath === '';
 
@@ -62,6 +58,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
     }
   };
 
+  const displayLocation = currentLocation.shortName || currentLocation.name || 'All Delhi';
+
   return (
     <>
       <header
@@ -88,7 +86,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
               const isActive =
                 (link.path === '/restaurants' && (currentPath === '/restaurants' || currentPath.startsWith('/restaurant/'))) ||
                 (link.path === '/iconic-area' && (currentPath === '/iconic-area' || currentPath.startsWith('/iconic-area/') || currentPath === '/collections')) ||
-                (link.path === '/nearby' && currentPath === '/nearby') ||
                 (link.path === '/bookmarks' && currentPath === '/bookmarks');
 
               return (
@@ -116,16 +113,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
             })}
           </nav>
 
-          {/* Desktop Right Action & City Badge (Visible ONLY md:flex -> No clash with mobile) */}
+          {/* Desktop Right Action & Location Badge */}
           <div className="hidden md:flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setLocationModalOpen(true)}
+              onClick={openLocationModal}
               className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full text-sm font-semibold border border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50 transition-all hover:scale-102 active:scale-95 cursor-pointer shadow-xs"
-              title="Click to change Delhi neighborhood or recalibrate GPS"
+              title="Click to select Delhi neighborhood or detect live location"
             >
-              <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse"></span>
-              <span className="truncate max-w-[140px]">{city}</span>
+              <span className={`w-2 h-2 rounded-full ${currentLocation.isLiveGps ? 'bg-emerald-500 animate-pulse' : 'bg-[#FF5A36]'}`}></span>
+              <span className="truncate max-w-[150px] font-bold">{displayLocation}</span>
               <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
             </button>
           </div>
@@ -134,13 +131,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
           <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
             <button
               type="button"
-              onClick={() => setLocationModalOpen(true)}
+              onClick={openLocationModal}
               className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 sm:px-3 min-h-[40px] rounded-full border border-[#E7E2DA] text-[#1C1917] bg-white hover:bg-stone-50 transition-all active:scale-95 cursor-pointer shadow-xs"
-              title="Change neighborhood or recalibrate GPS"
-              aria-label={`Current location: ${city}. Tap to change`}
+              title="Change neighborhood or detect live location"
+              aria-label={`Current location: ${displayLocation}. Tap to change`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse shrink-0"></span>
-              <span className="truncate max-w-[85px] xs:max-w-[115px] sm:max-w-[130px]">{city}</span>
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${currentLocation.isLiveGps ? 'bg-emerald-500 animate-pulse' : 'bg-[#FF5A36]'}`}></span>
+              <span className="truncate max-w-[95px] xs:max-w-[125px] sm:max-w-[140px]">{displayLocation}</span>
               <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
             </button>
 
@@ -155,11 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
         </div>
       </header>
 
-      <LocationPickerModal
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-        activeCity={city}
-      />
+      <LocationPickerModal />
     </>
   );
 };

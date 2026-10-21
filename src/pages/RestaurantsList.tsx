@@ -33,6 +33,7 @@ import { DELHI_ZONES, DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocatio
 import { useToast } from '../components/Toast';
 import { MealTimeHeroBanner } from '../components/discovery/MealTimeHeroBanner';
 import { useDiscovery } from '../context/DiscoveryContext';
+import { useLocationContext } from '../context/LocationContext';
 import { updatePageSeo } from '../lib/seo';
 
 interface RestaurantsListProps {
@@ -51,21 +52,18 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const [loading, setLoading] = useState(cachedInitialRests.length === 0);
   const [restaurants, setRestaurants] = useState<Restaurant[]>(() => cachedInitialRests);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
-  const [locating, setLocating] = useState(false);
-  const [detectedArea, setDetectedArea] = useState<string>('Delhi NCR');
-  const [nearestMetro, setNearestMetro] = useState<string>('');
+
+  // Centralized Global Location from Navbar
+  const { currentLocation, selectLocality, selectAllDelhi, openLocationModal } = useLocationContext();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
-  const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedCuisine, setSelectedCuisine] = useState<string>('all');
   const [selectedPrice, setSelectedPrice] = useState<'all' | '₹' | '₹₹' | '₹₹₹'>('all');
   const [selectedDiet, setSelectedDiet] = useState<string>('all');
   const [selectedMeal, setSelectedMeal] = useState<string>('all');
   const [selectedAmenity, setSelectedAmenity] = useState<string>('all');
-  const [distanceRadius, setDistanceRadius] = useState<number>(initialMode === 'near_me' ? 5 : 15);
   const [sortBy, setSortBy] = useState<'rating' | 'cost_low' | 'cost_high' | 'distance'>('rating');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -88,23 +86,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
     });
 
     loadData();
-    if (initialMode === 'near_me') {
-      handleLocate(false);
-    }
-
-    const handleLocationUpdate = (e: any) => {
-      if (e.detail) {
-        setUserCoords(e.detail);
-        if (restaurants.length > 0) {
-          const ctx = detectAreaContext(e.detail, restaurants);
-          if (ctx?.areaName) setDetectedArea(ctx.areaName);
-          if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
-        }
-      }
-    };
-    window.addEventListener('menumap_location_updated', handleLocationUpdate);
-    return () => window.removeEventListener('menumap_location_updated', handleLocationUpdate);
-  }, [initialMode, restaurants.length]);
+  }, [initialMode]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -131,74 +113,33 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       ]);
       setRestaurants(data);
       setMenuItems(items.filter((i) => i.is_available));
-      if (userCoords) {
-        const ctx = detectAreaContext(userCoords, data);
-        if (ctx?.areaName) setDetectedArea(ctx.areaName);
-        if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
-      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLocate = async (showNotification = true) => {
-    setLocating(true);
-    try {
-      const coordsPromise = getUserLocation();
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 500));
-      const fastCoords = await Promise.race([coordsPromise, timeoutPromise]);
-      if (fastCoords) {
-        setUserCoords(fastCoords);
-        saveCachedUserCoordinates(fastCoords);
-        window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: fastCoords }));
-        if (restaurants.length > 0) {
-          const ctx = detectAreaContext(fastCoords, restaurants);
-          if (ctx?.areaName) setDetectedArea(ctx.areaName);
-          if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
-        }
-        if (showNotification) {
-          showToast('Live GPS location detected successfully!', 'success');
-        }
-      } else {
-        // GPS slow or prompt pending: resolve in background without blocking immediate rendering
-        coordsPromise.then((resolvedCoords) => {
-          if (resolvedCoords) {
-            setUserCoords(resolvedCoords);
-            saveCachedUserCoordinates(resolvedCoords);
-            window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: resolvedCoords }));
-          }
-        }).catch(() => {});
-      }
-    } catch {
-      if (showNotification) {
-        showToast('Could not retrieve precise GPS. Showing Delhi NCR.', 'info');
-      }
-    } finally {
-      setLocating(false);
-    }
-  };
-
   const clearAllFilters = () => {
     setSearchQuery('');
-    setSelectedZone('all');
     setSelectedCuisine('all');
     setSelectedPrice('all');
     setSelectedDiet('all');
     setSelectedMeal('all');
     setSelectedAmenity('all');
-    setDistanceRadius(15);
     setSortBy('rating');
   };
 
   // Distance calculation
   const restaurantsWithDistance = useMemo(() => {
+    const hasLocCoords = !currentLocation.isAllDelhi && typeof currentLocation.latitude === 'number' && typeof currentLocation.longitude === 'number';
+
     return restaurants.map((r) => {
-      const dist = userCoords
-        ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, r.latitude, r.longitude)
-        : undefined;
+      let dist: number | undefined;
+      if (hasLocCoords) {
+        dist = calculateDistanceKm(currentLocation.latitude!, currentLocation.longitude!, r.latitude, r.longitude);
+      }
       return { ...r, distanceKm: dist };
     });
-  }, [restaurants, userCoords]);
+  }, [restaurants, currentLocation]);
 
   // Cuisines list
   const cuisines = ['Cafe', 'North Indian', 'Chinese', 'Italian', 'Bakery', 'Street Food', 'Mughlai', 'Desserts'];
@@ -377,84 +318,65 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         if (!hasAmenity) return false;
       }
 
-      // Delhi Zone filter
-      if (selectedZone !== 'all') {
-        const qz = selectedZone.toLowerCase();
-        const matchesLandmark = (r.landmark || '').toLowerCase().includes(qz);
-        const matchesCity = (r.city || '').toLowerCase().includes(qz);
-        const inZoneLocs = DELHI_LOCATIONS.filter((l) => l.zoneKey === selectedZone);
-        const isNearZone = inZoneLocs.some((l) => {
-          if (typeof r.latitude === 'number' && typeof r.longitude === 'number') {
-            const d = calculateDistanceKm(l.latitude, l.longitude, r.latitude, r.longitude);
-            return d <= 5.5;
-          }
-          return false;
-        });
-        if (!matchesLandmark && !matchesCity && !isNearZone) return false;
-      }
+      // 1. Locality Filter (When specific locality is chosen in Navbar)
+      if (!currentLocation.isAllDelhi) {
+        const areaName = currentLocation.name.toLowerCase();
+        const shortName = (currentLocation.shortName || '').toLowerCase();
+        const rText = `${r.name} ${r.city} ${r.address_line1 || ''} ${r.landmark || ''} ${r.metro_station || ''}`.toLowerCase();
+        
+        const matchesKeyword = rText.includes(shortName) || rText.includes(areaName);
+        const isNearbyLocality = typeof r.distanceKm === 'number' && r.distanceKm <= 6.0;
 
-      // Distance radius if userCoords available
-      if (userCoords && typeof r.distanceKm === 'number') {
-        if (r.distanceKm > distanceRadius) return false;
+        if (!matchesKeyword && !isNearbyLocality) {
+          return false;
+        }
       }
 
       return true;
     }).sort((a, b) => {
+      if (sortBy === 'distance' && typeof a.distanceKm === 'number' && typeof b.distanceKm === 'number') {
+        return a.distanceKm - b.distanceKm;
+      }
       if (sortBy === 'rating') return (b.rating_avg || 4.5) - (a.rating_avg || 4.5);
       if (sortBy === 'cost_low') return (a.average_cost_for_two || 350) - (b.average_cost_for_two || 350);
       if (sortBy === 'cost_high') return (b.average_cost_for_two || 350) - (a.average_cost_for_two || 350);
-      if (sortBy === 'distance') return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
       return 0;
     });
-  }, [restaurantsWithDistance, searchTokens, restaurantItemsMap, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, distanceRadius, sortBy, userCoords]);
+  }, [restaurantsWithDistance, searchTokens, restaurantItemsMap, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, sortBy, currentLocation]);
 
-  // Fallback: If distance filter or default radius leaves 0 results on initial load,
-  // never leave the directory empty! Fallback to displaying Top 20 Featured Delhi NCR Cafes.
-  const fallbackFeaturedRests = useMemo(() => {
-    return restaurantsWithDistance.filter((r) => r.is_featured || (r.rating_avg && r.rating_avg >= 4.2)).slice(0, 20);
-  }, [restaurantsWithDistance]);
-
-  const hasExplicitFilter = Boolean(
-    searchQuery.trim() ||
-    selectedZone !== 'all' ||
-    selectedCuisine !== 'all' ||
-    selectedPrice !== 'all' ||
-    selectedDiet !== 'all' ||
-    selectedMeal !== 'all' ||
-    selectedAmenity !== 'all'
-  );
-
-  const displayedRestaurants = useMemo(() => {
-    if (filteredRestaurants.length > 0) return filteredRestaurants;
-    // Fallback: If not an explicit filter search that had 0 matches, show top 20 featured cafes!
-    if (!hasExplicitFilter && fallbackFeaturedRests.length > 0) {
-      return fallbackFeaturedRests;
-    }
-    return [];
-  }, [filteredRestaurants, hasExplicitFilter, fallbackFeaturedRests]);
+  const displayedRestaurants = filteredRestaurants;
 
   const renderFilterContent = () => (
     <>
-      {/* Delhi Zone */}
-      <div>
-        <div className="text-xs font-extrabold tracking-wider uppercase text-[#78716C] mb-3">
-          Delhi Zone
+      {/* Active Area Banner in Filter */}
+      <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1.5">
+        <div className="flex items-center justify-between text-xs font-bold text-stone-500 uppercase tracking-wider">
+          <span>Active Area</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {DELHI_ZONES.map((z) => {
-            const on = selectedZone === z.key;
-            return (
+        <div className="font-extrabold text-sm text-[#1C1917] truncate">
+          {currentLocation.name}
+        </div>
+        <div className="flex items-center gap-2 pt-1 text-xs">
+          <button
+            type="button"
+            onClick={openLocationModal}
+            className="font-bold text-[#D8350F] hover:underline cursor-pointer"
+          >
+            Change Area
+          </button>
+          {!currentLocation.isAllDelhi && (
+            <>
+              <span className="text-stone-300">·</span>
               <button
-                key={z.key}
                 type="button"
-                onClick={() => setSelectedZone(z.key)}
-                className={`chipl text-xs min-h-[36px] px-3 py-1 cursor-pointer ${on ? 'on' : ''}`}
+                onClick={selectAllDelhi}
+                className="font-bold text-stone-600 hover:underline cursor-pointer"
               >
-                <span>{z.icon}</span>
-                <span>{z.label}</span>
+                View All Delhi
               </button>
-            );
-          })}
+            </>
+          )}
         </div>
       </div>
 
@@ -572,34 +494,12 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         </div>
       </div>
 
-      {/* Distance Slider */}
-      <div>
-        <div className="flex justify-between items-baseline mb-2">
-          <span className="text-xs font-extrabold tracking-wider uppercase text-[#78716C]">
-            Distance radius
-          </span>
-          <span className="hd text-base font-bold text-[#1C1917]">
-            {distanceRadius} km
-          </span>
-        </div>
-        <input
-          type="range"
-          min="1"
-          max="25"
-          value={distanceRadius}
-          onChange={(e) => setDistanceRadius(Number(e.target.value))}
-          className="w-full accent-[#D8350F] cursor-pointer"
-        />
-        <div className="flex justify-between text-[11px] text-[#78716C] mt-1 font-medium">
-          <span>Walking (1km)</span>
-          <span>Metro/Cab (25km)</span>
-        </div>
-      </div>
+
     </>
   );
 
   const activeFiltersCount = 
-    (selectedZone !== 'all' ? 1 : 0) +
+    (!currentLocation.isAllDelhi ? 1 : 0) +
     (selectedCuisine !== 'all' ? 1 : 0) +
     (selectedPrice !== 'all' ? 1 : 0) +
     (selectedDiet !== 'all' ? 1 : 0) +
@@ -765,8 +665,8 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                           key={loc.name}
                           type="button"
                           onClick={() => {
-                            setSearchQuery(loc.shortName);
-                            setSelectedZone(loc.zoneKey);
+                            selectLocality(loc);
+                            setSearchQuery('');
                             setSearchDropdownOpen(false);
                           }}
                           className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-[#E7E2DA] hover:border-[#1C1917] hover:bg-stone-50 text-[#1C1917] transition-colors flex items-center gap-1.5 cursor-pointer"
@@ -860,73 +760,54 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
             )}
           </div>
 
-          {/* Quick "Near Me" GPS Sort Toggle */}
+          {/* Current Active Location Pill (1-Tap opens central modal) */}
           <button
             type="button"
-            onClick={() => {
-              if (sortBy === 'distance') {
-                setSortBy('rating');
-              } else {
-                setSortBy('distance');
-                if (!userCoords) handleLocate(true);
-              }
-            }}
-            className={`chipl min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-5 rounded-2xl sm:rounded-[22px] font-bold text-xs sm:text-sm transition-all ${
-              sortBy === 'distance'
-                ? 'bg-[#FF5A36] text-white border-[#FF5A36] shadow-sm'
-                : 'bg-white text-[#1C1917] border-[#E7E2DA] hover:border-stone-300'
-            }`}
+            onClick={openLocationModal}
+            className="inline-flex items-center gap-1.5 sm:gap-2 min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-5 rounded-2xl sm:rounded-[22px] bg-white hover:bg-stone-50 border border-[#E7E2DA] hover:border-stone-400 shadow-xs text-xs sm:text-sm font-bold text-[#1C1917] cursor-pointer transition-all active:scale-95"
+            title="Tap to change neighborhood or switch to All Delhi NCR"
           >
-            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 text-current" />
-            <span>Near Me</span>
-          </button>
-
-          {/* Current Active Location Pill */}
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-5 rounded-2xl sm:rounded-[22px] bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-bold text-[#1C1917]">
             <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF5A36] shrink-0" />
-            <span className="text-stone-400 font-medium">Area:</span>
-            <span className="text-[#D8350F] font-black truncate max-w-[110px] sm:max-w-[150px]">{detectedArea || 'Delhi NCR'}</span>
-            {nearestMetro && (
-              <span className="hidden xl:inline-flex items-center gap-1 text-[#0F766E] text-xs font-semibold pl-2 border-l border-stone-200">
-                <Train className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate max-w-[130px]">{nearestMetro.split('(')[0].trim()}</span>
-              </span>
-            )}
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
-          </div>
+            <span className="text-stone-400 font-medium hidden xs:inline">Area:</span>
+            <span className="text-[#D8350F] font-black truncate max-w-[100px] xs:max-w-[140px] sm:max-w-[180px]">
+              {currentLocation.shortName || currentLocation.name}
+            </span>
+            <ChevronDown className="w-3 h-3 text-stone-400 shrink-0" />
+          </button>
 
           {/* Mobile Filter Toggle */}
           <button
             type="button"
             onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-            className="lg:hidden chipl min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-4 rounded-2xl sm:rounded-[22px] font-bold text-xs sm:text-sm bg-white"
+            className="lg:hidden chipl min-h-[46px] sm:min-h-[56px] px-3.5 sm:px-4 rounded-2xl sm:rounded-[22px] font-bold text-xs sm:text-sm bg-white cursor-pointer"
           >
             <SlidersHorizontal className="w-4 h-4 mr-1.5" />
             Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
         </div>
 
-        {/* Delhi Zones Quick Horizontal Strip */}
-        <div className="mt-4 pt-3 border-t border-[#E7E2DA]/70 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 shrink-0 mr-1">
-            Delhi Zones:
-          </span>
-          {DELHI_ZONES.map((zone) => (
+        {/* Locality Active Bar (shows when specific neighborhood is selected) */}
+        {!currentLocation.isAllDelhi && (
+          <div className="mt-3 flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-orange-50/80 border border-orange-200 text-xs text-[#1C1917] animate-in fade-in duration-200">
+            <div className="flex items-center gap-2 truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+              <span className="truncate">
+                Showing verified spots in <strong className="font-extrabold text-[#D8350F]">{currentLocation.name}</strong>
+                {currentLocation.metroStation && (
+                  <span className="hidden sm:inline text-stone-600 font-medium"> (Metro: {currentLocation.metroStation})</span>
+                )}
+              </span>
+            </div>
             <button
-              key={zone.key}
               type="button"
-              onClick={() => setSelectedZone(zone.key)}
-              className={`text-xs px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer border ${
-                selectedZone === zone.key
-                  ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-xs'
-                  : 'bg-white text-[#57534E] border-[#E7E2DA] hover:bg-stone-50'
-              }`}
+              onClick={selectAllDelhi}
+              className="text-[#D8350F] hover:underline font-extrabold flex items-center gap-1 cursor-pointer shrink-0"
+              title="Reset filter and browse all cafes in Delhi NCR"
             >
-              <span>{zone.icon}</span>
-              <span>{zone.label}</span>
+              <span>✕ View All Delhi</span>
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Main Content: Sidebar + Cards Grid */}
@@ -1091,19 +972,14 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
               {loading ? (
                 <span className="inline-flex items-center gap-2 font-bold text-stone-600 animate-pulse">
                   <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
-                  Discovering verified counter menus in {detectedArea}...
+                  Discovering verified counter menus in {currentLocation.name}...
                 </span>
               ) : (
                 <>
                   <strong className="text-[#1C1917] font-bold">
                     Showing {displayedRestaurants.length} verified counters
                   </strong>{' '}
-                  in {detectedArea}
-                  {filteredRestaurants.length === 0 && displayedRestaurants.length > 0 && (
-                    <span className="text-xs text-amber-700 ml-2 font-medium">
-                      (Top Featured Delhi NCR Spots)
-                    </span>
-                  )}
+                  in {currentLocation.name}
                 </>
               )}
             </p>
@@ -1160,7 +1036,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                     type="button"
                     onClick={() => {
                       setSearchQuery(keyword);
-                      setSelectedZone('all');
+                      selectAllDelhi();
                       setSelectedCuisine('all');
                     }}
                     className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2DA] hover:border-[#FF5A36] hover:bg-[#FFE9E2]/50 text-[#1C1917] transition-all cursor-pointer"

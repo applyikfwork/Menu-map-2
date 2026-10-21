@@ -50,6 +50,7 @@ import {
   getLiveHeroTicket
 } from '../lib/recommendations';
 import { AREA_FOOD_GUIDES } from '../lib/areaGuidesData';
+import { useLocationContext } from '../context/LocationContext';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { useToast } from '../components/Toast';
 import { toggleBookmark, isBookmarked } from '../lib/bookmarks';
@@ -86,9 +87,18 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // GPS Coordinates & Locating state
-  const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
-  const [locating, setLocating] = useState(false);
+  // Centralized Global Location from Navbar
+  const { currentLocation, openLocationModal, isLocating } = useLocationContext();
+
+  const userCoords: GeoCoordinates | null = useMemo(() => {
+    if (currentLocation.latitude && currentLocation.longitude) {
+      return {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      };
+    }
+    return null;
+  }, [currentLocation]);
 
   // Modals
   const [spinModalOpen, setSpinModalOpen] = useState(false);
@@ -106,32 +116,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
 
   useEffect(() => {
     loadHomeData();
-    if (!userCoords) {
-      triggerAutoLocation();
-    }
-
-    const handleLocationUpdate = (e: any) => {
-      if (e.detail) {
-        setUserCoords(e.detail);
-      }
-    };
-    window.addEventListener('menumap_location_updated', handleLocationUpdate);
-    return () => window.removeEventListener('menumap_location_updated', handleLocationUpdate);
   }, []);
-
-  const triggerAutoLocation = async () => {
-    try {
-      setLocating(true);
-      const coords = await getUserLocation();
-      setUserCoords(coords);
-      saveCachedUserCoordinates(coords);
-      window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-    } catch {
-      // Fallback gracefully
-    } finally {
-      setLocating(false);
-    }
-  };
 
   const loadHomeData = async () => {
     setLoading(true);
@@ -149,22 +134,6 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
     }
   };
 
-  const handleManualLocationClick = async () => {
-    setLocating(true);
-    try {
-      const coords = await getUserLocation();
-      setUserCoords(coords);
-      saveCachedUserCoordinates(coords);
-      window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-      const context = detectAreaContext(coords, restaurants);
-      showToast(`Location detected! Showing cafes near ${context.areaName}.`, 'success');
-    } catch {
-      showToast('GPS unavailable. Showing central Delhi hubs.', 'info');
-    } finally {
-      setLocating(false);
-    }
-  };
-
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (searchQuery.trim()) {
@@ -174,39 +143,49 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
     }
   };
 
+  const activeAreaName = useMemo(() => {
+    if (currentLocation.isAllDelhi) return 'Delhi NCR';
+    return currentLocation.name || 'Delhi NCR';
+  }, [currentLocation]);
+
+  const activeDelhiLocation: DelhiLocation = useMemo(() => {
+    if (!currentLocation.isAllDelhi) {
+      const found = DELHI_LOCATIONS.find(
+        (loc) => loc.id === currentLocation.id || loc.name.toLowerCase() === currentLocation.name.toLowerCase()
+      );
+      if (found) return found;
+    }
+    if (userCoords) {
+      const ctx = detectAreaContext(userCoords, restaurants);
+      if (ctx.closestLocation) return ctx.closestLocation;
+    }
+    return DELHI_LOCATIONS[0];
+  }, [currentLocation, userCoords, restaurants]);
+
   // Detected Area Context
   const detectedAreaContext = useMemo(() => {
     if (!userCoords) {
-      const defaultLoc = DELHI_LOCATIONS[0];
+      const defaultLoc = activeDelhiLocation;
       return {
-        areaName: defaultLoc.name,
+        areaName: activeAreaName,
         tagline: defaultLoc.tagline,
-        headline: 'Best Cafes & Verified Menus in North Campus (DU)',
+        headline: `Best Cafes & Verified Menus in ${activeAreaName}`,
         subheadline: 'Explore student-budget cafes, study tables with power outlets & Wi-Fi, and late-night addas.',
         distanceKm: 0,
-        isDUCampus: true,
-        isHeritage: false,
-        isCentralDelhi: false,
-        isWestDelhi: false,
-        isNorthWestDelhi: false,
-        isSouthDelhi: false,
-        isEastDelhi: false,
+        isDUCampus: /campus|hudson|kamla/i.test(activeAreaName),
+        isHeritage: /chandni|purani|chawri/i.test(activeAreaName),
+        isCentralDelhi: /connaught|cp|mandi/i.test(activeAreaName),
+        isWestDelhi: /punjabi|rajouri|janakpuri/i.test(activeAreaName),
+        isNorthWestDelhi: /pitampura|rohini|nsp/i.test(activeAreaName),
+        isSouthDelhi: /hauz|gk|saket/i.test(activeAreaName),
+        isEastDelhi: /laxmi|preet|anand/i.test(activeAreaName),
         nearestMetro: defaultLoc.metroStation,
         zone: defaultLoc.zone,
         closestLocation: defaultLoc,
       };
     }
     return detectAreaContext(userCoords, restaurants);
-  }, [userCoords, restaurants]);
-
-  const activeAreaName = detectedAreaContext?.areaName || 'Delhi NCR';
-
-  const activeDelhiLocation: DelhiLocation = useMemo(() => {
-    if (detectedAreaContext?.closestLocation) {
-      return detectedAreaContext.closestLocation;
-    }
-    return DELHI_LOCATIONS[0];
-  }, [detectedAreaContext]);
+  }, [userCoords, restaurants, activeDelhiLocation, activeAreaName]);
 
   // Find either an exact editorial guide from AREA_FOOD_GUIDES or generate a rich guide dynamically
   const activeAreaGuide = useMemo(() => {
@@ -442,13 +421,20 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
           {/* Universal Live Location Status Pill (Clean, Attractive, Non-redundant) */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7E2DA]/80">
             <div className="flex flex-wrap items-center gap-2.5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-extrabold text-[#1C1917]">
-                <MapPin className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
+              <button
+                type="button"
+                onClick={openLocationModal}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] hover:border-[#FF5A36] shadow-xs text-xs sm:text-sm font-extrabold text-[#1C1917] transition-all cursor-pointer group"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#FF5A36] group-hover:scale-110 transition-transform shrink-0" />
                 <span className="text-[#78716C] font-bold">Current Area:</span>
                 <span className="text-[#D8350F]">{activeAreaName}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
-              </div>
-              {activeDelhiLocation?.metroStation && (
+                {currentLocation.isLiveGps && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="Live GPS Active" />
+                )}
+                <span className="text-[11px] text-stone-400 group-hover:text-[#FF5A36] font-semibold underline underline-offset-2 ml-1">Change</span>
+              </button>
+              {!currentLocation.isAllDelhi && activeDelhiLocation?.metroStation && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-xs font-bold text-[#0F766E]">
                   <Train className="w-3.5 h-3.5 shrink-0" />
                   <span>{activeDelhiLocation.metroStation}</span>
@@ -459,14 +445,15 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                   )}
                 </div>
               )}
-              <span className="text-[11px] text-[#78716C] font-semibold hidden lg:inline">
-                (Click top bar location button to switch area anytime)
-              </span>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-bold text-[#0F766E] bg-teal-50 border border-teal-100 px-3 py-1 rounded-full">
               <Sparkles className="w-3.5 h-3.5 text-[#0F766E]" />
-              <span>Showing verified dining spots in {activeAreaName.split(/[\s,/]+/)[0]}</span>
+              <span>
+                {currentLocation.isAllDelhi 
+                  ? 'Showing verified dining spots across Delhi NCR' 
+                  : `Showing verified dining spots in ${activeAreaName.split(/[\s,/]+/)[0]}`}
+              </span>
             </div>
           </div>
 

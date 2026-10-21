@@ -4,48 +4,43 @@ import {
   X, 
   MapPin, 
   Crosshair, 
-  Sparkles, 
-  Check, 
-  ChevronRight, 
   Search, 
   Compass, 
-  Navigation, 
-  Train,
-  CheckCircle2
+  Check, 
+  Sparkles,
+  Train
 } from 'lucide-react';
-import { 
-  DELHI_LOCATIONS, 
-  DELHI_ZONES, 
-  DelhiLocation, 
-  DelhiZoneInfo, 
-  saveCachedUserCoordinates, 
-  getUserLocation,
-  searchDelhiLocations,
-  calculateDistanceKm,
-  formatDistance,
-  getCachedUserCoordinates
-} from '../lib/location';
-import { useToast } from './Toast';
+import { DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
+import { searchDelhiLocations } from '../lib/location';
+import { useLocationContext } from '../context/LocationContext';
 
 interface LocationPickerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   activeCity?: string;
 }
 
 export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
-  isOpen,
-  onClose,
-  activeCity = 'Delhi NCR',
+  isOpen: propIsOpen,
+  onClose: propOnClose,
 }) => {
-  const { showToast } = useToast();
+  const {
+    currentLocation,
+    selectLocality,
+    selectAllDelhi,
+    detectLiveGps,
+    isLocating,
+    isLocationModalOpen,
+    closeLocationModal
+  } = useLocationContext();
+
+  const isOpen = propIsOpen !== undefined ? propIsOpen : isLocationModalOpen;
+  const onClose = propOnClose || closeLocationModal;
+
   const [mounted, setMounted] = useState(false);
-  const [locating, setLocating] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
-  const [selectedZone, setSelectedZone] = useState<string>('all');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Ensure portal target document.body is ready
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -54,11 +49,8 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      // Auto-focus search on desktop after small delay
       const timer = setTimeout(() => {
-        if (window.innerWidth > 768) {
-          searchInputRef.current?.focus();
-        }
+        searchInputRef.current?.focus();
       }, 150);
       return () => {
         document.body.style.overflow = '';
@@ -80,374 +72,193 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Helper to color-code Delhi Metro Lines realistically
-  const getMetroLineBadgeClass = (line: string) => {
-    const l = line.toLowerCase();
-    if (l.includes('yellow')) return 'bg-amber-100 text-amber-900 border-amber-300';
-    if (l.includes('blue')) return 'bg-sky-100 text-sky-900 border-sky-300';
-    if (l.includes('red')) return 'bg-rose-100 text-rose-900 border-rose-300';
-    if (l.includes('pink')) return 'bg-pink-100 text-pink-900 border-pink-300';
-    if (l.includes('violet')) return 'bg-purple-100 text-purple-900 border-purple-300';
-    if (l.includes('magenta')) return 'bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300';
-    if (l.includes('airport') || l.includes('orange')) return 'bg-orange-100 text-orange-900 border-orange-300';
-    if (l.includes('green')) return 'bg-emerald-100 text-emerald-900 border-emerald-300';
-    return 'bg-stone-100 text-stone-700 border-stone-200';
-  };
-
-  // Top quick-access hubs for 1-tap switching
-  const popularHubShortcuts = useMemo(() => {
-    const desiredShortNames = [
-      'Connaught Place',
-      'Hudson Lane',
-      'NSP Pitampura',
-      'Hauz Khas',
-      'Chandni Chowk',
-      'Dwarka Sec 12',
-      'Rajouri Garden',
-      'Laxmi Nagar',
-      'Aerocity',
-      'Saket'
-    ];
-    return DELHI_LOCATIONS.filter((l) => 
-      desiredShortNames.some((name) => l.name.toLowerCase().includes(name.toLowerCase()) || l.shortName.toLowerCase().includes(name.toLowerCase()))
-    ).slice(0, 10);
-  }, []);
-
-  // Filtered locations with distance calculation if coordinates cached
-  const userCoords = useMemo(() => getCachedUserCoordinates(), [isOpen]);
-
+  // Filter locations using fast real-time search
   const filteredLocations = useMemo(() => {
-    const results = searchDelhiLocations(searchFilter, selectedZone);
-
-    if (userCoords) {
-      return [...results].sort((a, b) => {
-        const distA = calculateDistanceKm(userCoords.latitude, userCoords.longitude, a.latitude, a.longitude);
-        const distB = calculateDistanceKm(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude);
-        return distA - distB;
-      });
-    }
-
-    return results;
-  }, [searchFilter, selectedZone, userCoords]);
+    return searchDelhiLocations(searchFilter);
+  }, [searchFilter]);
 
   if (!isOpen || !mounted) return null;
 
-  const handleSelectLocation = (loc: DelhiLocation) => {
-    const coords = {
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      accuracy: 50,
-    };
-    saveCachedUserCoordinates(coords);
-    window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-    showToast(`Area switched to ${loc.shortName || loc.name}!`, 'success');
-    onClose();
-  };
-
-  const handleUseGps = async () => {
-    setLocating(true);
-    try {
-      const coords = await getUserLocation();
-      saveCachedUserCoordinates(coords);
-      window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-      showToast('Live GPS location detected successfully!', 'success');
-      onClose();
-    } catch {
-      showToast('GPS permission denied or unavailable. Please pick your Delhi neighborhood below.', 'info');
-    } finally {
-      setLocating(false);
-    }
-  };
-
   return createPortal(
-    <div 
-      className="fixed inset-0 z-[999999] flex items-center justify-center p-2.5 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn overflow-hidden"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100dvh',
-        zIndex: 999999,
-      }}
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="location-modal-title"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Modal Dialog Card (Optimized Height, Zero Flex-Clipping, 100% Contained) */}
       <div 
-        className="relative w-full max-w-2xl h-[94dvh] sm:h-[86vh] max-h-[760px] bg-[#FAF8F5] rounded-2xl sm:rounded-[36px] shadow-2xl border border-[#EFEAE2] flex flex-col overflow-hidden animate-scaleUp"
+        className="w-full sm:max-w-xl h-[88vh] sm:h-[620px] max-h-[92vh] bg-[#FAF8F5] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-[#E7E2DA] animate-in slide-in-from-bottom-6 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        
         {/* ========================================================================= */}
-        {/* 1. FIXED TOP HEADER (ALWAYS FULLY VISIBLE & ACCESSIBLE) */}
+        {/* 1. MODAL HEADER */}
         {/* ========================================================================= */}
-        <div className="shrink-0 p-3.5 sm:p-5 border-b border-[#E7E2DA] bg-white flex items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-orange-100 text-[#FF5A36] flex items-center justify-center shrink-0 shadow-xs">
-              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+        <div className="shrink-0 p-4 sm:p-5 bg-white border-b border-[#E7E2DA] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#FFE9E2] text-[#D8350F] flex items-center justify-center shrink-0">
+              <MapPin className="w-5 h-5 stroke-[2.2]" />
             </div>
-            <div className="min-w-0">
-              <h3 className="font-heading font-black text-sm sm:text-lg text-[#1C1917] leading-tight truncate">
-                Select Delhi Location
-              </h3>
-              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-stone-500 font-sans truncate">
+            <div>
+              <h2 id="location-modal-title" className="hd text-lg sm:text-xl font-black text-[#1C1917] tracking-tight">
+                Select Your Delhi Area
+              </h2>
+              <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
                 <span>Active:</span>
-                <span className="font-bold text-[#D8350F] truncate">{activeCity}</span>
+                <span className="font-bold text-[#D8350F] truncate max-w-[180px]">
+                  {currentLocation.name}
+                </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
               </div>
             </div>
           </div>
 
           <button
-            onClick={onClose}
-            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            title="Close dialog (Esc)"
-            aria-label="Close dialog"
-          >
-            <X className="w-4 h-4 stroke-[2.5]" />
-          </button>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 2. AUTO-DETECT GPS BUTTON (PINNED & PROMINENT, NEVER CUT OFF) */}
-        {/* ========================================================================= */}
-        <div className="shrink-0 p-3 sm:p-4 bg-gradient-to-r from-orange-50/70 via-stone-50 to-teal-50/60 border-b border-[#E7E2DA]">
-          <button
             type="button"
-            onClick={handleUseGps}
-            disabled={locating}
-            className="w-full py-3 sm:py-3.5 px-4 rounded-2xl bg-[#1C1917] hover:bg-black text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-98 cursor-pointer disabled:opacity-60"
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Close location selector"
           >
-            <Crosshair className={`w-4 h-4 text-[#FF5A36] ${locating ? 'animate-spin' : ''}`} />
-            <span>{locating ? 'Detecting Precise GPS Location...' : 'Use My Live GPS Location'}</span>
-            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider hidden sm:inline">
-              Instant Auto-Detect
-            </span>
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. UNIVERSAL SEARCH INPUT & INSTANT POPULAR SHORTCUTS */}
+        {/* 2. TOP ACTION BUTTONS: LIVE GPS & ALL DELHI NCR */}
         {/* ========================================================================= */}
-        <div className="shrink-0 px-3 sm:px-4 pt-3 pb-2 bg-[#FAF8F5] space-y-2">
-          <div className="relative flex items-center bg-white border border-[#E7E2DA] rounded-2xl px-3.5 py-2.5 shadow-xs focus-within:border-[#FF5A36] focus-within:ring-2 focus-within:ring-[#FF5A36]/15 transition-all">
-            <Search className="w-4 h-4 text-stone-400 shrink-0 mr-2" />
+        <div className="shrink-0 p-3 sm:p-4 bg-white border-b border-[#E7E2DA] space-y-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* Action 1: Use Live GPS */}
+            <button
+              type="button"
+              onClick={() => detectLiveGps(false)}
+              disabled={isLocating}
+              className="py-3 px-4 rounded-2xl bg-[#1C1917] hover:bg-black text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer disabled:opacity-60"
+            >
+              <Crosshair className={`w-4 h-4 text-[#FF5A36] ${isLocating ? 'animate-spin' : ''}`} />
+              <span>{isLocating ? 'Detecting Location...' : '⚡ Use Live Location'}</span>
+            </button>
+
+            {/* Action 2: All Delhi NCR */}
+            <button
+              type="button"
+              onClick={selectAllDelhi}
+              className={`py-3 px-4 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shadow-xs active:scale-98 cursor-pointer ${
+                currentLocation.isAllDelhi
+                  ? 'bg-orange-50 border-[#FF5A36] text-[#D8350F]'
+                  : 'bg-white hover:bg-stone-50 border-[#E7E2DA] text-[#1C1917]'
+              }`}
+            >
+              <Compass className="w-4 h-4 text-[#FF5A36]" />
+              <span>🗺️ All Delhi NCR (770+ Cafes)</span>
+            </button>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               ref={searchInputRef}
               type="text"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Search colony, metro station, line, or food (e.g. NSP, Momos, Yellow Line)..."
-              className="w-full bg-transparent text-xs sm:text-sm font-medium text-[#1C1917] placeholder-stone-400 outline-none"
+              placeholder="Search by area, market, or metro station..."
+              className="w-full pl-10 pr-9 py-2.5 bg-[#FAF8F5] border border-[#E7E2DA] focus:border-[#FF5A36] focus:bg-white rounded-xl text-xs sm:text-sm font-semibold text-[#1C1917] placeholder:text-stone-400 outline-none transition-all"
             />
             {searchFilter && (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setSearchFilter('')}
-                className="text-stone-400 hover:text-stone-700 p-0.5 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
-
-          {/* Quick-Tap Popular Food Hubs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 shrink-0 mr-0.5">
-              Top Hubs:
-            </span>
-            {popularHubShortcuts.map((loc) => (
-              <button
-                key={loc.id}
-                type="button"
-                onClick={() => handleSelectLocation(loc)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-orange-50 hover:text-[#D8350F] hover:border-[#FF5A36]/40 text-[#44403C] font-bold whitespace-nowrap transition-colors shrink-0 border border-[#E7E2DA] shadow-2xs cursor-pointer"
-              >
-                {loc.shortName}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. DELHI ZONE TABS (HORIZONTAL SCROLLING) */}
+        {/* 3. SCROLLABLE DELHI LOCALITIES FEED (SEARCH OR SCROLL) */}
         {/* ========================================================================= */}
-        <div className="shrink-0 px-3 sm:px-4 pb-2.5 bg-[#FAF8F5] border-b border-[#E7E2DA]/60">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-            {DELHI_ZONES.map((zone) => {
-              const isSelected = selectedZone === zone.key;
-              return (
-                <button
-                  key={zone.key}
-                  type="button"
-                  onClick={() => setSelectedZone(zone.key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border ${
-                    isSelected
-                      ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-xs'
-                      : 'bg-white border-[#E7E2DA] text-[#57534E] hover:border-stone-400 hover:bg-stone-50'
-                  }`}
-                >
-                  <span>{zone.icon}</span>
-                  <span>{zone.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 5. SCROLLABLE NEIGHBORHOODS & METRO HUBS FEED */}
-        {/* ========================================================================= */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-2.5 overscroll-contain font-sans">
-          <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-stone-400 px-1">
-            <span>Delhi NCR Neighborhoods &amp; Metro Stations ({filteredLocations.length})</span>
-            {userCoords && <span className="text-[#0F766E] font-bold">Sorted by Proximity</span>}
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-2 overscroll-contain">
+          <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-stone-400 px-1 mb-1">
+            <span>Delhi NCR Localities ({filteredLocations.length})</span>
+            <span className="text-stone-500 font-medium">Tap to switch area</span>
           </div>
 
-          {filteredLocations.map((loc) => {
-            const isSelected = 
-              activeCity.toLowerCase().includes(loc.shortName.toLowerCase()) || 
-              loc.name.toLowerCase().includes(activeCity.toLowerCase());
-
-            const dist = userCoords
-              ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, loc.latitude, loc.longitude)
-              : undefined;
-
-            return (
-              <button
-                key={loc.id}
-                type="button"
-                onClick={() => handleSelectLocation(loc)}
-                className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all flex items-start justify-between gap-3 group cursor-pointer ${
-                  isSelected
-                    ? 'bg-orange-50/70 border-[#FF5A36] shadow-xs ring-1 ring-[#FF5A36]/30'
-                    : 'bg-white hover:bg-stone-50/80 border-[#E7E2DA] hover:border-stone-300 shadow-2xs'
-                }`}
-              >
-                <div className="min-w-0 flex-1">
-                  {/* Top Badges */}
-                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
-                      {loc.zone}
-                    </span>
-                    {loc.isPopularHub && (
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-100 text-[#D8350F]">
-                        ★ Top Hub
-                      </span>
-                    )}
-                    {loc.pincode && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-stone-50 text-stone-500 border border-stone-200/50">
-                        PIN: {loc.pincode}
-                      </span>
-                    )}
-                    {dist !== undefined && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-[#0F766E] border border-teal-100">
-                        {formatDistance(dist)} away
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Location Title & Selection Indicator */}
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-heading font-black text-sm sm:text-base text-[#1C1917] group-hover:text-[#D8350F] transition-colors truncate">
-                      {loc.name}
-                    </h4>
-                    {isSelected && (
-                      <span className="w-4 h-4 rounded-full bg-[#FF5A36] text-white flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Foodie Tagline */}
-                  <p className="text-xs text-[#57534E] line-clamp-1 mt-0.5 font-normal">
-                    {loc.tagline}
-                  </p>
-
-                  {/* Metro Station & Metro Line Tags */}
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-stone-600">
-                    <span className="inline-flex items-center gap-1 text-[#0F766E] font-bold">
-                      <Train className="w-3.5 h-3.5 shrink-0" />
-                      <span>{loc.metroStation}</span>
-                    </span>
-                    {loc.metroLines.map((line) => (
-                      <span
-                        key={line}
-                        className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border ${getMetroLineBadgeClass(line)}`}
-                      >
-                        {line}
-                      </span>
-                    ))}
-                    <span className="text-stone-300">·</span>
-                    <span className="text-stone-500">Avg ₹{loc.avgCostForTwo} for two</span>
-                  </div>
-
-                  {/* Food Highlights Strip */}
-                  <div className="mt-2 flex flex-wrap items-center gap-1">
-                    {loc.famousSpecialties.slice(0, 4).map((dish) => (
-                      <span
-                        key={dish}
-                        className="text-[10px] font-medium bg-[#FAF8F5] text-stone-600 px-2 py-0.5 rounded-lg border border-stone-200/60"
-                      >
-                        {dish}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-2 shrink-0">
-                  <div className="w-7 h-7 rounded-full bg-stone-100 group-hover:bg-[#FF5A36] group-hover:text-white text-stone-400 flex items-center justify-center transition-all">
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-
-          {filteredLocations.length === 0 && (
-            <div className="text-center py-12 px-4 space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-400 flex items-center justify-center mx-auto">
-                <Search className="w-6 h-6" />
+          {filteredLocations.length === 0 ? (
+            <div className="p-8 text-center space-y-3 bg-white rounded-2xl border border-[#E7E2DA] my-4">
+              <div className="w-12 h-12 rounded-full bg-orange-100 text-[#D8350F] flex items-center justify-center mx-auto font-bold text-lg">
+                <Search className="w-5 h-5" />
               </div>
-              <h4 className="font-heading font-bold text-base text-[#1C1917]">
-                No matching Delhi location found
+              <h4 className="font-extrabold text-stone-900 text-sm">
+                No matching area found for "{searchFilter}"
               </h4>
-              <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                We couldn't find "{searchFilter}" in {selectedZone === 'all' ? 'Delhi NCR' : 'this zone'}. Try searching by colony name, metro station, or clear your filters.
+              <p className="text-xs text-stone-500 max-w-xs mx-auto">
+                Try searching another market or explore all restaurants across Delhi NCR.
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  setSearchFilter('');
-                  setSelectedZone('all');
-                }}
-                className="btn bg-[#1C1917] text-white text-xs px-4 py-2 rounded-xl font-bold"
+                onClick={selectAllDelhi}
+                className="mt-2 px-4 py-2 bg-[#1C1917] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-black"
               >
-                Show All 60+ Delhi Areas
+                View All Delhi NCR
               </button>
             </div>
+          ) : (
+            filteredLocations.map((loc) => {
+              const isSelected = !currentLocation.isAllDelhi && (currentLocation.id === loc.id || currentLocation.name === loc.name);
+
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => selectLocality(loc)}
+                  className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer group ${
+                    isSelected
+                      ? 'bg-orange-50 border-[#FF5A36] shadow-sm'
+                      : 'bg-white hover:bg-stone-50 border-[#E7E2DA] hover:border-stone-400 shadow-2xs'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-sm text-[#1C1917] group-hover:text-[#D8350F] transition-colors truncate">
+                        {loc.name}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                      <span className="inline-flex items-center gap-1 font-semibold text-stone-600">
+                        <Train className="w-3 h-3 text-indigo-500 shrink-0" />
+                        <span>{loc.metroStation}</span>
+                      </span>
+
+                      {loc.famousSpecialties && loc.famousSpecialties.length > 0 && (
+                        <span className="hidden sm:inline text-stone-400">
+                          · {loc.famousSpecialties.slice(0, 2).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0">
+                    {isSelected ? (
+                      <div className="w-7 h-7 rounded-full bg-[#FF5A36] text-white flex items-center justify-center shadow-xs">
+                        <Check className="w-4 h-4 stroke-[3]" />
+                      </div>
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-stone-100 group-hover:bg-stone-200 text-stone-500 flex items-center justify-center transition-colors">
+                        <MapPin className="w-3.5 h-3.5" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })
           )}
         </div>
-
-        {/* Bottom Micro Footer */}
-        <div className="shrink-0 p-3 bg-white border-t border-[#E7E2DA] flex items-center justify-between gap-2 text-[11px] text-stone-500 px-4">
-          <span className="flex items-center gap-1.5 min-w-0 truncate">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
-            <span className="truncate">60+ Delhi colonies mapped</span>
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="font-bold text-[#D8350F] hover:underline cursor-pointer shrink-0 min-h-[40px] px-2 flex items-center"
-          >
-            Done
-          </button>
-        </div>
-
       </div>
     </div>,
     document.body
