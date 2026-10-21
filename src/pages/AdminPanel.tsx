@@ -774,6 +774,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
     }
   };
 
+  const [reseeding, setReseeding] = useState(false);
+
+  const handleForceReseed = async () => {
+    if (window.confirm('Sync and re-seed all 770 verified Delhi NCR restaurants and 6,794 dishes? Any custom cafes you created will be safely preserved.')) {
+      setReseeding(true);
+      try {
+        await api.forceReseedData();
+        await loadAllAdminData();
+        showToast('Successfully synchronized all 770 verified restaurants & menu datasets!', 'success');
+      } catch (e: any) {
+        showToast(`Failed to re-seed datasets: ${e?.message || 'Error'}`, 'error');
+      } finally {
+        setReseeding(false);
+      }
+    }
+  };
+
   // --------------------------------------------------------------------------
   // AUTHENTICATED ADMIN DASHBOARD COMPUTATIONS & HOOKS
   // (Must be declared before any early return to satisfy React Rules of Hooks)
@@ -2362,12 +2379,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
 
                   <button
                     type="button"
+                    onClick={handleForceReseed}
+                    disabled={reseeding}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${reseeding ? 'animate-spin' : ''}`} />
+                    <span>{reseeding ? 'Re-seeding...' : 'Sync & Re-seed 770 Venues'}</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleSyncCloud}
                     disabled={syncingCloud}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncingCloud ? 'animate-spin' : ''}`} />
-                    <span>{syncingCloud ? 'Syncing to Cloud...' : '⚡ Sync All 88 Restaurants & 1,162 Dishes'}</span>
+                    <span>{syncingCloud ? 'Syncing to Cloud...' : '⚡ Sync to Supabase Cloud'}</span>
                   </button>
 
                   <button

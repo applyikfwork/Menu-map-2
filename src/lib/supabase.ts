@@ -130,7 +130,7 @@ export function recordMapDoneId(id: string, isDone: boolean): void {
   saveStoredMapDoneIds(Array.from(current));
 }
 
-const CURRENT_DATA_VERSION = '2026-v5-full-delhi-10-hubs';
+const CURRENT_DATA_VERSION = '2026-v6-full-delhi-770-hubs';
 const VERSION_KEY = `${STORAGE_PREFIX}data_version`;
 
 let seedInitPromise: Promise<void> | null = null;
@@ -148,7 +148,7 @@ export async function ensureSeedInitialized(): Promise<void> {
       currentVer === CURRENT_DATA_VERSION &&
       existing &&
       Array.isArray(parsed) &&
-      parsed.length >= 480 &&
+      parsed.length >= 750 &&
       colsParsed.length >= 12
     ) {
       return;
@@ -184,6 +184,16 @@ export async function ensureSeedInitialized(): Promise<void> {
     await seedInitPromise;
   } catch (e) {
     console.error('Error auto-seeding verified restaurant data:', e);
+  }
+}
+
+export async function forceReseedData(): Promise<void> {
+  try {
+    localStorage.removeItem(VERSION_KEY);
+    seedInitPromise = null;
+    await ensureSeedInitialized();
+  } catch (e) {
+    console.error('Failed to force reseed:', e);
   }
 }
 
@@ -462,8 +472,13 @@ export function generateFallbackMenuItems(restaurant: Restaurant): MenuItem[] {
 }
 
 export const api = {
+  async forceReseedData(): Promise<void> {
+    await forceReseedData();
+  },
+
   // RESTAURANTS
   async getRestaurants(activeOnly: boolean = true): Promise<Restaurant[]> {
+    await ensureSeedInitialized();
     const doneIds = new Set(getStoredMapDoneIds());
     const supabase = getSupabaseClient();
     let result: Restaurant[] = [];
@@ -873,6 +888,7 @@ export const api = {
 
   // MENU ITEMS
   async getMenuItems(restaurantId?: string): Promise<MenuItem[]> {
+    await ensureSeedInitialized();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
