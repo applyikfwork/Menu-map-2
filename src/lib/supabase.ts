@@ -191,7 +191,29 @@ export async function forceReseedData(): Promise<void> {
   try {
     localStorage.removeItem(VERSION_KEY);
     seedInitPromise = null;
-    await ensureSeedInitialized();
+    const { generateSeedData } = await safeDynamicImport(() => import('./seedData'));
+    const data = generateSeedData();
+    const existing = localStorage.getItem(`${STORAGE_PREFIX}tbl_restaurants`);
+    const parsed = existing ? JSON.parse(existing) : [];
+    const doneIds = new Set(getStoredMapDoneIds());
+    const customCafes = Array.isArray(parsed)
+      ? parsed.filter((r) => r && (r.is_claimed || r.email || !data.restaurants.some((sr) => sr.id === r.id)))
+      : [];
+    const seededRestaurants = data.restaurants.map((r) => ({
+      ...enrichRestaurant(r),
+      map_profile_done: Boolean(r.map_profile_done || doneIds.has(r.id)),
+    }));
+    const combinedRestaurants = [
+      ...customCafes,
+      ...seededRestaurants.filter((sr) => !customCafes.some((cr) => cr.id === sr.id)),
+    ];
+
+    localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(combinedRestaurants));
+    localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_categories`, JSON.stringify(data.categories));
+    localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(data.menuItems.map((i) => enrichMenuItem(i))));
+    localStorage.setItem(`${STORAGE_PREFIX}tbl_collections`, JSON.stringify(data.collections));
+    localStorage.setItem(`${STORAGE_PREFIX}tbl_collection_items`, JSON.stringify(data.collectionItems));
+    localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
   } catch (e) {
     console.error('Failed to force reseed:', e);
   }
@@ -481,6 +503,7 @@ export const api = {
     await ensureSeedInitialized();
     const doneIds = new Set(getStoredMapDoneIds());
     const supabase = getSupabaseClient();
+    const localList = loadTable<Restaurant>('restaurants');
     let result: Restaurant[] = [];
 
     if (supabase) {
@@ -489,8 +512,12 @@ export const api = {
         if (activeOnly) query = query.eq('is_active', true);
         const { data, error } = await query.order('rating_avg', { ascending: false });
         if (!error && data && data.length > 0) {
-          result = data as Restaurant[];
-          // Cache verified cloud restaurants to local table for offline speed
+          const cloudRests = data as Restaurant[];
+          // Merge: cloud restaurants override local by ID, but retain all local seeded restaurants (like Batch 3) not yet in cloud!
+          const cloudIdSet = new Set(cloudRests.map((r) => r.id));
+          const missingFromCloud = localList.filter((r) => !cloudIdSet.has(r.id) && (!activeOnly || r.is_active));
+          result = [...cloudRests, ...missingFromCloud];
+          // Cache verified merged restaurants to local table for offline speed
           saveTable('restaurants', result);
         }
       } catch (e) {
@@ -499,8 +526,7 @@ export const api = {
     }
 
     if (result.length === 0) {
-      const list = loadTable<Restaurant>('restaurants');
-      result = activeOnly ? list.filter((r) => r.is_active) : list;
+      result = activeOnly ? localList.filter((r) => r.is_active) : localList;
     }
 
     if (activeOnly) {
@@ -893,10 +919,21 @@ export const api = {
     if (supabase) {
       try {
         let query = supabase.from('menu_items').select('*');
-        if (restaurantId) query = query.eq('restaurant_id', restaurantId);
-        const { data, error } = await query.order('sort_order', { ascending: true });
-        if (!error && data && data.length > 0) {
-          return data.map((i: any) => enrichMenuItem(i));
+        if (restaurantId) {
+          query = query.eq('restaurant_id', restaurantId);
+          const { data, error } = await query.order('sort_order', { ascending: true });
+          if (!error && data && data.length > 0) {
+            return data.map((i: any) => enrichMenuItem(i));
+          }
+        } else {
+          const { data, error } = await query.order('sort_order', { ascending: true });
+          if (!error && data && data.length > 0) {
+            const cloudItems = data.map((i: any) => enrichMenuItem(i));
+            const cloudItemIds = new Set(cloudItems.map((i) => i.id));
+            const local = loadTable<MenuItem>('menu_items');
+            const missing = local.filter((i) => !cloudItemIds.has(i.id));
+            return [...cloudItems, ...missing].sort((a, b) => a.sort_order - b.sort_order);
+          }
         }
       } catch (e) {}
     }
