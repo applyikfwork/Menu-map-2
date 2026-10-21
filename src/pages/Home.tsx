@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
   MapPin, 
+  Crosshair, 
   Sparkles, 
   Utensils, 
   ArrowRight, 
@@ -16,14 +17,18 @@ import {
   HelpCircle, 
   Calendar, 
   Coffee,
+  CheckCircle2,
+  ExternalLink,
   Navigation,
-  Percent,
-  Train,
-  ChevronDown,
+  Compass,
+  Bookmark,
+  TrendingDown,
   Layers,
   Award,
   Zap,
-  Tag
+  Filter,
+  Percent,
+  Train
 } from 'lucide-react';
 import { Restaurant, MenuItem, Collection } from '../types/database';
 import { api } from '../lib/supabase';
@@ -34,14 +39,20 @@ import {
   getCachedUserCoordinates,
   saveCachedUserCoordinates,
   detectAreaContext,
-  formatDistance
+  formatDistance,
+  POPULAR_FOOD_HUBS
 } from '../lib/location';
 import { DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
-import { getDynamicMealContext } from '../lib/recommendations';
+import { 
+  getDynamicMealContext,
+  getRecommendedVenues,
+  getRecommendedDishes,
+  getLiveHeroTicket
+} from '../lib/recommendations';
 import { AREA_FOOD_GUIDES } from '../lib/areaGuidesData';
 import { RestaurantCard } from '../components/RestaurantCard';
-import { LocationPickerModal } from '../components/LocationPickerModal';
 import { useToast } from '../components/Toast';
+import { toggleBookmark, isBookmarked } from '../lib/bookmarks';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 
 const SpinWheelModal = lazyWithRetry(
@@ -64,63 +75,6 @@ interface HomeProps {
   navigate: (path: string) => void;
 }
 
-// 8 Horizontally Scrollable Category Shortcuts (Mobile-First 1-Tap Access)
-const FOOD_CATEGORY_SHORTCUTS = [
-  { id: 'all', label: 'All Menus', icon: '🍽️', filter: 'All' },
-  { id: 'cafe', label: 'Cafes & Coffee', icon: '☕', filter: 'Cafe' },
-  { id: 'pizza', label: 'Pizza & Italian', icon: '🍕', filter: 'Pizza' },
-  { id: 'momos', label: 'Momos & Asian', icon: '🥟', filter: 'Momos' },
-  { id: 'pure_veg', label: 'Pure Veg', icon: '🌿', filter: 'Pure Veg' },
-  { id: 'late_night', label: 'Late Night', icon: '🌙', filter: 'Late night' },
-  { id: 'budget', label: 'Budget (< ₹400)', icon: '💰', filter: 'Budget' },
-  { id: 'desserts', label: 'Desserts & Bakes', icon: '🧇', filter: 'Dessert' },
-  { id: 'shakes', label: 'Shakes & Drinks', icon: '🥤', filter: 'Shake' },
-];
-
-// Concise Editorial Discovery Campaigns (Reduced height, readable, non-autoplaying)
-const DISCOVERY_CAMPAIGNS = [
-  {
-    id: 'budget',
-    tag: 'Budget Foodie Guide',
-    title: 'Pocket-Friendly Feasts Under ₹350 For Two',
-    subtitle: 'Verified student-budget addas with authentic in-store prices in Hudson Lane & Satya Niketan.',
-    bg: 'from-amber-950 via-[#1C1917] to-amber-950',
-    accent: 'bg-amber-400 text-stone-950',
-    filter: 'Budget',
-    badge: '0% App Markup'
-  },
-  {
-    id: 'late_night',
-    tag: 'Night Owl Fuel',
-    title: 'Late Night Cafes Open Past Midnight',
-    subtitle: 'Where to grab midnight cold coffees, loaded fries, and hot momos across Delhi NCR.',
-    bg: 'from-indigo-950 via-[#1C1917] to-slate-950',
-    accent: 'bg-indigo-400 text-stone-950',
-    filter: 'Late night',
-    badge: 'Open Post 12 AM'
-  },
-  {
-    id: 'work_friendly',
-    tag: 'Study & Remote Work',
-    title: 'Work-Friendly Cafes With Wi-Fi & Power Plugs',
-    subtitle: 'Quiet corners, artisanal pour-overs, and verified cafe Wi-Fi credentials for work sessions.',
-    bg: 'from-teal-950 via-[#1C1917] to-emerald-950',
-    accent: 'bg-teal-400 text-stone-950',
-    filter: 'Cafe',
-    badge: 'Wi-Fi Verified'
-  },
-  {
-    id: 'iconic_trails',
-    tag: 'Neighborhood Food Crawls',
-    title: 'Walking Food Trails in Majnu Ka Tila & Hudson Lane',
-    subtitle: 'Tested 3-stop food itineraries mapped with nearest Delhi Metro stations.',
-    bg: 'from-rose-950 via-[#1C1917] to-orange-950',
-    accent: 'bg-[#FF5A36] text-white',
-    filter: 'iconic',
-    badge: 'Curated Trails'
-  }
-];
-
 export const Home: React.FC<HomeProps> = ({ navigate }) => {
   const { showToast } = useToast();
 
@@ -135,7 +89,6 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   // GPS Coordinates & Locating state
   const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
   const [locating, setLocating] = useState(false);
-  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   // Modals
   const [spinModalOpen, setSpinModalOpen] = useState(false);
@@ -143,10 +96,10 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   const [plannerModalOpen, setPlannerModalOpen] = useState(false);
 
   // Filter tabs for restaurants
-  const [restaurantFilter, setRestaurantFilter] = useState<'All' | 'Pure Veg' | 'Rooftop' | 'Late night' | 'Budget' | 'Cafe' | 'Pizza' | 'Momos'>('All');
+  const [restaurantFilter, setRestaurantFilter] = useState<'All' | 'Pure Veg' | 'Rooftop' | 'Late night' | 'Budget'>('All');
 
-  // Discovery Campaign Carousel State (Manual, no autoplay)
-  const [activeCampaignIdx, setActiveCampaignIdx] = useState(0);
+  // Selected Dish Spotlight
+  const [selectedSpotlightIndex, setSelectedSpotlightIndex] = useState(0);
 
   // Real-time Meal context (Breakfast, Lunch, Evening, Dinner, Late Night)
   const mealContext = useMemo(() => getDynamicMealContext(), []);
@@ -174,7 +127,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       saveCachedUserCoordinates(coords);
       window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
     } catch {
-      // Fallback gracefully to default
+      // Fallback gracefully
     } finally {
       setLocating(false);
     }
@@ -193,6 +146,22 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       console.error('Error loading home data:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualLocationClick = async () => {
+    setLocating(true);
+    try {
+      const coords = await getUserLocation();
+      setUserCoords(coords);
+      saveCachedUserCoordinates(coords);
+      window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
+      const context = detectAreaContext(coords, restaurants);
+      showToast(`Location detected! Showing cafes near ${context.areaName}.`, 'success');
+    } catch {
+      showToast('GPS unavailable. Showing central Delhi hubs.', 'info');
+    } finally {
+      setLocating(false);
     }
   };
 
@@ -232,8 +201,98 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
 
   const activeAreaName = detectedAreaContext?.areaName || 'Delhi NCR';
 
+  const activeDelhiLocation: DelhiLocation = useMemo(() => {
+    if (detectedAreaContext?.closestLocation) {
+      return detectedAreaContext.closestLocation;
+    }
+    return DELHI_LOCATIONS[0];
+  }, [detectedAreaContext]);
+
+  // Find either an exact editorial guide from AREA_FOOD_GUIDES or generate a rich guide dynamically
+  const activeAreaGuide = useMemo(() => {
+    const active = activeAreaName.toLowerCase();
+    const match = AREA_FOOD_GUIDES.find((g) => {
+      const title = (g.title || '').toLowerCase();
+      const metaName = (g.area_metadata?.area_name || '').toLowerCase();
+      const slug = (g.slug || '').toLowerCase();
+      return (
+        title.includes(active) ||
+        metaName.includes(active) ||
+        slug.includes(active.split(/[\s,/]+/)[0]) ||
+        active.includes(metaName.split(/[\s,/]+/)[0])
+      );
+    });
+
+    if (match) return match;
+
+    // Dynamically construct a rich area guide for ANY of the 60+ Delhi locations!
+    const loc = activeDelhiLocation;
+    const dynamicGuide: Collection = {
+      id: `dynamic-${loc.id}`,
+      slug: loc.id,
+      title: `Foodie Guide to ${loc.name}`,
+      description: loc.tagline,
+      cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
+      type: 'Area-Guide',
+      is_featured: true,
+      is_active: true,
+      sort_order: 1,
+      created_at: new Date().toISOString(),
+      area_metadata: {
+        area_name: loc.name,
+        zone: loc.zone,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        nearest_metro: `${loc.metroStation} (${loc.metroLines.join(', ')})`,
+        best_time_to_visit: 'Evening 4:00 PM – 11:00 PM',
+        parking_tips: `Metro multilevel parking available near ${loc.metroStation}.`,
+        avg_cost_for_two: loc.avgCostForTwo,
+        famous_for_summary: loc.famousSpecialties.join(' · '),
+        vibe_badge: loc.tagline,
+        food_crawl_stops: [
+          {
+            stop_number: 1,
+            time: '4:30 PM',
+            type: 'Quick Bites & Snacks',
+            venue_name: `${loc.famousSpecialties[0] || 'Signature Dish'} Corner`,
+            recommended_dish: loc.famousSpecialties[0] || 'Local Favorite',
+            distance_to_next: '150 meters (2 min walk)',
+            note: `Top rated spot near ${loc.metroStation} for authentic quick bites.`
+          },
+          {
+            stop_number: 2,
+            time: '6:30 PM',
+            type: 'Cafe & Beverage Break',
+            venue_name: `Central ${loc.shortName} Cafe`,
+            recommended_dish: loc.famousSpecialties[1] || 'Cold Coffee & Shakes',
+            distance_to_next: '200 meters (3 min walk)',
+            note: 'Relaxed ambience, verified counter menu, and power sockets for casual hangouts.'
+          },
+          {
+            stop_number: 3,
+            time: '8:30 PM',
+            type: 'Dinner Feast',
+            venue_name: `${loc.shortName} Iconic Feast Spot`,
+            recommended_dish: loc.famousSpecialties[2] || 'Dinner Specialties',
+            distance_to_next: 'End of trail',
+            note: 'Famous in the colony for rich gravies, breads, and authentic Delhi street flavors.'
+          }
+        ],
+        famous_dishes: loc.famousSpecialties.map((dish, i) => ({
+          name: dish,
+          restaurant_name: `${loc.shortName} Iconic Eatery`,
+          price: Math.round((loc.avgCostForTwo / 3) + (i * 20)),
+          is_veg: true,
+          why_famous: `Quintessential ${loc.shortName} specialty loved by local residents and Delhi foodies.`,
+          counter_vs_app_savings: `Save ₹${Math.round(loc.avgCostForTwo * 0.15)} on in-store menu`
+        }))
+      }
+    };
+    return dynamicGuide;
+  }, [activeAreaName, activeDelhiLocation]);
+
   // Restaurants filtered and sorted by proximity to the active user location
-  const filteredAreaRestaurants = useMemo(() => {
+  const areaRestaurants = useMemo(() => {
     const list = restaurants.filter((r) => {
       if (restaurantFilter === 'Pure Veg') {
         return r.dietary_options?.includes('Pure Veg');
@@ -246,15 +305,6 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       }
       if (restaurantFilter === 'Budget') {
         return (r.average_cost_for_two || 500) <= 400;
-      }
-      if (restaurantFilter === 'Cafe') {
-        return r.cuisine_types?.some((c) => /cafe|coffee|beverage/i.test(c));
-      }
-      if (restaurantFilter === 'Pizza') {
-        return r.cuisine_types?.some((c) => /pizza|italian/i.test(c));
-      }
-      if (restaurantFilter === 'Momos') {
-        return r.cuisine_types?.some((c) => /momo|tibetan|asian|chinese/i.test(c));
       }
       return true;
     });
@@ -270,233 +320,383 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
     return list;
   }, [restaurants, restaurantFilter, userCoords]);
 
-  // Recently added or genuinely verified venues
-  const recentlyAddedRestaurants = useMemo(() => {
-    return [...restaurants]
-      .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
-      .slice(0, 6);
-  }, [restaurants]);
+  // Multi-Factor Live Hero Ticket for active location (Warm & Cream UI Card)
+  const heroTicketData = useMemo(() => {
+    return getLiveHeroTicket(restaurants, menuItems, userCoords);
+  }, [restaurants, menuItems, userCoords]);
 
-  const activeCampaign = DISCOVERY_CAMPAIGNS[activeCampaignIdx] || DISCOVERY_CAMPAIGNS[0];
+  const heroRestaurant = heroTicketData.restaurant;
+  const heroTicketItems = heroTicketData.items;
+
+  // Dishes available in this active location / top cafes
+  const activeLocationDishes = useMemo(() => {
+    const topAreaRestIds = new Set(areaRestaurants.slice(0, 12).map((r) => r.id));
+    const areaItems = menuItems.filter((i) => topAreaRestIds.has(i.restaurant_id));
+    const pool = areaItems.length >= 4 ? areaItems : menuItems;
+
+    const gradients = [
+      'linear-gradient(135deg, #FF6B4A 0%, #D8350F 100%)',
+      'linear-gradient(135deg, #0F766E 0%, #115E59 100%)',
+      'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+      'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+    ];
+
+    if (pool.length === 0) {
+      return [
+        {
+          id: 'demo-1',
+          name: 'Crispy Kurkure Paneer Momos',
+          restaurant: 'Ricos Cafe & Bistro',
+          restaurantSlug: 'ricos-cafe-bistro',
+          area: activeAreaName,
+          counterPrice: 169,
+          appPrice: 260,
+          savings: 'Save ₹91 (35%)',
+          desc: 'Crunchy golden panko coating with spiced cottage cheese stuffing and fire-roasted garlic dip.',
+          gradient: gradients[0],
+          isVeg: true,
+        },
+        {
+          id: 'demo-2',
+          name: 'Ferrero Rocher Monster Shake',
+          restaurant: 'Big Yellow Door',
+          restaurantSlug: 'big-yellow-door',
+          area: activeAreaName,
+          counterPrice: 219,
+          appPrice: 320,
+          savings: 'Save ₹101 (32%)',
+          desc: 'Layered Nutella fudge, vanilla soft-serve, roasted hazelnuts and whole Ferrero Rocher chocolates.',
+          gradient: gradients[1],
+          isVeg: true,
+        },
+        {
+          id: 'demo-3',
+          name: 'Cheesy Peri Peri Fries Platter',
+          restaurant: 'Woodbox Cafe',
+          restaurantSlug: 'woodbox-cafe',
+          area: activeAreaName,
+          counterPrice: 189,
+          appPrice: 280,
+          savings: 'Save ₹91 (32%)',
+          desc: 'Double-fried crisp potato fingers tossed in African bird’s eye seasoning with bubbling melted cheddar.',
+          gradient: gradients[2],
+          isVeg: true,
+        },
+        {
+          id: 'demo-4',
+          name: 'Baked Pink Sauce Penne',
+          restaurant: 'Hudson Cafe',
+          restaurantSlug: 'hudson-cafe',
+          area: activeAreaName,
+          counterPrice: 249,
+          appPrice: 360,
+          savings: 'Save ₹111 (31%)',
+          desc: 'Crushed Italian plum tomatoes, dairy cream, fresh basil baked under a thick golden mozzarella crust.',
+          gradient: gradients[3],
+          isVeg: true,
+        },
+      ];
+    }
+
+    return pool.slice(0, 4).map((item, idx) => {
+      const rest = restaurants.find((r) => r.id === item.restaurant_id);
+      const appPrice = Math.round(item.price * 1.34 + 32);
+      const savingsAmt = Math.max(20, appPrice - item.price);
+      const savingsPct = Math.round((savingsAmt / appPrice) * 100);
+
+      return {
+        id: item.id,
+        name: item.name,
+        restaurant: rest?.name || 'Verified Cafe',
+        restaurantSlug: rest?.slug || '',
+        area: rest?.landmark || rest?.city || activeAreaName,
+        counterPrice: item.price,
+        appPrice,
+        savings: `Save ₹${savingsAmt} (${savingsPct}%)`,
+        desc: item.description || `Freshly prepared ${item.name} at verified in-store counter pricing with 0% middleman markup.`,
+        gradient: gradients[idx % gradients.length],
+        isVeg: item.dietary_tags?.includes('Veg') ?? true,
+      };
+    });
+  }, [areaRestaurants, menuItems, restaurants, activeAreaName]);
+
+  const currentSpotlight = activeLocationDishes[selectedSpotlightIndex] || activeLocationDishes[0];
 
   return (
-    <div className="w-full bg-[#FAF8F4] text-[#191715] selection:bg-[#FFE0D6] selection:text-[#9A2208]">
+    <div className="w-full bg-[#FAF8F5] text-[#1C1917] overflow-hidden selection:bg-[#FFE0D6] selection:text-[#9A2208]">
       {/* ========================================================
-          1. COMPACT LOCATION HEADER & PROMINENT UNIVERSAL SEARCH
+          1. WARM, HIGH-CONVERTING HERO SECTION (HERO 2.0)
       ======================================================== */}
-      <section className="bg-gradient-to-b from-[#F5EFEB] to-[#FAF8F4] border-b border-[#E8E4DC] pt-5 sm:pt-7 pb-8 sm:pb-10">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-8 space-y-5">
-          {/* 1.1 Compact Location & Meal Context Pill */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setLocationModalOpen(true)}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E8E4DC] shadow-2xs text-xs font-bold text-[#191715] hover:bg-stone-50 transition-colors cursor-pointer"
-                title="Tap to change neighborhood or recalibrate GPS"
-              >
-                <MapPin className="w-3.5 h-3.5 text-[#F4512C] shrink-0" />
-                <span className="text-[#686461] font-medium">Location:</span>
-                <span className="text-[#191715] font-black truncate max-w-[140px] sm:max-w-none">{activeAreaName}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <ChevronDown className="w-3 h-3 text-stone-400 ml-0.5" />
-              </button>
+      <section className="relative bg-gradient-to-b from-[#F5EFEB] via-[#FAF8F5] to-[#FAF8F5] border-b border-[#E7E2DA] pt-6 sm:pt-8 pb-16 sm:pb-24">
+        {/* Soft Organic Ambience Glows */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-20 -top-32 w-[650px] h-[650px] rounded-full bg-[radial-gradient(circle,rgba(255,90,54,0.12),transparent_65%)]"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[radial-gradient(circle,rgba(15,118,110,0.08),transparent_65%)]"
+        />
 
-              {detectedAreaContext?.nearestMetro && (
-                <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-xs font-bold text-[#0F766E]">
-                  <Train className="w-3 h-3 shrink-0" />
-                  <span>{detectedAreaContext.nearestMetro}</span>
+        <div className="relative max-w-[1280px] mx-auto px-4 sm:px-8">
+          {/* Universal Live Location Status Pill (Clean, Attractive, Non-redundant) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7E2DA]/80">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] shadow-xs text-xs sm:text-sm font-extrabold text-[#1C1917]">
+                <MapPin className="w-3.5 h-3.5 text-[#FF5A36] shrink-0" />
+                <span className="text-[#78716C] font-bold">Current Area:</span>
+                <span className="text-[#D8350F]">{activeAreaName}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
+              </div>
+              {activeDelhiLocation?.metroStation && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-xs font-bold text-[#0F766E]">
+                  <Train className="w-3.5 h-3.5 shrink-0" />
+                  <span>{activeDelhiLocation.metroStation}</span>
+                  {activeDelhiLocation.metroLines[0] && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-white text-teal-800 font-extrabold border border-teal-200">
+                      {activeDelhiLocation.metroLines[0]}
+                    </span>
+                  )}
                 </div>
               )}
+              <span className="text-[11px] text-[#78716C] font-semibold hidden lg:inline">
+                (Click top bar location button to switch area anytime)
+              </span>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-bold text-[#0F766E] bg-teal-50 border border-teal-100 px-3 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse shrink-0" />
-              <span>{mealContext.badge} · 0% App Markup</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#0F766E]" />
+              <span>Showing verified dining spots in {activeAreaName.split(/[\s,/]+/)[0]}</span>
             </div>
           </div>
 
-          {/* 1.2 Prominent Universal Search Bar */}
-          <div className="max-w-3xl mx-auto pt-2 space-y-3">
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center shadow-md rounded-2xl bg-white border border-[#E8E4DC] focus-within:border-[#F4512C] transition-all">
-              <div className="pl-4 pr-2 text-stone-400">
-                <Search className="w-5 h-5 text-stone-500" />
+          {/* Hero Two-Column Grid: Left Content + Right Interactive Live Counter Ticket */}
+          <div className="pt-8 sm:pt-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left Hero Content */}
+            <div className="lg:col-span-7 text-left">
+              {/* Dynamic Real-Time Meal Badge & Trust Pill */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] shadow-xs text-xs font-bold text-[#0F766E] flex-wrap">
+                <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse shrink-0"></span>
+                <span className="text-[#0F766E] font-black">{mealContext.badge}</span>
+                <span className="text-stone-300">·</span>
+                <span className="text-[#57534E]">100% Real Counter Menus</span>
+                <span className="text-stone-300 hidden sm:inline">·</span>
+                <span className="text-[#D8350F] font-black hidden sm:inline">0% App Markup</span>
               </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search dishes, restaurants or cuisines"
-                className="w-full py-4 pr-3 text-sm sm:text-base font-medium text-[#191715] placeholder:text-stone-400 bg-transparent outline-none"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="px-2 text-xs font-bold text-stone-400 hover:text-stone-700 cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-              <div className="pr-2 sm:pr-3">
-                <button
-                  type="submit"
-                  className="btn bg-[#F4512C] hover:bg-[#E0401B] text-white min-h-[44px] px-5 sm:px-6 rounded-xl font-bold text-xs sm:text-sm shadow-xs cursor-pointer active:scale-95 transition-all"
-                >
-                  Find Menus
-                </button>
-              </div>
-            </form>
 
-            {/* Quick-Tap Craving Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
-              <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider shrink-0 mr-1">
-                Popular:
-              </span>
-              {[
-                { label: '🥟 Momos', query: 'Momos' },
-                { label: '☕ Artisan Coffee', query: 'Coffee' },
-                { label: '🍕 Neapolitan Pizza', query: 'Pizza' },
-                { label: '🌿 Pure Veg', query: 'Pure Veg' },
-                { label: '🌙 Late Night', query: 'Late night' },
-                { label: '💰 Budget Eats', query: 'Budget' },
-                { label: '🥤 Shakes', query: 'Shake' }
-              ].map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery(chip.query);
-                    navigate(`/search?q=${encodeURIComponent(chip.query)}`);
-                  }}
-                  className="text-xs px-3 py-1 rounded-full bg-white hover:bg-orange-50 hover:text-[#F4512C] text-stone-700 font-bold border border-[#E8E4DC] whitespace-nowrap transition-colors shrink-0 cursor-pointer shadow-2xs"
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+              {/* Headline */}
+              <h1 className="hd mt-5 text-3xl sm:text-5xl lg:text-[56px] font-black text-[#1C1917] leading-[1.08] tracking-tight">
+                Eat at <span className="text-[#FF5A36]">exact counter prices.</span><br />
+                Skip delivery app markups.
+              </h1>
 
-      {/* ========================================================
-          2. COMPACT DISCOVERY BANNER (-25% HEIGHT, REFINED EDITORIAL FOCUS)
-      ======================================================== */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-6">
-        <div className={`relative rounded-[28px] sm:rounded-[32px] overflow-hidden bg-gradient-to-r ${activeCampaign.bg} text-white p-6 sm:p-9 shadow-lg border border-stone-800`}>
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-white/15 text-stone-200 text-[10px] font-extrabold uppercase tracking-wider">
-                  {activeCampaign.tag}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-black uppercase tracking-wider">
-                  {activeCampaign.badge}
-                </span>
-              </div>
-              <h2 className="hd text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight">
-                {activeCampaign.title}
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-normal">
-                {activeCampaign.subtitle}
+              {/* Subhead */}
+              <p className="mt-4 text-base sm:text-lg text-[#57534E] leading-relaxed max-w-xl font-normal">
+                Menu Maps gives you direct access to 100% verified in-store counter menus in <strong className="text-[#1C1917] font-bold">{activeAreaName}</strong>. Check prices before walking in, or place orders straight to the cafe over WhatsApp.
               </p>
+
+              {/* Universal Menu & Dish Search Card */}
+              <div className="mt-7 bg-white rounded-3xl p-3 sm:p-3.5 shadow-xl border border-[#E7E2DA] max-w-xl">
+                <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1 flex items-center gap-3 px-4 min-h-[54px] rounded-2xl bg-[#FAF8F5] border border-transparent focus-within:border-[#FF5A36]/40 transition-colors">
+                    <Search className="w-5 h-5 text-[#78716C] shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={`Search momos, monster shakes, BYD, ${activeAreaName.split(/[\s,/]+/)[0]}…`}
+                      className="flex-1 min-w-0 bg-transparent text-[#1C1917] placeholder:text-stone-400 text-sm sm:text-base outline-none font-medium"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="text-xs font-bold text-stone-400 hover:text-stone-700 px-1 cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white min-h-[54px] px-8 rounded-2xl font-extrabold text-sm sm:text-base shrink-0 w-full sm:w-auto cursor-pointer shadow-md transition-all active:scale-95"
+                  >
+                    Find menus
+                  </button>
+                </form>
+
+                {/* Instant Tap Cravings Strip */}
+                <div className="mt-3 pt-2.5 border-t border-[#E7E2DA]/70 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  <span className="text-[10px] font-extrabold tracking-wider uppercase text-[#78716C] shrink-0 mr-1">
+                    Try:
+                  </span>
+                  {[
+                    { label: '🥟 Momos', query: 'Momos' },
+                    { label: '🥤 Shakes', query: 'Shake' },
+                    { label: '🫓 Chur Chur Naan', query: 'Naan' },
+                    { label: '🍟 Loaded Fries', query: 'Fries' },
+                    { label: '☕ Artisan Coffee', query: 'Coffee' },
+                    { label: '🌿 Pure Veg', query: 'Veg' },
+                    { label: '🌙 Late Night', query: 'Late Night' },
+                  ].map((chip) => (
+                    <button
+                      key={chip.label}
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery(chip.query);
+                        navigate(`/search?q=${encodeURIComponent(chip.query)}`);
+                      }}
+                      className="text-xs px-2.5 py-1 rounded-xl bg-stone-100 hover:bg-orange-50 hover:text-[#D8350F] text-[#44403C] font-bold whitespace-nowrap transition-colors shrink-0 cursor-pointer"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3 Quick Benefit Metrics */}
+              <div className="mt-6 flex flex-wrap items-center gap-6 text-xs sm:text-sm font-semibold text-[#57534E]">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
+                  <span>129+ Verified Delhi Cafes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-orange-100 text-[#D8350F] flex items-center justify-center shrink-0">
+                    <Percent className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
+                  <span>Save 25–40% vs Food Apps</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-teal-100 text-[#0F766E] flex items-center justify-center shrink-0">
+                    <Phone className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Direct WhatsApp Ordering</span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeCampaign.filter === 'iconic') {
-                    navigate('/iconic-area');
-                  } else {
-                    setRestaurantFilter(activeCampaign.filter as any);
-                    const el = document.getElementById('cafes-grid');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className={`btn ${activeCampaign.accent} min-h-[46px] px-6 rounded-xl font-black text-xs sm:text-sm shadow-md flex items-center gap-2 cursor-pointer active:scale-95 transition-all`}
-              >
-                <span>Explore Curated Cafes</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+            {/* Right Hero Visual: Authentic Clean Counter Price Ticket */}
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="relative w-full max-w-[390px] group transition-all duration-300">
+                {/* Clean Verified Badge Top */}
+                <div className="inline-flex items-center gap-1.5 mb-2.5 sm:absolute sm:-top-4 sm:-left-3 z-20 bg-[#0F766E] text-white font-extrabold text-[11px] tracking-wider uppercase px-3.5 py-1.5 rounded-xl shadow-md">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Real Dine-In Receipt</span>
+                </div>
 
-          {/* Manual Campaign Selector Tabs (No Autoplay, Fully Predictable) */}
-          <div className="relative z-10 flex items-center gap-2 mt-6 pt-5 border-t border-white/10 overflow-x-auto no-scrollbar">
-            {DISCOVERY_CAMPAIGNS.map((camp, idx) => (
-              <button
-                key={camp.id}
-                type="button"
-                onClick={() => setActiveCampaignIdx(idx)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeCampaignIdx === idx
-                    ? 'bg-white text-stone-950 font-black shadow-xs'
-                    : 'bg-white/10 hover:bg-white/20 text-stone-300'
-                }`}
-              >
-                {camp.tag}
-              </button>
-            ))}
+                {/* Main Receipt Card */}
+                <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-[#E7E2DA] relative overflow-hidden">
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-extrabold tracking-wider uppercase text-[#78716C]">
+                        Counter Bill Ticket
+                      </div>
+                      <h3 className="hd mt-1 text-xl sm:text-2xl font-black text-[#1C1917] truncate">
+                        {heroRestaurant?.name || 'Top Verified Counter'}
+                      </h3>
+                      <div className="text-xs font-semibold text-[#78716C] mt-0.5 truncate">
+                        {heroRestaurant?.landmark || heroRestaurant?.city || activeAreaName}
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-[#E6F4F1] text-[#0F766E] text-[11px] font-black shrink-0">
+                      ✓ Verified
+                    </span>
+                  </div>
+
+                  {/* Cut-out Receipt Perforation Line */}
+                  <div className="my-4 -mx-6 sm:-mx-7 border-t-2 border-dashed border-[#E7E2DA] relative">
+                    <span className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-[#F5EFEB]" />
+                    <span className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-[#F5EFEB]" />
+                  </div>
+
+                  {/* Itemized Counter Dishes */}
+                  <div className="flex flex-col gap-3.5">
+                    {heroTicketItems.slice(0, 3).map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-start gap-3">
+                        <div className="min-w-0">
+                          <div className="font-bold text-sm text-[#1C1917] truncate leading-snug">
+                            {item.name}
+                          </div>
+                          <div className="text-[11px] text-[#78716C] mt-0.5 truncate">
+                            {item.rest} · <span className="line-through text-stone-400">App ₹{item.app}</span>
+                          </div>
+                        </div>
+                        <div className="hd text-base font-black text-[#D8350F] shrink-0">
+                          ₹{item.price}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Second Perforation Line */}
+                  <div className="my-4 -mx-6 sm:-mx-7 border-t-2 border-dashed border-[#E7E2DA] relative">
+                    <span className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-[#F5EFEB]" />
+                    <span className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-[#F5EFEB]" />
+                  </div>
+
+                  {/* Receipt Total & Real Diner Savings */}
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#78716C] uppercase tracking-wider">
+                        Counter Bill Total
+                      </span>
+                      <div className="text-xs text-[#0F766E] font-extrabold mt-0.5">
+                        You save ₹{heroTicketData.savingsTotal} vs food apps
+                      </div>
+                    </div>
+                    <span className="hd text-2xl sm:text-3xl font-black text-[#1C1917]">
+                      ₹{heroTicketData.counterTotal}
+                    </span>
+                  </div>
+
+                  {/* Action Link inside Ticket */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (heroRestaurant?.slug) {
+                        navigate(`/${heroRestaurant.slug}`);
+                      } else {
+                        navigate('/restaurants');
+                      }
+                    }}
+                    className="btn mt-4 w-full bg-[#0F766E] hover:bg-[#115E59] text-white min-h-[46px] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all rounded-xl shadow-xs"
+                  >
+                    <span>View {heroRestaurant ? heroRestaurant.name.split(' ')[0] : 'counter'} menu & prices</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ========================================================
-          3. HORIZONTALLY SCROLLABLE FOOD CATEGORY SHORTCUTS
+          2. TOP VERIFIED CAFES IN THIS LOCATION
       ======================================================== */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-6">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-          {FOOD_CATEGORY_SHORTCUTS.map((cat) => {
-            const isActive = restaurantFilter === cat.filter;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setRestaurantFilter(cat.filter as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#191715] text-white border-[#191715] shadow-xs'
-                    : 'bg-white text-stone-700 hover:text-stone-900 border-[#E8E4DC] hover:border-stone-400'
-                }`}
-              >
-                <span className="text-sm">{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ========================================================
-          4. NEARBY & POPULAR VERIFIED RESTAURANTS
-      ======================================================== */}
-      <section id="cafes-grid" className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-10 pb-14">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E8E4DC] pb-4">
-          <div>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#F4512C] block">
-              Direct Counter Discovery
-            </span>
-            <h2 className="hd text-2xl sm:text-3xl font-black text-[#191715] mt-1">
-              Top Verified Cafes in {activeAreaName}
+      <section className="sec pt-14 pb-16">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-2xl">
+            <div className="eyebrow text-[#D8350F]">Verified Counter Menus</div>
+            <h2 className="h2 mt-2">
+              Top cafes & restaurants in {activeAreaName}
             </h2>
-            <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
-              100% verified printed menus, in-store pricing, and 0% markup WhatsApp orders.
+            <p className="mt-1.5 text-sm text-[#78716C] font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Showing verified dining spots with 100% digital counter menus</span>
             </p>
           </div>
 
-          {/* Quick Sub-Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+          {/* Filter Pills */}
+          <div className="flex flex-wrap gap-2">
             {(['All', 'Pure Veg', 'Rooftop', 'Late night', 'Budget'] as const).map((filter) => (
               <button
                 key={filter}
                 type="button"
                 onClick={() => setRestaurantFilter(filter)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
-                  restaurantFilter === filter
-                    ? 'bg-[#191715] text-white border-[#191715]'
-                    : 'bg-white text-stone-600 hover:bg-stone-50 border-[#E8E4DC]'
-                }`}
+                className={`chipl ${restaurantFilter === filter ? 'on' : ''}`}
               >
                 {filter}
               </button>
@@ -504,219 +704,362 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
           </div>
         </div>
 
-        {/* Restaurant Cards Grid (Consistent Aspect Ratio, Honest Ratings) */}
-        {filteredAreaRestaurants.length === 0 ? (
-          <div className="mt-8 bg-white rounded-3xl p-10 text-center border border-[#E8E4DC] space-y-3">
-            <Utensils className="w-10 h-10 text-stone-400 mx-auto" />
-            <h3 className="font-bold text-base text-[#191715]">No restaurants matched this filter in {activeAreaName}</h3>
-            <p className="text-xs text-stone-500">Try switching filters or explore cafes across all of Delhi NCR.</p>
-            <button
-              type="button"
-              onClick={() => setRestaurantFilter('All')}
-              className="btn bg-[#191715] text-white text-xs px-5 py-2.5 rounded-xl font-bold"
-            >
-              Reset Filters
-            </button>
-          </div>
-        ) : (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAreaRestaurants.slice(0, 6).map((restaurant) => {
-              const userDist = userCoords
-                ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, restaurant.latitude, restaurant.longitude)
-                : undefined;
+        {/* Restaurant Cards Grid */}
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {areaRestaurants.slice(0, 6).map((restaurant) => {
+            const userDist = userCoords
+              ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, restaurant.latitude, restaurant.longitude)
+              : undefined;
 
-              return (
-                <RestaurantCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  navigate={navigate}
-                  userDistanceKm={userDist}
-                />
-              );
-            })}
-          </div>
-        )}
+            return (
+              <RestaurantCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                navigate={navigate}
+                userDistanceKm={userDist}
+              />
+            );
+          })}
+        </div>
 
         <div className="mt-10 text-center">
           <button
-            type="button"
             onClick={() => navigate('/restaurants')}
-            className="btn bg-white hover:bg-stone-50 text-[#191715] border border-[#E8E4DC] min-h-[48px] px-8 rounded-full font-bold shadow-2xs hover:border-stone-400 transition-all cursor-pointer"
+            className="btn bg-[#1C1917] text-white hover:bg-stone-800 min-h-[50px] px-8 rounded-full font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
           >
-            <span>View All {restaurants.length || 682} Verified Menus in Delhi NCR</span>
-            <ArrowRight className="w-4 h-4 text-[#F4512C]" />
+            View all {restaurants.length || 129} verified counter menus in Delhi NCR →
           </button>
         </div>
       </section>
 
       {/* ========================================================
-          5. FEATURED LOCAL FOOD AREAS & LIVING TRAILS
+          3. POPULAR COUNTER DISHES IN THIS LOCATION
       ======================================================== */}
-      <section className="bg-white border-y border-[#E8E4DC] py-14">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-8 space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#0F766E] block">
-                Neighbourhood Food Maps
-              </span>
-              <h2 className="hd text-2xl sm:text-3xl font-black text-[#191715] mt-1">
-                Explore Delhi's Iconic Food Hubs
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
-                Curated dining pockets with metro connectivity, average cost, and signature dish stops.
+      <section id="dishes" className="sec bg-white py-16 border-y border-[#E7E2DA]">
+        <div className="max-w-2xl">
+          <div className="eyebrow text-[#0F766E]">Counter Price Benchmark</div>
+          <h2 className="h2 mt-2">
+            Signature dishes in {activeAreaName}
+          </h2>
+          <p className="mt-1.5 text-sm text-[#78716C]">
+            Compare the exact in-store counter price against inflated food delivery apps before ordering.
+          </p>
+        </div>
+
+        <div className="mt-8 flex flex-col lg:flex-row gap-6 items-stretch">
+          {/* Spotlight Card */}
+          <div className="flex-1 bg-[#1C1917] text-white rounded-[32px] p-7 sm:p-9 relative overflow-hidden flex flex-col justify-between shadow-xl">
+            <div
+              aria-hidden="true"
+              className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-[radial-gradient(circle,rgba(255,90,54,0.35),transparent_70%)] pointer-events-none"
+            />
+            <div className="relative z-10">
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 rounded-full bg-[#FF5A36] text-[#1C1917] text-xs font-black uppercase tracking-wide">
+                  Dish Spotlight
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/15 text-[#5EEAD4] text-xs font-bold">
+                  {currentSpotlight.savings}
+                </span>
+              </div>
+
+              <h3 className="hd mt-5 text-2xl sm:text-3xl font-extrabold leading-tight text-white">
+                {currentSpotlight.name}
+              </h3>
+              <p className="mt-2 text-sm sm:text-base text-stone-300 leading-relaxed max-w-lg">
+                {currentSpotlight.desc}
               </p>
+
+              <div className="mt-6 flex items-baseline gap-4">
+                <span className="hd text-4xl sm:text-5xl font-black text-white">
+                  ₹{currentSpotlight.counterPrice}
+                </span>
+                <span className="text-sm font-semibold text-stone-300">
+                  at {currentSpotlight.restaurant} · {currentSpotlight.area}
+                </span>
+              </div>
+
+              <div className="mt-2 text-xs text-stone-400">
+                Food delivery app price: <span className="line-through">₹{currentSpotlight.appPrice}</span> + packaging + delivery fee
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/iconic-area')}
-              className="text-xs font-bold text-[#F4512C] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
-            >
-              <span>View all neighborhood guides</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+
+            <div className="mt-6 relative z-10 flex flex-wrap gap-3">
+              <button
+                onClick={() => navigate(`/search?q=${encodeURIComponent(currentSpotlight.name)}`)}
+                className="btn bg-white text-[#1C1917] hover:bg-stone-100 min-h-[46px] rounded-xl font-bold cursor-pointer"
+              >
+                Find counters near you
+              </button>
+              {currentSpotlight.restaurantSlug && (
+                <button
+                  onClick={() => navigate(`/${currentSpotlight.restaurantSlug}`)}
+                  className="btn bg-transparent border border-white/25 text-white hover:bg-white/10 min-h-[46px] rounded-xl font-bold cursor-pointer"
+                >
+                  View full menu →
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {AREA_FOOD_GUIDES.slice(0, 6).map((guide) => (
-              <div
-                key={guide.id}
-                onClick={() => navigate(`/iconic-area/${guide.slug}`)}
-                className="lift group bg-[#FAF8F4] rounded-[24px] overflow-hidden border border-[#E8E4DC] cursor-pointer hover:border-stone-400 transition-all flex flex-col justify-between"
-              >
-                <div className="relative aspect-[16/9] overflow-hidden bg-stone-200">
-                  <img
-                    src={guide.cover_image_url}
-                    alt={guide.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-0.5 rounded-full bg-white/95 text-stone-900 text-[10px] font-black uppercase tracking-wider shadow-xs">
-                      {guide.area_metadata?.zone || 'Delhi Food Hub'}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-3 inset-x-3 text-white">
-                    <h3 className="font-heading font-black text-lg text-white leading-tight">
-                      {guide.area_metadata?.area_name || guide.title}
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col justify-between">
-                  <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
-                    {guide.description}
-                  </p>
-
-                  <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-xs text-stone-700">
-                    <div className="flex items-center gap-1 font-bold">
-                      <Train className="w-3.5 h-3.5 text-[#0F766E]" />
-                      <span className="truncate max-w-[150px]">{guide.area_metadata?.nearest_metro?.split('(')[0] || 'Metro Connected'}</span>
+          {/* Dish Selector List */}
+          <div className="flex-1 flex flex-col gap-3 justify-center">
+            {activeLocationDishes.map((dish, idx) => {
+              const isSelected = selectedSpotlightIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  onClick={() => setSelectedSpotlightIndex(idx)}
+                  className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                    isSelected
+                      ? 'bg-orange-50/60 border-[#FF5A36] shadow-sm ring-2 ring-[#FF5A36]/30'
+                      : 'bg-white border-[#E7E2DA] hover:border-stone-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div
+                      className="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center text-white font-black text-base shadow-xs"
+                      style={{ background: dish.gradient }}
+                    >
+                      ₹
                     </div>
-                    <span className="font-black text-[#F4512C]">
-                      ₹{guide.area_metadata?.avg_cost_for_two || 500} for two
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {dish.isVeg && (
+                          <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+                        )}
+                        <h4 className="font-bold text-base text-[#1C1917] truncate">
+                          {dish.name}
+                        </h4>
+                      </div>
+                      <p className="text-xs text-[#78716C] mt-0.5 truncate">
+                        {dish.restaurant} · {dish.area}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="hd text-xl font-black text-[#D8350F]">
+                      ₹{dish.counterPrice}
                     </span>
+                    <div className="text-[11px] font-bold text-[#0F766E]">
+                      {dish.savings}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ========================================================
-          6. RECENTLY VERIFIED & NEWLY ADDED RESTAURANTS
+          4. DEDICATED AREA GUIDE FOR THIS LOCATION ONLY
       ======================================================== */}
-      {recentlyAddedRestaurants.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-4 sm:px-8 py-14">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E8E4DC] pb-4">
-            <div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-purple-700 block">
-                Fresh Verified Additions
-              </span>
-              <h2 className="hd text-2xl sm:text-3xl font-black text-[#191715] mt-1">
-                Recently Added to MenuMaps
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
-                New cafe menus digitized and verified with 0% delivery app markup.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/restaurants')}
-              className="text-xs font-bold text-[#F4512C] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
-            >
-              <span>Explore all cafes</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+      {activeAreaGuide && (
+        <section className="sec py-16">
+          <div className="max-w-2xl">
+            <div className="eyebrow text-[#D8350F]">Curated Food Guide · This Place Only</div>
+            <h2 className="h2 mt-2">
+              Insider foodie guide to {activeAreaGuide.area_metadata?.area_name || activeAreaName}
+            </h2>
+            <p className="mt-1.5 text-sm text-[#78716C]">
+              {activeAreaGuide.description}
+            </p>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recentlyAddedRestaurants.map((restaurant) => (
-              <RestaurantCard
-                key={restaurant.id}
-                restaurant={restaurant}
-                navigate={navigate}
-              />
-            ))}
+          {/* Area Guide Hero Banner Card */}
+          <div className="mt-8 bg-white border border-[#E7E2DA] rounded-[36px] overflow-hidden shadow-lg">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              {/* Left Details */}
+              <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <span className="px-3 py-1 rounded-full bg-orange-100 text-[#D8350F] text-xs font-black uppercase tracking-wider">
+                      {activeAreaGuide.area_metadata?.zone || 'Iconic Food Hub'}
+                    </span>
+                    {activeAreaGuide.area_metadata?.avg_cost_for_two && (
+                      <span className="px-3 py-1 rounded-full bg-teal-50 text-[#0F766E] text-xs font-bold border border-teal-200">
+                        ₹{activeAreaGuide.area_metadata.avg_cost_for_two} for two
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="hd text-2xl sm:text-3xl font-black text-[#1C1917]">
+                    {activeAreaGuide.title}
+                  </h3>
+
+                  <p className="mt-3 text-sm sm:text-base text-[#57534E] leading-relaxed">
+                    {activeAreaGuide.area_metadata?.vibe_badge || activeAreaGuide.description}
+                  </p>
+
+                  {/* Key Quick Facts */}
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 border-t border-[#E7E2DA]">
+                    {activeAreaGuide.area_metadata?.nearest_metro && (
+                      <div className="flex items-start gap-2.5">
+                        <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-[11px] font-bold text-[#78716C] uppercase tracking-wide">
+                            Nearest Metro
+                          </div>
+                          <div className="text-xs font-bold text-[#1C1917]">
+                            {activeAreaGuide.area_metadata.nearest_metro}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeAreaGuide.area_metadata?.best_time_to_visit && (
+                      <div className="flex items-start gap-2.5">
+                        <Clock className="w-4 h-4 text-[#0F766E] shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-[11px] font-bold text-[#78716C] uppercase tracking-wide">
+                            Best Time to Visit
+                          </div>
+                          <div className="text-xs font-bold text-[#1C1917]">
+                            {activeAreaGuide.area_metadata.best_time_to_visit}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {activeAreaGuide.area_metadata?.famous_for_summary && (
+                    <div className="mt-4 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA] text-xs text-[#44403C]">
+                      <strong className="text-[#1C1917]">Famous for: </strong>
+                      {activeAreaGuide.area_metadata.famous_for_summary}
+                    </div>
+                  )}
+                </div>
+
+                {/* Trail Link Button */}
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    onClick={() => {
+                      if (activeAreaGuide.id.startsWith('dynamic-')) {
+                        navigate('/restaurants');
+                      } else {
+                        navigate(`/iconic-area/${activeAreaGuide.slug}`);
+                      }
+                    }}
+                    className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white min-h-[48px] px-6 rounded-xl font-bold cursor-pointer shadow-sm flex items-center gap-2"
+                  >
+                    <span>
+                      {activeAreaGuide.id.startsWith('dynamic-')
+                        ? `Explore verified menus in ${activeDelhiLocation.shortName}`
+                        : `Read complete ${activeAreaGuide.area_metadata?.area_name || 'neighbourhood'} guide`}
+                    </span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPlannerModalOpen(true)}
+                    className="btn bg-white border border-[#E7E2DA] hover:bg-stone-50 text-[#1C1917] min-h-[48px] px-5 rounded-xl font-bold cursor-pointer"
+                  >
+                    Plan Foodie Crawl
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Crawl Stops Preview */}
+              <div className="lg:col-span-5 bg-[#FAF8F5] p-6 sm:p-8 border-t lg:border-t-0 lg:border-l border-[#E7E2DA] flex flex-col justify-between">
+                <div>
+                  <div className="text-xs font-black uppercase tracking-wider text-[#78716C] mb-4 flex items-center gap-2">
+                    <Navigation className="w-4 h-4 text-[#0F766E]" />
+                    <span>Tested 3-Stop Walking Trail</span>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    {activeAreaGuide.area_metadata?.food_crawl_stops &&
+                    activeAreaGuide.area_metadata.food_crawl_stops.length > 0 ? (
+                      activeAreaGuide.area_metadata.food_crawl_stops.map((stop: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-3.5 rounded-2xl bg-white border border-[#E7E2DA] shadow-xs"
+                        >
+                          <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-[#0F766E]">
+                            <span>{stop.time}</span>
+                            <span className="text-stone-400 font-medium">{stop.distance_to_next}</span>
+                          </div>
+                          <div className="font-bold text-sm text-[#1C1917] mt-1">
+                            {stop.venue_name}
+                          </div>
+                          <div className="text-xs text-[#D8350F] font-semibold mt-0.5">
+                            Must try: {stop.recommended_dish}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 bg-white rounded-2xl border border-[#E7E2DA] text-xs text-stone-500">
+                        Walking trail being updated by community explorers.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-[#E7E2DA] text-right">
+                  <button
+                    onClick={() => navigate('/iconic-area')}
+                    className="text-xs font-bold text-[#78716C] hover:text-[#D8350F] transition-colors"
+                  >
+                    Explore guides in other Delhi neighborhoods →
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       )}
 
       {/* ========================================================
-          7. COMPACT INTERACTIVE DECISION TOOLS (WHEEL & QUIZ)
+          5. INTERACTIVE FOOD DISCOVERY TOOLS (SPIN & QUIZ)
       ======================================================== */}
-      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pb-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <section className="sec py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Spin Wheel Card */}
-          <div className="bg-gradient-to-br from-[#FFE9E2] to-[#FFF5F0] border border-[#FFCCBD] rounded-[28px] p-6 sm:p-7 flex flex-col justify-between shadow-2xs">
+          <div className="bg-gradient-to-br from-[#FFE9E2] to-[#FFF5F0] border border-[#FFCCBD] rounded-[32px] p-7 sm:p-8 flex flex-col justify-between shadow-sm">
             <div>
-              <span className="px-2.5 py-0.5 rounded-full bg-white text-[#F4512C] text-[10px] font-black uppercase tracking-wider shadow-2xs">
+              <span className="px-3 py-1 rounded-full bg-white text-[#D8350F] text-xs font-black uppercase tracking-wider shadow-xs">
                 Decision Maker
               </span>
-              <h3 className="hd mt-3 text-xl sm:text-2xl font-black text-[#191715]">
-                Can't decide what to eat? Spin the Wheel
+              <h3 className="hd mt-4 text-2xl sm:text-3xl font-extrabold text-[#1C1917]">
+                Can't decide what to eat? Spin the Wheel!
               </h3>
-              <p className="mt-1.5 text-xs text-stone-600 leading-relaxed">
+              <p className="mt-2 text-sm text-[#57534E] leading-relaxed">
                 Let fate pick your next meal from verified dishes and cafes in {activeAreaName}.
               </p>
             </div>
-            <div className="mt-5">
+            <div className="mt-6">
               <button
                 type="button"
                 onClick={() => setSpinModalOpen(true)}
-                className="btn bg-[#F4512C] hover:bg-[#E0401B] text-white min-h-[44px] px-5 rounded-xl font-bold text-xs cursor-pointer shadow-xs flex items-center gap-2"
+                className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white min-h-[46px] px-6 rounded-xl font-bold cursor-pointer shadow-sm flex items-center gap-2"
               >
-                <RotateCw className="w-3.5 h-3.5" />
+                <RotateCw className="w-4 h-4" />
                 <span>Spin the Food Wheel</span>
               </button>
             </div>
           </div>
 
-          {/* Craving Quiz Card */}
-          <div className="bg-gradient-to-br from-[#E6F4F1] to-[#F0FAF7] border border-[#BCE3DA] rounded-[28px] p-6 sm:p-7 flex flex-col justify-between shadow-2xs">
+          {/* Food Quiz Card */}
+          <div className="bg-gradient-to-br from-[#E6F4F1] to-[#F0FAF7] border border-[#BCE3DA] rounded-[32px] p-7 sm:p-8 flex flex-col justify-between shadow-sm">
             <div>
-              <span className="px-2.5 py-0.5 rounded-full bg-white text-[#0F766E] text-[10px] font-black uppercase tracking-wider shadow-2xs">
-                Craving Matcher
+              <span className="px-3 py-1 rounded-full bg-white text-[#0F766E] text-xs font-black uppercase tracking-wider shadow-xs">
+                Craving Quiz
               </span>
-              <h3 className="hd mt-3 text-xl sm:text-2xl font-black text-[#191715]">
+              <h3 className="hd mt-4 text-2xl sm:text-3xl font-extrabold text-[#1C1917]">
                 What should you eat right now?
               </h3>
-              <p className="mt-1.5 text-xs text-stone-600 leading-relaxed">
+              <p className="mt-2 text-sm text-[#57534E] leading-relaxed">
                 Answer 3 quick questions about your mood, budget, and cravings to get matched instantly.
               </p>
             </div>
-            <div className="mt-5">
+            <div className="mt-6">
               <button
                 type="button"
                 onClick={() => setQuizModalOpen(true)}
-                className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white min-h-[44px] px-5 rounded-xl font-bold text-xs cursor-pointer shadow-xs flex items-center gap-2"
+                className="btn bg-[#0F766E] hover:bg-[#115E59] text-white min-h-[46px] px-6 rounded-xl font-bold cursor-pointer shadow-sm flex items-center gap-2"
               >
-                <HelpCircle className="w-3.5 h-3.5" />
+                <HelpCircle className="w-4 h-4" />
                 <span>Take 60-Second Quiz</span>
               </button>
             </div>
@@ -725,68 +1068,38 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       </section>
 
       {/* ========================================================
-          8. TRANSPARENT MENU TRUST EXPLAINER
+          6. CLEAN DINER CTA BANNER
       ======================================================== */}
-      <section className="bg-white border-t border-[#E8E4DC] py-14">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-8 space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#0F766E]">
-              Zero Middleman Markups
-            </span>
-            <h2 className="hd text-2xl sm:text-3xl font-black text-[#191715]">
-              How MenuMaps Protects Your Food Bill
+      <section className="sec pb-24">
+        <div className="bg-[#1C1917] text-white rounded-[36px] p-8 sm:p-14 text-center relative overflow-hidden shadow-xl">
+          <div
+            aria-hidden="true"
+            className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(255,90,54,0.3),transparent_70%)] pointer-events-none"
+          />
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <h2 className="hd text-3xl sm:text-5xl font-black text-white leading-tight">
+              Real food menus. Zero app markup.
             </h2>
-            <p className="text-xs sm:text-sm text-stone-600">
-              Unlike delivery apps that inflate dish prices by 25–40%, MenuMaps shows exact in-store counter menus.
+            <p className="mt-3 text-sm sm:text-base text-stone-300">
+              Menu Maps is Delhi's direct dining guide with 100% verified counter menus across {restaurants.length || 129} verified dining spots.
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-            <div className="p-6 rounded-[24px] bg-[#FAF8F4] border border-[#E8E4DC] space-y-2">
-              <div className="w-10 h-10 rounded-2xl bg-orange-100 text-[#F4512C] flex items-center justify-center font-black">
-                <Check className="w-5 h-5 stroke-[3]" />
-              </div>
-              <h3 className="font-heading font-black text-base text-[#191715]">
-                100% Genuine Counter Rates
-              </h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                Menus are photographed directly from physical in-store printouts or verified by cafe owners. What you see is what you pay.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-[24px] bg-[#FAF8F4] border border-[#E8E4DC] space-y-2">
-              <div className="w-10 h-10 rounded-2xl bg-teal-100 text-[#0F766E] flex items-center justify-center font-black">
-                <Percent className="w-5 h-5 stroke-[3]" />
-              </div>
-              <h3 className="font-heading font-black text-base text-[#191715]">
-                0% Delivery App Commissions
-              </h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                Cafes pay ₹0 commission to MenuMaps, allowing them to offer transparent pricing without adding packaging or surge premiums.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-[24px] bg-[#FAF8F4] border border-[#E8E4DC] space-y-2">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black">
-                <Phone className="w-5 h-5" />
-              </div>
-              <h3 className="font-heading font-black text-base text-[#191715]">
-                Direct Kitchen WhatsApp Orders
-              </h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                Order takeout or table service directly to the counter via WhatsApp, with table numbers and itemized totals auto-formatted.
-              </p>
+            <div className="mt-7 flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => navigate('/restaurants')}
+                className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white min-h-[48px] px-7 rounded-full font-bold cursor-pointer shadow-md"
+              >
+                Browse All Cafes & Menus
+              </button>
+              <button
+                onClick={() => navigate('/iconic-area')}
+                className="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 min-h-[48px] px-7 rounded-full font-bold cursor-pointer"
+              >
+                View Delhi Neighbourhood Maps
+              </button>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Location Picker Modal */}
-      <LocationPickerModal
-        isOpen={locationModalOpen}
-        onClose={() => setLocationModalOpen(false)}
-        activeCity={activeAreaName}
-      />
 
       {/* Interactive Modals */}
       <React.Suspense fallback={null}>
