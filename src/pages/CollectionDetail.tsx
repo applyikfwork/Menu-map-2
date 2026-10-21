@@ -53,8 +53,12 @@ interface CollectionDetailProps {
 export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, navigate }) => {
   const { showToast } = useToast();
 
-  const [loading, setLoading] = useState(true);
-  const [collection, setCollection] = useState<Collection | null>(null);
+  const fallbackInitialGuide = AREA_FOOD_GUIDES.find(
+    (g) => g.slug === slug || g.id === slug || g.title.toLowerCase().includes(slug.replace(/-/g, ' ').toLowerCase())
+  );
+
+  const [loading, setLoading] = useState<boolean>(() => !fallbackInitialGuide);
+  const [collection, setCollection] = useState<Collection | null>(() => fallbackInitialGuide || null);
   const [collectionItems, setCollectionItems] = useState<CollectionItem[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -118,7 +122,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
   }, [slug]);
 
   const loadCollectionData = async () => {
-    setLoading(true);
+    if (!collection) setLoading(true);
     try {
       let col: Collection | null = null;
 
@@ -413,11 +417,12 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({ slug, naviga
     return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=walking`;
   }, [crawlStops, meta, collection]);
 
-  if (loading) {
+  if (loading && !collection) {
     return (
       <div className="max-w-[1280px] mx-auto px-4 py-24 text-center">
         <div className="w-12 h-12 border-4 border-[#FF5A36] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-bold text-stone-500">Loading neighborhood guide…</p>
+        <h2 className="text-base font-extrabold text-stone-800">Scouting neighborhood dining guide…</h2>
+        <p className="text-xs text-stone-500 mt-1">Fetching verified menus and local food crawl stops.</p>
       </div>
     );
   }

@@ -128,10 +128,15 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const { showToast } = useToast();
   const { engine, mealTimeInfo, trackView, calculateSavings } = useDiscovery();
 
-  const [loading, setLoading] = useState(true);
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
+  const cachedInitialRest = engine.getRestaurantBySlug(cleanSlug) || engine.getRestaurantBySlug(slug) || null;
+  const cachedInitialItems = cachedInitialRest ? engine.getDishesForRestaurant(cachedInitialRest.id) : [];
+  const cachedInitialCats = cachedInitialRest ? engine.getCategoriesForRestaurant(cachedInitialRest.id) : [];
+
+  const [loading, setLoading] = useState<boolean>(() => !cachedInitialRest);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(() => cachedInitialRest);
+  const [categories, setCategories] = useState<MenuCategory[]>(() => cachedInitialCats);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => cachedInitialItems);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [similarRestaurants, setSimilarRestaurants] = useState<Restaurant[]>([]);
 
@@ -235,9 +240,14 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     const cachedRest = engine.getRestaurantBySlug(cleanSlug) || engine.getRestaurantBySlug(slug);
     if (cachedRest) {
       setRestaurant(cachedRest);
+      const cachedItems = engine.getDishesForRestaurant(cachedRest.id);
+      if (cachedItems.length > 0) setMenuItems(cachedItems);
+      const cachedCats = engine.getCategoriesForRestaurant(cachedRest.id);
+      if (cachedCats.length > 0) setCategories(cachedCats);
       setBookmarked(isBookmarked('restaurant', cachedRest.id));
       trackView('restaurant', cachedRest.id, cachedRest.name, cachedRest.slug);
-    } else {
+      setLoading(false);
+    } else if (!restaurant) {
       setLoading(true);
     }
 
@@ -485,11 +495,12 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     }
   };
 
-  if (loading) {
+  if (loading && !restaurant) {
     return (
       <div className="max-w-[1280px] mx-auto px-6 py-20 text-center">
         <div className="w-12 h-12 border-4 border-[#FF5A36] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-bold text-stone-500">Loading counter menu…</p>
+        <h2 className="text-base font-extrabold text-stone-800">Verifying cafe counter records…</h2>
+        <p className="text-xs text-stone-500 mt-1">Loading authentic in-store pricing and menu items.</p>
       </div>
     );
   }

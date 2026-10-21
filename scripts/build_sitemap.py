@@ -1,64 +1,81 @@
 import re
 import os
 import glob
+import json
 from datetime import datetime
 
 DOMAIN = "https://menumaps.in"
 TODAY = datetime.now().strftime("%Y-%m-%d")
-
-venue_files = [
-    'src/lib/northCampusDuVenues.ts',
-    'src/lib/extraZoneVenues.ts',
-    'src/lib/newDelhiVenues.ts',
-]
-venue_files.extend(glob.glob('src/data/venues/*.ts'))
+PRERENDER_DATA = "dist/prerender_data.json"
 
 restaurant_slugs = set()
 dish_slugs = set()
-
-for vf in set(venue_files):
-    if not os.path.exists(vf):
-        continue
-    with open(vf, 'r', encoding='utf-8', errors='ignore') as f:
-        content = f.read()
-
-    # Extract RESTAURANTS blocks
-    rest_blocks = re.findall(r'(?:export\s+const\s+[A-Za-z0-9_]*RESTAURANTS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
-    for rb, _ in rest_blocks:
-        found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', rb)
-        for s in found:
-            restaurant_slugs.add(s)
-
-    # Extract MENU_ITEMS blocks
-    item_blocks = re.findall(r'(?:export\s+const\s+[A-Za-z0-9_]*MENU_ITEMS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
-    for ib, _ in item_blocks:
-        found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', ib)
-        for s in found:
-            dish_slugs.add(s)
-
-# Also check seedData.ts specifically
-if os.path.exists('src/lib/seedData.ts'):
-    with open('src/lib/seedData.ts', 'r', encoding='utf-8', errors='ignore') as f:
-        content = f.read()
-    rest_blocks = re.findall(r'(?:export\s+const\s+SEED_RESTAURANTS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
-    for rb, _ in rest_blocks:
-        found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', rb)
-        for s in found:
-            restaurant_slugs.add(s)
-    
-    item_blocks = re.findall(r'(?:export\s+const\s+SEED_MENU_ITEMS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
-    for ib, _ in item_blocks:
-        found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', ib)
-        for s in found:
-            dish_slugs.add(s)
-
-# Area Guides
 area_guide_slugs = set()
-if os.path.exists('src/lib/areaGuidesData.ts'):
-    with open('src/lib/areaGuidesData.ts', 'r', encoding='utf-8', errors='ignore') as f:
-        text = f.read()
-    for s in re.findall(r'(?:^|\s)slug\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', text):
-        area_guide_slugs.add(s)
+
+# Prefer dist/prerender_data.json if present
+if os.path.exists(PRERENDER_DATA):
+    print(f"Loading slugs directly from {PRERENDER_DATA}...")
+    with open(PRERENDER_DATA, 'r', encoding='utf-8') as f:
+        pdata = json.load(f)
+    for r in pdata.get("restaurants", []):
+        if r.get("slug"):
+            restaurant_slugs.add(r["slug"])
+    for d in pdata.get("dishes", []):
+        if d.get("slug"):
+            dish_slugs.add(d["slug"])
+    for g in pdata.get("area_guides", []):
+        if g.get("slug"):
+            area_guide_slugs.add(g["slug"])
+else:
+    venue_files = [
+        'src/lib/northCampusDuVenues.ts',
+        'src/lib/extraZoneVenues.ts',
+        'src/lib/newDelhiVenues.ts',
+    ]
+    venue_files.extend(glob.glob('src/data/venues/*.ts'))
+
+    for vf in set(venue_files):
+        if not os.path.exists(vf):
+            continue
+        with open(vf, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+
+        # Extract RESTAURANTS blocks
+        rest_blocks = re.findall(r'(?:export\s+const\s+[A-Za-z0-9_]*RESTAURANTS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
+        for rb, _ in rest_blocks:
+            found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', rb)
+            for s in found:
+                restaurant_slugs.add(s)
+
+        # Extract MENU_ITEMS blocks
+        item_blocks = re.findall(r'(?:export\s+const\s+[A-Za-z0-9_]*MENU_ITEMS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
+        for ib, _ in item_blocks:
+            found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', ib)
+            for s in found:
+                dish_slugs.add(s)
+
+    # Also check seedData.ts specifically
+    if os.path.exists('src/lib/seedData.ts'):
+        with open('src/lib/seedData.ts', 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        rest_blocks = re.findall(r'(?:export\s+const\s+SEED_RESTAURANTS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
+        for rb, _ in rest_blocks:
+            found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', rb)
+            for s in found:
+                restaurant_slugs.add(s)
+        
+        item_blocks = re.findall(r'(?:export\s+const\s+SEED_MENU_ITEMS\b[^=]*=\s*\[)(.*?)(\];\s*(?:export|\Z))', content, re.DOTALL)
+        for ib, _ in item_blocks:
+            found = re.findall(r'[\'"]slug[\'"]\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', ib)
+            for s in found:
+                dish_slugs.add(s)
+
+    # Area Guides
+    if os.path.exists('src/lib/areaGuidesData.ts'):
+        with open('src/lib/areaGuidesData.ts', 'r', encoding='utf-8', errors='ignore') as f:
+            text = f.read()
+        for s in re.findall(r'(?:^|\s)slug\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', text):
+            area_guide_slugs.add(s)
 
 core_pages = [
     ("", "daily", "1.0"),
@@ -121,8 +138,15 @@ for slug in sorted(list(dish_slugs)):
 lines.append('</urlset>\n')
 
 output_path = 'public/sitemap.xml'
+sitemap_xml = '\n'.join(lines)
 with open(output_path, 'w', encoding='utf-8') as f:
-    f.write('\n'.join(lines))
+    f.write(sitemap_xml)
+
+if os.path.exists('dist'):
+    dist_sitemap_path = 'dist/sitemap.xml'
+    with open(dist_sitemap_path, 'w', encoding='utf-8') as f:
+        f.write(sitemap_xml)
+    print(f"Also synced sitemap to {dist_sitemap_path}")
 
 print(f"Sitemap successfully generated at {output_path}:")
 print(f"  - Core Pages: {len(core_pages)}")

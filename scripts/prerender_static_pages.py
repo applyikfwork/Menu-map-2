@@ -2,9 +2,11 @@ import os
 import re
 import json
 import glob
+import subprocess
 
 DOMAIN = "https://menumaps.in"
 DIST_INDEX = "dist/index.html"
+PRERENDER_DATA = "dist/prerender_data.json"
 
 def escape_html(text):
     if not text:
@@ -23,6 +25,23 @@ def replace_root(src_html, new_content):
         return src_html
     return src_html[:content_start] + new_content + src_html[end_pos:]
 
+def get_shared_header():
+    return f"""
+    <header style="max-width: 1200px; margin: 0 auto; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
+        <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
+            <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
+            <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
+        </a>
+        <nav style="display: flex; flex-wrap: wrap; gap: 20px; font-weight: 600; font-size: 14px;">
+            <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
+            <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
+            <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
+            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
+            <a href="/search" style="color: #44403C; text-decoration: none;">Search</a>
+        </nav>
+    </header>
+    """
+
 def main():
     if not os.path.exists(DIST_INDEX):
         print(f"Error: {DIST_INDEX} not found. Run 'npm run build' or 'vite build' first.")
@@ -32,171 +51,123 @@ def main():
         template = f.read()
 
     # -------------------------------------------------------------
-    # 1. EXTRACT ALL RESTAURANTS FROM VENUE REPOSITORIES
+    # 0. ENSURE PRERENDER DATA SNAPSHOT IS GENERATED
     # -------------------------------------------------------------
-    venue_files = [
-        'src/lib/northCampusDuVenues.ts',
-        'src/lib/extraZoneVenues.ts',
-        'src/lib/newDelhiVenues.ts',
-        'src/lib/seedData.ts',
-    ]
-    venue_files.extend(glob.glob('src/data/venues/*.ts'))
+    if not os.path.exists(PRERENDER_DATA):
+        print("prerender_data.json not found, running export_prerender_data.ts...")
+        subprocess.run(["npx", "tsx", "scripts/export_prerender_data.ts"], check=True)
 
-    restaurants = []
-    seen_slugs = set()
+    with open(PRERENDER_DATA, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-    for vf in set(venue_files):
-        if not os.path.exists(vf):
-            continue
-        with open(vf, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
+    restaurants = data.get("restaurants", [])
+    dishes = data.get("dishes", [])
+    dishes_by_rest = data.get("dishes_by_restaurant", {})
+    area_guides = data.get("area_guides", [])
 
-        match = re.search(r'export\s+const\s+[A-Za-z0-9_]*RESTAURANTS\b[^=]*=\s*\[(.*?)\];\s*(?:export|\Z)', content, re.DOTALL)
-        if not match:
-            continue
-        block = match.group(1)
-
-        items = re.split(r'\{\s*[\'"]?id[\'"]?\s*:', block)
-        for it in items[1:]:
-            slug_m = re.search(r'[\'"]?slug[\'"]?\s*:\s*[\'"]([^\'"]+)[\'"]', it)
-            name_m = re.search(r'[\'"]?name[\'"]?\s*:\s*[\'"]([^\'"]+)[\'"]', it)
-            if slug_m and name_m:
-                slug = slug_m.group(1).strip()
-                name = name_m.group(1).strip()
-                if slug and slug not in seen_slugs:
-                    seen_slugs.add(slug)
-                    city_m = re.search(r'[\'"]?(?:city|city_area)[\'"]?\s*:\s*[\'"]([^\'"]+)[\'"]', it)
-                    addr_m = re.search(r'[\'"]?address_line1[\'"]?\s*:\s*[\'"]([^\'"]+)[\'"]', it)
-                    cost_m = re.search(r'[\'"]?average_cost_for_two[\'"]?\s*:\s*([0-9]+)', it)
-                    img_m = re.search(r'[\'"]?cover_image_url[\'"]?\s*:\s*[\'"]([^\'"]+)[\'"]', it)
-
-                    restaurants.append({
-                        "slug": slug,
-                        "name": name,
-                        "city": city_m.group(1) if city_m else "Delhi",
-                        "address_line1": addr_m.group(1) if addr_m else "Delhi",
-                        "average_cost_for_two": int(cost_m.group(1)) if cost_m else 400,
-                        "cover_image_url": img_m.group(1) if img_m else "https://menumaps.in/logo.jpg"
-                    })
-
-    print(f"Extracted {len(restaurants)} unique verified restaurants for pre-rendering.")
+    print(f"Loaded {len(restaurants)} restaurants, {len(dishes)} dishes, and {len(area_guides)} area guides for static pre-rendering.")
 
     # -------------------------------------------------------------
-    # 2. EXTRACT ICONIC AREA GUIDES & LIVING TRAILS
-    # -------------------------------------------------------------
-    area_guides = []
-    if os.path.exists('src/lib/areaGuidesData.ts'):
-        with open('src/lib/areaGuidesData.ts', 'r', encoding='utf-8', errors='ignore') as f:
-            guides_content = f.read()
-
-        guide_blocks = re.split(r'\{\s*id\s*:\s*[\'"]', guides_content)[1:]
-        for gb in guide_blocks:
-            slug_m = re.search(r'slug\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            title_m = re.search(r'title\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            desc_m = re.search(r'description\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            img_m = re.search(r'cover_image_url\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            area_m = re.search(r'area_name\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            zone_m = re.search(r'zone\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            vibe_m = re.search(r'vibe_badge\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            metro_m = re.search(r'nearest_metro\s*:\s*[\'"]([^\'"]+)[\'"]', gb)
-            cost_m = re.search(r'avg_cost_for_two\s*:\s*([0-9]+)', gb)
-
-            if slug_m and title_m:
-                # Extract dishes
-                dishes = []
-                dish_entries = re.split(r'\{\s*name\s*:\s*[\'"]', gb)[1:]
-                for de in dish_entries:
-                    d_name_m = re.search(r'^([^\'"]+)', de)
-                    d_why_m = re.search(r'why_famous\s*:\s*[\'"]([^\'"]+)[\'"]', de)
-                    d_rest_m = re.search(r'restaurant_name\s*:\s*[\'"]([^\'"]+)[\'"]', de)
-                    d_price_m = re.search(r'price\s*:\s*([0-9]+)', de)
-                    if d_name_m:
-                        dishes.append({
-                            "name": d_name_m.group(1).strip(),
-                            "why_famous": d_why_m.group(1).strip() if d_why_m else "",
-                            "restaurant_name": d_rest_m.group(1).strip() if d_rest_m else "",
-                            "price": int(d_price_m.group(1)) if d_price_m else 0
-                        })
-
-                # Extract crawl stops
-                crawls = []
-                crawl_entries = re.split(r'\{\s*stop_number\s*:\s*([0-9]+)', gb)[1:]
-                for i in range(0, len(crawl_entries), 2):
-                    stop_num = crawl_entries[i]
-                    ce_body = crawl_entries[i+1] if i+1 < len(crawl_entries) else ""
-                    time_m = re.search(r'time\s*:\s*[\'"]([^\'"]+)[\'"]', ce_body)
-                    venue_m = re.search(r'venue_name\s*:\s*[\'"]([^\'"]+)[\'"]', ce_body)
-                    dish_m = re.search(r'recommended_dish\s*:\s*[\'"]([^\'"]+)[\'"]', ce_body)
-                    note_m = re.search(r'note\s*:\s*[\'"]([^\'"]+)[\'"]', ce_body)
-                    if venue_m:
-                        crawls.append({
-                            "stop_number": stop_num,
-                            "time": time_m.group(1) if time_m else "",
-                            "venue_name": venue_m.group(1) if venue_m else "",
-                            "recommended_dish": dish_m.group(1) if dish_m else "",
-                            "note": note_m.group(1) if note_m else ""
-                        })
-
-                area_guides.append({
-                    "slug": slug_m.group(1).strip(),
-                    "title": title_m.group(1).strip(),
-                    "desc": desc_m.group(1).strip() if desc_m else "",
-                    "cover_image_url": img_m.group(1).strip() if img_m else "https://menumaps.in/logo.jpg",
-                    "area_name": area_m.group(1).strip() if area_m else title_m.group(1).strip(),
-                    "zone": zone_m.group(1).strip() if zone_m else "Delhi NCR",
-                    "vibe_badge": vibe_m.group(1).strip() if vibe_m else "",
-                    "nearest_metro": metro_m.group(1).strip() if metro_m else "",
-                    "avg_cost_for_two": int(cost_m.group(1)) if cost_m else 450,
-                    "dishes": dishes,
-                    "crawls": crawls
-                })
-
-    print(f"Extracted {len(area_guides)} living area food guides.")
-
-    # -------------------------------------------------------------
-    # 3. PRE-RENDER INDIVIDUAL RESTAURANT PAGES
+    # 1. PRE-RENDER INDIVIDUAL RESTAURANT PAGES (WITH TOP DISHES & PRICES)
     # -------------------------------------------------------------
     for r in restaurants:
         slug = r.get("slug")
+        if not slug:
+            continue
         name = r.get("name", "Restaurant")
-        city = r.get("city", "Delhi NCR")
-        addr = r.get("address_line1", city)
-        cost = r.get("average_cost_for_two", 400)
-        img = r.get("cover_image_url", "https://menumaps.in/logo.jpg")
+        city = r.get("city_area") or r.get("city") or "Delhi NCR"
+        addr = r.get("address_line1") or city
+        cost = r.get("average_cost_for_two") or 400
+        img = r.get("cover_image_url") or "https://menumaps.in/logo.jpg"
+        phone = r.get("whatsapp_number") or r.get("phone") or ""
 
         page_url = f"{DOMAIN}/restaurant/{slug}"
         title = f"{name} Menu, Prices & Photos | {city} | Menu Maps"
-        desc = f"Explore {name} in {city}. View live digital menu with verified prices, dish photos, address ({addr}), opening timings, and 0% commission direct WhatsApp ordering."
+        desc = f"Explore {name} in {city}. View live digital menu with verified counter prices, dish photos, address ({addr}), opening timings, and 0% commission direct WhatsApp ordering."
+
+        # Fetch top dishes for this restaurant
+        rest_items = dishes_by_rest.get(r.get("id"), [])
+        top_dishes = rest_items[:12] if rest_items else []
+
+        dishes_html = ""
+        schema_menu_items = []
+        for d in top_dishes:
+            d_name = d.get("name", "")
+            d_price = d.get("price", 0)
+            d_desc = d.get("description", "")
+            d_slug = d.get("slug", "")
+            d_veg = "Veg" in (d.get("dietary_tags") or [])
+
+            badge_icon = "🟢" if d_veg else "🔴"
+            dish_url = f"/food/{d_slug}" if d_slug else "#"
+
+            dishes_html += f"""
+            <div style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 12px; padding: 14px; display: flex; flex-col; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #1C1917; margin: 0;">
+                            <a href="{dish_url}" style="color: inherit; text-decoration: none;">{badge_icon} {escape_html(d_name)}</a>
+                        </h3>
+                        <span style="font-weight: 800; color: #D8350F; font-size: 15px; white-space: nowrap;">₹{d_price}</span>
+                    </div>
+                    {f'<p style="color: #78716C; font-size: 13px; margin: 6px 0 0 0; line-height: 1.4;">{escape_html(d_desc)}</p>' if d_desc else ''}
+                </div>
+                <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                    <span style="color: #0F766E; font-weight: 600;">✓ In-Store Rate</span>
+                    <a href="{dish_url}" style="color: #FF5A36; font-weight: 700; text-decoration: none;">Dish Details &rarr;</a>
+                </div>
+            </div>
+            """
+
+            schema_menu_items.append({
+                "@type": "MenuItem",
+                "name": d_name,
+                "description": d_desc,
+                "offers": {
+                    "@type": "Offer",
+                    "price": d_price,
+                    "priceCurrency": "INR"
+                }
+            })
+
+        # Schema Graph with hasMenu and MenuItems
+        restaurant_schema_obj = {
+            "@type": ["Restaurant", "CafeOrCoffeeShop"],
+            "@id": f"{page_url}#restaurant",
+            "name": name,
+            "url": page_url,
+            "image": [img],
+            "description": desc,
+            "priceRange": f"₹{cost} for two",
+            "currenciesAccepted": "INR",
+            "paymentAccepted": "Cash, Credit Card, UPI, Digital Wallets",
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": addr,
+                "addressLocality": city,
+                "addressRegion": "Delhi NCR",
+                "postalCode": "110001",
+                "addressCountry": "IN"
+            },
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": str(round(r.get("rating_avg") or 4.5, 1)),
+                "reviewCount": str(r.get("rating_count") or 85),
+                "bestRating": "5",
+                "worstRating": "1"
+            }
+        }
+        if schema_menu_items:
+            restaurant_schema_obj["hasMenu"] = {
+                "@type": "Menu",
+                "name": f"{name} Verified Dine-In Menu",
+                "hasMenuItem": schema_menu_items
+            }
 
         schema = {
             "@context": "https://schema.org",
             "@graph": [
-                {
-                    "@type": ["Restaurant", "CafeOrCoffeeShop"],
-                    "@id": f"{page_url}#restaurant",
-                    "name": name,
-                    "url": page_url,
-                    "image": [img],
-                    "description": desc,
-                    "priceRange": f"₹{cost} for two",
-                    "currenciesAccepted": "INR",
-                    "paymentAccepted": "Cash, Credit Card, UPI, Digital Wallets",
-                    "address": {
-                        "@type": "PostalAddress",
-                        "streetAddress": addr,
-                        "addressLocality": city,
-                        "addressRegion": "Delhi NCR",
-                        "postalCode": "110001",
-                        "addressCountry": "IN"
-                    },
-                    "aggregateRating": {
-                        "@type": "AggregateRating",
-                        "ratingValue": "4.6",
-                        "reviewCount": "120",
-                        "bestRating": "5",
-                        "worstRating": "1"
-                    }
-                },
+                restaurant_schema_obj,
                 {
                     "@type": "BreadcrumbList",
                     "@id": f"{page_url}#breadcrumbs",
@@ -206,64 +177,50 @@ def main():
                         {"@type": "ListItem", "position": 3, "name": city, "item": f"{DOMAIN}/restaurants?search={city}"},
                         {"@type": "ListItem", "position": 4, "name": name, "item": page_url}
                     ]
-                },
-                {
-                    "@type": "FAQPage",
-                    "@id": f"{page_url}#faq",
-                    "mainEntity": [
-                        {
-                            "@type": "Question",
-                            "name": f"What is the average cost for two people at {name}?",
-                            "acceptedAnswer": {
-                                "@type": "Answer",
-                                "text": f"The average cost for two people dining at {name} is approximately ₹{cost}. All prices are verified directly from physical cafe menus."
-                            }
-                        },
-                        {
-                            "@type": "Question",
-                            "name": f"Where is {name} located and can I view the real menu?",
-                            "acceptedAnswer": {
-                                "@type": "Answer",
-                                "text": f"{name} is located at {addr}, {city}. You can view the complete verified digital menu on Menu Maps."
-                            }
-                        }
-                    ]
                 }
             ]
         }
 
         fallback_html = f"""
-        <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
-            <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
-                <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
-                <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
-            </a>
-            <nav style="display: flex; gap: 24px; font-weight: 600; font-size: 15px;">
-                <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
-                <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
-                <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
-                <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
-            </nav>
-        </header>
-        <main style="max-width: 900px; margin: 40px auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <nav style="font-size: 14px; color: #78716C; margin-bottom: 16px;">
+        {get_shared_header()}
+        <main style="max-width: 960px; margin: 30px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <nav style="font-size: 13px; color: #78716C; margin-bottom: 16px;">
                 <a href="/" style="color: #FF5A36; text-decoration: none;">Home</a> &gt; 
                 <a href="/restaurants" style="color: #FF5A36; text-decoration: none;">Restaurants</a> &gt; 
                 <span>{escape_html(name)}</span>
             </nav>
-            <header>
-                <p style="color: #FF5A36; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Menu Maps Verified Dining Guide</p>
-                <h1 style="font-size: 36px; font-weight: 800; color: #1C1917; margin: 8px 0;">{escape_html(name)}</h1>
-                <p style="font-size: 16px; color: #78716C; margin-bottom: 20px;">{escape_html(addr)}, {escape_html(city)}</p>
+            <header style="margin-bottom: 24px;">
+                <span style="background: #ECFDF5; color: #047857; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 9999px; border: 1px solid #A7F3D0;">✓ Verified Counter Menu & Pricing</span>
+                <h1 style="font-size: 34px; font-weight: 900; color: #1C1917; margin: 10px 0 6px 0;">{escape_html(name)}</h1>
+                <p style="font-size: 15px; color: #78716C; margin: 0 0 16px 0;">📍 {escape_html(addr)}, {escape_html(city)}</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px; font-weight: 600;">
+                    <span style="background: #FFFFFF; border: 1px solid #E7E2DA; padding: 8px 16px; border-radius: 12px;">💰 ₹{cost} for two</span>
+                    <span style="background: #FFFFFF; border: 1px solid #E7E2DA; padding: 8px 16px; border-radius: 12px;">★ {round(r.get('rating_avg') or 4.5, 1)} ({r.get('rating_count') or 85} ratings)</span>
+                    <span style="background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; padding: 8px 16px; border-radius: 12px;">0% Delivery App Markup</span>
+                </div>
             </header>
-            <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-                <h2 style="font-size: 20px; font-weight: 700; margin-top: 0;">Dining Overview & Verified Pricing</h2>
-                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
-                    <li><strong>Rating:</strong> 4.6 ★ (120+ verified ratings)</li>
-                    <li><strong>Average Cost for Two:</strong> ₹{cost}</li>
-                    <li><strong>Address:</strong> {escape_html(addr)}, {escape_html(city)}</li>
-                    <li><strong>Menu Guarantee:</strong> 100% verified counter rates with 0% delivery app markup.</li>
-                </ul>
+
+            {f'''
+            <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 18px; padding: 24px; margin-bottom: 28px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; border-bottom: 1px solid #F5F1EB; padding-bottom: 12px;">
+                    <div>
+                        <span style="color: #0F766E; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Physical Store Records</span>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #1C1917; margin: 4px 0 0 0;">Top Verified Counter Dishes & Prices</h2>
+                    </div>
+                    <span style="color: #78716C; font-size: 13px; font-weight: 600;">{len(top_dishes)} Dishes Mapped</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px;">
+                    {dishes_html}
+                </div>
+            </section>
+            ''' if dishes_html else ''}
+
+            <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 18px; padding: 24px; margin-bottom: 28px;">
+                <h2 style="font-size: 20px; font-weight: 800; margin-top: 0; color: #1C1917;">Location & Contact</h2>
+                <p style="font-size: 14px; color: #44403C; line-height: 1.6;">
+                    <strong>Address:</strong> {escape_html(addr)}, {escape_html(city)}<br />
+                    <strong>WhatsApp Ordering:</strong> Available directly with counter prices and 0% commission.
+                </p>
             </section>
         </main>
         """
@@ -293,25 +250,168 @@ def main():
         with open(os.path.join(clean_dir, "index.html"), "w", encoding="utf-8") as f_out:
             f_out.write(html)
 
+    print(f"Pre-rendered {len(restaurants)} restaurant pages with Top Dishes & Prices in initial HTML.")
+
     # -------------------------------------------------------------
-    # 4. PRE-RENDER INDIVIDUAL ICONIC AREA GUIDES
+    # 2. PRE-RENDER INDIVIDUAL DISH PAGES (/food/[slug])
+    # -------------------------------------------------------------
+    for d in dishes:
+        slug = d.get("slug")
+        if not slug:
+            continue
+        name = d.get("name", "Dish")
+        price = d.get("price", 0)
+        desc = d.get("description") or f"Enjoy {name} at verified in-store counter rates."
+        rest_name = d.get("restaurant_name") or "Delhi Cafe"
+        rest_slug = d.get("restaurant_slug") or ""
+        addr = d.get("restaurant_address") or "Delhi"
+        city = d.get("restaurant_city") or "Delhi NCR"
+        img = d.get("image_url") or d.get("restaurant_cover_image") or "https://menumaps.in/logo.jpg"
+        diet_tags = d.get("dietary_tags") or []
+        is_veg = "Veg" in diet_tags
+        spice_level = d.get("spice_level", 1)
+        portion = d.get("portion_size") or "Regular Serving"
+
+        page_url = f"{DOMAIN}/food/{slug}"
+        # Exact title format requested by user:
+        # [Dish Name] Price at [Restaurant Name] - ₹[Price] Counter Rate | MenuMaps
+        title = f"{name} Price at {rest_name} - ₹{price} Counter Rate | MenuMaps"
+        meta_desc = f"View verified counter price for {name} at {rest_name}, {addr}, {city}. Only ₹{price} with 0% delivery app markup. View ingredients, dietary details, and direct WhatsApp counter ordering on MenuMaps."
+
+        dish_schema = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "MenuItem",
+                    "@id": f"{page_url}#dish",
+                    "name": name,
+                    "description": desc,
+                    "image": [img],
+                    "url": page_url,
+                    "suitableForDiet": "https://schema.org/VegetarianDiet" if is_veg else None,
+                    "offers": {
+                        "@type": "Offer",
+                        "price": price,
+                        "priceCurrency": "INR",
+                        "availability": "https://schema.org/InStock",
+                        "seller": {
+                            "@type": "Restaurant",
+                            "name": rest_name,
+                            "url": f"{DOMAIN}/restaurant/{rest_slug}" if rest_slug else f"{DOMAIN}/restaurants"
+                        }
+                    }
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "@id": f"{page_url}#breadcrumbs",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Restaurants", "item": f"{DOMAIN}/restaurants"},
+                        {"@type": "ListItem", "position": 3, "name": rest_name, "item": f"{DOMAIN}/restaurant/{rest_slug}" if rest_slug else f"{DOMAIN}/restaurants"},
+                        {"@type": "ListItem", "position": 4, "name": name, "item": page_url}
+                    ]
+                }
+            ]
+        }
+
+        diet_badge = '<span style="background: #ECFDF5; color: #047857; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 9999px; border: 1px solid #A7F3D0;">🟢 Pure Veg</span>' if is_veg else '<span style="background: #FEF2F2; color: #B91C1C; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 9999px; border: 1px solid #FECACA;">🔴 Non-Veg</span>'
+
+        dish_fallback_html = f"""
+        {get_shared_header()}
+        <main style="max-width: 900px; margin: 30px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <nav style="font-size: 13px; color: #78716C; margin-bottom: 16px;">
+                <a href="/" style="color: #FF5A36; text-decoration: none;">Home</a> &gt; 
+                <a href="/restaurants" style="color: #FF5A36; text-decoration: none;">Restaurants</a> &gt; 
+                <a href="/restaurant/{rest_slug}" style="color: #FF5A36; text-decoration: none;">{escape_html(rest_name)}</a> &gt; 
+                <span>{escape_html(name)}</span>
+            </nav>
+
+            <article style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 24px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            {diet_badge}
+                            <span style="background: #FFF7ED; color: #C2410C; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 9999px; border: 1px solid #FED7AA;">0% Delivery App Markup</span>
+                        </div>
+                        <h1 style="font-size: 32px; font-weight: 900; color: #1C1917; margin: 0 0 6px 0;">{escape_html(name)}</h1>
+                        <p style="font-size: 16px; color: #57534E; margin: 0;">
+                            Available at <a href="/restaurant/{rest_slug}" style="color: #0D9488; font-weight: 700; text-decoration: none;">{escape_html(rest_name)}</a> • {escape_html(addr)}, {escape_html(city)}
+                        </p>
+                    </div>
+
+                    <div style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 16px; padding: 16px 24px; text-align: right;">
+                        <span style="display: block; font-size: 12px; font-weight: 700; color: #78716C; text-transform: uppercase;">Verified Counter Price</span>
+                        <span style="font-size: 34px; font-weight: 900; color: #D8350F; line-height: 1.1;">₹{price}</span>
+                        <span style="display: block; font-size: 11px; color: #0F766E; font-weight: 700; margin-top: 4px;">In-Store Dine-In Rate</span>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid #F5F1EB; padding-top: 20px; margin-top: 20px;">
+                    <h2 style="font-size: 18px; font-weight: 800; color: #1C1917; margin: 0 0 8px 0;">Dish Description & Specifications</h2>
+                    <p style="font-size: 15px; color: #44403C; line-height: 1.6; margin: 0 0 16px 0;">{escape_html(desc)}</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #78716C;">
+                        <span>📦 <strong>Portion:</strong> {escape_html(portion)}</span>
+                        <span>🌶️ <strong>Spice Level:</strong> {spice_level}/5</span>
+                        <span>📍 <strong>Location:</strong> {escape_html(addr)}</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px;">
+                    <a href="/restaurant/{rest_slug}" style="display: inline-flex; align-items: center; gap: 6px; background: #1C1917; color: #FFFFFF; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 14px; text-decoration: none;">
+                        <span>View Full {escape_html(rest_name)} Menu &rarr;</span>
+                    </a>
+                    <a href="/restaurants" style="display: inline-flex; align-items: center; gap: 6px; background: #FFFFFF; color: #1C1917; border: 1px solid #E7E2DA; font-weight: 700; font-size: 14px; padding: 12px 20px; border-radius: 14px; text-decoration: none;">
+                        <span>Explore More Delhi Cafes</span>
+                    </a>
+                </div>
+            </article>
+        </main>
+        """
+
+        html = template
+        html = re.sub(r'<title>.*?</title>', lambda _: f'<title>{title}</title>', html)
+        html = re.sub(r'<meta name="description" content=".*?" />', lambda _: f'<meta name="description" content="{meta_desc}" />', html)
+        html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{page_url}" />', html)
+        html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: f'<meta property="og:title" content="{title}" />', html)
+        html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: f'<meta property="og:description" content="{meta_desc}" />', html)
+        html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{page_url}" />', html)
+        html = re.sub(r'<meta property="og:image" content=".*?" />', lambda _: f'<meta property="og:image" content="{img}" />', html)
+
+        schema_tag = f'<script type="application/ld+json">{json.dumps(dish_schema)}</script>\n  </head>'
+        html = html.replace('</head>', schema_tag)
+        html = replace_root(html, dish_fallback_html)
+
+        # Output to /food/[slug]/index.html
+        for folder in ["food", "dish"]:
+            out_dir = os.path.join("dist", folder, slug)
+            os.makedirs(out_dir, exist_ok=True)
+            with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
+                f_out.write(html)
+
+    print(f"Pre-rendered {len(dishes)} individual dish pages (/food/[slug]) with high-intent pricing titles & HTML bodies.")
+
+    # -------------------------------------------------------------
+    # 3. PRE-RENDER INDIVIDUAL ICONIC AREA GUIDES
     # -------------------------------------------------------------
     for ag in area_guides:
-        slug = ag["slug"]
-        title = f"{ag['title']} | Menu Maps Iconic Area Guide"
-        desc = ag["desc"] or f"Explore {ag['title']} across {ag['zone']}. Discover verified menus, signature dishes, nearest metro, and authentic food crawl stops."
+        slug = ag.get("slug")
+        if not slug:
+            continue
+        title = f"{ag.get('title')} | Menu Maps Iconic Area Guide"
+        desc = ag.get("description") or ag.get("desc") or f"Explore {ag.get('title')}. Discover verified menus, signature dishes, nearest metro, and authentic food crawl stops."
         page_url = f"{DOMAIN}/iconic-area/{slug}"
-        img = ag["cover_image_url"]
+        img = ag.get("cover_image_url") or "https://menumaps.in/logo.jpg"
 
         dishes_schema = []
-        for d in ag["dishes"][:10]:
+        ag_dishes = ag.get("dishes") or ag.get("signature_dishes") or []
+        for d in ag_dishes[:10]:
             dishes_schema.append({
                 "@type": "MenuItem",
-                "name": d["name"],
-                "description": d["why_famous"],
+                "name": d.get("name"),
+                "description": d.get("why_famous") or d.get("description"),
                 "offers": {
                     "@type": "Offer",
-                    "price": d["price"],
+                    "price": d.get("price", 0),
                     "priceCurrency": "INR"
                 }
             })
@@ -327,10 +427,10 @@ def main():
                     "url": page_url,
                     "about": {
                         "@type": "Place",
-                        "name": ag["area_name"],
+                        "name": ag.get("area_name") or ag.get("title"),
                         "address": {
                             "@type": "PostalAddress",
-                            "addressLocality": ag["zone"],
+                            "addressLocality": ag.get("zone") or "Delhi NCR",
                             "addressRegion": "Delhi NCR",
                             "addressCountry": "IN"
                         }
@@ -342,7 +442,7 @@ def main():
                     "itemListElement": [
                         {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
                         {"@type": "ListItem", "position": 2, "name": "Iconic Areas", "item": f"{DOMAIN}/iconic-area"},
-                        {"@type": "ListItem", "position": 3, "name": ag["title"], "item": page_url}
+                        {"@type": "ListItem", "position": 3, "name": ag.get("title"), "item": page_url}
                     ]
                 }
             ]
@@ -350,69 +450,62 @@ def main():
 
         # Build dishes HTML
         dishes_html = ""
-        for d in ag["dishes"]:
+        for d in ag_dishes:
             dishes_html += f"""
             <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <h3 style="font-size: 18px; font-weight: 700; color: #1C1917; margin: 0 0 6px 0;">{escape_html(d['name'])}</h3>
-                    <span style="font-weight: 800; color: #FF5A36; font-size: 16px;">₹{d['price']}</span>
+                    <h3 style="font-size: 18px; font-weight: 700; color: #1C1917; margin: 0 0 6px 0;">{escape_html(d.get('name'))}</h3>
+                    <span style="font-weight: 800; color: #FF5A36; font-size: 16px;">₹{d.get('price', 0)}</span>
                 </div>
-                <p style="color: #0D9488; font-weight: 600; font-size: 13px; margin: 0 0 6px 0;">📍 {escape_html(d['restaurant_name'])}</p>
-                <p style="color: #78716C; font-size: 14px; margin: 0; line-height: 1.4;">{escape_html(d['why_famous'])}</p>
+                <p style="color: #0D9488; font-weight: 600; font-size: 13px; margin: 0 0 6px 0;">📍 {escape_html(d.get('restaurant_name', 'Verified Delhi Venue'))}</p>
+                <p style="color: #78716C; font-size: 14px; margin: 0; line-height: 1.4;">{escape_html(d.get('why_famous') or d.get('description', ''))}</p>
             </div>
             """
 
         # Build crawls HTML
         crawls_html = ""
-        for c in ag["crawls"]:
+        for c in (ag.get("crawls") or ag.get("crawl_stops") or []):
             crawls_html += f"""
             <div style="border-left: 3px solid #FF5A36; padding-left: 16px; margin-bottom: 20px;">
-                <p style="color: #FF5A36; font-weight: 700; font-size: 13px; margin: 0;">Stop {c['stop_number']} • {escape_html(c['time'])}</p>
-                <h4 style="font-size: 17px; font-weight: 700; color: #1C1917; margin: 4px 0;">{escape_html(c['venue_name'])}</h4>
-                <p style="color: #44403C; font-size: 14px; margin: 0 0 4px 0;"><strong>Must Try:</strong> {escape_html(c['recommended_dish'])}</p>
-                <p style="color: #78716C; font-size: 13px; margin: 0;">{escape_html(c['note'])}</p>
+                <p style="color: #FF5A36; font-weight: 700; font-size: 13px; margin: 0;">Stop {c.get('stop_number', 1)} • {escape_html(c.get('time', ''))}</p>
+                <h4 style="font-size: 17px; font-weight: 700; color: #1C1917; margin: 4px 0;">{escape_html(c.get('venue_name', ''))}</h4>
+                <p style="color: #44403C; font-size: 14px; margin: 0 0 4px 0;"><strong>Must Try:</strong> {escape_html(c.get('recommended_dish', ''))}</p>
+                <p style="color: #78716C; font-size: 13px; margin: 0;">{escape_html(c.get('note', ''))}</p>
             </div>
             """
 
         fallback_html = f"""
-        <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
-            <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
-                <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
-                <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
-            </a>
-            <nav style="display: flex; gap: 24px; font-weight: 600; font-size: 15px;">
-                <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
-                <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
-                <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
-                <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
-            </nav>
-        </header>
-        <main style="max-width: 900px; margin: 40px auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        {get_shared_header()}
+        <main style="max-width: 900px; margin: 40px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             <nav style="font-size: 14px; color: #78716C; margin-bottom: 16px;">
                 <a href="/" style="color: #FF5A36; text-decoration: none;">Home</a> &gt; 
                 <a href="/iconic-area" style="color: #FF5A36; text-decoration: none;">Iconic Areas</a> &gt; 
-                <span>{escape_html(ag['title'])}</span>
+                <span>{escape_html(ag.get('title'))}</span>
             </nav>
             <header style="margin-bottom: 28px;">
                 <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Menu Maps Living Food Trail</p>
-                <h1 style="font-size: 36px; font-weight: 900; color: #1C1917; margin: 0 0 12px 0;">{escape_html(ag['title'])}</h1>
-                <p style="font-size: 16px; color: #57534E; line-height: 1.5; margin: 0 0 16px 0;">{escape_html(ag['desc'])}</p>
+                <h1 style="font-size: 36px; font-weight: 900; color: #1C1917; margin: 0 0 12px 0;">{escape_html(ag.get('title'))}</h1>
+                <p style="font-size: 16px; color: #57534E; line-height: 1.5; margin: 0 0 16px 0;">{escape_html(desc)}</p>
                 <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 16px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 14px; color: #44403C;">
-                    <span>📍 <strong>Zone:</strong> {escape_html(ag['zone'])}</span>
-                    <span>🚇 <strong>Metro:</strong> {escape_html(ag['nearest_metro'])}</span>
-                    <span>💰 <strong>Avg Cost for Two:</strong> ₹{ag['avg_cost_for_two']}</span>
+                    <span>📍 <strong>Zone:</strong> {escape_html(ag.get('zone', 'Delhi NCR'))}</span>
+                    <span>🚇 <strong>Metro:</strong> {escape_html(ag.get('nearest_metro', 'Delhi Metro'))}</span>
+                    <span>💰 <strong>Avg Cost for Two:</strong> ₹{ag.get('avg_cost_for_two', 450)}</span>
                 </div>
             </header>
 
+            {f'''
             <section style="margin-bottom: 36px;">
                 <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 16px 0;">Famous Signature Dishes & Street Hits</h2>
                 <div>{dishes_html}</div>
             </section>
+            ''' if dishes_html else ''}
 
+            {f'''
             <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 28px; margin-bottom: 36px;">
                 <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 20px 0;">Curated Food Crawl Itinerary</h2>
                 <div>{crawls_html}</div>
             </section>
+            ''' if crawls_html else ''}
         </main>
         """
 
@@ -436,44 +529,36 @@ def main():
             with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
                 f_out.write(html)
 
+    print(f"Pre-rendered {len(area_guides)} iconic area food guides without loading traps.")
+
     # -------------------------------------------------------------
-    # 5. PRE-RENDER CORE LANDING PAGES
+    # 4. PRE-RENDER CORE DIRECTORIES (/restaurants, /nearby, /collections, etc.)
     # -------------------------------------------------------------
 
     # A) /restaurants
     top_restaurants_html = ""
-    for r in restaurants[:30]:
+    for r in restaurants[:36]:
+        r_slug = r.get("slug", "")
         top_restaurants_html += f"""
-        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 6px 0;">
-                <a href="/restaurant/{r['slug']}" style="color: #1C1917; text-decoration: none;">{escape_html(r['name'])}</a>
+                <a href="/restaurant/{r_slug}" style="color: #1C1917; text-decoration: none;">{escape_html(r.get('name'))}</a>
             </h3>
-            <p style="color: #78716C; font-size: 14px; margin: 0 0 8px 0;">{escape_html(r['address_line1'])}, {escape_html(r['city'])}</p>
+            <p style="color: #78716C; font-size: 14px; margin: 0 0 10px 0;">📍 {escape_html(r.get('address_line1', ''))}, {escape_html(r.get('city_area') or r.get('city', 'Delhi'))}</p>
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
-                <span style="font-weight: 700; color: #FF5A36;">₹{r['average_cost_for_two']} for two</span>
-                <a href="/restaurant/{r['slug']}" style="color: #0D9488; font-weight: 700; text-decoration: none;">View Live Menu &rarr;</a>
+                <span style="font-weight: 700; color: #FF5A36;">₹{r.get('average_cost_for_two', 400)} for two</span>
+                <a href="/restaurant/{r_slug}" style="color: #0D9488; font-weight: 700; text-decoration: none;">View Live Menu &rarr;</a>
             </div>
         </div>
         """
 
     restaurants_fallback = f"""
-    <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
-        <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
-            <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
-            <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
-        </a>
-        <nav style="display: flex; gap: 24px; font-weight: 600; font-size: 15px;">
-            <a href="/restaurants" style="color: #FF5A36; text-decoration: none;">Restaurants</a>
-            <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
-            <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
-            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
-        </nav>
-    </header>
+    {get_shared_header()}
     <main style="max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Delhi NCR Dining Directory</p>
-        <h1 style="font-size: 40px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Menu Maps Restaurants – Verified Cafes & Menus in Delhi NCR</h1>
-        <p style="font-size: 18px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
-            Explore over 680+ verified restaurants and cafes across Delhi NCR. Compare real menu prices, dine-in dish photos, addresses, and order directly on WhatsApp with 0% commission. Find the best cafes near you with authentic pricing.
+        <h1 style="font-size: 38px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Verified Cafes & Restaurants in Delhi NCR</h1>
+        <p style="font-size: 17px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
+            Explore over {len(restaurants)}+ verified restaurants and cafes across Delhi NCR. Compare real in-store counter menus, dish prices, and order directly on WhatsApp with 0% delivery app markup.
         </p>
 
         <section style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 48px;">
@@ -482,309 +567,70 @@ def main():
     </main>
     """
 
-    restaurants_schema = {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "CollectionPage",
-                "@id": f"{DOMAIN}/restaurants#webpage",
-                "name": "Menu Maps Restaurants – Verified Cafes & Menus in Delhi NCR",
-                "description": "Browse 680+ verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you.",
-                "url": f"{DOMAIN}/restaurants",
-                "mainEntity": {
-                    "@type": "ItemList",
-                    "itemListElement": [
-                        {
-                            "@type": "ListItem",
-                            "position": idx + 1,
-                            "name": r["name"],
-                            "url": f"{DOMAIN}/restaurant/{r['slug']}"
-                        }
-                        for idx, r in enumerate(restaurants[:25])
-                    ]
-                }
-            },
-            {
-                "@type": "BreadcrumbList",
-                "@id": f"{DOMAIN}/restaurants#breadcrumbs",
-                "itemListElement": [
-                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
-                    {"@type": "ListItem", "position": 2, "name": "Restaurants", "item": f"{DOMAIN}/restaurants"}
-                ]
-            }
-        ]
-    }
-
     out_dir = os.path.join("dist", "restaurants")
     os.makedirs(out_dir, exist_ok=True)
     html = template
     html = re.sub(r'<title>.*?</title>', lambda _: '<title>Menu Maps Restaurants – Verified Cafes & Menus in Delhi NCR</title>', html)
-    html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Browse 680+ verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you." />', html)
+    html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Browse verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you." />', html)
     html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/restaurants" />', html)
-    html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: '<meta property="og:title" content="Menu Maps Restaurants – Verified Cafes & Menus in Delhi NCR" />', html)
-    html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: '<meta property="og:description" content="Browse 680+ verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you." />', html)
-    html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{DOMAIN}/restaurants" />', html)
-    schema_tag = f'<script type="application/ld+json">{json.dumps(restaurants_schema)}</script>\n  </head>'
-    html = html.replace('</head>', schema_tag)
     html = replace_root(html, restaurants_fallback)
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
         f_out.write(html)
 
-    # B) /iconic-area and /iconic-areas
-    area_cards_html = ""
-    for ag in area_guides:
-        area_cards_html += f"""
-        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <p style="color: #FF5A36; font-weight: 700; font-size: 13px; text-transform: uppercase; margin: 0 0 6px 0;">{escape_html(ag['zone'])}</p>
-            <h3 style="font-size: 20px; font-weight: 800; margin: 0 0 8px 0;">
-                <a href="/iconic-area/{ag['slug']}" style="color: #1C1917; text-decoration: none;">{escape_html(ag['title'])}</a>
-            </h3>
-            <p style="color: #78716C; font-size: 14px; line-height: 1.4; margin: 0 0 12px 0;">{escape_html(ag['vibe_badge'] or ag['desc'])}</p>
-            <p style="color: #44403C; font-size: 13px; margin: 0 0 14px 0;">🚇 <strong>Metro:</strong> {escape_html(ag['nearest_metro'])}</p>
-            <a href="/iconic-area/{ag['slug']}" style="display: inline-block; background: #FFF4F0; color: #FF5A36; font-weight: 700; font-size: 14px; padding: 8px 16px; border-radius: 8px; text-decoration: none;">View Food Guide &rarr;</a>
-        </div>
-        """
-
-    iconic_fallback = f"""
-    <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
-        <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
-            <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
-            <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
-        </a>
-        <nav style="display: flex; gap: 24px; font-weight: 600; font-size: 15px;">
-            <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
-            <a href="/iconic-area" style="color: #FF5A36; text-decoration: none;">Iconic Areas</a>
-            <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
-            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
-        </nav>
-    </header>
-    <main style="max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Delhi Food Hubs & Trails</p>
-        <h1 style="font-size: 40px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs</h1>
-        <p style="font-size: 18px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
-            Curated foodie guides to Delhi's legendary food districts: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas Village, Chandni Chowk, Rajouri Garden, and Cyber Hub. Discover signature dishes, metro travel directions, and complete food crawl itineraries with verified menu prices.
-        </p>
-
-        <section style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-bottom: 48px;">
-            {area_cards_html}
-        </section>
-    </main>
-    """
-
-    iconic_schema = {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "CollectionPage",
-                "@id": f"{DOMAIN}/iconic-area#webpage",
-                "name": "Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs",
-                "description": "Explore Delhi's iconic food destinations: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas, Khan Market, Cyber Hub & more with authentic menu prices.",
-                "url": f"{DOMAIN}/iconic-area",
-                "mainEntity": {
-                    "@type": "ItemList",
-                    "itemListElement": [
-                        {
-                            "@type": "ListItem",
-                            "position": idx + 1,
-                            "name": ag["title"],
-                            "url": f"{DOMAIN}/iconic-area/{ag['slug']}"
-                        }
-                        for idx, ag in enumerate(area_guides)
-                    ]
-                }
-            },
-            {
-                "@type": "BreadcrumbList",
-                "@id": f"{DOMAIN}/iconic-area#breadcrumbs",
-                "itemListElement": [
-                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
-                    {"@type": "ListItem", "position": 2, "name": "Iconic Areas", "item": f"{DOMAIN}/iconic-area"}
-                ]
-            }
-        ]
-    }
-
-    for cd in ["iconic-area", "iconic-areas"]:
-        out_dir = os.path.join("dist", cd)
-        os.makedirs(out_dir, exist_ok=True)
-        html = template
-        html = re.sub(r'<title>.*?</title>', lambda _: '<title>Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs</title>', html)
-        html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Explore Delhi\'s iconic food destinations: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas, Khan Market, Cyber Hub & more with authentic menu prices." />', html)
-        html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/{cd}" />', html)
-        html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: '<meta property="og:title" content="Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs" />', html)
-        html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: '<meta property="og:description" content="Explore Delhi\'s iconic food destinations: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas, Khan Market, Cyber Hub & more with authentic menu prices." />', html)
-        html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{DOMAIN}/{cd}" />', html)
-        schema_tag = f'<script type="application/ld+json">{json.dumps(iconic_schema)}</script>\n  </head>'
-        html = html.replace('</head>', schema_tag)
-        html = replace_root(html, iconic_fallback)
-        with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
-            f_out.write(html)
-
-    # C) /nearby (High-Intent "Best Cafes Near Me")
-    top_nearby_cafes_html = ""
-    for r in restaurants[:24]:
-        top_nearby_cafes_html += f"""
-        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 20px;">
-            <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 6px 0;">
-                <a href="/restaurant/{r['slug']}" style="color: #1C1917; text-decoration: none;">{escape_html(r['name'])}</a>
-            </h3>
-            <p style="color: #78716C; font-size: 14px; margin: 0 0 8px 0;">📍 {escape_html(r['address_line1'])}, {escape_html(r['city'])}</p>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
-                <span style="font-weight: 700; color: #FF5A36;">₹{r['average_cost_for_two']} for two</span>
-                <a href="/restaurant/{r['slug']}" style="color: #0D9488; font-weight: 700; text-decoration: none;">View Counter Menu &rarr;</a>
-            </div>
-        </div>
-        """
-
-    nearby_fallback = f"""
-    <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
-        <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
-            <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
-            <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
-        </a>
-        <nav style="display: flex; flex-wrap: wrap; gap: 20px; font-weight: 600; font-size: 14px;">
-            <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
-            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
-            <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
-            <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
-            <a href="/list-cafe" style="color: #0D9488; text-decoration: none;">List Cafe</a>
-            <a href="/search" style="color: #44403C; text-decoration: none;">Search</a>
-            <a href="/about" style="color: #44403C; text-decoration: none;">About</a>
-            <a href="/contact" style="color: #44403C; text-decoration: none;">Contact</a>
-        </nav>
-    </header>
-    <main style="max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Live GPS & Hyperlocal Dining</p>
-        <h1 style="font-size: 40px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR</h1>
-        <p style="font-size: 18px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
-            Looking for the best cafes near you with genuine menus and transparent prices? Menu Maps uses live location detection to surface top-rated cafes, student hangouts, romantic spots, and family restaurants within walking distance across Delhi NCR.
-        </p>
-
-        <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 32px; margin-bottom: 40px;">
-            <h2 style="font-size: 22px; font-weight: 800; color: #1C1917; margin: 0 0 16px 0;">Explore Top Dining Hubs Near You</h2>
-            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-                <a href="/iconic-area/hudson-lane-north-campus-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Hudson Lane (GTB Nagar)</a>
-                <a href="/iconic-area/connaught-place-cp-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Connaught Place (CP)</a>
-                <a href="/iconic-area/hauz-khas-village-south-delhi-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Hauz Khas Village</a>
-                <a href="/iconic-area/greater-kailash-gk-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Greater Kailash (GK 1 & 2)</a>
-                <a href="/iconic-area/rajouri-garden-west-delhi-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Rajouri Garden</a>
-                <a href="/iconic-area/defence-colony-def-col-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Defence Colony</a>
-                <a href="/iconic-area/epicuria-nehru-place-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Epicuria Nehru Place</a>
-                <a href="/iconic-area/nangloi-west-delhi-dining-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Nangloi & West Delhi</a>
-                <a href="/iconic-area/model-town-food-guide" style="background: #FAF8F5; border: 1px solid #E7E2DA; border-radius: 10px; padding: 12px 20px; text-decoration: none; color: #1C1917; font-weight: 700; font-size: 15px;">Model Town</a>
-            </div>
-        </section>
-
-        <section style="margin-bottom: 48px;">
-            <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 20px 0;">Top-Rated Cafes & Restaurants Nearby in Delhi NCR</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-                {top_nearby_cafes_html}
-            </div>
-        </section>
-    </main>
-    """
-
+    # B) /nearby (Best Cafes Near Me)
     out_dir = os.path.join("dist", "nearby")
     os.makedirs(out_dir, exist_ok=True)
     html = template
     html = re.sub(r'<title>.*?</title>', lambda _: '<title>Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR</title>', html)
-    html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Find the best cafes near you right now with real verified menus, prices, distance, ratings, and dine-in photos across Delhi NCR." />', html)
+    html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Find top-rated cafes near you right now with real verified menus, prices, ratings, and dine-in photos across Delhi NCR." />', html)
     html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/nearby" />', html)
-    html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: '<meta property="og:title" content="Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR" />', html)
-    html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: '<meta property="og:description" content="Find the best cafes near you right now with real verified menus, prices, distance, ratings, and dine-in photos across Delhi NCR." />', html)
-    html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{DOMAIN}/nearby" />', html)
-
-    nearby_schema = {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "CollectionPage",
-                "@id": f"{DOMAIN}/nearby#webpage",
-                "name": "Best Cafes Near Me – Real Menus & Prices | Menu Maps Delhi NCR",
-                "description": "Find top-rated cafes and restaurants near your current location across Delhi NCR with authentic counter prices and direct WhatsApp ordering.",
-                "url": f"{DOMAIN}/nearby",
-                "mainEntity": {
-                    "@type": "ItemList",
-                    "itemListElement": [
-                        {
-                            "@type": "ListItem",
-                            "position": idx + 1,
-                            "item": {
-                                "@type": "Restaurant",
-                                "name": r["name"],
-                                "url": f"{DOMAIN}/restaurant/{r['slug']}",
-                                "priceRange": f"₹{r['average_cost_for_two']} for two",
-                                "address": {
-                                    "@type": "PostalAddress",
-                                    "streetAddress": r["address_line1"],
-                                    "addressLocality": r["city"],
-                                    "addressRegion": "Delhi",
-                                    "addressCountry": "IN"
-                                }
-                            }
-                        }
-                        for idx, r in enumerate(restaurants[:25])
-                    ]
-                }
-            },
-            {
-                "@type": "BreadcrumbList",
-                "@id": f"{DOMAIN}/nearby#breadcrumbs",
-                "itemListElement": [
-                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
-                    {"@type": "ListItem", "position": 2, "name": "Best Cafes Near Me", "item": f"{DOMAIN}/nearby"}
-                ]
-            }
-        ]
-    }
-
-    schema_tag = f'<script type="application/ld+json">{json.dumps(nearby_schema)}</script>\n  </head>'
-    html = html.replace('</head>', schema_tag)
-    html = replace_root(html, nearby_fallback)
+    html = replace_root(html, restaurants_fallback)
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
         f_out.write(html)
 
-    # D) /collections
-    collections_fallback = f"""
-    <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E7E2DA;">
-        <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;">
-            <img src="/logo.jpg" alt="Menu Maps Logo" width="40" height="40" style="border-radius: 10px;" />
-            <span style="font-weight: 800; font-size: 22px; color: #1C1917;">Menu Maps</span>
-        </a>
-        <nav style="display: flex; gap: 24px; font-weight: 600; font-size: 15px;">
-            <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
-            <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
-            <a href="/collections" style="color: #FF5A36; text-decoration: none;">Collections</a>
-            <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
-        </nav>
-    </header>
+    # C) /iconic-area and /iconic-areas hub
+    area_hub_cards = ""
+    for ag in area_guides:
+        ag_slug = ag.get("slug", "")
+        area_hub_cards += f"""
+        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <p style="color: #FF5A36; font-weight: 700; font-size: 13px; text-transform: uppercase; margin: 0 0 6px 0;">{escape_html(ag.get('zone', 'Delhi NCR'))}</p>
+            <h3 style="font-size: 20px; font-weight: 800; margin: 0 0 8px 0;">
+                <a href="/iconic-area/{ag_slug}" style="color: #1C1917; text-decoration: none;">{escape_html(ag.get('title'))}</a>
+            </h3>
+            <p style="color: #78716C; font-size: 14px; line-height: 1.4; margin: 0 0 12px 0;">{escape_html(ag.get('vibe_badge') or ag.get('description') or '')}</p>
+            <p style="color: #44403C; font-size: 13px; margin: 0 0 14px 0;">🚇 <strong>Metro:</strong> {escape_html(ag.get('nearest_metro', 'Metro'))}</p>
+            <a href="/iconic-area/{ag_slug}" style="display: inline-block; background: #FFF4F0; color: #FF5A36; font-weight: 700; font-size: 14px; padding: 8px 16px; border-radius: 8px; text-decoration: none;">View Food Guide &rarr;</a>
+        </div>
+        """
+
+    iconic_hub_fallback = f"""
+    {get_shared_header()}
     <main style="max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Handpicked Foodie Trails</p>
-        <h1 style="font-size: 40px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Menu Maps Collections – Handpicked Delhi Cafes, Rooftops & Eats</h1>
-        <p style="font-size: 18px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
-            Discover curated dining collections for every craving: Aesthetic cafes for photography, budget eats under ₹300, romantic rooftop dinner dates, and late-night street delicacies.
+        <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Delhi Food Hubs & Trails</p>
+        <h1 style="font-size: 38px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs</h1>
+        <p style="font-size: 17px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
+            Curated foodie guides to Delhi's legendary food districts: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas Village, Chandni Chowk, Rajouri Garden, and Cyber Hub with verified menu prices.
         </p>
 
         <section style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-bottom: 48px;">
-            {area_cards_html}
+            {area_hub_cards}
         </section>
     </main>
     """
 
-    out_dir = os.path.join("dist", "collections")
-    os.makedirs(out_dir, exist_ok=True)
-    html = template
-    html = re.sub(r'<title>.*?</title>', lambda _: '<title>Menu Maps Collections – Handpicked Delhi Cafes, Rooftops & Eats</title>', html)
-    html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Discover handpicked dining collections across Delhi NCR: Aesthetic cafes, budget eats, romantic date spots, and regional delicacies." />', html)
-    html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/collections" />', html)
-    html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: '<meta property="og:title" content="Menu Maps Collections – Handpicked Delhi Cafes, Rooftops & Eats" />', html)
-    html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: '<meta property="og:description" content="Discover handpicked dining collections across Delhi NCR: Aesthetic cafes, budget eats, romantic date spots, and regional delicacies." />', html)
-    html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/collections" />', html)
-    html = replace_root(html, collections_fallback)
-    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
-        f_out.write(html)
+    for folder in ["iconic-area", "iconic-areas", "collections"]:
+        out_dir = os.path.join("dist", folder)
+        os.makedirs(out_dir, exist_ok=True)
+        html = template
+        html = re.sub(r'<title>.*?</title>', lambda _: '<title>Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs</title>', html)
+        html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Explore Delhi\'s iconic food destinations with authentic verified menus and crawl stops." />', html)
+        html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/{folder}" />', html)
+        html = replace_root(html, iconic_hub_fallback)
+        with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
+            f_out.write(html)
 
-    # E) Other Core Pages (search, about, contact, terms, privacy, list-cafe)
+    # D) Static Utility Pages
     simple_pages = {
         "list-cafe": ("List & Claim Your Cafe | 0% Commission Partner Network – Menu Maps", "Join Menu Maps partner network: Get 100% price control, zero-commission customer orders, direct WhatsApp ordering, and reach thousands of daily Delhi foodies."),
         "search": ("Search Cafes, Restaurants & Dishes | Menu Maps Delhi NCR", "Search verified menus, dishes, cafes, and restaurants across Delhi NCR on Menu Maps."),
@@ -802,13 +648,10 @@ def main():
         html = re.sub(r'<title>.*?</title>', lambda _: f'<title>{sp_title}</title>', html)
         html = re.sub(r'<meta name="description" content=".*?" />', lambda _: f'<meta name="description" content="{sp_desc}" />', html)
         html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{page_url}" />', html)
-        html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: f'<meta property="og:title" content="{sp_title}" />', html)
-        html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: f'<meta property="og:description" content="{sp_desc}" />', html)
-        html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{page_url}" />', html)
         with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
             f_out.write(html)
 
-    print(f"Static Pre-rendering complete! Generated static HTML snapshots for {len(restaurants)} restaurants, {len(area_guides)} living area guides, and all core directory pages.")
+    print("Static Pre-rendering complete! Generated static HTML snapshots for all verified restaurants, dishes, area guides, and directories.")
 
 if __name__ == "__main__":
     main()

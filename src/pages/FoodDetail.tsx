@@ -34,14 +34,20 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
   const { showToast } = useToast();
   const { engine, trackView, activeLocality } = useDiscovery();
 
-  const [loading, setLoading] = useState(true);
-  const [dish, setDish] = useState<MenuItem | null>(null);
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const cachedInitialDish = engine.getDishBySlug(slug) || null;
+  const cachedInitialRest = cachedInitialDish ? engine.getRestaurantById(cachedInitialDish.restaurant_id) || null : null;
+
+  const [loading, setLoading] = useState<boolean>(() => !cachedInitialDish);
+  const [dish, setDish] = useState<MenuItem | null>(() => cachedInitialDish);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(() => cachedInitialRest);
   const [sameRestaurantDishes, setSameRestaurantDishes] = useState<MenuItem[]>([]);
   const [similarDishes, setSimilarDishes] = useState<MenuItem[]>([]);
   const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
+    if (cachedInitialDish) {
+      document.title = `${cachedInitialDish.name} Price at ${cachedInitialRest?.name || 'Delhi Cafe'} - ₹${cachedInitialDish.price} Counter Rate | MenuMaps`;
+    }
     loadDishData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -55,7 +61,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
   }, [slug]);
 
   const loadDishData = async () => {
-    setLoading(true);
+    if (!dish) setLoading(true);
     try {
       // 1. Instant Cache Check from Central Discovery Engine
       let item = engine.getDishBySlug(slug);
@@ -86,10 +92,12 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
       // Dynamic Dish SEO & Schema
       const dishUrl = `https://menumaps.in/food/${item.slug}`;
       const dishSchema = buildDishSchema(item, rest, dishUrl);
+      const dishTitle = `${item.name} Price at ${rest?.name || 'Delhi Cafe'} - ₹${item.price} Counter Rate | MenuMaps`;
 
+      document.title = dishTitle;
       updatePageSeo({
-        title: `${item.name} (₹${item.price}) at ${rest?.name || 'Delhi Cafe'} | Menu Maps`,
-        description: `Order ${item.name} for ₹${item.price} at ${rest?.name || 'Delhi'}. View verified price, ingredients, dietary details, and direct WhatsApp counter ordering.`,
+        title: dishTitle,
+        description: `View verified counter price for ${item.name} at ${rest?.name || 'Delhi'}. Only ₹${item.price} with 0% delivery app markup. View ingredients, dietary details, and direct WhatsApp counter ordering on MenuMaps.`,
         canonicalUrl: dishUrl,
         ogImage: item.image_url || rest?.cover_image_url,
         ogType: 'food',

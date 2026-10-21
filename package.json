@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build && python scripts/prerender_static_pages.py && python scripts/build_sitemap.py",
-    "prerender": "python scripts/prerender_static_pages.py",
+    "build": "vite build && npx tsx scripts/export_prerender_data.ts && python scripts/prerender_static_pages.py && python scripts/build_sitemap.py",
+    "prerender": "npx tsx scripts/export_prerender_data.ts && python scripts/prerender_static_pages.py",
     "sitemap": "python scripts/build_sitemap.py",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",

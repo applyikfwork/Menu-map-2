@@ -24,6 +24,9 @@ import {
   BATCH2_RESTAURANTS,
   BATCH2_CATEGORIES,
   BATCH2_MENU_ITEMS,
+  BATCH3_RESTAURANTS,
+  BATCH3_CATEGORIES,
+  BATCH3_MENU_ITEMS,
 } from '../data/venues';
 
 export interface SeedDataset {
@@ -5301,6 +5304,7 @@ export function generateSeedData(): SeedDataset {
       ...GK2_RESTAURANTS,
       ...DEF_COL_RESTAURANTS,
       ...BATCH2_RESTAURANTS,
+      ...BATCH3_RESTAURANTS,
     ],
     categories: [
       ...categories,
@@ -5313,6 +5317,7 @@ export function generateSeedData(): SeedDataset {
       ...GK2_CATEGORIES,
       ...DEF_COL_CATEGORIES,
       ...BATCH2_CATEGORIES,
+      ...BATCH3_CATEGORIES,
     ],
     menuItems: [
       ...menuItems,
@@ -5325,6 +5330,7 @@ export function generateSeedData(): SeedDataset {
       ...GK2_MENU_ITEMS,
       ...DEF_COL_MENU_ITEMS,
       ...BATCH2_MENU_ITEMS,
+      ...BATCH3_MENU_ITEMS,
     ],
     collections: [...collections, ...AREA_FOOD_GUIDES],
     collectionItems,

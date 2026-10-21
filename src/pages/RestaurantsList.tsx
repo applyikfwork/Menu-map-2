@@ -47,8 +47,9 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const { showToast } = useToast();
   const { engine, currentMealTime, setManualMealTime } = useDiscovery();
 
-  const [loading, setLoading] = useState(true);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const cachedInitialRests = engine.getAllRestaurants();
+  const [loading, setLoading] = useState(cachedInitialRests.length === 0);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(() => cachedInitialRests);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(() => getCachedUserCoordinates());
   const [locating, setLocating] = useState(false);
@@ -143,17 +144,30 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const handleLocate = async (showNotification = true) => {
     setLocating(true);
     try {
-      const coords = await getUserLocation();
-      setUserCoords(coords);
-      saveCachedUserCoordinates(coords);
-      window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: coords }));
-      if (restaurants.length > 0) {
-        const ctx = detectAreaContext(coords, restaurants);
-        if (ctx?.areaName) setDetectedArea(ctx.areaName);
-        if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
-      }
-      if (showNotification) {
-        showToast('Live GPS location detected successfully!', 'success');
+      const coordsPromise = getUserLocation();
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 500));
+      const fastCoords = await Promise.race([coordsPromise, timeoutPromise]);
+      if (fastCoords) {
+        setUserCoords(fastCoords);
+        saveCachedUserCoordinates(fastCoords);
+        window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: fastCoords }));
+        if (restaurants.length > 0) {
+          const ctx = detectAreaContext(fastCoords, restaurants);
+          if (ctx?.areaName) setDetectedArea(ctx.areaName);
+          if (ctx?.nearestMetro) setNearestMetro(ctx.nearestMetro);
+        }
+        if (showNotification) {
+          showToast('Live GPS location detected successfully!', 'success');
+        }
+      } else {
+        // GPS slow or prompt pending: resolve in background without blocking immediate rendering
+        coordsPromise.then((resolvedCoords) => {
+          if (resolvedCoords) {
+            setUserCoords(resolvedCoords);
+            saveCachedUserCoordinates(resolvedCoords);
+            window.dispatchEvent(new CustomEvent('menumap_location_updated', { detail: resolvedCoords }));
+          }
+        }).catch(() => {});
       }
     } catch {
       if (showNotification) {
@@ -393,6 +407,31 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       return 0;
     });
   }, [restaurantsWithDistance, searchTokens, restaurantItemsMap, selectedZone, selectedCuisine, selectedPrice, selectedDiet, selectedMeal, selectedAmenity, distanceRadius, sortBy, userCoords]);
+
+  // Fallback: If distance filter or default radius leaves 0 results on initial load,
+  // never leave the directory empty! Fallback to displaying Top 20 Featured Delhi NCR Cafes.
+  const fallbackFeaturedRests = useMemo(() => {
+    return restaurantsWithDistance.filter((r) => r.is_featured || (r.rating_avg && r.rating_avg >= 4.2)).slice(0, 20);
+  }, [restaurantsWithDistance]);
+
+  const hasExplicitFilter = Boolean(
+    searchQuery.trim() ||
+    selectedZone !== 'all' ||
+    selectedCuisine !== 'all' ||
+    selectedPrice !== 'all' ||
+    selectedDiet !== 'all' ||
+    selectedMeal !== 'all' ||
+    selectedAmenity !== 'all'
+  );
+
+  const displayedRestaurants = useMemo(() => {
+    if (filteredRestaurants.length > 0) return filteredRestaurants;
+    // Fallback: If not an explicit filter search that had 0 matches, show top 20 featured cafes!
+    if (!hasExplicitFilter && fallbackFeaturedRests.length > 0) {
+      return fallbackFeaturedRests;
+    }
+    return [];
+  }, [filteredRestaurants, hasExplicitFilter, fallbackFeaturedRests]);
 
   const renderFilterContent = () => (
     <>
@@ -1050,9 +1089,14 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <p className="text-sm sm:text-base text-[#57534E]">
               <strong className="text-[#1C1917] font-bold">
-                Showing {filteredRestaurants.length} verified counters
+                Showing {displayedRestaurants.length} verified counters
               </strong>{' '}
               in {detectedArea}
+              {filteredRestaurants.length === 0 && displayedRestaurants.length > 0 && (
+                <span className="text-xs text-amber-700 ml-2 font-medium">
+                  (Top Featured Delhi NCR Spots)
+                </span>
+              )}
             </p>
 
             {/* Active filter badge pills */}
@@ -1085,7 +1129,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                 <div key={i} className="aspect-[16/10] bg-stone-200/60 rounded-[28px] animate-pulse" />
               ))}
             </div>
-          ) : filteredRestaurants.length === 0 ? (
+          ) : displayedRestaurants.length === 0 ? (
             <div className="bg-white rounded-[28px] border border-[#EFEAE2] p-8 sm:p-12 text-center my-6">
               <div className="w-14 h-14 rounded-2xl bg-[#FFE9E2] text-[#D8350F] flex items-center justify-center mx-auto mb-4 font-bold text-2xl">
                 <Search className="w-6 h-6" />
@@ -1129,7 +1173,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredRestaurants.map((restaurant) => (
+              {displayedRestaurants.map((restaurant) => (
                 <RestaurantCard
                   key={restaurant.id}
                   restaurant={restaurant}
