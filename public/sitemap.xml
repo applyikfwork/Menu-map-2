@@ -100,6 +100,12 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://menumaps.in/iconic-area/dwarka-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://menumaps.in/iconic-area/epicuria-nehru-place-food-guide</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
@@ -119,6 +125,18 @@
   </url>
   <url>
     <loc>https://menumaps.in/iconic-area/hudson-lane-north-campus-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/janakpuri-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/laxmi-nagar-food-guide</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
@@ -154,6 +172,18 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://menumaps.in/iconic-area/paschim-vihar-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/pitampura-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://menumaps.in/iconic-area/punjabi-bagh-food-guide</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
@@ -178,7 +208,19 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://menumaps.in/iconic-area/rohini-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://menumaps.in/iconic-area/satya-niketan-south-campus-food-guide</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://menumaps.in/iconic-area/tilak-nagar-food-guide</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>

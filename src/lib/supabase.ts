@@ -27,6 +27,17 @@ import {
 } from '../types/database';
 import { AREA_FOOD_GUIDES } from './areaGuidesData';
 import { discoveryEngine } from './engine/discoveryEngine';
+import { generateSeedData, SeedDataset } from './seedData';
+
+// Master in-memory dataset cache (immune to browser localStorage 5MB quota)
+let masterSeedData: SeedDataset | null = null;
+
+export function getMasterSeedData(): SeedDataset {
+  if (!masterSeedData) {
+    masterSeedData = generateSeedData();
+  }
+  return masterSeedData;
+}
 
 export const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
 
@@ -137,51 +148,10 @@ let seedInitPromise: Promise<void> | null = null;
 
 export async function ensureSeedInitialized(): Promise<void> {
   try {
-    const currentVer = localStorage.getItem(VERSION_KEY);
-    const existing = localStorage.getItem(`${STORAGE_PREFIX}tbl_restaurants`);
-    const parsed = existing ? JSON.parse(existing) : [];
-    const colsRaw = localStorage.getItem(`${STORAGE_PREFIX}tbl_collections`);
-    const colsParsed = colsRaw ? JSON.parse(colsRaw) : [];
-
-    // Ensure all verified restaurants, categories, and area guides are initialized
-    if (
-      currentVer === CURRENT_DATA_VERSION &&
-      existing &&
-      Array.isArray(parsed) &&
-      parsed.length >= 750 &&
-      colsParsed.length >= 12
-    ) {
-      return;
+    getMasterSeedData();
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
     }
-
-    if (!seedInitPromise) {
-      seedInitPromise = (async () => {
-        const { generateSeedData } = await safeDynamicImport(() => import('./seedData'));
-        const data = generateSeedData();
-        // Retain any existing map_profile_done progress during re-seed
-        const doneIds = new Set(getStoredMapDoneIds());
-        // Preserve any custom user-created restaurants already in localStorage
-        const customCafes = Array.isArray(parsed)
-          ? parsed.filter((r) => r && (r.is_claimed || r.email || !data.restaurants.some((sr) => sr.id === r.id)))
-          : [];
-        const seededRestaurants = data.restaurants.map((r) => ({
-          ...enrichRestaurant(r),
-          map_profile_done: Boolean(r.map_profile_done || doneIds.has(r.id)),
-        }));
-        const combinedRestaurants = [
-          ...customCafes,
-          ...seededRestaurants.filter((sr) => !customCafes.some((cr) => cr.id === sr.id)),
-        ];
-
-        localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(combinedRestaurants));
-        localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_categories`, JSON.stringify(data.categories));
-        localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(data.menuItems.map((i) => enrichMenuItem(i))));
-        localStorage.setItem(`${STORAGE_PREFIX}tbl_collections`, JSON.stringify(data.collections));
-        localStorage.setItem(`${STORAGE_PREFIX}tbl_collection_items`, JSON.stringify(data.collectionItems));
-        localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
-      })();
-    }
-    await seedInitPromise;
   } catch (e) {
     console.error('Error auto-seeding verified restaurant data:', e);
   }
@@ -189,70 +159,124 @@ export async function ensureSeedInitialized(): Promise<void> {
 
 export async function forceReseedData(): Promise<void> {
   try {
-    localStorage.removeItem(VERSION_KEY);
-    seedInitPromise = null;
-    const { generateSeedData } = await safeDynamicImport(() => import('./seedData'));
-    const data = generateSeedData();
-    const existing = localStorage.getItem(`${STORAGE_PREFIX}tbl_restaurants`);
-    const parsed = existing ? JSON.parse(existing) : [];
-    const doneIds = new Set(getStoredMapDoneIds());
-    const customCafes = Array.isArray(parsed)
-      ? parsed.filter((r) => r && (r.is_claimed || r.email || !data.restaurants.some((sr) => sr.id === r.id)))
-      : [];
-    const seededRestaurants = data.restaurants.map((r) => ({
-      ...enrichRestaurant(r),
-      map_profile_done: Boolean(r.map_profile_done || doneIds.has(r.id)),
-    }));
-    const combinedRestaurants = [
-      ...customCafes,
-      ...seededRestaurants.filter((sr) => !customCafes.some((cr) => cr.id === sr.id)),
-    ];
-
-    localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(combinedRestaurants));
-    localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_categories`, JSON.stringify(data.categories));
-    localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(data.menuItems.map((i) => enrichMenuItem(i))));
-    localStorage.setItem(`${STORAGE_PREFIX}tbl_collections`, JSON.stringify(data.collections));
-    localStorage.setItem(`${STORAGE_PREFIX}tbl_collection_items`, JSON.stringify(data.collectionItems));
-    localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
+    masterSeedData = null; // Forces immediate clean re-evaluation from seedData
+    const seed = getMasterSeedData();
+    if (typeof localStorage !== 'undefined') {
+      // Clean out obsolete full arrays that broke browser 5MB quota
+      localStorage.removeItem(`${STORAGE_PREFIX}tbl_menu_items`);
+      // Keep custom cafes in tbl_restaurants
+      const rawRests = localStorage.getItem(`${STORAGE_PREFIX}tbl_restaurants`);
+      const parsed = rawRests ? JSON.parse(rawRests) : [];
+      const seedIdSet = new Set(seed.restaurants.map((r) => r.id));
+      const customCafes = Array.isArray(parsed) ? parsed.filter((r: any) => !seedIdSet.has(r.id) || r.is_claimed) : [];
+      localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(customCafes));
+      localStorage.setItem(VERSION_KEY, CURRENT_DATA_VERSION);
+    }
   } catch (e) {
     console.error('Failed to force reseed:', e);
   }
 }
 
 function loadTable<T>(table: string): T[] {
-  // Trigger background seed initialization if uninitialized
-  ensureSeedInitialized().catch(console.error);
+  const seed = getMasterSeedData();
   const doneIds = new Set(getStoredMapDoneIds());
+
   try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}tbl_${table}`);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        if (table === 'restaurants') {
-          return parsed.map((r: any) => ({
-            ...enrichRestaurant(r),
-            map_profile_done: Boolean(
-              r.map_profile_done ||
-              r.google_maps_place_id === 'MAP_DONE' ||
-              r.google_maps_place_id === 'DONE' ||
-              doneIds.has(r.id)
-            ),
-          })) as T[];
-        }
-        if (table === 'menu_items') {
-          return parsed.map((i: any) => enrichMenuItem(i)) as T[];
-        }
-        return parsed as T[];
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(`${STORAGE_PREFIX}tbl_${table}`) : null;
+    const localSaved = raw ? JSON.parse(raw) : [];
+
+    if (table === 'restaurants') {
+      const seeded = seed.restaurants.map((r) => ({
+        ...enrichRestaurant(r),
+        map_profile_done: Boolean(
+          r.map_profile_done ||
+          r.google_maps_place_id === 'MAP_DONE' ||
+          r.google_maps_place_id === 'DONE' ||
+          doneIds.has(r.id)
+        ),
+      }));
+      if (Array.isArray(localSaved) && localSaved.length > 0) {
+        const localMap = new Map<string, any>(localSaved.map((r: any) => [r.id, r]));
+        const merged = seeded.map((sr) => (localMap.has(sr.id) ? { ...sr, ...localMap.get(sr.id) } : sr));
+        const seededIdSet = new Set(seeded.map((s) => s.id));
+        const customCafes = localSaved.filter((r: any) => r && !seededIdSet.has(r.id));
+        return [...customCafes, ...merged] as T[];
       }
+      return seeded as T[];
+    }
+
+    if (table === 'menu_items') {
+      const seeded = seed.menuItems.map((i) => enrichMenuItem(i));
+      if (Array.isArray(localSaved) && localSaved.length > 0) {
+        const localMap = new Map<string, any>(localSaved.map((i: any) => [i.id, i]));
+        const merged = seeded.map((si) => (localMap.has(si.id) ? { ...si, ...localMap.get(si.id) } : si));
+        const seededIdSet = new Set(seeded.map((s) => s.id));
+        const customItems = localSaved.filter((i: any) => i && !seededIdSet.has(i.id));
+        return [...customItems, ...merged] as T[];
+      }
+      return seeded as T[];
+    }
+
+    if (table === 'menu_categories') {
+      const seeded = seed.categories;
+      if (Array.isArray(localSaved) && localSaved.length > 0) {
+        const localMap = new Map<string, any>(localSaved.map((c: any) => [c.id, c]));
+        const merged = seeded.map((sc) => (localMap.has(sc.id) ? { ...sc, ...localMap.get(sc.id) } : sc));
+        const seededIdSet = new Set(seeded.map((s) => s.id));
+        const customCats = localSaved.filter((c: any) => c && !seededIdSet.has(c.id));
+        return [...customCats, ...merged] as T[];
+      }
+      return seeded as T[];
+    }
+
+    if (table === 'collections') {
+      const seeded = seed.collections;
+      if (Array.isArray(localSaved) && localSaved.length > 0) {
+        const localMap = new Map<string, any>(localSaved.map((c: any) => [c.id, c]));
+        const merged = seeded.map((sc) => (localMap.has(sc.id) ? { ...sc, ...localMap.get(sc.id) } : sc));
+        const seededIdSet = new Set(seeded.map((s) => s.id));
+        const customCols = localSaved.filter((c: any) => c && !seededIdSet.has(c.id));
+        return [...customCols, ...merged] as T[];
+      }
+      return seeded as T[];
+    }
+
+    if (table === 'collection_items') {
+      return seed.collectionItems as T[];
+    }
+
+    if (Array.isArray(localSaved) && localSaved.length > 0) {
+      return localSaved as T[];
     }
   } catch (e) {
     console.error(`Error loading table ${table}:`, e);
   }
+
+  if (table === 'restaurants') return seed.restaurants as T[];
+  if (table === 'menu_items') return seed.menuItems as T[];
+  if (table === 'menu_categories') return seed.categories as T[];
+  if (table === 'collections') return seed.collections as T[];
+  if (table === 'collection_items') return seed.collectionItems as T[];
   return [];
 }
 
 function saveTable<T>(table: string, data: T[]): void {
+  if (typeof localStorage === 'undefined') return;
   try {
+    if (table === 'menu_items') {
+      const seed = getMasterSeedData();
+      const seedIdSet = new Set(seed.menuItems.map((i) => i.id));
+      const customOnly = (data as any[]).filter((i) => !seedIdSet.has(i.id) || i.is_user_modified);
+      localStorage.setItem(`${STORAGE_PREFIX}tbl_menu_items`, JSON.stringify(customOnly));
+      return;
+    }
+    if (table === 'restaurants') {
+      const seed = getMasterSeedData();
+      const seedIdSet = new Set(seed.restaurants.map((r) => r.id));
+      const customOnly = (data as any[]).filter((r) => !seedIdSet.has(r.id) || r.is_claimed);
+      localStorage.setItem(`${STORAGE_PREFIX}tbl_restaurants`, JSON.stringify(customOnly));
+      return;
+    }
     localStorage.setItem(`${STORAGE_PREFIX}tbl_${table}`, JSON.stringify(data));
   } catch (e: any) {
     if (e?.name === 'QuotaExceededError' || e?.code === 22) {

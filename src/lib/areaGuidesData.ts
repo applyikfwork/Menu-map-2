@@ -1344,5 +1344,397 @@ export const AREA_FOOD_GUIDES: Collection[] = [
         }
       ]
     }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000041',
+    title: 'Paschim Vihar Food & Street Feast Guide',
+    slug: 'paschim-vihar-food-guide',
+    description: 'West Delhi’s legendary Punjabi foodie hub: Amritsari kulcha platters, tandoori malai soya chaap, family dhabas, and buzzing waffle addas.',
+    cover_image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 20,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Paschim Vihar (Jwala Heri & B-Block)',
+      zone: 'West Delhi',
+      latitude: 28.6685,
+      longitude: 77.0942,
+      vibe_badge: 'Bustling Punjabi street market, smoky tandoori chaap grills & family dessert corners.',
+      famous_for_summary: 'Amritsari Aloo Pyaaz Kulcha Thalis, Sunny Leone Malai Chaap, Tandoori Momos & Belgian Waffles.',
+      best_time_to_visit: '5:00 PM – 11:00 PM (Lively market atmosphere & fresh tandoor batches)',
+      nearest_metro: 'Paschim Vihar West Metro Station (Green Line), Exit Gate 1 (3-min E-Rickshaw ₹10)',
+      parking_tips: 'Jwala Heri main market is pedestrian-heavy; park at DDA Market parking or near the metro station.',
+      avg_cost_for_two: 350,
+      sub_guide_filters: [
+        'Legendary Soya Chaap & Tandoor',
+        'Amritsari Kulchas & Thalis',
+        'Late Night Shakes & Desserts',
+        'Pure Veg Family Dining'
+      ],
+      famous_dishes: [
+        {
+          name: 'Amritsari Aloo Pyaaz Kulcha Thali',
+          why_famous: 'Flaky tandoor-baked bread stuffed with spiced potato and onion, topped with white butter and served with pindi chole.',
+          restaurant_name: "Baljeet's Amritsari Koolcha",
+          price: 140,
+          image_url: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Sunny Leone Malai Chaap',
+          why_famous: 'Rich, creamy roasted soya chaap marinated with rich dairy cream, cashews, and aromatic spices.',
+          restaurant_name: 'Veer Ji Malai Chaap Wale',
+          price: 190,
+          image_url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Sardar Ji Special Malai Chaap',
+          why_famous: 'Charcoal grilled soya chaap tossed in house butter gravy and crushed black pepper.',
+          restaurant_name: 'Sardar Ji Malai Chaap Wale',
+          price: 180,
+          image_url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000042',
+    title: 'Tilak Nagar & Jail Road Food Crawl Map',
+    slug: 'tilak-nagar-food-guide',
+    description: 'The heartbeat of West Delhi street food: century-old Punjabi sweet shops, famous fruit beers, spicy kathi rolls, and creamy kulfi falooda.',
+    cover_image_url: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 21,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Tilak Nagar (Central Market & Jail Road)',
+      zone: 'West Delhi',
+      latitude: 28.6366,
+      longitude: 77.0963,
+      vibe_badge: 'High-energy West Delhi food market, desi ghee aroma & iconic late-night street stalls.',
+      famous_for_summary: 'Special Paneer Chole Bhature, Fruit Beer, Tandoori Chicken Rolls & Kesar Badam Kulfi.',
+      best_time_to_visit: '11:00 AM – 3:00 PM for Bhature; 6:00 PM – 11:30 PM for Street Grills',
+      nearest_metro: 'Tilak Nagar Metro Station (Blue Line), Exit Gate 2 (Direct entry to Market)',
+      parking_tips: 'Jail Road has designated street parking slots; avoid parking inside narrow residential blocks.',
+      avg_cost_for_two: 350,
+      sub_guide_filters: [
+        'Iconic Chole Bhature & Sweets',
+        'Jail Road Street Grills',
+        'Kathi Rolls & Fast Food',
+        'Falooda & Lassi Corners'
+      ],
+      famous_dishes: [
+        {
+          name: 'Special Paneer Chole Bhature',
+          why_famous: 'Crispy golden balloon bhature stuffed with grated paneer, paired with dark tangy pindi chole and pickled chilies.',
+          restaurant_name: 'Grover Sweets',
+          price: 130,
+          image_url: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Fresh Non-Alcoholic Fruit Beer',
+          why_famous: 'Chilled, frothy apple and fruit infusion served straight from the wooden tap barrel.',
+          restaurant_name: "Berco's Tilak Nagar",
+          price: 110,
+          image_url: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Warm Bun Maska & Desi Chai',
+          why_famous: 'Soft toasted pav slathered with dollops of salted butter, best dipped in steaming ginger chai.',
+          restaurant_name: 'Chaayos Tilak Nagar',
+          price: 70,
+          image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000043',
+    title: 'Pitampura & Rani Bagh Gourmet Food Guide',
+    slug: 'pitampura-food-guide',
+    description: 'North-West Delhi’s culinary crown: Kapil Vihar food avenue, NSP modern cafes, Punjabi barbecue masters, and artisanal shake lounges.',
+    cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 22,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Pitampura (Kapil Vihar & Rani Bagh)',
+      zone: 'North-West & NSP',
+      latitude: 28.6989,
+      longitude: 77.1325,
+      vibe_badge: 'Vibrant modern high-street dining, terrace family restrobars & midnight chaat walks.',
+      famous_for_summary: 'Slow-Cooked Pindi Dal Makhani, Belgian Thickshakes, Kurkure Momos & Hazelnut Hot Chocolate.',
+      best_time_to_visit: '6:00 PM – 11:30 PM (Vibrant neon avenues & open-air cafe seating)',
+      nearest_metro: 'Netaji Subhash Place (Red & Pink Line Interchange) or Kohat Enclave (Red Line)',
+      parking_tips: 'Kapil Vihar main road has designated municipal parking attendants.',
+      avg_cost_for_two: 500,
+      sub_guide_filters: [
+        'Kapil Vihar Cafe Strip',
+        'Legendary North Indian Gravies',
+        'Shakes, Waffles & Hot Chocolate',
+        'Budget Student Bites'
+      ],
+      famous_dishes: [
+        {
+          name: 'Pindi Special Dal Makhani',
+          why_famous: 'Velvety black lentils slow-simmered for 18 hours with tomato puree and home-churned butter.',
+          restaurant_name: 'Pindi Pitampura',
+          price: 280,
+          image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Classic Belgian Chocolate Shake',
+          why_famous: 'Thick creamy milkshake blended with dark Belgian cocoa and chocolate wafer crunch.',
+          restaurant_name: 'Shake Square Pitampura',
+          price: 160,
+          image_url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Hazelnut Hot Chocolate',
+          why_famous: 'Steaming rich chocolate topped with toasted hazelnut syrup and cocoa dusting.',
+          restaurant_name: 'Bistro 57 Pitampura',
+          price: 140,
+          image_url: 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000044',
+    title: 'Dwarka Sector 6, 10 & 12 Dining & Cafe Trail',
+    slug: 'dwarka-food-guide',
+    description: 'South-West Delhi’s premier sub-city culinary trail: chic rooftop terraces, gourmet pizza studios, artisanal coffee roasteries, and family banquet feasts.',
+    cover_image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 23,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Dwarka (Sector 6, 10 & 12 Markets)',
+      zone: 'South-West & Dwarka',
+      latitude: 28.5815,
+      longitude: 77.0588,
+      vibe_badge: 'Spacious pedestrian squares, breezy terrace lounges & family weekend dinners.',
+      famous_for_summary: 'Wood-Fired Neapolitan Pizzas, Sizzling Brownies, Cardamom Chai Flasks & Pan-Asian Dim Sum.',
+      best_time_to_visit: '5:00 PM – 11:30 PM (Pleasant terrace breezes & bustling family squares)',
+      nearest_metro: 'Dwarka Sector 10 Metro Station (Blue Line), Exit Gate 1 (2-min walk)',
+      parking_tips: 'Sector 6 & 10 market squares feature vast, organized surface parking lots with minimal congestion.',
+      avg_cost_for_two: 600,
+      sub_guide_filters: [
+        'Rooftop Terraces & Restrobars',
+        'Artisan Coffee & Work Cafes',
+        'Family Dining & North Indian',
+        'Quick Bites & Chai Hubs'
+      ],
+      famous_dishes: [
+        {
+          name: 'Wood Fired Margherita Pizza',
+          why_famous: 'Authentic fermented dough baked at 450°C with San Marzano tomato sauce, fresh mozzarella, and basil.',
+          restaurant_name: 'Drool Art Dwarka',
+          price: 320,
+          image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Ginger Cardamom Chai Flask',
+          why_famous: 'Freshly brewed full-bodied handmade chai infused with crushed adrak and elaichi.',
+          restaurant_name: 'Chai Point Dwarka',
+          price: 140,
+          image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Creamy Truffle Mushroom Risotto',
+          why_famous: 'Arborio rice gently simmered in vegetable stock, wild button mushrooms, parmesan, and truffle oil.',
+          restaurant_name: 'Cafe After Hours Dwarka',
+          price: 380,
+          image_url: 'https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000045',
+    title: 'Janakpuri District Centre (JDC) & B-Block Food Map',
+    slug: 'janakpuri-food-guide',
+    description: 'West Delhi’s energetic commercial dining epicentre: open-air JDC plazas, trendy restrobars, Punjabi family lounges, and late-night food trucks.',
+    cover_image_url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 24,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Janakpuri (District Centre JDC & B-Block)',
+      zone: 'West Delhi',
+      latitude: 28.6292,
+      longitude: 77.0783,
+      vibe_badge: 'High-energy plazas, vibrant live music lounges & West Delhi crowd favorites.',
+      famous_for_summary: 'Kurkure Momos, Gourmet Juicy Lucy Burgers, Tandoori Malai Chaap & Desi Ghee Raj Kachoris.',
+      best_time_to_visit: '4:00 PM – 11:30 PM (Vibrant musical evenings & dinner rush)',
+      nearest_metro: 'Janakpuri West Metro Station (Blue & Magenta Line Interchange), Exit Gate 1',
+      parking_tips: 'Janakpuri District Centre has dedicated underground and multilevel parking complexes.',
+      avg_cost_for_two: 650,
+      sub_guide_filters: [
+        'JDC Restrobars & Nightlife',
+        'Cafe Terraces & Coffee Addas',
+        'Punjabi North Indian Feasts',
+        'Quick Street Bites'
+      ],
+      famous_dishes: [
+        {
+          name: 'Crispy Kurkure Momos Platter',
+          why_famous: 'Deep-fried crumb coated momos stuffed with seasoned vegetables and served with spicy momo dips.',
+          restaurant_name: 'Piccadilly Janakpuri',
+          price: 170,
+          image_url: 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Tandoori Paneer Malai Tikka',
+          why_famous: 'Cream-marinated cottage cheese cubes chargrilled with bell peppers and onions.',
+          restaurant_name: 'Over The Top Janakpuri',
+          price: 260,
+          image_url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'The Original Juicy Lucy Burger',
+          why_famous: 'Giant seasoned patty stuffed with molten cheese, topped with caramelized onions and house relish.',
+          restaurant_name: 'Cafe Delhi Heights Janakpuri',
+          price: 425,
+          image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000046',
+    title: 'Rohini Sector 7, 8 & 9 Food Street Trail',
+    slug: 'rohini-food-guide',
+    description: 'North-West Delhi’s ultimate street food playground: DC Chowk midnight stalls, cheesy pasta huts, monster thickshake parlours, and Mughlai grills.',
+    cover_image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 25,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Rohini (Sector 7, 8, 9 & DC Chowk)',
+      zone: 'North-West & NSP',
+      latitude: 28.7154,
+      longitude: 77.1194,
+      vibe_badge: 'Youthful food streets, late-night car snacking & iconic roadside pasta parlours.',
+      famous_for_summary: 'White Sauce Cheesy Pastas, Lalla Mussa Dal, Sizzling Brownies & Tandoori Kathi Rolls.',
+      best_time_to_visit: '6:30 PM – 12:30 AM (Buzzing late-night foodie crowd & sizzling stalls)',
+      nearest_metro: 'Rohini East or Rohini West Metro Station (Red Line), Exit Gate 2',
+      parking_tips: 'Sector 8 & 9 markets have wide service roads suitable for car dining and parking.',
+      avg_cost_for_two: 400,
+      sub_guide_filters: [
+        'DC Chowk Street Food Stalls',
+        'Famous Pastas & Shakes',
+        'Fine Dining & Family Restaurants',
+        'Late Night Desserts'
+      ],
+      famous_dishes: [
+        {
+          name: 'Signature Lalla Mussa Dal',
+          why_famous: 'MasterChef Sanjeev Kapoor signature black lentils slow-cooked overnight with churned butter.',
+          restaurant_name: 'The Yellow Chilli Rohini',
+          price: 295,
+          image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'White Sauce Creamy Cheesy Pasta',
+          why_famous: 'Penne pasta tossed in rich bechamel cheese sauce with sweet corn, oregano, and olives.',
+          restaurant_name: "Billu's Hut Rohini",
+          price: 180,
+          image_url: 'https://images.unsplash.com/photo-1621996346565-e3d5d628169e?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Sizzling Walnut Brownie with Ice Cream',
+          why_famous: 'Hot chocolate fudge sizzling over a hot cast iron plate with vanilla bean scoop.',
+          restaurant_name: 'Cafe Brownie Rohini',
+          price: 190,
+          image_url: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        }
+      ]
+    }
+  },
+  {
+    id: '44444444-0000-4000-8000-000000000047',
+    title: 'Laxmi Nagar & Vikas Marg Food Street Map',
+    slug: 'laxmi-nagar-food-guide',
+    description: 'East Delhi’s bustling street food capital: crisp bedmi poori nagori halwa, authentic Raj kachoris, spicy double egg rolls, and traditional sweet houses.',
+    cover_image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&auto=format&fit=crop&q=80',
+    type: 'Area-Guide',
+    is_featured: true,
+    is_active: true,
+    sort_order: 26,
+    created_at: '2026-10-13T12:00:00.000Z',
+    area_metadata: {
+      area_name: 'Laxmi Nagar (Vikas Marg & Guru Nanak Pura)',
+      zone: 'East & Trans-Yamuna',
+      latitude: 28.6309,
+      longitude: 77.2773,
+      vibe_badge: 'High-density foodie alleys, student pocket-friendly joints & century-old sweet masters.',
+      famous_for_summary: 'Bedmi Aloo Nagori Halwa, Royal Raj Kachori, Kathi Egg Chicken Rolls & Rasmalai.',
+      best_time_to_visit: '8:30 AM – 1:00 PM for Bedmi Breakfast; 5:00 PM – 10:30 PM for Evening Chaat',
+      nearest_metro: 'Laxmi Nagar Metro Station (Blue Line), Exit Gate 1 (Direct exit to Vikas Marg)',
+      parking_tips: 'Vikas Marg is busy; use Laxmi Nagar Metro Station parking or park near Scope Minar.',
+      avg_cost_for_two: 300,
+      sub_guide_filters: [
+        'Legendary Breakfast & Halwai',
+        'Kathi Rolls & Fast Food',
+        'Chaat & Street Food Stalls',
+        'Pure Veg Family Meals'
+      ],
+      famous_dishes: [
+        {
+          name: 'Desi Ghee Bedmi Poori Nagori Halwa',
+          why_famous: 'Crisp urad dal stuffed pooris served with spicy aloo sabzi, sweet pumpkin chutney, and sooji halwa.',
+          restaurant_name: "Nath's Sweets Laxmi Nagar",
+          price: 110,
+          image_url: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Special Royal Raj Kachori Platter',
+          why_famous: 'Giant crispy kachori filled with sprouts, bhallas, sweetened curd, tangy saunth, and crunchy sev.',
+          restaurant_name: 'Bikanervala Laxmi Nagar',
+          price: 130,
+          image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&auto=format&fit=crop&q=80',
+          is_veg: true,
+        },
+        {
+          name: 'Double Egg Double Chicken Roll',
+          why_famous: 'Flaky paratha coated with double eggs and rolled with spiced tandoori chicken tikka chunks and mint onions.',
+          restaurant_name: 'Roll King Laxmi Nagar',
+          price: 160,
+          image_url: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=800&auto=format&fit=crop&q=80',
+          is_veg: false,
+        }
+      ]
+    }
   }
 ];
