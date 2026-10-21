@@ -560,7 +560,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                   <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
                   </div>
-                  <span>129+ Verified Delhi Cafes</span>
+                  <span>{restaurants.length > 0 ? `${restaurants.length}+ Verified Delhi Cafes` : 'Verified Delhi NCR Cafes'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full bg-orange-100 text-[#D8350F] flex items-center justify-center shrink-0">

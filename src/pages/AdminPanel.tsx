@@ -1079,7 +1079,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             { id: 'reviews', label: `Reviews (${reviews.length})`, icon: MessageSquare },
             { id: 'analytics', label: 'Search Analytics', icon: BarChart3 },
             { id: 'settings', label: 'Settings & Supabase', icon: Settings },
-            { id: 'system_intel', label: 'Website Vault & Timeline', icon: Terminal },
+            { id: 'system_intel', label: 'Website Specs & Timeline', icon: Terminal },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSection === tab.id;
@@ -1214,10 +1214,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
 
                 <button
                   onClick={() => handleOpenAddCollection('Area-Guide')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-md transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-md transition-all cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span>New Area Guide</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('system_intel')}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-stone-900 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                  title="View technical specifications and time-to-time development ledger"
+                >
+                  <Terminal className="w-4 h-4 text-rose-400" />
+                  <span>Website Specs & Timeline</span>
                 </button>
               </div>
             </div>

@@ -59,6 +59,38 @@ interface TimelineMilestone {
 // Comprehensive Historical Master Timeline ("tie to time all details with time so we know in what we do")
 const INITIAL_MASTER_TIMELINE: TimelineMilestone[] = [
   {
+    id: 'ms-2026-10-21-02',
+    timestamp: '2026-10-21T19:35:00+05:30',
+    formattedTime: 'Oct 21, 2026 · 07:35 PM IST',
+    title: 'Navigation Streamlining & Restaurant Detail Top Structure Redesign',
+    category: 'UX Redesign',
+    author: 'Full-Stack UI/UX Specialist',
+    summary: 'Streamlined mobile bottom navigation to 4 clean tabs; added instant Near Me GPS chip to Search; transformed restaurant detail hero into uncluttered photography with structured white dossier card.',
+    technicalDetails: [
+      'Removed redundant Near Me tab from MobileBottomNav.tsx (now 4 balanced tabs: Home, Restaurants, Iconic Areas, Saved with 25% equal width).',
+      'Removed duplicate Near Me link from desktop Navbar.tsx while preserving /nearby route compatibility in App.tsx.',
+      'Added instant 📍 Near Me (GPS) quick-action chip to Search.tsx for single-tap location distance sorting.',
+      'Cleaned RestaurantDetail.tsx cover hero: removed overlapping text badges, veg labels, and open hours from the photo canvas, leaving clean Back, Save, Share, and Photos buttons.',
+      'Elevated structured white dossier card below photo with grouped verified/veg badges, live pulsating open status indicator, average cost for two, and 48px touch-target action buttons.',
+      'Eliminated flash of "Showing 0 verified counters" in RestaurantsList.tsx during data loading with an animated pulsing discoverer.'
+    ]
+  },
+  {
+    id: 'ms-2026-10-21-01',
+    timestamp: '2026-10-21T12:00:00+05:30',
+    formattedTime: 'Oct 21, 2026 · 12:00 PM IST',
+    title: 'Browser 5.0 MB Storage Quota Shield & In-Memory Master Seed Engine',
+    category: 'Architecture',
+    author: 'Principal Systems Architect',
+    summary: 'Prevented browser QuotaExceededError crashes when scaling to 770 cafes and 6,795 dishes by keeping master datasets in-memory and isolating user-created edits.',
+    technicalDetails: [
+      'Identified that total JSON payload for 770 cafes and 6,795 dishes is ~6.68 MB, which exceeds the browser hard 5.0 MB localStorage quota limit.',
+      'Engineered getMasterSeedData() in-memory caching engine: seed datasets load instantly in memory with zero storage serialization.',
+      'Scoped localStorage exclusively to custom user cafes, claim submissions, and owner modifications (< 100 KB total footprint).',
+      'Clarified cloud database vs local code seed counts: 515 cafes in Supabase Postgres cloud vs 770 in code dataset (including Batch 3 with 259 venues across West/East Delhi).'
+    ]
+  },
+  {
     id: 'ms-2026-10-20-04',
     timestamp: '2026-10-20T21:05:00+05:30',
     formattedTime: 'Oct 20, 2026 · 09:05 PM IST',
@@ -309,8 +341,8 @@ export const SystemIntelVault: React.FC<SystemIntelVaultProps> = ({
     const brief = `Menu Maps (https://menumaps.in)
 Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Motion, Lucide Icons
 Backend: Supabase PostgreSQL (RLS), LocalStorage Multi-Table Sync Engine
-Pre-Rendering: Python SSG (682 restaurant snapshots + 14 area food guides)
-Sitemap: 6,318 URLs indexed at /sitemap.xml
+Pre-Rendering: Node SSG (770 restaurant snapshots + 26 area food guides)
+Sitemap: 7,601 URLs indexed at /sitemap.xml
 Caching: Vercel CDN (immutable assets, no-cache index.html)
 Resilience: lazyWithRetry auto-refresh on deployment hash change + vite:preloadError interceptor`;
 
@@ -386,7 +418,7 @@ Resilience: lazyWithRetry auto-refresh on deployment hash change + vite:preloadE
           </div>
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
             <span className="text-[11px] font-bold text-stone-400 block">Indexed URLs</span>
-            <span className="text-xl font-black text-sky-400">6,318</span>
+            <span className="text-xl font-black text-sky-400">7,601</span>
           </div>
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
             <span className="text-[11px] font-bold text-stone-400 block">Owners & Claims</span>

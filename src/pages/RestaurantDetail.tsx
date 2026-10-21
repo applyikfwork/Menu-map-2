@@ -572,10 +572,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           1. REDESIGNED HERO SECTION & CINEMA VISUAL STAGE
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-4 space-y-4">
-        {/* 1.1 CINEMA VISUAL CANVAS (UNCLUTTERED PHOTOGRAPHY) */}
+        {/* 1.1 CINEMA VISUAL CANVAS (UNCLUTTERED, PURE PHOTOGRAPHY) */}
         <div className="relative rounded-[32px] sm:rounded-[40px] overflow-hidden bg-stone-900 border border-stone-200/80 shadow-md group">
           <div
-            className="w-full h-[260px] sm:h-[360px] lg:h-[420px] transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-[240px] sm:h-[340px] lg:h-[400px] transition-transform duration-700 group-hover:scale-105"
             style={{
               backgroundImage: `url(${restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80'})`,
               backgroundSize: 'cover',
@@ -583,56 +583,32 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             }}
           />
 
-          {/* Subtle Top & Bottom Cinematic Edge Gradients (Does not obscure food photography) */}
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+          {/* Minimal Top & Bottom Edge Gradients (Retains maximum photo visibility) */}
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
 
-          {/* Top Floating Controls Overlay */}
+          {/* Top Controls: Minimalist Clean Back Button & Actions */}
           <div className="absolute top-4 inset-x-4 sm:inset-x-6 flex items-center justify-between pointer-events-auto">
-            {/* Left: Back / Breadcrumb Pill & Verified Tag */}
+            <button
+              type="button"
+              onClick={() => navigate('/restaurants')}
+              className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 transition-all cursor-pointer shadow-md active:scale-95"
+              title="Back to all cafes"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => navigate('/restaurants')}
-                className="px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer shadow-sm"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">All Cafes</span>
-              </button>
-
-              <span className="px-3 py-1.5 rounded-full bg-emerald-600/90 backdrop-blur-md text-white text-xs font-black flex items-center gap-1 shadow-sm border border-emerald-400/30">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Verified Menu</span>
-              </span>
-
-              {isPureVeg && (
-                <span className="px-3 py-1.5 rounded-full bg-emerald-500/90 text-white text-xs font-extrabold shadow-sm">
-                  Pure Veg
-                </span>
-              )}
-            </div>
-
-            {/* Right: Quick Action Buttons (Bookmark, Share, Gallery Pill) */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveMainTab('gallery')}
-                className="px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer shadow-sm"
-                title="View Photo Gallery & Paper Menu"
-              >
-                <Camera className="w-3.5 h-3.5 text-amber-300" />
-                <span className="hidden xs:inline">Gallery</span>
-              </button>
-
               <button
                 type="button"
                 onClick={handleBookmarkToggle}
                 aria-label="Save"
-                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90 cursor-pointer shadow-sm ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform active:scale-90 cursor-pointer shadow-md ${
                   bookmarked
                     ? 'bg-[#FF5A36] text-white border-[#FF5A36]'
                     : 'bg-black/40 hover:bg-black/60 text-white border-white/20'
                 }`}
+                title="Bookmark cafe"
               >
                 <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-white' : 'text-white'}`} />
               </button>
@@ -641,45 +617,33 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 type="button"
                 onClick={() => setShowSocialModal(true)}
                 aria-label="Share"
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-90 cursor-pointer shadow-sm"
+                className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center backdrop-blur-md border border-white/20 transition-transform active:scale-90 cursor-pointer shadow-md"
+                title="Share menu"
               >
                 <Share2 className="w-4 h-4 text-white" />
               </button>
             </div>
           </div>
 
-          {/* Bottom Floating Bar on Hero (Ratings & Open Status Only) */}
-          <div className="absolute bottom-4 inset-x-4 sm:inset-x-6 flex items-center justify-between pointer-events-auto">
-            {/* Open / Timing Status Pill */}
-            <div className="flex items-center gap-2">
-              <span className={`px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-extrabold flex items-center gap-1.5 shadow-sm border ${
-                restaurant.is_open
-                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
-                  : 'bg-stone-900/80 text-stone-300 border-stone-600/40'
-              }`}>
-                <span className={`w-2 h-2 rounded-full ${restaurant.is_open ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'}`} />
-                <span>{restaurant.is_open ? 'Open Now' : 'Closed'}</span>
-                <span className="text-white/60">·</span>
-                <span className="text-white font-medium">{formatOpeningHours(restaurant.opening_hours)}</span>
-              </span>
-            </div>
-
-            {/* Rating & Diner Count Pill */}
-            <div className="flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-black flex items-center gap-1.5 border border-white/20 shadow-sm">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span>{restaurant.rating ? restaurant.rating.toFixed(1) : '4.6'}</span>
-                <span className="text-stone-300 font-normal">({reviews.length || restaurant.rating_count || 120}+ reviews)</span>
-              </div>
-            </div>
+          {/* Bottom Right: Clean Photos Pill */}
+          <div className="absolute bottom-4 right-4 sm:right-6 pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('gallery')}
+              className="px-3.5 py-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer shadow-md"
+              title="View Photo Gallery & Paper Menu"
+            >
+              <Camera className="w-3.5 h-3.5 text-amber-300" />
+              <span>{galleryImages.length > 0 ? `${galleryImages.length} Photos` : 'View Photos'}</span>
+            </button>
           </div>
         </div>
 
         {/* 1.2 DEDICATED RESTAURANT DOSSIER CARD (ELEVATED CLEAN WHITE SURFACE) */}
-        <div className="bg-white rounded-[32px] sm:rounded-[36px] p-6 sm:p-8 border border-[#EFEAE2] shadow-sm space-y-6">
-          {/* Main Title, Brand Logo & Key Badges */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div className="flex items-start sm:items-center gap-4">
+        <div className="bg-white rounded-[32px] sm:rounded-[36px] p-6 sm:p-8 border border-[#EFEAE2] shadow-sm space-y-5">
+          {/* Main Title, Brand Logo & Grouped Badges */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-5">
+            <div className="flex items-start gap-4">
               {restaurant.logo_url && (
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl border border-stone-200 bg-white p-1.5 shadow-md shrink-0 overflow-hidden">
                   <img
@@ -689,13 +653,26 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                   />
                 </div>
               )}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="hd text-3xl sm:text-4xl lg:text-5xl font-black text-[#1C1917] tracking-tight">
                     {restaurant.name}
                   </h1>
+
+                  {/* Badges grouped with the name */}
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-extrabold shadow-2xs">
+                    <Check className="w-3.5 h-3.5 stroke-[3] text-emerald-600" />
+                    <span>Verified Menu</span>
+                  </span>
+
+                  {isPureVeg && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold shadow-2xs">
+                      Pure Veg
+                    </span>
+                  )}
+
                   {restaurant.is_claimed ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-extrabold" title="Claimed and managed directly by the cafe owner">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 border border-stone-300 text-xs font-extrabold" title="Claimed and managed directly by the cafe owner">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Verified Owner</span>
                     </span>
@@ -703,7 +680,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                     <button
                       type="button"
                       onClick={() => setShowClaimModal(true)}
-                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold cursor-pointer transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold cursor-pointer transition-colors"
                       title="Are you the owner of this cafe? Claim your profile"
                     >
                       <Building2 className="w-3 h-3 text-[#FF5A36]" />
@@ -720,12 +697,39 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             </div>
 
             {/* Quick Pricing Badge */}
-            <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-stone-100">
-              <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">Average Cost</span>
+            <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-stone-100 shrink-0">
+              <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Average Cost</span>
               <div className="text-xl sm:text-2xl font-black text-[#1C1917] flex items-center gap-1">
                 <span>₹{restaurant.average_cost_for_two || 500}</span>
-                <span className="text-xs font-bold text-stone-600">for two</span>
+                <span className="text-xs font-bold text-stone-500">for two</span>
               </div>
+            </div>
+          </div>
+
+          {/* Key Facts & Status Intel Bar (Ratings, Live Open/Closed, Operational Hours) */}
+          <div className="flex flex-wrap items-center gap-3 pt-1 text-xs sm:text-sm">
+            {/* Rating */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-extrabold">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span>{restaurant.rating ? restaurant.rating.toFixed(1) : '4.6'}</span>
+              <span className="text-stone-500 font-medium">({reviews.length || restaurant.rating_count || 120}+ reviews)</span>
+            </div>
+
+            {/* Open / Closed Live Status */}
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-bold border ${
+              restaurant.is_open
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-stone-100 text-stone-700 border-stone-200'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${restaurant.is_open ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'}`} />
+              <span>{restaurant.is_open ? 'Open Now' : 'Closed'}</span>
+              <span className="text-stone-400">·</span>
+              <span className="font-medium text-stone-600">{formatOpeningHours(restaurant.opening_hours)}</span>
+            </div>
+
+            {/* 0% Commission Guarantee */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 text-[#D8350F] font-bold">
+              <span>🏷️ Real In-Store Counter Rates</span>
             </div>
           </div>
 

@@ -46,7 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate, city = 'D
   const navLinks = [
     { label: 'Restaurants', path: '/restaurants' },
     { label: 'Iconic Areas', path: '/iconic-area' },
-    { label: 'Near Me', path: '/nearby' },
     { label: 'Saved', path: '/bookmarks', badge: savedCount > 0 ? savedCount : undefined },
   ];
 

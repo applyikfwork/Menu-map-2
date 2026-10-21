@@ -209,6 +209,20 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
     });
   }, [menuItems, query]);
 
+  const handleTriggerNearMe = async () => {
+    try {
+      let coords = userCoords;
+      if (!coords) {
+        coords = await getUserLocation();
+        setUserCoords(coords);
+      }
+      setSortBy('distance');
+      setTabMode('restaurants');
+    } catch {
+      // ignore
+    }
+  };
+
   const clearAllFilters = () => {
     setSelectedCuisines([]);
     setSelectedMealTypes([]);
@@ -462,6 +476,50 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             <span>Filters</span>
           </button>
         </div>
+      </div>
+
+      {/* Quick Discovery Chips with prominent Near Me GPS */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mt-4">
+        <button
+          type="button"
+          onClick={handleTriggerNearMe}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+            sortBy === 'distance'
+              ? 'bg-[#FF5A36] text-white border border-[#FF5A36]'
+              : 'bg-white text-stone-800 border border-[#E7E2DA] hover:border-[#FF5A36]/60 hover:text-[#FF5A36]'
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
+          <span>📍 Near Me (GPS)</span>
+        </button>
+
+        {[
+          { label: 'North Campus', q: 'North Campus' },
+          { label: 'Connaught Place', q: 'Connaught Place' },
+          { label: 'Hudson Lane', q: 'Hudson Lane' },
+          { label: 'Satya Niketan', q: 'Satya Niketan' },
+          { label: 'Cold Coffee', q: 'Cold Coffee' },
+          { label: 'Momos', q: 'Momos' },
+          { label: 'Pure Veg', filter: 'veg' },
+          { label: 'Budget Under ₹400', filter: 'budget' },
+        ].map((chip) => (
+          <button
+            key={chip.label}
+            type="button"
+            onClick={() => {
+              if (chip.q) {
+                setQuery(chip.q);
+              } else if (chip.filter === 'veg') {
+                setSelectedDietary((prev) => (prev.includes('Pure Veg') ? prev : [...prev, 'Pure Veg']));
+              } else if (chip.filter === 'budget') {
+                setSelectedPriceRanges(['₹']);
+              }
+            }}
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-stone-700 border border-[#E7E2DA] hover:border-stone-400 hover:text-stone-950 transition-all shrink-0 cursor-pointer shadow-xs"
+          >
+            {chip.label}
+          </button>
+        ))}
       </div>
 
       {/* Main Layout: Filters sidebar + Results */}

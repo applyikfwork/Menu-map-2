@@ -79,7 +79,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
         : 'Menu Maps Restaurants – Verified Cafes & Menus in Delhi NCR',
       description: isNearby
         ? 'Find the best cafes and restaurants near you with verified menus, real counter prices, and live distance discovery across Delhi NCR.'
-        : 'Browse 680+ verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you.',
+        : 'Browse authentic verified cafes and restaurants across Delhi NCR on Menu Maps. View real counter menus, dish prices, and find the best cafes near you.',
       keywords: isNearby
         ? ['best cafes near me', 'restaurants near me with prices', 'cafes near me', 'food near me', 'top rated cafes delhi']
         : ['menu maps resturant', 'menu maps restaurants', 'cafes in delhi ncr', 'delhi restaurant menu prices', 'verified cafes'],
@@ -1088,14 +1088,23 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
           {/* Top Status & Active Filter Tags */}
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <p className="text-sm sm:text-base text-[#57534E]">
-              <strong className="text-[#1C1917] font-bold">
-                Showing {displayedRestaurants.length} verified counters
-              </strong>{' '}
-              in {detectedArea}
-              {filteredRestaurants.length === 0 && displayedRestaurants.length > 0 && (
-                <span className="text-xs text-amber-700 ml-2 font-medium">
-                  (Top Featured Delhi NCR Spots)
+              {loading ? (
+                <span className="inline-flex items-center gap-2 font-bold text-stone-600 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                  Discovering verified counter menus in {detectedArea}...
                 </span>
+              ) : (
+                <>
+                  <strong className="text-[#1C1917] font-bold">
+                    Showing {displayedRestaurants.length} verified counters
+                  </strong>{' '}
+                  in {detectedArea}
+                  {filteredRestaurants.length === 0 && displayedRestaurants.length > 0 && (
+                    <span className="text-xs text-amber-700 ml-2 font-medium">
+                      (Top Featured Delhi NCR Spots)
+                    </span>
+                  )}
+                </>
               )}
             </p>
 
