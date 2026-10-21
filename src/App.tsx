@@ -231,7 +231,7 @@ function AppContent() {
   const isAdminPage = currentPath === '/admin-secure-panel2010';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917]">
+    <div className="min-h-screen flex flex-col bg-[#FAF8F4] text-[#191715]">
       {!isAdminPage && (
         <Navbar
           currentPath={currentPath}

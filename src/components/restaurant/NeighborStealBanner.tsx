@@ -21,7 +21,7 @@ export const NeighborStealBanner: React.FC<NeighborStealBannerProps> = ({
   // Find a verified neighbor in the same market or nearby area
   const verifiedNeighbor = useMemo(() => {
     if (isVerifiedPartner) return null;
-    return nearbyRestaurants.find((r) => r.id !== currentRestaurant.id && (r.is_verified || r.rating >= 4.2)) || nearbyRestaurants[0] || null;
+    return nearbyRestaurants.find((r) => r.id !== currentRestaurant.id && (r.is_verified || (r.rating_avg && r.rating_avg >= 4.2) || (r.rating && r.rating >= 4.2))) || nearbyRestaurants[0] || null;
   }, [nearbyRestaurants, currentRestaurant, isVerifiedPartner]);
 
   // If already verified partner, display verified badge banner

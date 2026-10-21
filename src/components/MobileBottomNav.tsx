@@ -63,10 +63,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
   return (
     <nav
       aria-label="Mobile Navigation Bar"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-t border-[#E7E2DA] flex items-center justify-around px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F4]/95 backdrop-blur-md border-t border-[#E8E4DC] flex items-center justify-around px-1 shadow-[0_-4px_24px_rgba(25,23,21,0.08)]"
       style={{
         paddingTop: '6px',
-        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+        paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
       }}
     >
       {navItems.map((item) => {
@@ -77,21 +77,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
             onClick={() => navigate(item.path)}
             className={`flex-1 flex flex-col items-center justify-center gap-1 py-1.5 px-1 min-h-[48px] text-[11px] font-bold transition-all active:scale-95 relative cursor-pointer ${
               item.active
-                ? 'text-[#FF5A36]'
-                : 'text-[#78716C] hover:text-[#1C1917]'
+                ? 'text-[#F4512C]'
+                : 'text-[#78716C] hover:text-[#191715]'
             }`}
           >
             <div className="relative">
               <Icon className="w-5 h-5 stroke-[2.2]" />
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-[#FF5A36] text-white text-[9px] font-black flex items-center justify-center shadow-xs">
+                <span className="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-[#F4512C] text-white text-[9px] font-black flex items-center justify-center shadow-xs">
                   {item.badge}
                 </span>
               )}
             </div>
             <span>{item.label}</span>
             {item.active && (
-              <span className="w-1 h-1 rounded-full bg-[#FF5A36] -mt-0.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F4512C] -mt-0.5" />
             )}
           </button>
         );

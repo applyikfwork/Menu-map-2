@@ -1424,7 +1424,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                                   type="button"
                                   onClick={() => {
                                     const target = restaurants.find(r => r.id === item.restaurant_id);
-                                    if (target) handleOpenEditRestaurant(target);
+                                    if (target) {
+                                      setEditingRestaurant(target);
+                                      setRestaurantModalOpen(true);
+                                    }
                                   }}
                                   className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium transition-colors cursor-pointer"
                                   title="Edit Restaurant in Admin"

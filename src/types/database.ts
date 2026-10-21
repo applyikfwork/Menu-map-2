@@ -1,6 +1,6 @@
 export type DietaryOption = 'Pure Veg' | 'Vegan Options' | 'Gluten-Free Options' | 'Halal' | 'Jain Friendly';
 
-export type DietaryTag = 'Veg' | 'Non-veg' | 'Vegan' | 'Gluten-free' | 'High Protein' | 'Low Calorie' | 'Egg' | 'Spicy';
+export type DietaryTag = 'Veg' | 'Non-veg' | 'Vegan' | 'Gluten-free' | 'High Protein' | 'Low Calorie' | 'Egg' | 'Spicy' | 'Jain' | 'Pure Veg' | 'Vegetarian';
 
 export type MealType = 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks' | 'Late Night';
 
@@ -51,6 +51,8 @@ export interface Restaurant {
   dietary_options: DietaryOption[];
   rating_avg: number;
   rating_count: number;
+  rating?: number;
+  city_area?: string;
   cover_image_url: string;
   logo_url?: string;
   is_claimed?: boolean;
@@ -145,6 +147,11 @@ export interface MenuItem {
   sort_order: number;
   is_featured: boolean;
   is_must_try?: boolean;
+  is_veg?: boolean;
+  is_popular?: boolean;
+  rating?: number;
+  category_name?: string;
+  cuisine_types?: string[];
   view_count: number;
   order_count: number;
   created_at: string;
@@ -281,6 +288,7 @@ export type ClaimStatus = 'pending_admin_approval' | 'approved' | 'rejected' | '
 export interface RestaurantClaim {
   id: string;
   restaurant_id: string;
+  restaurant_slug?: string;
   restaurant_name: string;
   owner_name: string;
   owner_email: string;

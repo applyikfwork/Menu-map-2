@@ -403,18 +403,18 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
       {/* Top Search Bar */}
-      <div className="bg-white rounded-[28px] p-3 sm:p-4 border border-[#E7E2DA] shadow-xs flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-white rounded-[28px] p-3 sm:p-4 border border-[#E8E4DC] shadow-xs flex flex-col md:flex-row items-center gap-3">
         <div className="flex-1 flex items-center gap-3 px-3 w-full">
           <SearchIcon className="w-5 h-5 text-[#78716C] shrink-0" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search cafes, restaurants, pastas, thalis, coffee..."
-            className="w-full bg-transparent text-[#1C1917] placeholder-stone-400 text-base font-medium outline-none"
+            placeholder="Search dishes, restaurants or cuisines"
+            className="w-full bg-transparent text-[#191715] placeholder-stone-400 text-base font-medium outline-none"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="p-1 hover:bg-stone-100 rounded-full text-stone-400">
+            <button onClick={() => setQuery('')} className="p-1 hover:bg-stone-100 rounded-full text-stone-400 cursor-pointer">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -427,7 +427,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             <button
               onClick={() => setTabMode('all')}
               className={`px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer min-h-[34px] shrink-0 ${
-                tabMode === 'all' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
+                tabMode === 'all' ? 'bg-[#191715] text-white shadow-xs' : 'hover:text-[#191715]'
               }`}
             >
               All ({filteredRestaurants.length + filteredItems.length})
@@ -435,7 +435,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             <button
               onClick={() => setTabMode('restaurants')}
               className={`px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer min-h-[34px] shrink-0 ${
-                tabMode === 'restaurants' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
+                tabMode === 'restaurants' ? 'bg-[#191715] text-white shadow-xs' : 'hover:text-[#191715]'
               }`}
             >
               Places ({filteredRestaurants.length})
@@ -443,7 +443,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             <button
               onClick={() => setTabMode('dishes')}
               className={`px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer min-h-[34px] shrink-0 ${
-                tabMode === 'dishes' ? 'bg-[#1C1917] text-white shadow-xs' : 'hover:text-[#1C1917]'
+                tabMode === 'dishes' ? 'bg-[#191715] text-white shadow-xs' : 'hover:text-[#191715]'
               }`}
             >
               Dishes ({filteredItems.length})
@@ -452,17 +452,120 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
 
           <button
             onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-            className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-2xl text-xs font-bold border transition-colors shrink-0 ${
+            className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-2xl text-xs font-bold border transition-colors shrink-0 cursor-pointer ${
               hasActiveFilters
-                ? 'bg-[#FF5A36]/10 text-[#FF5A36] border-[#FF5A36]/30'
-                : 'bg-white text-stone-700 border-[#E7E2DA]'
+                ? 'bg-[#F4512C]/10 text-[#F4512C] border-[#F4512C]/30'
+                : 'bg-white text-stone-700 border-[#E8E4DC]'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            <span>Filters</span>
+            <span>Filters {hasActiveFilters ? `(${selectedCuisines.length + selectedPriceRanges.length + (minRating > 0 ? 1 : 0) + selectedDietary.length + (onlyOpenNow ? 1 : 0) + (onlyDelivery ? 1 : 0)})` : ''}</span>
           </button>
         </div>
       </div>
+
+      {/* Instant Suggestion / Craving Chips */}
+      {!query && (
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mt-4 pb-1">
+          <span className="text-[11px] font-bold text-stone-600 uppercase tracking-wider shrink-0">Popular:</span>
+          {['Momos', 'Artisan Coffee', 'Pizza', 'Pure Veg', 'Late Night', 'Budget Feasts', 'Burgers', 'Shakes'].map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setQuery(tag)}
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-white hover:bg-stone-50 text-stone-700 border border-[#E8E4DC] shrink-0 transition-colors cursor-pointer"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Active Filters Bar (when any filters active) */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 -mt-4 p-3 rounded-2xl bg-white border border-[#E8E4DC] text-xs">
+          <span className="font-bold text-stone-600">Active Filters:</span>
+          {selectedCuisines.map((c) => (
+            <span key={c} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-medium">
+              {c}
+              <button
+                type="button"
+                onClick={() => setSelectedCuisines((prev) => prev.filter((item) => item !== c))}
+                className="hover:text-rose-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          {selectedPriceRanges.map((p) => (
+            <span key={p} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-medium">
+              Price: {p}
+              <button
+                type="button"
+                onClick={() => setSelectedPriceRanges((prev) => prev.filter((item) => item !== p))}
+                className="hover:text-rose-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          {minRating > 0 && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 font-medium border border-amber-200">
+              ★ {minRating}+
+              <button
+                type="button"
+                onClick={() => setMinRating(0)}
+                className="hover:text-rose-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          {selectedDietary.map((d) => (
+            <span key={d} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200">
+              {d}
+              <button
+                type="button"
+                onClick={() => setSelectedDietary((prev) => prev.filter((item) => item !== d))}
+                className="hover:text-rose-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          {onlyOpenNow && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-medium">
+              Open Now
+              <button
+                type="button"
+                onClick={() => setOnlyOpenNow(false)}
+                className="hover:text-rose-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          {onlyDelivery && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-medium">
+              Delivery
+              <button
+                type="button"
+                onClick={() => setOnlyDelivery(false)}
+                className="hover:text-rose-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs font-bold text-[#F4512C] hover:underline ml-auto cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
 
       {/* Main Layout: Filters sidebar + Results */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
@@ -489,23 +592,23 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
         {/* Mobile Filters Drawer Modal */}
         {showFiltersMobile && (
           <div className="fixed inset-0 z-50 lg:hidden flex flex-col bg-white animate-fade-in">
-            <div className="flex items-center justify-between p-4 border-b border-stone-200 bg-[#FAF8F5]">
+            <div className="flex items-center justify-between p-4 border-b border-[#E8E4DC] bg-[#FAF8F4]">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-[#FF5A36]" />
-                <h3 className="font-heading font-extrabold text-lg text-[#1C1917]">Filters</h3>
+                <SlidersHorizontal className="w-5 h-5 text-[#F4512C]" />
+                <h3 className="font-heading font-extrabold text-lg text-[#191715]">Filters</h3>
               </div>
               <div className="flex items-center gap-3">
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-xs font-bold text-[#FF5A36] hover:underline"
+                    className="text-xs font-bold text-[#F4512C] hover:underline cursor-pointer"
                   >
-                    Reset all
+                    Clear all
                   </button>
                 )}
                 <button
                   onClick={() => setShowFiltersMobile(false)}
-                  className="p-2 hover:bg-stone-200/60 rounded-full text-stone-600 transition-colors"
+                  className="p-2 hover:bg-stone-200/60 rounded-full text-stone-600 transition-colors cursor-pointer"
                   aria-label="Close filters"
                 >
                   <X className="w-5 h-5" />
@@ -518,14 +621,24 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
             </div>
 
             <div 
-              className="p-4 border-t border-stone-200 bg-white sticky bottom-0 shadow-lg"
+              className="p-4 border-t border-[#E8E4DC] bg-white sticky bottom-0 shadow-lg flex items-center gap-3"
               style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
             >
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="px-4 py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-2xl text-xs transition-colors shrink-0 cursor-pointer"
+                >
+                  Clear All
+                </button>
+              )}
               <button
+                type="button"
                 onClick={() => setShowFiltersMobile(false)}
-                className="w-full py-3.5 bg-[#14110F] hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3.5 bg-[#191715] hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer text-xs"
               >
-                <span>Show {filteredRestaurants.length + filteredItems.length} Results</span>
+                <span>Apply &amp; Show {filteredRestaurants.length + filteredItems.length} Results</span>
               </button>
             </div>
           </div>

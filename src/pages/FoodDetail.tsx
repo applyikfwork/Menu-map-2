@@ -23,6 +23,7 @@ import { useDiscovery } from '../context/DiscoveryContext';
 import { LocalityPriceComparisonCard } from '../components/discovery/LocalityPriceComparisonCard';
 import { DishPairingStrip } from '../components/discovery/DishPairingStrip';
 import { updatePageSeo, buildDishSchema } from '../lib/seo';
+import { getSmartDishImage, IMAGE_DISCLAIMER_TEXT, IMAGE_DISCLAIMER_BADGE } from '../lib/dishImageRegistry';
 
 interface FoodDetailProps {
   slug: string;

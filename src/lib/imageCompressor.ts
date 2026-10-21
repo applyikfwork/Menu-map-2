@@ -12,11 +12,28 @@ export interface CompressionResult {
   height: number;
 }
 
+export interface CompressionOptions {
+  maxWidth?: number;
+  maxDimension?: number;
+  quality?: number;
+  maxSizeBytes?: number;
+}
+
 export async function compressImageFile(
   file: File,
-  maxDimension = 1600,
-  maxSizeBytes = 950 * 1024 // Target under 950 KB (< 1 MB)
+  optionsOrMaxDimension: number | CompressionOptions = 1600,
+  maxSizeBytesParam = 950 * 1024 // Target under 950 KB (< 1 MB)
 ): Promise<CompressionResult> {
+  const isOptions = typeof optionsOrMaxDimension === 'object' && optionsOrMaxDimension !== null;
+  const maxDimension = isOptions
+    ? (optionsOrMaxDimension.maxWidth || optionsOrMaxDimension.maxDimension || 1600)
+    : (optionsOrMaxDimension || 1600);
+  const initialQuality = isOptions && typeof optionsOrMaxDimension.quality === 'number'
+    ? optionsOrMaxDimension.quality
+    : 0.85;
+  const maxSizeBytes = isOptions && optionsOrMaxDimension.maxSizeBytes
+    ? optionsOrMaxDimension.maxSizeBytes
+    : maxSizeBytesParam;
   return new Promise((resolve, reject) => {
     const originalSizeKb = Math.round(file.size / 1024);
 
@@ -55,7 +72,7 @@ export async function compressImageFile(
         ctx.drawImage(img, 0, 0, width, height);
 
         // Iteratively find quality that ensures < 1 MB
-        let quality = 0.85;
+        let quality = initialQuality;
         let dataUrl = canvas.toDataURL('image/jpeg', quality);
 
         // Calculate binary size of base64

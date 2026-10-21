@@ -386,7 +386,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
       return true;
     }).sort((a, b) => {
-      if (sortBy === 'rating') return (b.rating_avg || 4.5) - (a.rating_avg || 4.5);
+      if (sortBy === 'rating') return (b.rating_avg || 0) - (a.rating_avg || 0);
       if (sortBy === 'cost_low') return (a.average_cost_for_two || 350) - (b.average_cost_for_two || 350);
       if (sortBy === 'cost_high') return (b.average_cost_for_two || 350) - (a.average_cost_for_two || 350);
       if (sortBy === 'distance') return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
@@ -568,7 +568,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
     (selectedAmenity !== 'all' ? 1 : 0);
 
   return (
-    <div className="w-full bg-[#FAF8F5] text-[#1C1917] min-h-screen">
+    <div className="w-full bg-[#FAF8F4] text-[#191715] min-h-screen">
       {/* Top Header / Title */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-6 sm:pt-8 pb-3">
         <div className="text-xs font-extrabold tracking-widest uppercase text-[#D8350F]">

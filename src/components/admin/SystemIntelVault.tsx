@@ -32,7 +32,7 @@ import {
   RestaurantOwnerAccount, 
   Review, 
   SearchAnalytic 
-} from '../../lib/supabase';
+} from '../../types/database';
 import { useToast } from '../Toast';
 
 interface SystemIntelVaultProps {
