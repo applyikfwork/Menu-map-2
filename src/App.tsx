@@ -30,8 +30,7 @@ const ListCafe = lazyWithRetry(() => import('./pages/ListCafe'), 'ListCafe', 'Li
 const ClaimVerify = lazyWithRetry(() => import('./pages/ClaimVerify'), 'ClaimVerify', 'ClaimVerify');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound', 'NotFound');
 
-import { ADMIN_EMAIL, getCurrentAdminSession, api } from './lib/supabase';
-import { getCachedUserCoordinates, detectAreaContext, GeoCoordinates } from './lib/location';
+import { ADMIN_EMAIL, getCurrentAdminSession } from './lib/supabase';
 
 // Local stub for platform analytics
 const Analytics = () => null;
@@ -44,34 +43,7 @@ function AppContent() {
   const [searchParams, setSearchParams] = useState<URLSearchParams>(() => {
     return new URLSearchParams(window.location.search);
   });
-  const [detectedCity, setDetectedCity] = useState<string>('Delhi NCR');
 
-  // Dynamic Neighborhood sync from cached or live GPS
-  useEffect(() => {
-    const updateLocationContext = async (coords?: GeoCoordinates) => {
-      try {
-        const active = coords || getCachedUserCoordinates();
-        if (!active) return;
-        const rests = await api.getRestaurants(true);
-        const ctx = detectAreaContext(active, rests);
-        if (ctx?.areaName) {
-          setDetectedCity(ctx.areaName);
-        }
-      } catch (err) {
-        // Fallback to Delhi NCR
-      }
-    };
-
-    updateLocationContext();
-
-    const handleLocUpdate = (e: any) => {
-      if (e.detail) {
-        updateLocationContext(e.detail);
-      }
-    };
-    window.addEventListener('menumap_location_updated', handleLocUpdate);
-    return () => window.removeEventListener('menumap_location_updated', handleLocUpdate);
-  }, []);
 
   // Client-side router navigation
   const navigate = (pathWithQuery: string) => {
@@ -262,10 +234,12 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <DiscoveryProvider>
-          <AppContent />
-          <Analytics />
-        </DiscoveryProvider>
+        <LocationProvider>
+          <DiscoveryProvider>
+            <AppContent />
+            <Analytics />
+          </DiscoveryProvider>
+        </LocationProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
