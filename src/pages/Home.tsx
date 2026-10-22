@@ -541,6 +541,37 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                 </div>
               </div>
 
+              {/* 1-Tap Mood & Dietary Triage */}
+              <div className="mt-5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                {[
+                  { label: '🍽️ All Cafes', filter: 'All' },
+                  { label: '🌱 100% Pure Veg', filter: 'Pure Veg' },
+                  { label: '💰 Budget Under ₹400', filter: 'Budget' },
+                  { label: '🌙 Open Late Night', filter: 'Late night' },
+                  { label: '🌆 Rooftop Ambience', filter: 'Rooftop' },
+                ].map((mood) => {
+                  const isActive = restaurantFilter === mood.filter;
+                  return (
+                    <button
+                      key={mood.label}
+                      type="button"
+                      onClick={() => {
+                        setRestaurantFilter(mood.filter as any);
+                        const el = document.getElementById('cafes');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                        isActive
+                          ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-sm'
+                          : 'bg-white hover:bg-stone-50 text-[#44403C] border-[#E7E2DA]'
+                      }`}
+                    >
+                      {mood.label}
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* 3 Quick Benefit Metrics */}
               <div className="mt-6 flex flex-wrap items-center gap-6 text-xs sm:text-sm font-semibold text-[#57534E]">
                 <div className="flex items-center gap-2">
@@ -714,7 +745,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
             onClick={() => navigate('/restaurants')}
             className="btn bg-[#1C1917] text-white hover:bg-stone-800 min-h-[50px] px-8 rounded-full font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
           >
-            View all {restaurants.length || 129} verified counter menus in Delhi NCR →
+            View all {restaurants.length || 770} verified counter menus in Delhi NCR →
           </button>
         </div>
       </section>
@@ -1068,7 +1099,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
               Real food menus. Zero app markup.
             </h2>
             <p className="mt-3 text-sm sm:text-base text-stone-300">
-              Menu Maps is Delhi's direct dining guide with 100% verified counter menus across {restaurants.length || 129} verified dining spots.
+              Menu Maps is Delhi's direct dining guide with 100% verified counter menus across {restaurants.length || 770} verified dining spots.
             </p>
             <div className="mt-7 flex flex-wrap gap-3 justify-center">
               <button

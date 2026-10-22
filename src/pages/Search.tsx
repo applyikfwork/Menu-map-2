@@ -15,6 +15,7 @@ import {
 import { Restaurant, MenuItem, PriceRange, DietaryOption, MealType } from '../types/database';
 import { api } from '../lib/supabase';
 import { getUserLocation, calculateDistanceKm, GeoCoordinates } from '../lib/location';
+import { useLocationContext } from '../context/LocationContext';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { FoodItemCard } from '../components/FoodItemCard';
 import { RestaurantCardSkeleton } from '../components/Skeleton';
@@ -38,7 +39,17 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [userCoords, setUserCoords] = useState<GeoCoordinates | null>(null);
+  const { currentLocation, detectLiveGps } = useLocationContext();
+
+  const userCoords: GeoCoordinates | null = useMemo(() => {
+    if (currentLocation.latitude && currentLocation.longitude) {
+      return {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      };
+    }
+    return null;
+  }, [currentLocation]);
 
   // Filters State
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>(
@@ -55,7 +66,6 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
 
   useEffect(() => {
     loadData();
-    getUserLocation().then(setUserCoords).catch(() => {});
   }, []);
 
   const loadData = async () => {
@@ -211,10 +221,8 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
 
   const handleTriggerNearMe = async () => {
     try {
-      let coords = userCoords;
-      if (!coords) {
-        coords = await getUserLocation();
-        setUserCoords(coords);
+      if (currentLocation.isAllDelhi || !userCoords) {
+        await detectLiveGps();
       }
       setSortBy('distance');
       setTabMode('restaurants');

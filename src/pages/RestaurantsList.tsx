@@ -808,6 +808,76 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
             </button>
           </div>
         )}
+
+        {/* Quick 1-Tap Cravings & Dietary HUD Strip */}
+        <div className="mt-3.5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+              activeFiltersCount === 0 && currentLocation.isAllDelhi
+                ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-sm'
+                : 'bg-white hover:bg-stone-50 text-[#44403C] border-[#E7E2DA]'
+            }`}
+          >
+            🍽️ All ({restaurants.length || 770})
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedDiet(selectedDiet === 'Pure Veg' ? 'all' : 'Pure Veg')}
+            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+              selectedDiet === 'Pure Veg'
+                ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-sm'
+                : 'bg-white hover:bg-emerald-50 text-[#0F766E] border-emerald-200'
+            }`}
+          >
+            🌱 Pure Veg
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedPrice(selectedPrice === '₹' ? 'all' : '₹')}
+            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+              selectedPrice === '₹'
+                ? 'bg-[#FF5A36] text-white border-[#FF5A36] shadow-sm'
+                : 'bg-white hover:bg-stone-50 text-[#44403C] border-[#E7E2DA]'
+            }`}
+          >
+            💰 Budget (₹)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedMeal(selectedMeal === 'Late Night' ? 'all' : 'Late Night')}
+            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+              selectedMeal === 'Late Night'
+                ? 'bg-[#1C1917] text-white border-[#1C1917] shadow-sm'
+                : 'bg-white hover:bg-stone-50 text-[#44403C] border-[#E7E2DA]'
+            }`}
+          >
+            🌙 Late Night
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedCuisine(selectedCuisine === 'Cafe' ? 'all' : 'Cafe')}
+            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+              selectedCuisine === 'Cafe'
+                ? 'bg-[#FF5A36] text-white border-[#FF5A36] shadow-sm'
+                : 'bg-white hover:bg-stone-50 text-[#44403C] border-[#E7E2DA]'
+            }`}
+          >
+            ☕ Cafes
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedAmenity(selectedAmenity === 'Rooftop' ? 'all' : 'Rooftop')}
+            className={`text-xs px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer border ${
+              selectedAmenity === 'Rooftop'
+                ? 'bg-[#FF5A36] text-white border-[#FF5A36] shadow-sm'
+                : 'bg-white hover:bg-stone-50 text-[#44403C] border-[#E7E2DA]'
+            }`}
+          >
+            🌆 Rooftop
+          </button>
+        </div>
       </section>
 
       {/* Main Content: Sidebar + Cards Grid */}
