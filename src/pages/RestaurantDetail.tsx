@@ -760,6 +760,12 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             </button>
           </div>
 
+          {/* Aggregator Markup Defense Pill (Loss Aversion & Price Transparency) */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-xs font-bold text-[#9A2A0C] my-1">
+            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+            <span>100% In-Store Prices · Save 20–35% vs Food Delivery Apps</span>
+          </div>
+
           {/* Comprehensive Action Bar (All actions clean, organized, prominent) */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             {/* Primary Action: Direct WhatsApp Counter Order */}
@@ -801,10 +807,10 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             <button
               type="button"
               onClick={() => setShowPhysicalMenuModal(true)}
-              className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-5 text-sm font-bold flex items-center gap-2 cursor-pointer"
+              className="btn bg-[#FAF8F5] hover:bg-stone-100 text-[#1C1917] border border-[#E7E2DA] shadow-sm min-h-[48px] px-5 text-sm font-extrabold flex items-center gap-2 cursor-pointer"
             >
               <FileText className="w-4 h-4 text-emerald-600" />
-              <span>Paper Menu</span>
+              <span>Real Counter Menu (Photos)</span>
             </button>
 
             {/* Call Button */}
@@ -2538,6 +2544,35 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           </div>
         </div>
       )}
+
+      {/* Sticky Mobile Quick-Action HUD (Fitts's Law / Thumb-Zone Ergonomics) */}
+      <div className="md:hidden fixed bottom-16 inset-x-0 z-30 px-3 py-2 bg-white/95 backdrop-blur-md border-t border-[#E7E2DA] shadow-xl flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowPhysicalMenuModal(true)}
+          className="flex-1 min-h-[46px] px-3 rounded-2xl bg-[#FAF8F5] hover:bg-stone-100 border border-[#E7E2DA] text-[#1C1917] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+        >
+          <FileText className="w-4 h-4 text-emerald-600" />
+          <span>Real Counter Menu</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            const rawPhone = restaurant.whatsapp_number || restaurant.phone;
+            if (rawPhone) {
+              const phone = rawPhone.replace(/[^0-9]/g, '');
+              window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on MenuMaps.`)}`, '_blank');
+            } else {
+              setShowOrderDrawer(true);
+            }
+          }}
+          className="flex-1 min-h-[46px] px-3 rounded-2xl bg-[#0F766E] hover:bg-[#0d6962] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer active:scale-95 transition-all"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>WhatsApp Order</span>
+        </button>
+      </div>
 
       {/* WhatsApp Order Drawer (15-min self-pickup, split bill & direct order) */}
       <WhatsAppOrderDrawer
