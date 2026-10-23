@@ -52,6 +52,9 @@ import {
 import { AREA_FOOD_GUIDES } from '../lib/areaGuidesData';
 import { useLocationContext } from '../context/LocationContext';
 import { RestaurantCard } from '../components/RestaurantCard';
+import { VisualCravingsRow } from '../components/discovery/VisualCravingsRow';
+import { BillComparisonWidget } from '../components/discovery/BillComparisonWidget';
+import { CuratedPlaylistsSection } from '../components/discovery/CuratedPlaylistsSection';
 import { useToast } from '../components/Toast';
 import { toggleBookmark, isBookmarked } from '../lib/bookmarks';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
@@ -690,6 +693,30 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
           </div>
         </div>
       </section>
+
+      {/* ========================================================
+          1.5. VISUAL CRAVINGS CAROUSEL (What are you craving today?)
+      ======================================================== */}
+      <VisualCravingsRow navigate={navigate} />
+
+      {/* ========================================================
+          1.6. THE VALUE HOOK: BILL COMPARISON WIDGET
+      ======================================================== */}
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-8 py-4">
+        <BillComparisonWidget navigate={navigate} />
+      </section>
+
+      {/* ========================================================
+          1.7. CURATED EDITORIAL SHELVES (Spotlight, Budget, Late Night)
+      ======================================================== */}
+      {restaurants.length > 0 && (
+        <CuratedPlaylistsSection
+          restaurants={restaurants}
+          activeAreaName={activeAreaName}
+          navigate={navigate}
+          userCoords={userCoords}
+        />
+      )}
 
       {/* ========================================================
           2. TOP VERIFIED CAFES IN THIS LOCATION
