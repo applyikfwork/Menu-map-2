@@ -1,4 +1,4 @@
-import { Restaurant, MenuCategory, MenuItem } from '../types/database';
+import { Restaurant, MenuCategory, MenuItem } from '../../types/database';
 
 export const NORTH_CAMPUS_DU_RESTAURANTS: Restaurant[] = [
   {

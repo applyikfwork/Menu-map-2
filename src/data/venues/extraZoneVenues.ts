@@ -1,4 +1,4 @@
-import { Restaurant, MenuCategory, MenuItem } from '../types/database';
+import { Restaurant, MenuCategory, MenuItem } from '../../types/database';
 
 export const EXTRA_ZONE_RESTAURANTS: Restaurant[] = [
   {

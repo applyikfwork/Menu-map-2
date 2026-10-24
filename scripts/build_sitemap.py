@@ -23,12 +23,7 @@ if os.path.exists(PRERENDER_DATA):
         if d.get("slug"):
             dish_slugs.add(d["slug"])
 else:
-    venue_files = [
-        'src/lib/northCampusDuVenues.ts',
-        'src/lib/extraZoneVenues.ts',
-        'src/lib/newDelhiVenues.ts',
-    ]
-    venue_files.extend(glob.glob('src/data/venues/*.ts'))
+    venue_files = glob.glob('src/data/venues/*.ts')
 
     for vf in set(venue_files):
         if not os.path.exists(vf):

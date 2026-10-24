@@ -12,20 +12,29 @@ export default defineConfig(() => {
       },
     },
     build: {
-      chunkSizeWarningLimit: 4500,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom')) {
+            const normalized = id.replace(/\\/g, '/');
+            if (normalized.includes('node_modules')) {
+              if (normalized.includes('/react/') || normalized.includes('/react-dom/')) {
                 return 'vendor-react';
               }
-              if (id.includes('lucide-react') || id.includes('motion')) {
+              if (normalized.includes('lucide-react') || normalized.includes('motion')) {
                 return 'vendor-ui';
               }
-              if (id.includes('@supabase')) {
+              if (normalized.includes('@supabase')) {
                 return 'vendor-supabase';
               }
+            }
+            // Code-split heavy static datasets so the main application code loads instantly
+            if (
+              normalized.includes('/src/data/venues/') ||
+              normalized.includes('/src/lib/seedData') ||
+              normalized.includes('/src/lib/delhiLocationsData')
+            ) {
+              return 'data-venues';
             }
           },
         },

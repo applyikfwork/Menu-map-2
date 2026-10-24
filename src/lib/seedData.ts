@@ -1,10 +1,6 @@
 import { Restaurant, MenuCategory, MenuItem, Collection, CollectionItem } from '../types/database';
 import { slugify } from './supabase';
 import { getSmartDishImage } from './dishImageRegistry';
-import { EXTRA_ZONE_RESTAURANTS, EXTRA_ZONE_CATEGORIES, EXTRA_ZONE_MENU_ITEMS } from './extraZoneVenues';
-import { NORTH_CAMPUS_DU_RESTAURANTS, NORTH_CAMPUS_DU_CATEGORIES, NORTH_CAMPUS_DU_MENU_ITEMS } from './northCampusDuVenues';
-import { NEW_DELHI_RESTAURANTS, NEW_DELHI_CATEGORIES, NEW_DELHI_MENU_ITEMS } from './newDelhiVenues';
-import { AREA_FOOD_GUIDES } from './areaGuidesData';
 import {
   MODEL_TOWN_RESTAURANTS,
   MODEL_TOWN_CATEGORIES,
@@ -27,6 +23,15 @@ import {
   BATCH3_RESTAURANTS,
   BATCH3_CATEGORIES,
   BATCH3_MENU_ITEMS,
+  NORTH_CAMPUS_DU_RESTAURANTS,
+  NORTH_CAMPUS_DU_CATEGORIES,
+  NORTH_CAMPUS_DU_MENU_ITEMS,
+  NEW_DELHI_RESTAURANTS,
+  NEW_DELHI_CATEGORIES,
+  NEW_DELHI_MENU_ITEMS,
+  EXTRA_ZONE_RESTAURANTS,
+  EXTRA_ZONE_CATEGORIES,
+  EXTRA_ZONE_MENU_ITEMS,
 } from '../data/venues';
 
 export interface SeedDataset {
@@ -5228,69 +5233,7 @@ export function generateSeedData(): SeedDataset {
   ];
 
   // Collections
-  const collections: Collection[] = [
-    {
-      id: uuid('44444444-0000-4000-8000-', 1),
-      title: 'Best Cafes & Dhabas in Nangloi',
-      slug: 'best-cafes-dhabas-nangloi',
-      description: 'The definitive foodie trail across Najafgarh Road and Shivram Park for rich thalis, momos, and artisanal coffees.',
-      cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80',
-      type: 'City-based',
-      is_featured: true,
-      is_active: true,
-      sort_order: 1,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: uuid('44444444-0000-4000-8000-', 2),
-      title: 'Crispy Kurkure & Afghani Momos',
-      slug: 'crispy-kurkure-afghani-momos',
-      description: 'Cravings for steaming hot dumplings dipped in spicy garlic sauce and cashew cream gravies.',
-      cover_image_url: 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=800&auto=format&fit=crop&q=80',
-      type: 'Cuisine-based',
-      is_featured: true,
-      is_active: true,
-      sort_order: 2,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: uuid('44444444-0000-4000-8000-', 3),
-      title: 'Family Thalis & Pure Veg Delights',
-      slug: 'family-thalis-pure-veg',
-      description: 'Generous portions, authentic Punjabi gravies, and hot clay-oven butter naans for family dinners.',
-      cover_image_url: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=800&auto=format&fit=crop&q=80',
-      type: 'Occasion-based',
-      is_featured: true,
-      is_active: true,
-      sort_order: 3,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: uuid('44444444-0000-4000-8000-', 4),
-      title: 'Chandni Chowk & Old Delhi Heritage Trail',
-      slug: 'chandni-chowk-heritage-trail',
-      description: 'Iconic century-old culinary legends: deep fried parathas, hot desi ghee jalebis, Bedmi Poori, and scenic Jama Masjid rooftop cafes.',
-      cover_image_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80',
-      type: 'City-based',
-      is_featured: true,
-      is_active: true,
-      sort_order: 4,
-      created_at: new Date().toISOString(),
-    }
-  ];
-
-  const collectionItems: CollectionItem[] = [
-    { id: uuid('55555555-0000-4000-8000-', 1), collection_id: uuid('44444444-0000-4000-8000-', 1), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000001', sort_order: 1, note: 'Must try their Dal Bukhara', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 2), collection_id: uuid('44444444-0000-4000-8000-', 1), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000004', sort_order: 2, note: 'Top student hangout with hazelnut cold brews', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 3), collection_id: uuid('44444444-0000-4000-8000-', 1), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000003', sort_order: 3, note: 'Family-friendly restro with play area', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 4), collection_id: uuid('44444444-0000-4000-8000-', 2), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000005', sort_order: 1, note: 'Famous Afghani & Kurkure momos', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 5), collection_id: uuid('44444444-0000-4000-8000-', 3), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000007', sort_order: 1, note: 'Traditional Punjabi dhaba flavors', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 6), collection_id: uuid('44444444-0000-4000-8000-', 3), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000008', sort_order: 2, note: 'Budget-friendly authentic thalis', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 7), collection_id: uuid('44444444-0000-4000-8000-', 4), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000031', sort_order: 1, note: 'Panoramic rooftop view of Jama Masjid domes', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 8), collection_id: uuid('44444444-0000-4000-8000-', 4), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000035', sort_order: 2, note: '150-year-old Paranthe Wali Gali pioneer', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 9), collection_id: uuid('44444444-0000-4000-8000-', 4), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000039', sort_order: 3, note: 'Iconic 1884 thick desi ghee jalebis with rabri', created_at: new Date().toISOString() },
-    { id: uuid('55555555-0000-4000-8000-', 10), collection_id: uuid('44444444-0000-4000-8000-', 4), item_type: 'restaurant', restaurant_id: '11111111-0000-4000-8000-000000000040', sort_order: 4, note: 'World famous Dahi Bhalla & crispy Aloo Tikki', created_at: new Date().toISOString() },
-  ];
+  const collections: Collection[] = [];
 
   return {
     restaurants: [
@@ -5332,8 +5275,8 @@ export function generateSeedData(): SeedDataset {
       ...BATCH2_MENU_ITEMS,
       ...BATCH3_MENU_ITEMS,
     ],
-    collections: [...collections, ...AREA_FOOD_GUIDES],
-    collectionItems,
+    collections: [],
+    collectionItems: [],
   };
 }
 

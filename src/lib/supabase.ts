@@ -25,7 +25,6 @@ import {
   AnnouncementBadge,
   GalleryCategory,
 } from '../types/database';
-import { AREA_FOOD_GUIDES } from './areaGuidesData';
 import { discoveryEngine } from './engine/discoveryEngine';
 import { generateSeedData, SeedDataset } from './seedData';
 
@@ -1148,24 +1147,11 @@ export const api = {
     }
   },
 
-  // COLLECTIONS & LIVING NEIGHBORHOOD GUIDES
+  // COLLECTIONS
   async getCollections(activeOnly: boolean = true): Promise<Collection[]> {
     await ensureSeedInitialized();
     const list = loadTable<Collection>('collections');
-    // Ensure all living area guides from AREA_FOOD_GUIDES are merged seamlessly
-    const existingSlugs = new Set(list.map((c) => c.slug));
-    const combined = [...list];
-    for (const guide of AREA_FOOD_GUIDES) {
-      if (!existingSlugs.has(guide.slug)) {
-        combined.push(guide);
-      } else {
-        const idx = combined.findIndex((c) => c.slug === guide.slug);
-        if (idx >= 0 && !combined[idx].area_metadata) {
-          combined[idx] = { ...guide, ...combined[idx], area_metadata: guide.area_metadata };
-        }
-      }
-    }
-    const filtered = activeOnly ? combined.filter((c) => c.is_active) : combined;
+    const filtered = activeOnly ? list.filter((c) => c.is_active) : list;
     return filtered.sort((a, b) => (a.sort_order ?? 99) - (b.sort_order ?? 99));
   },
 
@@ -1872,7 +1858,6 @@ export const api = {
     const localCols = await this.getCollections(false);
     const localCollectionItems = loadTable<CollectionItem>('collection_items');
 
-    const { generateSeedData } = await safeDynamicImport(() => import('./seedData'));
     const seed = generateSeedData();
     const restaurantsToSync = localRests.length > 0 ? localRests : seed.restaurants;
     const categoriesToSync = localCats.length > 0 ? localCats : seed.categories;
