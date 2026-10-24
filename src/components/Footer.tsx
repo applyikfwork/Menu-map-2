@@ -90,20 +90,6 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                   Best Cafes Near Me
                 </a>
                 <a
-                  href="/iconic-area"
-                  onClick={(e) => { e.preventDefault(); navigate('/iconic-area'); }}
-                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
-                >
-                  Iconic Areas
-                </a>
-                <a
-                  href="/collections"
-                  onClick={(e) => { e.preventDefault(); navigate('/collections'); }}
-                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
-                >
-                  Curated Collections
-                </a>
-                <a
                   href="/search"
                   onClick={(e) => { e.preventDefault(); navigate('/search'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"

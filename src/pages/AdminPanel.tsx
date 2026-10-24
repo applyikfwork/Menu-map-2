@@ -1075,7 +1075,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             },
             { id: 'restaurants', label: `Restaurants (${restaurants.length})`, icon: UtensilsCrossed },
             { id: 'menu', label: 'Menu Management', icon: Layers },
-            { id: 'collections', label: `Area Guides (${collections.length})`, icon: Sparkles },
             { id: 'reviews', label: `Reviews (${reviews.length})`, icon: MessageSquare },
             { id: 'analytics', label: 'Search Analytics', icon: BarChart3 },
             { id: 'settings', label: 'Settings & Supabase', icon: Settings },
@@ -1162,15 +1161,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs space-y-1">
-                <span className="text-xs font-bold text-slate-500">Curated Collections</span>
-                <div className="text-3xl font-heading font-black text-slate-900">
-                  {collections.length}
-                </div>
-                <div className="text-[11px] text-purple-600 font-semibold truncate">
-                  {collections.filter((c) => c.is_featured).length} featured on homepage
-                </div>
-              </div>
             </div>
 
             {/* Quick Actions Row */}
@@ -1212,13 +1202,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                   <span>Add Menu Dish</span>
                 </button>
 
-                <button
-                  onClick={() => handleOpenAddCollection('Area-Guide')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>New Area Guide</span>
-                </button>
 
                 <button
                   onClick={() => setActiveSection('system_intel')}

@@ -10,7 +10,6 @@ PRERENDER_DATA = "dist/prerender_data.json"
 
 restaurant_slugs = set()
 dish_slugs = set()
-area_guide_slugs = set()
 
 # Prefer dist/prerender_data.json if present
 if os.path.exists(PRERENDER_DATA):
@@ -23,9 +22,6 @@ if os.path.exists(PRERENDER_DATA):
     for d in pdata.get("dishes", []):
         if d.get("slug"):
             dish_slugs.add(d["slug"])
-    for g in pdata.get("area_guides", []):
-        if g.get("slug"):
-            area_guide_slugs.add(g["slug"])
 else:
     venue_files = [
         'src/lib/northCampusDuVenues.ts',
@@ -70,18 +66,9 @@ else:
             for s in found:
                 dish_slugs.add(s)
 
-    # Area Guides
-    if os.path.exists('src/lib/areaGuidesData.ts'):
-        with open('src/lib/areaGuidesData.ts', 'r', encoding='utf-8', errors='ignore') as f:
-            text = f.read()
-        for s in re.findall(r'(?:^|\s)slug\s*:\s*[\'"]([a-zA-Z0-9_-]+)[\'"]', text):
-            area_guide_slugs.add(s)
-
 core_pages = [
     ("", "daily", "1.0"),
     ("restaurants", "daily", "0.9"),
-    ("iconic-area", "weekly", "0.9"),
-    ("collections", "weekly", "0.9"),
     ("nearby", "daily", "0.9"),
     ("list-cafe", "weekly", "0.85"),
     ("search", "daily", "0.8"),
@@ -105,17 +92,7 @@ for path, freq, prio in core_pages:
     lines.append(f'    <priority>{prio}</priority>')
     lines.append('  </url>')
 
-# 2. Area Guides
-lines.append('\n  <!-- Iconic Area Food Guides -->')
-for slug in sorted(list(area_guide_slugs)):
-    lines.append('  <url>')
-    lines.append(f'    <loc>{DOMAIN}/iconic-area/{slug}</loc>')
-    lines.append(f'    <lastmod>{TODAY}</lastmod>')
-    lines.append('    <changefreq>weekly</changefreq>')
-    lines.append('    <priority>0.85</priority>')
-    lines.append('  </url>')
-
-# 3. Verified Restaurants (/restaurant/:slug)
+# 2. Verified Restaurants (/restaurant/:slug)
 lines.append('\n  <!-- Verified Restaurant Menus -->')
 for slug in sorted(list(restaurant_slugs)):
     lines.append('  <url>')
@@ -125,7 +102,7 @@ for slug in sorted(list(restaurant_slugs)):
     lines.append('    <priority>0.80</priority>')
     lines.append('  </url>')
 
-# 4. Verified Dishes (/food/:slug)
+# 3. Verified Dishes (/food/:slug)
 lines.append('\n  <!-- Individual Verified Dishes -->')
 for slug in sorted(list(dish_slugs)):
     lines.append('  <url>')
@@ -150,7 +127,6 @@ if os.path.exists('dist'):
 
 print(f"Sitemap successfully generated at {output_path}:")
 print(f"  - Core Pages: {len(core_pages)}")
-print(f"  - Area Guides: {len(area_guide_slugs)}")
 print(f"  - Verified Restaurants: {len(restaurant_slugs)}")
 print(f"  - Verified Dishes: {len(dish_slugs)}")
-print(f"  - Total URLs: {len(core_pages) + len(area_guide_slugs) + len(restaurant_slugs) + len(dish_slugs)}")
+print(f"  - Total URLs: {len(core_pages) + len(restaurant_slugs) + len(dish_slugs)}")

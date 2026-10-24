@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Bookmark, Compass, Utensils, Sparkles, Trash2, ArrowRight } from 'lucide-react';
-import { Restaurant, MenuItem, Collection } from '../types/database';
+import { Bookmark, Compass, Utensils, Trash2, ArrowRight } from 'lucide-react';
+import { Restaurant, MenuItem } from '../types/database';
 import { api } from '../lib/supabase';
 import { getBookmarks, clearAllBookmarks } from '../lib/bookmarks';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { FoodItemCard } from '../components/FoodItemCard';
-import { CollectionCard } from '../components/CollectionCard';
 import { useToast } from '../components/Toast';
 
 interface BookmarksProps {
   navigate: (path: string) => void;
 }
 
-type BookmarkTab = 'restaurants' | 'dishes' | 'collections';
+type BookmarkTab = 'restaurants' | 'dishes';
 
 export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
   const { showToast } = useToast();
@@ -20,9 +19,7 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
   const [loading, setLoading] = useState(true);
 
   const [bookmarkedRestaurants, setBookmarkedRestaurants] = useState<Restaurant[]>([]);
-  const [bookmarkedDishes, setBookmarkedDishes] = useState<MenuItem[]>([]);
-  const [bookmarkedCollections, setBookmarkedCollections] = useState<Collection[]>([]);
-  const [restaurantsMap, setRestaurantsMap] = useState<Record<string, Restaurant>>({});
+  const [bookmarkedDishes, setBookmarkedDishes] = useState<MenuItem[]>([]);  const [restaurantsMap, setRestaurantsMap] = useState<Record<string, Restaurant>>({});
 
   useEffect(() => {
     loadSavedData();
@@ -34,10 +31,9 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
     setLoading(true);
     try {
       const store = getBookmarks();
-      const [allRests, allDishes, allCols] = await Promise.all([
+      const [allRests, allDishes] = await Promise.all([
         api.getRestaurants(false),
         api.getMenuItems(),
-        api.getCollections(false),
       ]);
 
       const rMap: Record<string, Restaurant> = {};
@@ -46,7 +42,6 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
 
       setBookmarkedRestaurants(allRests.filter((r) => store.restaurants.includes(r.id)));
       setBookmarkedDishes(allDishes.filter((d) => store.dishes.includes(d.id)));
-      setBookmarkedCollections(allCols.filter((c) => store.collections.includes(c.id)));
     } finally {
       setLoading(false);
     }
@@ -60,7 +55,7 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
   };
 
   const totalCount =
-    bookmarkedRestaurants.length + bookmarkedDishes.length + bookmarkedCollections.length;
+    bookmarkedRestaurants.length + bookmarkedDishes.length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -76,7 +71,7 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
             My Saved Counter Menus
           </h1>
           <p className="text-xs sm:text-sm text-stone-500 font-sans mt-0.5">
-            Easily access your favorite cafes, signature dishes, and iconic neighborhood guides.
+            Easily access your favorite cafes and signature dishes.
           </p>
         </div>
 
@@ -109,13 +104,7 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
           <span>Dishes ({bookmarkedDishes.length})</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('collections')}
-          className={`chipl ${activeTab === 'collections' ? 'on' : ''}`}
-        >
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>Area Guides ({bookmarkedCollections.length})</span>
-        </button>
+
       </div>
 
       {/* Tab Content */}
@@ -150,7 +139,8 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
             </button>
           </div>
         )
-      ) : activeTab === 'dishes' ? (
+      ) : (
+
         bookmarkedDishes.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {bookmarkedDishes.map((dish) => (
@@ -182,31 +172,6 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
             </button>
           </div>
         )
-      ) : bookmarkedCollections.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bookmarkedCollections.map((col) => (
-            <CollectionCard key={col.id} collection={col} navigate={navigate} />
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white border-2 border-dashed border-[#EFEAE2] rounded-3xl p-14 sm:p-18 text-center space-y-4 shadow-2xs">
-          <div className="w-16 h-16 rounded-full bg-[#FAF8F5] text-stone-400 border border-[#EFEAE2] flex items-center justify-center mx-auto">
-            <Sparkles className="w-8 h-8 text-amber-500" />
-          </div>
-          <h3 className="font-heading font-black text-2xl text-[#1C1917]">
-            No saved neighborhood guides
-          </h3>
-          <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto font-sans">
-            Bookmark entire foodie hubs like Majnu Ka Tila, Hudson Lane, or Connaught Place with one click.
-          </p>
-          <button
-            onClick={() => navigate('/iconic-area')}
-            className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white shadow-md text-xs font-bold"
-          >
-            <span>Browse Iconic Areas</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
       )}
 
     </div>

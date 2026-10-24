@@ -30,7 +30,7 @@ import {
   Percent,
   Train
 } from 'lucide-react';
-import { Restaurant, MenuItem, Collection } from '../types/database';
+import { Restaurant, MenuItem } from '../types/database';
 import { api } from '../lib/supabase';
 import { 
   getUserLocation, 
@@ -39,8 +39,7 @@ import {
   getCachedUserCoordinates,
   saveCachedUserCoordinates,
   detectAreaContext,
-  formatDistance,
-  POPULAR_FOOD_HUBS
+  formatDistance
 } from '../lib/location';
 import { DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
 import { 
@@ -49,7 +48,6 @@ import {
   getRecommendedDishes,
   getLiveHeroTicket
 } from '../lib/recommendations';
-import { AREA_FOOD_GUIDES } from '../lib/areaGuidesData';
 import { useLocationContext } from '../context/LocationContext';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { VisualCravingsRow } from '../components/discovery/VisualCravingsRow';
@@ -189,89 +187,6 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
     }
     return detectAreaContext(userCoords, restaurants);
   }, [userCoords, restaurants, activeDelhiLocation, activeAreaName]);
-
-  // Find either an exact editorial guide from AREA_FOOD_GUIDES or generate a rich guide dynamically
-  const activeAreaGuide = useMemo(() => {
-    const active = activeAreaName.toLowerCase();
-    const match = AREA_FOOD_GUIDES.find((g) => {
-      const title = (g.title || '').toLowerCase();
-      const metaName = (g.area_metadata?.area_name || '').toLowerCase();
-      const slug = (g.slug || '').toLowerCase();
-      return (
-        title.includes(active) ||
-        metaName.includes(active) ||
-        slug.includes(active.split(/[\s,/]+/)[0]) ||
-        active.includes(metaName.split(/[\s,/]+/)[0])
-      );
-    });
-
-    if (match) return match;
-
-    // Dynamically construct a rich area guide for ANY of the 60+ Delhi locations!
-    const loc = activeDelhiLocation;
-    const dynamicGuide: Collection = {
-      id: `dynamic-${loc.id}`,
-      slug: loc.id,
-      title: `Foodie Guide to ${loc.name}`,
-      description: loc.tagline,
-      cover_image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-      type: 'Area-Guide',
-      is_featured: true,
-      is_active: true,
-      sort_order: 1,
-      created_at: new Date().toISOString(),
-      area_metadata: {
-        area_name: loc.name,
-        zone: loc.zone,
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        nearest_metro: `${loc.metroStation} (${loc.metroLines.join(', ')})`,
-        best_time_to_visit: 'Evening 4:00 PM – 11:00 PM',
-        parking_tips: `Metro multilevel parking available near ${loc.metroStation}.`,
-        avg_cost_for_two: loc.avgCostForTwo,
-        famous_for_summary: loc.famousSpecialties.join(' · '),
-        vibe_badge: loc.tagline,
-        food_crawl_stops: [
-          {
-            stop_number: 1,
-            time: '4:30 PM',
-            type: 'Quick Bites & Snacks',
-            venue_name: `${loc.famousSpecialties[0] || 'Signature Dish'} Corner`,
-            recommended_dish: loc.famousSpecialties[0] || 'Local Favorite',
-            distance_to_next: '150 meters (2 min walk)',
-            note: `Top rated spot near ${loc.metroStation} for authentic quick bites.`
-          },
-          {
-            stop_number: 2,
-            time: '6:30 PM',
-            type: 'Cafe & Beverage Break',
-            venue_name: `Central ${loc.shortName} Cafe`,
-            recommended_dish: loc.famousSpecialties[1] || 'Cold Coffee & Shakes',
-            distance_to_next: '200 meters (3 min walk)',
-            note: 'Relaxed ambience, verified counter menu, and power sockets for casual hangouts.'
-          },
-          {
-            stop_number: 3,
-            time: '8:30 PM',
-            type: 'Dinner Feast',
-            venue_name: `${loc.shortName} Iconic Feast Spot`,
-            recommended_dish: loc.famousSpecialties[2] || 'Dinner Specialties',
-            distance_to_next: 'End of trail',
-            note: 'Famous in the colony for rich gravies, breads, and authentic Delhi street flavors.'
-          }
-        ],
-        famous_dishes: loc.famousSpecialties.map((dish, i) => ({
-          name: dish,
-          restaurant_name: `${loc.shortName} Iconic Eatery`,
-          price: Math.round((loc.avgCostForTwo / 3) + (i * 20)),
-          is_veg: true,
-          why_famous: `Quintessential ${loc.shortName} specialty loved by local residents and Delhi foodies.`,
-          counter_vs_app_savings: `Save ₹${Math.round(loc.avgCostForTwo * 0.15)} on in-store menu`
-        }))
-      }
-    };
-    return dynamicGuide;
-  }, [activeAreaName, activeDelhiLocation]);
 
   // Restaurants filtered and sorted by proximity to the active user location
   const areaRestaurants = useMemo(() => {
@@ -899,164 +814,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       </section>
 
       {/* ========================================================
-          4. DEDICATED AREA GUIDE FOR THIS LOCATION ONLY
-      ======================================================== */}
-      {activeAreaGuide && (
-        <section className="sec py-16">
-          <div className="max-w-2xl">
-            <div className="eyebrow text-[#D8350F]">Curated Food Guide · This Place Only</div>
-            <h2 className="h2 mt-2">
-              Insider foodie guide to {activeAreaGuide.area_metadata?.area_name || activeAreaName}
-            </h2>
-            <p className="mt-1.5 text-sm text-[#78716C]">
-              {activeAreaGuide.description}
-            </p>
-          </div>
-
-          {/* Area Guide Hero Banner Card */}
-          <div className="mt-8 bg-white border border-[#E7E2DA] rounded-[36px] overflow-hidden shadow-lg">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              {/* Left Details */}
-              <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <span className="px-3 py-1 rounded-full bg-orange-100 text-[#D8350F] text-xs font-black uppercase tracking-wider">
-                      {activeAreaGuide.area_metadata?.zone || 'Iconic Food Hub'}
-                    </span>
-                    {activeAreaGuide.area_metadata?.avg_cost_for_two && (
-                      <span className="px-3 py-1 rounded-full bg-teal-50 text-[#0F766E] text-xs font-bold border border-teal-200">
-                        ₹{activeAreaGuide.area_metadata.avg_cost_for_two} for two
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="hd text-2xl sm:text-3xl font-black text-[#1C1917]">
-                    {activeAreaGuide.title}
-                  </h3>
-
-                  <p className="mt-3 text-sm sm:text-base text-[#57534E] leading-relaxed">
-                    {activeAreaGuide.area_metadata?.vibe_badge || activeAreaGuide.description}
-                  </p>
-
-                  {/* Key Quick Facts */}
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 border-t border-[#E7E2DA]">
-                    {activeAreaGuide.area_metadata?.nearest_metro && (
-                      <div className="flex items-start gap-2.5">
-                        <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0 mt-0.5" />
-                        <div>
-                          <div className="text-[11px] font-bold text-[#78716C] uppercase tracking-wide">
-                            Nearest Metro
-                          </div>
-                          <div className="text-xs font-bold text-[#1C1917]">
-                            {activeAreaGuide.area_metadata.nearest_metro}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeAreaGuide.area_metadata?.best_time_to_visit && (
-                      <div className="flex items-start gap-2.5">
-                        <Clock className="w-4 h-4 text-[#0F766E] shrink-0 mt-0.5" />
-                        <div>
-                          <div className="text-[11px] font-bold text-[#78716C] uppercase tracking-wide">
-                            Best Time to Visit
-                          </div>
-                          <div className="text-xs font-bold text-[#1C1917]">
-                            {activeAreaGuide.area_metadata.best_time_to_visit}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {activeAreaGuide.area_metadata?.famous_for_summary && (
-                    <div className="mt-4 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA] text-xs text-[#44403C]">
-                      <strong className="text-[#1C1917]">Famous for: </strong>
-                      {activeAreaGuide.area_metadata.famous_for_summary}
-                    </div>
-                  )}
-                </div>
-
-                {/* Trail Link Button */}
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => {
-                      if (activeAreaGuide.id.startsWith('dynamic-')) {
-                        navigate('/restaurants');
-                      } else {
-                        navigate(`/iconic-area/${activeAreaGuide.slug}`);
-                      }
-                    }}
-                    className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white min-h-[48px] px-6 rounded-xl font-bold cursor-pointer shadow-sm flex items-center gap-2"
-                  >
-                    <span>
-                      {activeAreaGuide.id.startsWith('dynamic-')
-                        ? `Explore verified menus in ${activeDelhiLocation.shortName}`
-                        : `Read complete ${activeAreaGuide.area_metadata?.area_name || 'neighbourhood'} guide`}
-                    </span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setPlannerModalOpen(true)}
-                    className="btn bg-white border border-[#E7E2DA] hover:bg-stone-50 text-[#1C1917] min-h-[48px] px-5 rounded-xl font-bold cursor-pointer"
-                  >
-                    Plan Foodie Crawl
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Crawl Stops Preview */}
-              <div className="lg:col-span-5 bg-[#FAF8F5] p-6 sm:p-8 border-t lg:border-t-0 lg:border-l border-[#E7E2DA] flex flex-col justify-between">
-                <div>
-                  <div className="text-xs font-black uppercase tracking-wider text-[#78716C] mb-4 flex items-center gap-2">
-                    <Navigation className="w-4 h-4 text-[#0F766E]" />
-                    <span>Tested 3-Stop Walking Trail</span>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    {activeAreaGuide.area_metadata?.food_crawl_stops &&
-                    activeAreaGuide.area_metadata.food_crawl_stops.length > 0 ? (
-                      activeAreaGuide.area_metadata.food_crawl_stops.map((stop: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-2xl bg-white border border-[#E7E2DA] shadow-xs"
-                        >
-                          <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-[#0F766E]">
-                            <span>{stop.time}</span>
-                            <span className="text-stone-400 font-medium">{stop.distance_to_next}</span>
-                          </div>
-                          <div className="font-bold text-sm text-[#1C1917] mt-1">
-                            {stop.venue_name}
-                          </div>
-                          <div className="text-xs text-[#D8350F] font-semibold mt-0.5">
-                            Must try: {stop.recommended_dish}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 bg-white rounded-2xl border border-[#E7E2DA] text-xs text-stone-500">
-                        Walking trail being updated by community explorers.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-[#E7E2DA] text-right">
-                  <button
-                    onClick={() => navigate('/iconic-area')}
-                    className="text-xs font-bold text-[#78716C] hover:text-[#D8350F] transition-colors"
-                  >
-                    Explore guides in other Delhi neighborhoods →
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ========================================================
-          5. INTERACTIVE FOOD DISCOVERY TOOLS (SPIN & QUIZ)
+          4. INTERACTIVE FOOD DISCOVERY TOOLS (SPIN & QUIZ)
       ======================================================== */}
       <section className="sec py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1136,10 +894,10 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                 Browse All Cafes & Menus
               </button>
               <button
-                onClick={() => navigate('/iconic-area')}
+                onClick={() => navigate('/search')}
                 className="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 min-h-[48px] px-7 rounded-full font-bold cursor-pointer"
               >
-                View Delhi Neighbourhood Maps
+                Search Trending Dishes
               </button>
             </div>
           </div>

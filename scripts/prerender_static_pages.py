@@ -34,8 +34,6 @@ def get_shared_header():
         </a>
         <nav style="display: flex; flex-wrap: wrap; gap: 20px; font-weight: 600; font-size: 14px;">
             <a href="/restaurants" style="color: #44403C; text-decoration: none;">Restaurants</a>
-            <a href="/iconic-area" style="color: #44403C; text-decoration: none;">Iconic Areas</a>
-            <a href="/collections" style="color: #44403C; text-decoration: none;">Collections</a>
             <a href="/nearby" style="color: #FF5A36; text-decoration: none;">Best Cafes Near Me</a>
             <a href="/search" style="color: #44403C; text-decoration: none;">Search</a>
         </nav>
@@ -63,9 +61,7 @@ def main():
     restaurants = data.get("restaurants", [])
     dishes = data.get("dishes", [])
     dishes_by_rest = data.get("dishes_by_restaurant", {})
-    area_guides = data.get("area_guides", [])
-
-    print(f"Loaded {len(restaurants)} restaurants, {len(dishes)} dishes, and {len(area_guides)} area guides for static pre-rendering.")
+    print(f"Loaded {len(restaurants)} restaurants and {len(dishes)} dishes for static pre-rendering.")
 
     # -------------------------------------------------------------
     # 1. PRE-RENDER INDIVIDUAL RESTAURANT PAGES (WITH TOP DISHES & PRICES)
@@ -391,148 +387,7 @@ def main():
     print(f"Pre-rendered {len(dishes)} individual dish pages (/food/[slug]) with high-intent pricing titles & HTML bodies.")
 
     # -------------------------------------------------------------
-    # 3. PRE-RENDER INDIVIDUAL ICONIC AREA GUIDES
-    # -------------------------------------------------------------
-    for ag in area_guides:
-        slug = ag.get("slug")
-        if not slug:
-            continue
-        title = f"{ag.get('title')} | Menu Maps Iconic Area Guide"
-        desc = ag.get("description") or ag.get("desc") or f"Explore {ag.get('title')}. Discover verified menus, signature dishes, nearest metro, and authentic food crawl stops."
-        page_url = f"{DOMAIN}/iconic-area/{slug}"
-        img = ag.get("cover_image_url") or "https://menumaps.in/logo.jpg"
-
-        dishes_schema = []
-        ag_dishes = ag.get("dishes") or ag.get("signature_dishes") or []
-        for d in ag_dishes[:10]:
-            dishes_schema.append({
-                "@type": "MenuItem",
-                "name": d.get("name"),
-                "description": d.get("why_famous") or d.get("description"),
-                "offers": {
-                    "@type": "Offer",
-                    "price": d.get("price", 0),
-                    "priceCurrency": "INR"
-                }
-            })
-
-        area_schema = {
-            "@context": "https://schema.org",
-            "@graph": [
-                {
-                    "@type": "ItemPage",
-                    "@id": f"{page_url}#webpage",
-                    "name": title,
-                    "description": desc,
-                    "url": page_url,
-                    "about": {
-                        "@type": "Place",
-                        "name": ag.get("area_name") or ag.get("title"),
-                        "address": {
-                            "@type": "PostalAddress",
-                            "addressLocality": ag.get("zone") or "Delhi NCR",
-                            "addressRegion": "Delhi NCR",
-                            "addressCountry": "IN"
-                        }
-                    }
-                },
-                {
-                    "@type": "BreadcrumbList",
-                    "@id": f"{page_url}#breadcrumbs",
-                    "itemListElement": [
-                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
-                        {"@type": "ListItem", "position": 2, "name": "Iconic Areas", "item": f"{DOMAIN}/iconic-area"},
-                        {"@type": "ListItem", "position": 3, "name": ag.get("title"), "item": page_url}
-                    ]
-                }
-            ]
-        }
-
-        # Build dishes HTML
-        dishes_html = ""
-        for d in ag_dishes:
-            dishes_html += f"""
-            <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <h3 style="font-size: 18px; font-weight: 700; color: #1C1917; margin: 0 0 6px 0;">{escape_html(d.get('name'))}</h3>
-                    <span style="font-weight: 800; color: #FF5A36; font-size: 16px;">₹{d.get('price', 0)}</span>
-                </div>
-                <p style="color: #0D9488; font-weight: 600; font-size: 13px; margin: 0 0 6px 0;">📍 {escape_html(d.get('restaurant_name', 'Verified Delhi Venue'))}</p>
-                <p style="color: #78716C; font-size: 14px; margin: 0; line-height: 1.4;">{escape_html(d.get('why_famous') or d.get('description', ''))}</p>
-            </div>
-            """
-
-        # Build crawls HTML
-        crawls_html = ""
-        for c in (ag.get("crawls") or ag.get("crawl_stops") or []):
-            crawls_html += f"""
-            <div style="border-left: 3px solid #FF5A36; padding-left: 16px; margin-bottom: 20px;">
-                <p style="color: #FF5A36; font-weight: 700; font-size: 13px; margin: 0;">Stop {c.get('stop_number', 1)} • {escape_html(c.get('time', ''))}</p>
-                <h4 style="font-size: 17px; font-weight: 700; color: #1C1917; margin: 4px 0;">{escape_html(c.get('venue_name', ''))}</h4>
-                <p style="color: #44403C; font-size: 14px; margin: 0 0 4px 0;"><strong>Must Try:</strong> {escape_html(c.get('recommended_dish', ''))}</p>
-                <p style="color: #78716C; font-size: 13px; margin: 0;">{escape_html(c.get('note', ''))}</p>
-            </div>
-            """
-
-        fallback_html = f"""
-        {get_shared_header()}
-        <main style="max-width: 900px; margin: 40px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <nav style="font-size: 14px; color: #78716C; margin-bottom: 16px;">
-                <a href="/" style="color: #FF5A36; text-decoration: none;">Home</a> &gt; 
-                <a href="/iconic-area" style="color: #FF5A36; text-decoration: none;">Iconic Areas</a> &gt; 
-                <span>{escape_html(ag.get('title'))}</span>
-            </nav>
-            <header style="margin-bottom: 28px;">
-                <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Menu Maps Living Food Trail</p>
-                <h1 style="font-size: 36px; font-weight: 900; color: #1C1917; margin: 0 0 12px 0;">{escape_html(ag.get('title'))}</h1>
-                <p style="font-size: 16px; color: #57534E; line-height: 1.5; margin: 0 0 16px 0;">{escape_html(desc)}</p>
-                <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 12px; padding: 16px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 14px; color: #44403C;">
-                    <span>📍 <strong>Zone:</strong> {escape_html(ag.get('zone', 'Delhi NCR'))}</span>
-                    <span>🚇 <strong>Metro:</strong> {escape_html(ag.get('nearest_metro', 'Delhi Metro'))}</span>
-                    <span>💰 <strong>Avg Cost for Two:</strong> ₹{ag.get('avg_cost_for_two', 450)}</span>
-                </div>
-            </header>
-
-            {f'''
-            <section style="margin-bottom: 36px;">
-                <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 16px 0;">Famous Signature Dishes & Street Hits</h2>
-                <div>{dishes_html}</div>
-            </section>
-            ''' if dishes_html else ''}
-
-            {f'''
-            <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 28px; margin-bottom: 36px;">
-                <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 0 0 20px 0;">Curated Food Crawl Itinerary</h2>
-                <div>{crawls_html}</div>
-            </section>
-            ''' if crawls_html else ''}
-        </main>
-        """
-
-        html = template
-        html = re.sub(r'<title>.*?</title>', lambda _: f'<title>{title}</title>', html)
-        html = re.sub(r'<meta name="description" content=".*?" />', lambda _: f'<meta name="description" content="{desc}" />', html)
-        html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{page_url}" />', html)
-        html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: f'<meta property="og:title" content="{title}" />', html)
-        html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: f'<meta property="og:description" content="{desc}" />', html)
-        html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{page_url}" />', html)
-        html = re.sub(r'<meta property="og:image" content=".*?" />', lambda _: f'<meta property="og:image" content="{img}" />', html)
-
-        schema_tag = f'<script type="application/ld+json">{json.dumps(area_schema)}</script>\n  </head>'
-        html = html.replace('</head>', schema_tag)
-        html = replace_root(html, fallback_html)
-
-        # Output to /iconic-area/[slug]/index.html
-        for folder in ["iconic-area", "iconic-areas", "collection"]:
-            out_dir = os.path.join("dist", folder, slug)
-            os.makedirs(out_dir, exist_ok=True)
-            with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
-                f_out.write(html)
-
-    print(f"Pre-rendered {len(area_guides)} iconic area food guides without loading traps.")
-
-    # -------------------------------------------------------------
-    # 4. PRE-RENDER CORE DIRECTORIES (/restaurants, /nearby, /collections, etc.)
+    # 3. PRE-RENDER CORE DIRECTORIES (/restaurants, /nearby, etc.)
     # -------------------------------------------------------------
 
     # A) /restaurants
@@ -588,49 +443,7 @@ def main():
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
         f_out.write(html)
 
-    # C) /iconic-area and /iconic-areas hub
-    area_hub_cards = ""
-    for ag in area_guides:
-        ag_slug = ag.get("slug", "")
-        area_hub_cards += f"""
-        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <p style="color: #FF5A36; font-weight: 700; font-size: 13px; text-transform: uppercase; margin: 0 0 6px 0;">{escape_html(ag.get('zone', 'Delhi NCR'))}</p>
-            <h3 style="font-size: 20px; font-weight: 800; margin: 0 0 8px 0;">
-                <a href="/iconic-area/{ag_slug}" style="color: #1C1917; text-decoration: none;">{escape_html(ag.get('title'))}</a>
-            </h3>
-            <p style="color: #78716C; font-size: 14px; line-height: 1.4; margin: 0 0 12px 0;">{escape_html(ag.get('vibe_badge') or ag.get('description') or '')}</p>
-            <p style="color: #44403C; font-size: 13px; margin: 0 0 14px 0;">🚇 <strong>Metro:</strong> {escape_html(ag.get('nearest_metro', 'Metro'))}</p>
-            <a href="/iconic-area/{ag_slug}" style="display: inline-block; background: #FFF4F0; color: #FF5A36; font-weight: 700; font-size: 14px; padding: 8px 16px; border-radius: 8px; text-decoration: none;">View Food Guide &rarr;</a>
-        </div>
-        """
-
-    iconic_hub_fallback = f"""
-    {get_shared_header()}
-    <main style="max-width: 1200px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <p style="color: #FF5A36; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Delhi Food Hubs & Trails</p>
-        <h1 style="font-size: 38px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0;">Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs</h1>
-        <p style="font-size: 17px; color: #57534E; max-width: 850px; line-height: 1.6; margin-bottom: 32px;">
-            Curated foodie guides to Delhi's legendary food districts: Hudson Lane, Majnu Ka Tilla, Connaught Place, Hauz Khas Village, Chandni Chowk, Rajouri Garden, and Cyber Hub with verified menu prices.
-        </p>
-
-        <section style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-bottom: 48px;">
-            {area_hub_cards}
-        </section>
-    </main>
-    """
-
-    for folder in ["iconic-area", "iconic-areas", "collections"]:
-        out_dir = os.path.join("dist", folder)
-        os.makedirs(out_dir, exist_ok=True)
-        html = template
-        html = re.sub(r'<title>.*?</title>', lambda _: '<title>Menu Maps Iconic Areas – Famous Delhi Food Streets & Cafe Hubs</title>', html)
-        html = re.sub(r'<meta name="description" content=".*?" />', lambda _: '<meta name="description" content="Explore Delhi\'s iconic food destinations with authentic verified menus and crawl stops." />', html)
-        html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{DOMAIN}/{folder}" />', html)
-        html = replace_root(html, iconic_hub_fallback)
-        with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
-            f_out.write(html)
-
-    # D) Static Utility Pages
+    # C) Static Utility Pages
     simple_pages = {
         "list-cafe": ("List & Claim Your Cafe | 0% Commission Partner Network – Menu Maps", "Join Menu Maps partner network: Get 100% price control, zero-commission customer orders, direct WhatsApp ordering, and reach thousands of daily Delhi foodies."),
         "search": ("Search Cafes, Restaurants & Dishes | Menu Maps Delhi NCR", "Search verified menus, dishes, cafes, and restaurants across Delhi NCR on Menu Maps."),

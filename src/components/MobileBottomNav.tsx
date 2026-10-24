@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, UtensilsCrossed, MapPin, Bookmark } from 'lucide-react';
+import { Home, UtensilsCrossed, Search, Bookmark } from 'lucide-react';
 import { getBookmarks } from '../lib/bookmarks';
 
 interface MobileBottomNavProps {
@@ -12,11 +12,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
   const isRestaurants =
     (currentPath === '/restaurants' || currentPath.startsWith('/restaurant/')) ||
     currentPath === '/nearby';
-  const isIconicAreas =
-    currentPath === '/iconic-area' ||
-    currentPath === '/iconic-areas' ||
-    currentPath.startsWith('/iconic-area/') ||
-    currentPath === '/collections';
+  const isSearch = currentPath === '/search';
   const isSaved = currentPath === '/bookmarks';
 
   const [savedCount, setSavedCount] = useState(0);
@@ -24,7 +20,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
   useEffect(() => {
     const update = () => {
       const b = getBookmarks();
-      setSavedCount(b.restaurants.length + b.dishes.length + b.collections.length);
+      setSavedCount(b.restaurants.length + b.dishes.length);
     };
     update();
     window.addEventListener('menumap_bookmarks_updated', update);
@@ -45,10 +41,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
       active: isRestaurants,
     },
     {
-      label: 'Iconic Areas',
-      icon: MapPin,
-      path: '/iconic-area',
-      active: isIconicAreas,
+      label: 'Search',
+      icon: Search,
+      path: '/search',
+      active: isSearch,
     },
     {
       label: 'Saved',

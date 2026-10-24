@@ -179,10 +179,10 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => navigate('/iconic-area')}
+                onClick={() => navigate('/search')}
                 className="btn bg-[#FAF8F5] hover:bg-stone-100 text-[#1C1917] border border-[#EFEAE2] text-xs font-bold"
               >
-                <span>Area Guides</span>
+                <span>Search Dishes</span>
               </button>
             </div>
           </div>

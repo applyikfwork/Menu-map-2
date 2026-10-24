@@ -19,8 +19,6 @@ const Search = lazyWithRetry(() => import('./pages/Search'), 'Search', 'Search')
 const RestaurantsList = lazyWithRetry(() => import('./pages/RestaurantsList'), 'RestaurantsList', 'RestaurantsList');
 const RestaurantDetail = lazyWithRetry(() => import('./pages/RestaurantDetail'), 'RestaurantDetail', 'RestaurantDetail');
 const FoodDetail = lazyWithRetry(() => import('./pages/FoodDetail'), 'FoodDetail', 'FoodDetail');
-const CollectionsList = lazyWithRetry(() => import('./pages/CollectionsList'), 'CollectionsList', 'CollectionsList');
-const CollectionDetail = lazyWithRetry(() => import('./pages/CollectionDetail'), 'CollectionDetail', 'CollectionDetail');
 const Bookmarks = lazyWithRetry(() => import('./pages/Bookmarks'), 'Bookmarks', 'Bookmarks');
 const StaticPage = lazyWithRetry(() => import('./pages/StaticPages'), 'StaticPage', 'StaticPage');
 const AdminPanel = lazyWithRetry(() => import('./pages/AdminPanel'), 'AdminPanel', 'AdminPanel');
@@ -135,23 +133,17 @@ function AppContent() {
       return <FoodDetail slug={slug} navigate={navigate} />;
     }
 
-    // 7. Iconic Area Food Guides (/iconic-area, /iconic-areas & legacy /collections)
-    if (normPath === '/iconic-area' || normPath === '/iconic-areas' || normPath === '/collections') {
-      return <CollectionsList navigate={navigate} />;
-    }
-
-    // 8. Iconic Area Detail: /iconic-area/[slug], /iconic-areas/[slug], /collection/[slug]
-    if (normPath.startsWith('/iconic-area/')) {
-      const slug = normPath.slice('/iconic-area/'.length).split('/')[0].trim();
-      return <CollectionDetail slug={slug} navigate={navigate} />;
-    }
-    if (normPath.startsWith('/iconic-areas/')) {
-      const slug = normPath.slice('/iconic-areas/'.length).split('/')[0].trim();
-      return <CollectionDetail slug={slug} navigate={navigate} />;
-    }
-    if (normPath.startsWith('/collection/')) {
-      const slug = normPath.slice('/collection/'.length).split('/')[0].trim();
-      return <CollectionDetail slug={slug} navigate={navigate} />;
+    // 7. Legacy Iconic Area URL Redirect to /restaurants
+    if (
+      normPath === '/iconic-area' ||
+      normPath === '/iconic-areas' ||
+      normPath === '/collections' ||
+      normPath.startsWith('/iconic-area/') ||
+      normPath.startsWith('/iconic-areas/') ||
+      normPath.startsWith('/collection/')
+    ) {
+      navigate('/restaurants');
+      return null;
     }
 
     // 9. Nearby (Unified with Explore Discovery)
@@ -187,8 +179,7 @@ function AppContent() {
     const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
-      'restaurants', 'restaurant', 'food', 'dish', 'iconic-area', 'iconic-areas',
-      'collections', 'collection', 'nearby', 'bookmarks', 'about', 'contact',
+      'restaurants', 'restaurant', 'food', 'dish', 'nearby', 'bookmarks', 'about', 'contact',
       'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
     ]);

@@ -31,15 +31,3 @@ export const FoodCardSkeleton: React.FC = () => {
     </div>
   );
 };
-
-export const CollectionCardSkeleton: React.FC = () => {
-  return (
-    <div className="rounded-3xl overflow-hidden h-64 bg-stone-900 animate-pulse relative border border-stone-800">
-      <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-900/50 to-transparent" />
-      <div className="absolute bottom-5 left-5 right-5 space-y-2.5">
-        <div className="h-6 bg-stone-700 rounded-lg w-2/3" />
-        <div className="h-4 bg-stone-800 rounded-md w-1/3" />
-      </div>
-    </div>
-  );
-};
