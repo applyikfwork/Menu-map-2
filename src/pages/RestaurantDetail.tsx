@@ -20,6 +20,7 @@ import {
   MessageSquare,
   FileText,
   Sparkles,
+  Flame,
   Megaphone,
   Camera,
   Image as ImageIcon,
@@ -56,6 +57,7 @@ import { compressImageFile } from '../lib/imageCompressor';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { WhatsAppOrderDrawer, CartItem } from '../components/WhatsAppOrderDrawer';
+import { TableQrScannerModal } from '../components/restaurant/TableQrScannerModal';
 import { updatePageSeo, buildRestaurantSchema } from '../lib/seo';
 import { useToast } from '../components/Toast';
 import { useDiscovery } from '../context/DiscoveryContext';
@@ -173,6 +175,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [showClaimModal, setShowClaimModal] = useState(false);
+  const [showTableScannerModal, setShowTableScannerModal] = useState(false);
   const [showPhysicalMenuModal, setShowPhysicalMenuModal] = useState(false);
 
   // Owner & Live Announcements State
@@ -224,8 +227,21 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     };
     window.addEventListener('menumaps_qr_config_updated', handleQrConfigUpdated);
 
+    const handleAnnouncementUpdated = (e: any) => {
+      if (
+        restaurant &&
+        (e.detail?.restaurantId === restaurant.id ||
+          e.detail?.restaurantId === restaurant.slug ||
+          e.detail?.restaurantSlug === restaurant.slug)
+      ) {
+        setActiveAnnouncement(e.detail.announcement);
+      }
+    };
+    window.addEventListener('menumap_announcement_updated', handleAnnouncementUpdated);
+
     return () => {
       window.removeEventListener('menumaps_qr_config_updated', handleQrConfigUpdated);
+      window.removeEventListener('menumap_announcement_updated', handleAnnouncementUpdated);
       updatePageSeo({
         title: 'Menu Maps – Real Menus, Cafes & Restaurant Discovery',
         description: 'Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.',
@@ -268,7 +284,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
         api.getMenuItems(rest.id),
         api.getReviews(rest.id, true),
         api.getRestaurants(true),
-        api.getActiveRestaurantAnnouncement(rest.id),
+        api.getActiveRestaurantAnnouncement(rest.id, rest.slug, (rest as any).announcements),
         api.getRestaurantGallery(rest.id),
       ]);
 
@@ -826,34 +842,39 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
             {/* Dynamic In-Restaurant Mode Toggle */}
             {isTableDineIn ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsTableDineIn(false);
-                  setTableNumber(null);
-                  showToast('Exited table mode. Switched to public discovery.', 'info');
-                }}
-                className="btn bg-amber-400 hover:bg-amber-500 text-stone-950 font-black min-h-[48px] px-5 text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-amber-500 cursor-pointer ml-auto"
-                title="Click to exit in-restaurant table mode"
-              >
-                <Gift className="w-4 h-4 text-stone-950" />
-                <span>Table #{tableNumber || '1'} (Exit Mode)</span>
-              </button>
+              <div className="flex items-center gap-1.5 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowTableScannerModal(true)}
+                  className="btn bg-amber-400 hover:bg-amber-500 text-stone-950 font-black min-h-[48px] px-4 text-xs sm:text-sm flex items-center gap-1.5 shadow-md border border-amber-500 cursor-pointer"
+                  title="Table mode active. Tap to switch table or re-scan standee"
+                >
+                  <QrCode className="w-4 h-4 text-stone-950" />
+                  <span>Table #{tableNumber || '1'} (Active)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsTableDineIn(false);
+                    setTableNumber(null);
+                    setTablePerk(null);
+                    showToast('Exited table session.', 'info');
+                  }}
+                  className="p-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 min-h-[48px] flex items-center justify-center cursor-pointer transition-colors border border-stone-200 shadow-xs"
+                  title="Exit Table Mode"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
-                onClick={() => {
-                  setIsTableDineIn(true);
-                  setTableNumber('1');
-                  setActiveMainTab('menu');
-                  showToast('Activated In-Restaurant Table Mode for Table #1', 'success');
-                  if (!tablePerk) setShowTablePerkWheel(true);
-                }}
-                className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-4 text-xs font-bold flex items-center gap-1.5 cursor-pointer ml-auto"
-                title="Seated inside the cafe? Switch to in-restaurant table mode"
+                onClick={() => setShowTableScannerModal(true)}
+                className="btn bg-[#1C1917] hover:bg-stone-800 text-white shadow-sm min-h-[48px] px-4 sm:px-5 text-xs sm:text-sm font-bold flex items-center gap-2 cursor-pointer ml-auto border border-stone-800 transition-all hover:scale-[1.02]"
+                title="Scan tabletop QR code to activate table buzzers & digital menu"
               >
-                <QrCode className="w-4 h-4 text-[#FF5A36]" />
-                <span>Dining In?</span>
+                <QrCode className="w-4 h-4 text-[#FF5A36] animate-pulse shrink-0" />
+                <span>Scan QR</span>
               </button>
             )}
           </div>
@@ -996,6 +1017,70 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                   <span>Cutlery</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========================================================
+          1.3. PROMINENT LIVE OWNER ANNOUNCEMENT BULLETIN
+      ======================================================== */}
+      {activeAnnouncement && (
+        <section className="max-w-[1280px] mx-auto mt-6 px-4 sm:px-8 relative z-20">
+          <div className="rounded-[32px] bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-rose-500/15 border-2 border-amber-400/80 p-5 sm:p-7 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden backdrop-blur-xs">
+            <div
+              aria-hidden="true"
+              className="absolute -right-16 -top-16 w-60 h-60 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.25),transparent_70%)] pointer-events-none"
+            />
+            <div className="space-y-2 relative z-10 max-w-3xl">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+                </span>
+                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 to-orange-600 text-white font-black text-xs uppercase tracking-wider shadow-xs flex items-center gap-1.5">
+                  <Flame className="w-3.5 h-3.5" />
+                  <span>{activeAnnouncement.badge}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/80 border border-amber-300 text-xs font-black text-amber-950">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Official Notice from Restaurant Owner</span>
+                </span>
+              </div>
+              <h3 className="font-heading font-black text-xl sm:text-2xl text-stone-900 leading-tight">
+                {activeAnnouncement.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-stone-800 leading-relaxed font-medium">
+                {activeAnnouncement.message}
+              </p>
+            </div>
+
+            <div className="relative z-10 shrink-0 flex flex-wrap items-center gap-3">
+              {activeAnnouncement.action_label ? (
+                <a
+                  href={
+                    activeAnnouncement.action_url?.startsWith('http')
+                      ? activeAnnouncement.action_url
+                      : `https://wa.me/${(restaurant?.whatsapp_number || restaurant?.phone || '919876543210').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${restaurant?.name}, I am inquiring about your announcement: "${activeAnnouncement.title}" on Menu Maps.`)}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white px-6 py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-md flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                >
+                  <span>{activeAnnouncement.action_label}</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              ) : (
+                <a
+                  href={`https://wa.me/${(restaurant?.whatsapp_number || restaurant?.phone || '919876543210').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${restaurant?.name}, I saw your announcement on Menu Maps: "${activeAnnouncement.title}". Could you share more details?`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn bg-white hover:bg-stone-50 text-stone-900 border border-amber-300 px-5 py-3 rounded-2xl font-black text-xs shadow-xs flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Inquire via WhatsApp</span>
+                  <ExternalLink className="w-4 h-4 text-stone-500" />
+                </a>
+              )}
             </div>
           </div>
         </section>
@@ -2573,6 +2658,22 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
           <span>WhatsApp Order</span>
         </button>
       </div>
+
+      {/* Table QR Standee Scanner Modal */}
+      {showTableScannerModal && restaurant && (
+        <TableQrScannerModal
+          isOpen={showTableScannerModal}
+          onClose={() => setShowTableScannerModal(false)}
+          restaurant={restaurant}
+          onTableConfirmed={(tNum) => {
+            setIsTableDineIn(true);
+            setTableNumber(tNum);
+            setActiveMainTab('menu');
+            showToast(`🎉 Connected to Table #${tNum}! Live table buzzers & VIP perks active.`, 'success');
+            if (!tablePerk) setShowTablePerkWheel(true);
+          }}
+        />
+      )}
 
       {/* WhatsApp Order Drawer (15-min self-pickup, split bill & direct order) */}
       <WhatsAppOrderDrawer

@@ -138,7 +138,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
     action_url: '',
     is_active: true,
   });
-  const [announcementExpiryPreset, setAnnouncementExpiryPreset] = useState<'tonight' | '24h' | '3d' | '7d' | 'indefinite'>('tonight');
+  const [announcementExpiryPreset, setAnnouncementExpiryPreset] = useState<'tonight' | '24h' | '3d' | '7d' | 'indefinite'>('indefinite');
   const [savingAnnouncement, setSavingAnnouncement] = useState(false);
 
   // --------------------------------------------------------------------------
@@ -248,7 +248,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       action_url: '',
       is_active: true,
     });
-    setAnnouncementExpiryPreset('tonight');
+    setAnnouncementExpiryPreset('indefinite');
     setAnnouncementModalOpen(true);
   };
 
@@ -279,6 +279,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       const saved = await api.saveRestaurantAnnouncement({
         ...editingAnnouncement,
         restaurant_id: restaurant.id,
+        restaurant_slug: restaurant.slug,
         expires_at,
       });
 
@@ -311,6 +312,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
     try {
       const updated = await api.saveRestaurantAnnouncement({
         ...ann,
+        restaurant_slug: restaurant?.slug,
         is_active: !ann.is_active,
       });
       setAnnouncements((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));

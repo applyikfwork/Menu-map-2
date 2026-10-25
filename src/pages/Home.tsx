@@ -57,11 +57,6 @@ import { useToast } from '../components/Toast';
 import { toggleBookmark, isBookmarked } from '../lib/bookmarks';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 
-const SpinWheelModal = lazyWithRetry(
-  () => import('../components/interactive/SpinWheelModal'),
-  'SpinWheelModal',
-  'SpinWheelModal'
-);
 const FoodQuizModal = lazyWithRetry(
   () => import('../components/interactive/FoodQuizModal'),
   'FoodQuizModal',
@@ -102,7 +97,6 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   }, [currentLocation]);
 
   // Modals
-  const [spinModalOpen, setSpinModalOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [plannerModalOpen, setPlannerModalOpen] = useState(false);
 
@@ -336,45 +330,6 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
         />
 
         <div className="relative max-w-[1280px] mx-auto px-4 sm:px-8">
-          {/* Universal Live Location Status Pill (Clean, Attractive, Non-redundant) */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7E2DA]/80">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={openLocationModal}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] hover:border-[#FF5A36] shadow-xs text-xs sm:text-sm font-extrabold text-[#1C1917] transition-all cursor-pointer group"
-              >
-                <MapPin className="w-3.5 h-3.5 text-[#FF5A36] group-hover:scale-110 transition-transform shrink-0" />
-                <span className="text-[#78716C] font-bold">Current Area:</span>
-                <span className="text-[#D8350F]">{activeAreaName}</span>
-                {currentLocation.isLiveGps && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="Live GPS Active" />
-                )}
-                <span className="text-[11px] text-stone-400 group-hover:text-[#FF5A36] font-semibold underline underline-offset-2 ml-1">Change</span>
-              </button>
-              {!currentLocation.isAllDelhi && activeDelhiLocation?.metroStation && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200/80 text-xs font-bold text-[#0F766E]">
-                  <Train className="w-3.5 h-3.5 shrink-0" />
-                  <span>{activeDelhiLocation.metroStation}</span>
-                  {activeDelhiLocation.metroLines[0] && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-white text-teal-800 font-extrabold border border-teal-200">
-                      {activeDelhiLocation.metroLines[0]}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-bold text-[#0F766E] bg-teal-50 border border-teal-100 px-3 py-1 rounded-full">
-              <Sparkles className="w-3.5 h-3.5 text-[#0F766E]" />
-              <span>
-                {currentLocation.isAllDelhi 
-                  ? 'Showing verified dining spots across Delhi NCR' 
-                  : `Showing verified dining spots in ${activeAreaName.split(/[\s,/]+/)[0]}`}
-              </span>
-            </div>
-          </div>
-
           {/* Hero Two-Column Grid: Left Content + Right Interactive Live Counter Ticket */}
           <div className="pt-8 sm:pt-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left Hero Content */}
@@ -814,35 +769,10 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       </section>
 
       {/* ========================================================
-          4. INTERACTIVE FOOD DISCOVERY TOOLS (SPIN & QUIZ)
+          4. CRAVING QUIZ DISCOVERY TOOL
       ======================================================== */}
       <section className="sec py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Spin Wheel Card */}
-          <div className="bg-gradient-to-br from-[#FFE9E2] to-[#FFF5F0] border border-[#FFCCBD] rounded-[32px] p-7 sm:p-8 flex flex-col justify-between shadow-sm">
-            <div>
-              <span className="px-3 py-1 rounded-full bg-white text-[#D8350F] text-xs font-black uppercase tracking-wider shadow-xs">
-                Decision Maker
-              </span>
-              <h3 className="hd mt-4 text-2xl sm:text-3xl font-extrabold text-[#1C1917]">
-                Can't decide what to eat? Spin the Wheel!
-              </h3>
-              <p className="mt-2 text-sm text-[#57534E] leading-relaxed">
-                Let fate pick your next meal from verified dishes and cafes in {activeAreaName}.
-              </p>
-            </div>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={() => setSpinModalOpen(true)}
-                className="btn bg-[#D8350F] hover:bg-[#FF5A36] text-white min-h-[46px] px-6 rounded-xl font-bold cursor-pointer shadow-sm flex items-center gap-2"
-              >
-                <RotateCw className="w-4 h-4" />
-                <span>Spin the Food Wheel</span>
-              </button>
-            </div>
-          </div>
-
+        <div className="max-w-2xl mx-auto">
           {/* Food Quiz Card */}
           <div className="bg-gradient-to-br from-[#E6F4F1] to-[#F0FAF7] border border-[#BCE3DA] rounded-[32px] p-7 sm:p-8 flex flex-col justify-between shadow-sm">
             <div>
@@ -870,51 +800,11 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
         </div>
       </section>
 
-      {/* ========================================================
-          6. CLEAN DINER CTA BANNER
-      ======================================================== */}
-      <section className="sec pb-24">
-        <div className="bg-[#1C1917] text-white rounded-[36px] p-8 sm:p-14 text-center relative overflow-hidden shadow-xl">
-          <div
-            aria-hidden="true"
-            className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(255,90,54,0.3),transparent_70%)] pointer-events-none"
-          />
-          <div className="relative z-10 max-w-2xl mx-auto">
-            <h2 className="hd text-3xl sm:text-5xl font-black text-white leading-tight">
-              Real food menus. Zero app markup.
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-stone-300">
-              Menu Maps is Delhi's direct dining guide with 100% verified counter menus across {restaurants.length || 770} verified dining spots.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3 justify-center">
-              <button
-                onClick={() => navigate('/restaurants')}
-                className="btn bg-[#FF5A36] hover:bg-[#D8350F] text-white min-h-[48px] px-7 rounded-full font-bold cursor-pointer shadow-md"
-              >
-                Browse All Cafes & Menus
-              </button>
-              <button
-                onClick={() => navigate('/search')}
-                className="btn bg-white/10 hover:bg-white/20 text-white border border-white/20 min-h-[48px] px-7 rounded-full font-bold cursor-pointer"
-              >
-                Search Trending Dishes
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       {/* Interactive Modals */}
       <React.Suspense fallback={null}>
-        {spinModalOpen && (
-          <SpinWheelModal
-            isOpen={spinModalOpen}
-            onClose={() => setSpinModalOpen(false)}
-            restaurants={restaurants}
-            navigate={navigate}
-          />
-        )}
-        {quizModalOpen && (
+                {quizModalOpen && (
           <FoodQuizModal
             isOpen={quizModalOpen}
             onClose={() => setQuizModalOpen(false)}

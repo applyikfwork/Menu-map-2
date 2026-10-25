@@ -2613,37 +2613,64 @@ export const api = {
   // --------------------------------------------------------------------------
   // RESTAURANT ANNOUNCEMENTS & LIVE BULLETIN ENGINE
   // --------------------------------------------------------------------------
-  async getRestaurantAnnouncements(restaurantId: string): Promise<RestaurantAnnouncement[]> {
+  async getRestaurantAnnouncements(restaurantId: string, restaurantSlug?: string): Promise<RestaurantAnnouncement[]> {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { data, error } = await supabase
-          .from('restaurant_announcements')
-          .select('*')
-          .eq('restaurant_id', restaurantId)
-          .order('created_at', { ascending: false });
+        let query = supabase.from('restaurant_announcements').select('*');
+        if (restaurantSlug && restaurantSlug !== restaurantId) {
+          query = query.or(`restaurant_id.eq.${restaurantId},restaurant_id.eq.${restaurantSlug}`);
+        } else {
+          query = query.eq('restaurant_id', restaurantId);
+        }
+        const { data, error } = await query.order('created_at', { ascending: false });
         if (!error && data && data.length > 0) return data as RestaurantAnnouncement[];
       } catch (e) {}
     }
     const all = loadTable<RestaurantAnnouncement>('restaurant_announcements');
-    return all.filter((a) => a.restaurant_id === restaurantId);
+    return all.filter((a) => 
+      a.restaurant_id === restaurantId || 
+      (restaurantSlug && a.restaurant_id === restaurantSlug) ||
+      (restaurantSlug && (a as any).restaurant_slug === restaurantSlug)
+    );
   },
 
-  async getActiveRestaurantAnnouncement(restaurantId: string): Promise<RestaurantAnnouncement | null> {
-    const list = await this.getRestaurantAnnouncements(restaurantId);
+  async getActiveRestaurantAnnouncement(
+    restaurantId: string,
+    restaurantSlug?: string,
+    inlineAnnouncements?: RestaurantAnnouncement[]
+  ): Promise<RestaurantAnnouncement | null> {
+    // 1. Direct inline announcements on restaurant object
+    if (inlineAnnouncements && Array.isArray(inlineAnnouncements) && inlineAnnouncements.length > 0) {
+      const activeInline = inlineAnnouncements.find((a) => a.is_active);
+      if (activeInline) return activeInline;
+    }
+
+    // 2. Database & local table lookup
+    const list = await this.getRestaurantAnnouncements(restaurantId, restaurantSlug);
     const now = new Date().toISOString();
-    return list.find((a) => {
+    
+    // First try active and unexpired
+    const activeValid = list.find((a) => {
       if (!a.is_active) return false;
       if (a.expires_at && a.expires_at < now) return false;
       return true;
-    }) || null;
+    });
+
+    if (activeValid) return activeValid;
+
+    // Graceful fallback: If an owner set is_active=true but a short preset passed, preserve visibility
+    return list.find((a) => a.is_active) || null;
   },
 
-  async saveRestaurantAnnouncement(announcement: Partial<RestaurantAnnouncement>): Promise<RestaurantAnnouncement> {
+  async saveRestaurantAnnouncement(
+    announcement: Partial<RestaurantAnnouncement> & { restaurant_slug?: string }
+  ): Promise<RestaurantAnnouncement> {
     const now = new Date().toISOString();
-    const record: RestaurantAnnouncement = {
+    const record: RestaurantAnnouncement & { restaurant_slug?: string } = {
       id: announcement.id || crypto.randomUUID(),
       restaurant_id: announcement.restaurant_id || '',
+      restaurant_slug: announcement.restaurant_slug,
       title: announcement.title?.trim() || '',
       message: announcement.message?.trim() || '',
       badge: announcement.badge || "Today's Special",
@@ -2669,6 +2696,15 @@ export const api = {
     const filtered = all.filter((a) => a.id !== record.id);
     filtered.unshift(record);
     saveTable('restaurant_announcements', filtered);
+
+    // Notify active listeners across tabs/components
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('menumap_announcement_updated', {
+          detail: { announcement: record, restaurantId: record.restaurant_id, restaurantSlug: record.restaurant_slug },
+        })
+      );
+    }
 
     return record;
   },
