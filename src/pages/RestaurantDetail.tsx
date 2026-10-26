@@ -1431,96 +1431,99 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                       const savings = calculateSavings(item.price);
                       const dishImage = getSmartDishImage(item.name, undefined, item.image_url);
                       return (
-                        <div key={item.id} className="item group flex flex-col sm:flex-row items-stretch sm:items-center">
-                          <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                            {/* Thumbnail Photo / Gradient (Clean, no .ph texture overlay) */}
-                            <div
-                              onClick={() => setSelectedDishPreview(item)}
-                              className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 cursor-pointer hover:opacity-95 border border-stone-200/80 shadow-xs relative"
-                              title={`View ${item.name} details & nutrition`}
-                            >
-                              <img
-                                src={dishImage}
-                                alt={item.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                loading="lazy"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
-                                }}
-                              />
+                        <div key={item.id} className="item group flex flex-col items-stretch">
+                          {/* Main Row: Dish Photo + Info on left, Price + Add button on right */}
+                          <div className="flex items-center justify-between gap-3 sm:gap-4 w-full">
+                            <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
+                              {/* Thumbnail Photo / Gradient */}
+                              <div
+                                onClick={() => setSelectedDishPreview(item)}
+                                className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 cursor-pointer hover:opacity-95 border border-stone-200/80 shadow-xs relative"
+                                title={`View ${item.name} details & nutrition`}
+                              >
+                                <img
+                                  src={dishImage}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src =
+                                      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+                                  }}
+                                />
+                              </div>
+
+                              {/* Dish Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  {/* Veg / Non-Veg dot */}
+                                  <span
+                                    className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 ${
+                                      item.dietary_tags?.includes('Veg')
+                                        ? 'border-emerald-700'
+                                        : 'border-rose-700'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full ${
+                                        item.dietary_tags?.includes('Veg') ? 'bg-emerald-700' : 'bg-rose-700'
+                                      }`}
+                                    />
+                                  </span>
+
+                                  {(item.is_featured || item.is_must_try) && (
+                                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[#D8350F] bg-[#FFE9E2] px-1.5 sm:px-2 py-0.5 rounded-md shrink-0">
+                                      Bestseller
+                                    </span>
+                                  )}
+                                  {item.spice_level && item.spice_level > 1 && (
+                                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2 py-0.5 rounded-md shrink-0">
+                                      🌶️ Spicy
+                                    </span>
+                                  )}
+                                </div>
+
+                                <h3
+                                  onClick={() => setSelectedDishPreview(item)}
+                                  className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-1 sm:line-clamp-2 cursor-pointer hover:text-[#0F766E] transition-colors"
+                                  title={`Click to view ${item.name} details`}
+                                >
+                                  {item.name}
+                                </h3>
+                                {item.description && (
+                                  <p className="mt-1 text-xs sm:text-sm text-[#44403C] line-clamp-1 sm:line-clamp-2 leading-relaxed">
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
                             </div>
 
-                            {/* Dish Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 sm:gap-2">
-                                {/* Veg / Non-Veg dot */}
-                                <span
-                                  className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center ${
-                                    item.dietary_tags?.includes('Veg')
-                                      ? 'border-emerald-700'
-                                      : 'border-rose-700'
-                                  }`}
-                                >
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full ${
-                                      item.dietary_tags?.includes('Veg') ? 'bg-emerald-700' : 'bg-rose-700'
-                                    }`}
-                                  />
+                            {/* Price & Add Button */}
+                            <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 pl-2">
+                              <div className="flex flex-col items-end">
+                                <span className="hd text-lg sm:text-2xl font-black text-[#1C1917] leading-none">
+                                  ₹{item.price}
                                 </span>
-
-                                {(item.is_featured || item.is_must_try) && (
-                                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[#D8350F] bg-[#FFE9E2] px-1.5 sm:px-2 py-0.5 rounded-md">
-                                    Bestseller
-                                  </span>
-                                )}
-                                {item.spice_level && item.spice_level > 1 && (
-                                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2 py-0.5 rounded-md">
-                                    🌶️ Spicy
+                                {savings.totalSavings > 0 && (
+                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 inline-block mt-1 whitespace-nowrap">
+                                    Save ₹{savings.totalSavings} vs apps
                                   </span>
                                 )}
                               </div>
-
-                              <h3
-                                onClick={() => setSelectedDishPreview(item)}
-                                className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-2 cursor-pointer hover:text-[#0F766E] transition-colors relative z-10"
-                                title={`Click to view ${item.name} details`}
+                              <button
+                                type="button"
+                                onClick={() => handleAddToCart(item)}
+                                className="add cursor-pointer active:scale-95 mt-1"
+                                title="Add to order tray"
                               >
-                                {item.name}
-                              </h3>
-                              {item.description && (
-                                <p className="mt-1 text-xs sm:text-sm text-[#44403C] line-clamp-2 leading-relaxed">
-                                  {item.description}
-                                </p>
-                              )}
+                                +
+                              </button>
                             </div>
                           </div>
 
-                          {/* Price & Add Button */}
-                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 sm:pl-3 border-t sm:border-t-0 border-stone-100">
-                            <div className="flex sm:flex-col items-baseline sm:items-end gap-1.5">
-                              <span className="hd text-lg sm:text-2xl font-black text-[#1C1917]">
-                                ₹{item.price}
-                              </span>
-                              {savings.totalSavings > 0 && (
-                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 inline-block">
-                                  Save ₹{savings.totalSavings} vs apps
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleAddToCart(item)}
-                              className="add cursor-pointer active:scale-95"
-                              title="Add to order tray"
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          {/* Smart Pairing / The Perfect Bite */}
+                          {/* Smart Pairing / The Perfect Bite (cleanly placed underneath the dish row) */}
                           {smartPairing && (
-                            <div className="w-full mt-2 pt-2 border-t border-stone-100 flex items-center justify-between text-xs bg-amber-50/70 p-2.5 rounded-xl">
+                            <div className="w-full mt-2.5 pt-2.5 border-t border-stone-100 flex items-center justify-between text-xs bg-amber-50/70 px-3 py-2 rounded-xl">
                               <span className="text-stone-700 font-medium truncate max-w-[220px] sm:max-w-md">
                                 ✨ <strong>The Perfect Bite:</strong> Pairs best with <strong>{smartPairing.name}</strong> (+₹{smartPairing.price})
                               </span>
