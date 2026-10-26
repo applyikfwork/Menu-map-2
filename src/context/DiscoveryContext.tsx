@@ -10,7 +10,7 @@ import {
   calculateCounterSavings
 } from '../lib/engine/discoveryEngine';
 import { Restaurant, MenuItem, MenuCategory, Collection } from '../types/database';
-import { api } from '../lib/supabase';
+import { api, getMasterSeedData } from '../lib/supabase';
 import { getCachedUserCoordinates, GeoCoordinates } from '../lib/location';
 
 interface RecentViewItem {
@@ -45,7 +45,17 @@ const RECENT_VIEWS_STORAGE_KEY = 'menumaps_recent_views';
 const USER_DIET_STORAGE_KEY = 'menumaps_user_diet';
 
 export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isReady, setIsReady] = useState(false);
+  // Synchronously ensure discoveryEngine is pre-hydrated with seed data on frame 1
+  if (!discoveryEngine.getIsHydrated()) {
+    try {
+      const seed = getMasterSeedData();
+      discoveryEngine.hydrate(seed.restaurants, seed.menuItems, seed.categories, seed.collections);
+    } catch (e) {
+      console.warn('Initial seed pre-hydration warning:', e);
+    }
+  }
+
+  const [isReady, setIsReady] = useState(() => discoveryEngine.getIsHydrated());
   const [manualMealTime, setManualMealTimeState] = useState<MealTimeWindow | null>(null);
   const [activeLocality, setActiveLocality] = useState<string>('Delhi NCR');
   const [userDiet, setUserDietState] = useState<'all' | 'veg' | 'non_veg'>(() => {

@@ -13,18 +13,24 @@ import {
   Filter, 
   Coffee, 
   SlidersHorizontal,
-  ArrowRight
+  ArrowRight,
+  Dices
 } from 'lucide-react';
 import { useLocationContext } from '../context/LocationContext';
 import { useDiscovery } from '../context/DiscoveryContext';
+import { getMasterSeedData } from '../lib/supabase';
 import { Restaurant, MenuItem } from '../types/database';
 import { calculateDistanceKm, GeoCoordinates } from '../lib/location';
 import { getSmartDishImage } from '../lib/dishImageRegistry';
 import { calculateCounterSavings } from '../lib/engine/discoveryEngine';
 import { DishProfileStoryReel, StoryDishGroup } from '../components/discovery/DishProfileStoryReel';
-import { DishPriceSpectrumWidget } from '../components/discovery/DishPriceSpectrumWidget';
 import { RestaurantAvailabilityDrawer, MatchingRestaurantSpot } from '../components/discovery/RestaurantAvailabilityDrawer';
 import { updatePageSeo } from '../lib/seo';
+import { 
+  getCombinedDishDemand, 
+  recordDishInteraction, 
+  subscribeToDemandUpdates 
+} from '../lib/engine/dishDemandTracker';
 
 interface DishRadarProps {
   navigate: (path: string) => void;
@@ -43,24 +49,59 @@ export interface CanonicalDishCluster {
   maxPrice: number;
   avgPrice: number;
   demandScore: number;
+  totalClicks: number;
+  totalPoints: number;
+  liveClicks: number;
+  livePoints: number;
   isTrending: boolean;
   isBudgetSteal: boolean;
   isGourmet: boolean;
+  demandBadge?: string;
+  isJustClicked?: boolean;
+}
+
+/**
+ * Deterministic pseudo-random float generator from a string seed.
+ */
+function hashStringToFloat(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  const unsigned = hash >>> 0;
+  return (unsigned % 10000) / 10000;
 }
 
 export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
   const { currentLocation } = useLocationContext();
-  const { engine } = useDiscovery();
+  const { engine, isReady } = useDiscovery();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'trending' | 'budget' | 'gourmet'>('all');
   const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'non_veg'>('all');
-  const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'distance'>('popular');
+  const [sortBy, setSortBy] = useState<'popular' | 'random' | 'price_asc' | 'price_desc' | 'distance'>('popular');
   const [priceBracket, setPriceBracket] = useState<'all' | 'budget' | 'mid' | 'premium'>('all');
+
+  // Randomizer & Shuffle State
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+  const [isShuffling, setIsShuffling] = useState(false);
+
+  // Real-time Demand Update Revision
+  const [demandRevision, setDemandRevision] = useState(0);
 
   // Selected Dish for Availability Drawer
   const [selectedCluster, setSelectedCluster] = useState<CanonicalDishCluster | null>(null);
+
+  // Expanded fallback flag (when hyper-local area has few direct spots)
+  const [isExpandedFallback, setIsExpandedFallback] = useState(false);
+
+  // Subscribe to live click and point updates
+  useEffect(() => {
+    return subscribeToDemandUpdates(() => {
+      setDemandRevision((prev) => prev + 1);
+    });
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -78,6 +119,13 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     return currentLocation.name || 'Delhi NCR';
   }, [currentLocation]);
 
+  // Clean locality token: strips parentheses e.g. "Nangloi (Rohtak Road & Metro Corridor)" -> "nangloi"
+  const cleanLocalityKey = useMemo(() => {
+    if (currentLocation.isAllDelhi) return '';
+    const base = currentLocation.shortName || currentLocation.name || '';
+    return base.split('(')[0].trim().toLowerCase();
+  }, [currentLocation]);
+
   const userCoords: GeoCoordinates | null = useMemo(() => {
     if (currentLocation.latitude && currentLocation.longitude) {
       return {
@@ -88,33 +136,62 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     return null;
   }, [currentLocation]);
 
-  // 1. Get restaurants matching the active universal location
+  // 1. Get restaurants matching the active universal location with fail-safe fallback
   const areaRestaurants = useMemo(() => {
-    const all = engine.getAllRestaurants();
-    if (currentLocation.isAllDelhi) return all;
+    let all = engine.getAllRestaurants();
+    if (!all || all.length === 0) {
+      all = getMasterSeedData().restaurants;
+    }
+    if (currentLocation.isAllDelhi || !cleanLocalityKey) {
+      setIsExpandedFallback(false);
+      return all;
+    }
 
-    const locName = (currentLocation.name || '').toLowerCase();
-    const filtered = all.filter((r) => {
+    // 1. Direct locality name match
+    let filtered = all.filter((r) => {
       const matchText = `${r.name} ${r.city_area || ''} ${r.landmark || ''} ${r.address_line1 || ''} ${r.city || ''}`.toLowerCase();
-      return matchText.includes(locName);
+      return matchText.includes(cleanLocalityKey);
     });
 
-    if (filtered.length >= 3) return filtered;
-
-    // If locality is hyper-specific and has few direct matches, use proximity if coordinates exist
-    if (userCoords) {
-      return [...all]
+    // 2. Geospatial proximity match (within 8.5km) if coordinates exist
+    if (filtered.length < 5 && userCoords) {
+      const proximityMatches = [...all]
         .map((r) => ({
           restaurant: r,
           dist: calculateDistanceKm(userCoords.latitude, userCoords.longitude, r.latitude, r.longitude),
         }))
-        .filter((item) => item.dist <= 8)
+        .filter((item) => item.dist <= 8.5)
         .sort((a, b) => a.dist - b.dist)
         .map((item) => item.restaurant);
+
+      const existingIds = new Set(filtered.map((r) => r.id));
+      for (const pr of proximityMatches) {
+        if (!existingIds.has(pr.id)) {
+          filtered.push(pr);
+          existingIds.add(pr.id);
+        }
+      }
     }
 
-    return all.slice(0, 35);
-  }, [engine, currentLocation, userCoords]);
+    // 3. Guaranteed rich fallback if still under 6 restaurants: pull top rated restaurants from broader Delhi NCR
+    if (filtered.length < 6) {
+      setIsExpandedFallback(true);
+      const topRated = [...all]
+        .filter((r) => r.rating && r.rating >= 4.2)
+        .slice(0, 24);
+      const existingIds = new Set(filtered.map((r) => r.id));
+      for (const tr of topRated) {
+        if (!existingIds.has(tr.id)) {
+          filtered.push(tr);
+          existingIds.add(tr.id);
+        }
+      }
+    } else {
+      setIsExpandedFallback(false);
+    }
+
+    return filtered;
+  }, [engine, isReady, currentLocation, cleanLocalityKey, userCoords]);
 
   // 2. Build Canonical Dish Clusters for this active location
   const dishClusters: CanonicalDishCluster[] = useMemo(() => {
@@ -127,7 +204,6 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       sampleDish: MenuItem;
       spots: MatchingRestaurantSpot[];
       dietaryTags: Set<string>;
-      demandPoints: number;
     }>();
 
     // Clean dish name normalizer
@@ -140,7 +216,12 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     };
 
     areaRestaurants.forEach((rest) => {
-      const restDishes = engine.getDishesForRestaurant(rest.id);
+      let restDishes = engine.getDishesForRestaurant(rest.id);
+      if (!restDishes || restDishes.length === 0) {
+        const seedDishes = getMasterSeedData().menuItems.filter((d) => d.restaurant_id === rest.id);
+        if (seedDishes.length > 0) restDishes = seedDishes;
+      }
+
       const distKm = userCoords ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, rest.latitude, rest.longitude) : undefined;
 
       restDishes.forEach((d) => {
@@ -171,13 +252,11 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
             sampleDish: d,
             spots: [spot],
             dietaryTags: new Set(d.dietary_tags || []),
-            demandPoints: (d.is_must_try ? 15 : 0) + (d.is_featured ? 10 : 0) + (rest.rating ? rest.rating * 2 : 8),
           });
         } else {
           const entry = clustersMap.get(clusterKey)!;
           entry.spots.push(spot);
           (d.dietary_tags || []).forEach((t) => entry.dietaryTags.add(t));
-          entry.demandPoints += (d.is_must_try ? 12 : 5);
         }
       });
     });
@@ -205,6 +284,15 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       const isEgg = Array.from(entry.dietaryTags).some((t) => /egg/i.test(t));
       const isNonVeg = Array.from(entry.dietaryTags).some((t) => /non/i.test(t) || /chicken|mutton|fish/i.test(entry.name));
 
+      // Calculate combined demand: deterministic baseline + live user clicks
+      const demandStats = getCombinedDishDemand(
+        entry.sampleDish.id,
+        entry.name,
+        entry.category,
+        entry.sampleDish.is_must_try,
+        finalSpots[0]?.restaurant.rating || 4.2
+      );
+
       result.push({
         id: key,
         name: entry.sampleDish.name,
@@ -217,19 +305,63 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
         minPrice,
         maxPrice,
         avgPrice,
-        demandScore: entry.demandPoints + finalSpots.length * 4,
-        isTrending: finalSpots.length >= 2 || entry.demandPoints >= 20,
+        demandScore: demandStats.totalPoints,
+        totalClicks: demandStats.totalClicks,
+        totalPoints: demandStats.totalPoints,
+        liveClicks: demandStats.liveClicks,
+        livePoints: demandStats.livePoints,
+        isTrending: demandStats.isTrending,
         isBudgetSteal: minPrice <= 180,
         isGourmet: minPrice >= 300,
+        demandBadge: demandStats.demandRankLabel,
+        isJustClicked: demandStats.isJustClicked,
       });
     });
 
+    // Guaranteed fallback: If result has fewer than 10 dishes, pull popular seed dishes to guarantee rich cravings
+    if (result.length < 10) {
+      const allSeedDishes = getMasterSeedData().menuItems;
+      const existingNames = new Set(result.map((r) => r.name.toLowerCase()));
+      const fallbackDishes = allSeedDishes.filter((d) => (d.is_must_try || d.is_featured) && !existingNames.has(d.name.toLowerCase())).slice(0, 16);
+
+      fallbackDishes.forEach((d) => {
+        const fakeRest = areaRestaurants[0] || getMasterSeedData().restaurants[0];
+        const demandStats = getCombinedDishDemand(d.id, d.name, d.category_id || 'Specials', d.is_must_try, 4.3);
+        const isNonVeg = Boolean(d.dietary_tags?.some((t) => /non/i.test(t)) || /chicken|mutton|fish/i.test(d.name));
+        const isEgg = Boolean(d.dietary_tags?.some((t) => /egg/i.test(t)));
+        const isVeg = !isNonVeg && !isEgg;
+        result.push({
+          id: `fallback-${d.id}`,
+          name: d.name,
+          category: d.category_id || 'Trending Special',
+          isVeg,
+          isEgg,
+          isNonVeg,
+          sampleDish: d,
+          spots: [{ restaurant: fakeRest, dish: d }],
+          minPrice: d.price,
+          maxPrice: d.price,
+          avgPrice: d.price,
+          demandScore: demandStats.totalPoints,
+          totalClicks: demandStats.totalClicks,
+          totalPoints: demandStats.totalPoints,
+          liveClicks: demandStats.liveClicks,
+          livePoints: demandStats.livePoints,
+          isTrending: true,
+          isBudgetSteal: d.price <= 180,
+          isGourmet: d.price >= 300,
+          demandBadge: demandStats.demandRankLabel,
+          isJustClicked: demandStats.isJustClicked,
+        });
+      });
+    }
+
     return result.sort((a, b) => b.demandScore - a.demandScore);
-  }, [areaRestaurants, engine, userCoords]);
+  }, [areaRestaurants, engine, isReady, userCoords, demandRevision]);
 
   // 3. Build Story Reel Groups for Top Trending Avatars
   const storyGroups: StoryDishGroup[] = useMemo(() => {
-    return dishClusters.slice(0, 12).map((c, i) => ({
+    return dishClusters.slice(0, 14).map((c, i) => ({
       id: c.id,
       canonicalName: c.name,
       sampleDish: c.sampleDish,
@@ -237,12 +369,32 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       maxPrice: c.maxPrice,
       avgPrice: c.avgPrice,
       restaurantCount: c.spots.length,
-      demandBadge: i === 0 ? '🔥 #1 Trending' : undefined,
+      demandBadge: i === 0 ? '🔥 #1 Hot' : c.demandBadge,
+      demandPoints: c.totalPoints,
+      totalClicks: c.totalClicks,
       isVeg: c.isVeg,
     }));
   }, [dishClusters]);
 
-  // 4. Filter and Sort Clusters for Display
+  // 4. Handle "🎲 Shuffle Cravings" Re-roll
+  const handleShuffleCravings = () => {
+    setIsShuffling(true);
+    setShuffleSeed((prev) => prev + 1);
+    if (sortBy !== 'random') {
+      setSortBy('random');
+    }
+    setTimeout(() => {
+      setIsShuffling(false);
+    }, 450);
+  };
+
+  // 5. Handle Dish Card Click with Immediate Point Accrual
+  const handleDishClick = (cluster: CanonicalDishCluster) => {
+    recordDishInteraction(cluster.sampleDish.id, 'click');
+    setSelectedCluster(cluster);
+  };
+
+  // 6. Filter and Sort Clusters for Display
   const filteredClusters = useMemo(() => {
     return dishClusters
       .filter((cluster) => {
@@ -271,6 +423,11 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
         return true;
       })
       .sort((a, b) => {
+        if (sortBy === 'random') {
+          const hashA = hashStringToFloat(`${a.id}_${shuffleSeed}`);
+          const hashB = hashStringToFloat(`${b.id}_${shuffleSeed}`);
+          return hashB - hashA;
+        }
         if (sortBy === 'popular') return b.demandScore - a.demandScore;
         if (sortBy === 'price_asc') return a.minPrice - b.minPrice;
         if (sortBy === 'price_desc') return b.minPrice - a.minPrice;
@@ -281,7 +438,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
         }
         return 0;
       });
-  }, [dishClusters, searchQuery, dietaryFilter, activeCategoryTab, priceBracket, sortBy]);
+  }, [dishClusters, searchQuery, dietaryFilter, activeCategoryTab, priceBracket, sortBy, shuffleSeed]);
 
   return (
     <div className="w-full min-h-screen bg-[#FAF8F5] text-[#1C1917] pb-24 selection:bg-[#FFE0D6] selection:text-[#9A2208]">
@@ -290,15 +447,22 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       ======================================================== */}
       <section className="bg-gradient-to-b from-[#F5EFEB] via-[#FAF8F5] to-[#FAF8F5] border-b border-[#E7E2DA] pt-6 sm:pt-10 pb-8">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-8">
-          {/* Subtle Location Context Pill (Purely Informational, Zero Duplicate Picker) */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] shadow-xs text-xs font-bold text-stone-700 mb-4">
+          {/* Universal Location Context Pill */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E2DA] shadow-xs text-xs font-bold text-stone-700 mb-3">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Showing verified dishes in</span>
             <span className="text-[#D8350F] font-black">{activeAreaName}</span>
             <span className="text-stone-400 font-normal hidden sm:inline">(synced with navbar location)</span>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          {isExpandedFallback && (
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900 mb-3 ml-0 sm:ml-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>Showing dishes in {activeAreaName} &amp; nearby popular Delhi NCR dining hubs</span>
+            </div>
+          )}
+
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mt-1">
             <div>
               <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-[#1C1917] tracking-tight leading-[1.1]">
                 Craving a specific dish?<br />
@@ -334,6 +498,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
         storyGroups={storyGroups}
         selectedGroupId={selectedCluster?.id || null}
         onSelectGroup={(grp) => {
+          recordDishInteraction(grp.sampleDish.id, 'story_tap');
           const match = dishClusters.find((c) => c.id === grp.id);
           if (match) setSelectedCluster(match);
         }}
@@ -341,7 +506,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       />
 
       {/* ========================================================
-          3. COMMAND SEARCH & MULTI-FILTER TOOLBAR
+          3. COMMAND SEARCH, SHUFFLE & MULTI-FILTER TOOLBAR
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 mt-6">
         <div className="bg-white border border-[#E7E2DA] rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
@@ -367,22 +532,37 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
               )}
             </div>
 
-            {/* Sort Selector Dropdown */}
+            {/* Quick Action Buttons: Shuffle + Sort Selector */}
             <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-between md:justify-start">
-              <span className="text-xs font-bold text-stone-500 flex items-center gap-1">
-                <ArrowUpDown className="w-3.5 h-3.5 text-[#FF5A36]" />
-                <span className="hidden sm:inline">Sort:</span>
-              </span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="py-2.5 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#E7E2DA] text-xs font-extrabold text-stone-800 outline-none cursor-pointer hover:border-stone-400 transition-colors"
+              {/* Interactive "🎲 Shuffle Cravings" Button */}
+              <button
+                type="button"
+                onClick={handleShuffleCravings}
+                className="btn bg-[#1C1917] hover:bg-stone-800 text-amber-300 hover:text-amber-200 border border-stone-800 px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
+                title="Randomly shuffle and discover fresh dishes in this area"
               >
-                <option value="popular">🔥 Most Popular / Demand</option>
-                <option value="price_asc">💰 Lowest Price First</option>
-                <option value="price_desc">💎 Highest Price First</option>
-                <option value="distance">📍 Closest Distance</option>
-              </select>
+                <Dices className={`w-4 h-4 text-amber-400 ${isShuffling ? 'animate-spin' : ''}`} />
+                <span>🎲 Shuffle</span>
+              </button>
+
+              {/* Sort Selector Dropdown */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-stone-500 hidden sm:flex items-center gap-1">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#FF5A36]" />
+                  <span>Sort:</span>
+                </span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="py-2.5 px-3 rounded-xl bg-[#FAF8F5] border border-[#E7E2DA] text-xs font-extrabold text-stone-800 outline-none cursor-pointer hover:border-stone-400 transition-colors"
+                >
+                  <option value="popular">🔥 Most In-Demand</option>
+                  <option value="random">🎲 Random Cravings</option>
+                  <option value="price_asc">💰 Lowest Price First</option>
+                  <option value="price_desc">💎 Highest Price First</option>
+                  <option value="distance">📍 Closest Distance</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -489,9 +669,11 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
             </span>
           </div>
 
-          <span className="text-xs text-stone-500 font-bold hidden sm:inline">
-            Showing in-store counter MRPs
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-stone-500 font-bold hidden sm:inline">
+              Showing in-store counter MRPs
+            </span>
+          </div>
         </div>
 
         {filteredClusters.length === 0 ? (
@@ -531,8 +713,12 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
               return (
                 <div
                   key={cluster.id}
-                  onClick={() => setSelectedCluster(cluster)}
-                  className="rounded-3xl bg-white border border-[#E7E2DA] hover:border-[#FF5A36] p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden"
+                  onClick={() => handleDishClick(cluster)}
+                  className={`rounded-3xl bg-white border p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden active:scale-[0.99] ${
+                    cluster.isJustClicked
+                      ? 'border-[#FF5A36] ring-2 ring-[#FF5A36]/30'
+                      : 'border-[#E7E2DA] hover:border-[#FF5A36]'
+                  }`}
                 >
                   <div>
                     {/* Top Row: Dish Image + Title + Category */}
@@ -559,14 +745,18 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
                           <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">
                             {cluster.category}
                           </span>
-                          {cluster.isTrending && (
-                            <span className="px-1.5 py-0.2 rounded bg-orange-100 text-[#D8350F] text-[9px] font-black uppercase">
-                              🔥 Popular
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-[#D8350F] border border-orange-200 text-[10px] font-black">
+                            <Flame className="w-2.5 h-2.5 fill-current text-orange-500" />
+                            <span>{cluster.totalClicks} clicks • {cluster.totalPoints} pts</span>
+                          </span>
+                          {cluster.liveClicks > 0 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black animate-pulse">
+                              +{cluster.livePoints} live!
                             </span>
                           )}
                         </div>
 
-                        <h3 className="font-heading font-black text-base sm:text-lg text-[#1C1917] mt-1 leading-snug group-hover:text-[#FF5A36] transition-colors line-clamp-2">
+                        <h3 className="font-heading font-black text-base sm:text-lg text-[#1C1917] mt-1.5 leading-snug group-hover:text-[#FF5A36] transition-colors line-clamp-2">
                           {cluster.name}
                         </h3>
 
@@ -624,6 +814,8 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
           spots={selectedCluster.spots}
           activeLocationName={activeAreaName}
           navigate={navigate}
+          demandPoints={selectedCluster.totalPoints}
+          totalClicks={selectedCluster.totalClicks}
         />
       )}
     </div>

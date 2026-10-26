@@ -17,6 +17,7 @@ import {
 import { Restaurant, MenuItem } from '../../types/database';
 import { calculateCounterSavings } from '../../lib/engine/discoveryEngine';
 import { getSmartCoverImage, getSmartDishImage } from '../../lib/dishImageRegistry';
+import { recordDishInteraction } from '../../lib/engine/dishDemandTracker';
 
 export interface MatchingRestaurantSpot {
   restaurant: Restaurant;
@@ -31,6 +32,8 @@ interface RestaurantAvailabilityDrawerProps {
   spots: MatchingRestaurantSpot[];
   activeLocationName: string;
   navigate: (path: string) => void;
+  demandPoints?: number;
+  totalClicks?: number;
 }
 
 export const RestaurantAvailabilityDrawer: React.FC<RestaurantAvailabilityDrawerProps> = ({
@@ -40,6 +43,8 @@ export const RestaurantAvailabilityDrawer: React.FC<RestaurantAvailabilityDrawer
   spots,
   activeLocationName,
   navigate,
+  demandPoints,
+  totalClicks,
 }) => {
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'distance' | 'rating'>('price_asc');
 
@@ -89,13 +94,21 @@ export const RestaurantAvailabilityDrawer: React.FC<RestaurantAvailabilityDrawer
                 />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2 py-0.5 rounded-full bg-[#FF5A36] text-white text-[10px] font-black uppercase tracking-wider">
                     Dish Radar
                   </span>
                   <span className="text-xs text-stone-300 font-bold">
                     Found at {spots.length} nearby {spots.length === 1 ? 'spot' : 'spots'}
                   </span>
+                  {Boolean(demandPoints || totalClicks) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold">
+                      <Flame className="w-2.5 h-2.5 fill-current text-orange-400" />
+                      <span>{demandPoints} pts</span>
+                      <span>•</span>
+                      <span>{totalClicks} foodies</span>
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-heading font-black text-xl sm:text-2xl text-white mt-1">
                   Where to eat {dishName}
@@ -283,7 +296,12 @@ export const RestaurantAvailabilityDrawer: React.FC<RestaurantAvailabilityDrawer
                         href={whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn bg-[#0F766E] hover:bg-[#0d6962] text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                        onClick={() => {
+                          if (spot.dish?.id) {
+                            recordDishInteraction(spot.dish.id, 'whatsapp_order');
+                          }
+                        }}
+                        className="btn bg-[#0F766E] hover:bg-[#0d6962] text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-transform"
                         title="Order directly to cafe over WhatsApp at 0% commission"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
@@ -294,10 +312,13 @@ export const RestaurantAvailabilityDrawer: React.FC<RestaurantAvailabilityDrawer
                     <button
                       type="button"
                       onClick={() => {
+                        if (spot.dish?.id) {
+                          recordDishInteraction(spot.dish.id, 'menu_view');
+                        }
                         onClose();
                         navigate(`/${spot.restaurant.slug}`);
                       }}
-                      className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-300 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-300 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition-transform"
                     >
                       <span>View Menu</span>
                       <ExternalLink className="w-3 h-3 text-stone-400" />

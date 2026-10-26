@@ -12,6 +12,8 @@ export interface StoryDishGroup {
   avgPrice: number;
   restaurantCount: number;
   demandBadge?: string;
+  demandPoints?: number;
+  totalClicks?: number;
   isVeg: boolean;
 }
 
@@ -128,6 +130,11 @@ export const DishProfileStoryReel: React.FC<DishProfileStoryReelProps> = ({
                         <Flame className="w-2.5 h-2.5 fill-current" />
                         <span>#1 Hot</span>
                       </span>
+                    ) : group.demandPoints && group.demandPoints >= 200 ? (
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#1C1917] text-amber-300 border border-amber-400/40 text-[9px] font-extrabold shadow-xs flex items-center gap-0.5">
+                        <Flame className="w-2 h-2 text-orange-400 fill-current" />
+                        <span>{group.demandPoints} pts</span>
+                      </span>
                     ) : (
                       <span className="px-1.5 py-0.5 rounded-full bg-[#1C1917] text-amber-300 border border-amber-400/40 text-[9px] font-extrabold shadow-xs">
                         ₹{group.minPrice}+
@@ -145,9 +152,9 @@ export const DishProfileStoryReel: React.FC<DishProfileStoryReelProps> = ({
                   {group.canonicalName}
                 </span>
 
-                {/* Restaurant Availability Count */}
+                {/* Restaurant Availability Count & Starting Price */}
                 <span className="text-[10px] text-stone-500 font-semibold mt-0.5">
-                  {group.restaurantCount} {group.restaurantCount === 1 ? 'cafe' : 'cafes'}
+                  {group.restaurantCount} {group.restaurantCount === 1 ? 'cafe' : 'cafes'} • ₹{group.minPrice}
                 </span>
               </button>
             );
