@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, UtensilsCrossed, Search, Bookmark } from 'lucide-react';
+import { Home, UtensilsCrossed, Search, Bookmark, Flame } from 'lucide-react';
 import { getBookmarks } from '../lib/bookmarks';
 
 interface MobileBottomNavProps {
@@ -12,6 +12,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
   const isRestaurants =
     (currentPath === '/restaurants' || currentPath.startsWith('/restaurant/')) ||
     currentPath === '/nearby';
+  const isDishes = currentPath === '/dishes' || currentPath === '/dish-radar' || currentPath === '/cravings' || currentPath.startsWith('/food/') || currentPath.startsWith('/dish/');
   const isSearch = currentPath === '/search';
   const isSaved = currentPath === '/bookmarks';
 
@@ -35,10 +36,16 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentPath, n
       active: isHome,
     },
     {
-      label: 'Restaurants',
+      label: 'Cafes',
       icon: UtensilsCrossed,
       path: '/restaurants',
       active: isRestaurants,
+    },
+    {
+      label: 'Dishes',
+      icon: Flame,
+      path: '/dishes',
+      active: isDishes,
     },
     {
       label: 'Search',

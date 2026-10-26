@@ -19,6 +19,7 @@ const Search = lazyWithRetry(() => import('./pages/Search'), 'Search', 'Search')
 const RestaurantsList = lazyWithRetry(() => import('./pages/RestaurantsList'), 'RestaurantsList', 'RestaurantsList');
 const RestaurantDetail = lazyWithRetry(() => import('./pages/RestaurantDetail'), 'RestaurantDetail', 'RestaurantDetail');
 const FoodDetail = lazyWithRetry(() => import('./pages/FoodDetail'), 'FoodDetail', 'FoodDetail');
+const DishRadar = lazyWithRetry(() => import('./pages/DishRadar'), 'DishRadar', 'DishRadar');
 const Bookmarks = lazyWithRetry(() => import('./pages/Bookmarks'), 'Bookmarks', 'Bookmarks');
 const StaticPage = lazyWithRetry(() => import('./pages/StaticPages'), 'StaticPage', 'StaticPage');
 const AdminPanel = lazyWithRetry(() => import('./pages/AdminPanel'), 'AdminPanel', 'AdminPanel');
@@ -179,7 +180,7 @@ function AppContent() {
     const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
-      'restaurants', 'restaurant', 'food', 'dish', 'nearby', 'bookmarks', 'about', 'contact',
+      'restaurants', 'restaurant', 'food', 'dish', 'dishes', 'dish-radar', 'cravings', 'nearby', 'bookmarks', 'about', 'contact',
       'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
     ]);
