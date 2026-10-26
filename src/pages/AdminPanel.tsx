@@ -74,7 +74,9 @@ import {
   ClaimStatus,
   FamousDishSpotlight,
   FoodCrawlStop,
-  RestaurantOwnerAccount
+  RestaurantOwnerAccount,
+  StoreSetupRequest,
+  StoreSetupStatus
 } from '../types/database';
 import { 
   api, 
@@ -100,6 +102,7 @@ interface AdminPanelProps {
 
 export type AdminSection = 
   | 'dashboard'
+  | 'store_setups'
   | 'owner_claims'
   | 'restaurants'
   | 'menu'
@@ -143,6 +146,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const [copiedClaimsSql, setCopiedClaimsSql] = useState(false);
   const [refreshingClaims, setRefreshingClaims] = useState(false);
   const [claimsSqlModalOpen, setClaimsSqlModalOpen] = useState(false);
+
+  // VIP Store Setup Requests (₹499 Concierge)
+  const [storeSetupRequests, setStoreSetupRequests] = useState<StoreSetupRequest[]>([]);
+  const [setupStatusFilter, setSetupStatusFilter] = useState<'all' | StoreSetupStatus>('all');
+  const [setupSearch, setSetupSearch] = useState('');
+  const [updatingSetupId, setUpdatingSetupId] = useState<string | null>(null);
 
   // Selected Restaurant for Menu Management
   const [selectedRestId, setSelectedRestId] = useState<string>('');
@@ -213,9 +222,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
     };
     window.addEventListener('storage', handleStorage);
 
+    const handleSetupBroadcast = (e: any) => {
+      if (e.detail?.request) {
+        setStoreSetupRequests((prev) => [e.detail.request, ...prev.filter((r) => r.id !== e.detail.request.id)]);
+        showToast(`🚨 URGENT ALERT: New ₹499 Store Setup request from ${e.detail.request.restaurant_name}!`, 'success');
+      }
+    };
+    window.addEventListener('menumaps_store_setup_requested', handleSetupBroadcast);
+
     return () => {
       window.removeEventListener('menumap_claim_updated', handleClaimBroadcast);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('menumaps_store_setup_requested', handleSetupBroadcast);
     };
   }, []);
 
@@ -257,15 +275,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const loadAllAdminData = async () => {
     setLoading(true);
     try {
-      const [rests, items, revs, cols, anl, sets, allClaims, allOwners] = await Promise.all([
-        api.getRestaurants(false),
-        api.getMenuItems(),
-        api.getReviews(undefined, false),
-        api.getCollections(false),
-        api.getSearchAnalytics(),
-        api.getSettings(),
-        api.getRestaurantClaims(),
-        api.getRestaurantOwners ? api.getRestaurantOwners() : Promise.resolve([]),
+      const [rests, items, revs, cols, anl, sets, allClaims, allOwners, allSetups] = await Promise.all([
+        api.getRestaurants(false).catch(() => []),
+        api.getMenuItems().catch(() => []),
+        api.getReviews(undefined, false).catch(() => []),
+        api.getCollections(false).catch(() => []),
+        api.getSearchAnalytics().catch(() => []),
+        api.getSettings().catch(() => null),
+        api.getRestaurantClaims().catch(() => []),
+        api.getRestaurantOwners ? api.getRestaurantOwners().catch(() => []) : Promise.resolve([]),
+        api.getStoreSetupRequests().catch(() => []),
       ]);
 
       setRestaurants(rests);
@@ -276,6 +295,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
       setSettings(sets);
       setClaims(allClaims || []);
       setOwners(allOwners || []);
+      setStoreSetupRequests(allSetups || []);
 
       if (rests.length > 0 && !selectedRestId) {
         setSelectedRestId(rests[0].id);
@@ -291,6 +311,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
       showToast('Error loading database records.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateSetupStatus = async (id: string, status: StoreSetupStatus) => {
+    setUpdatingSetupId(id);
+    try {
+      await api.updateStoreSetupRequestStatus(id, status);
+      setStoreSetupRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status, updated_at: new Date().toISOString() } : r))
+      );
+      showToast(`Updated setup status to: ${status}`, 'success');
+    } catch (e) {
+      showToast('Failed to update status.', 'error');
+    } finally {
+      setUpdatingSetupId(null);
+    }
+  };
+
+  const handleDeleteSetupRequest = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this store setup request?')) return;
+    try {
+      await api.deleteStoreSetupRequest(id);
+      setStoreSetupRequests((prev) => prev.filter((r) => r.id !== id));
+      showToast('Setup request deleted.', 'info');
+    } catch (e) {
+      showToast('Failed to delete request.', 'error');
     }
   };
 
@@ -1069,6 +1115,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
           {[
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
             { 
+              id: 'store_setups', 
+              label: `VIP Setups (₹499)${storeSetupRequests.filter(r => r.status === 'pending').length > 0 ? ` [${storeSetupRequests.filter(r => r.status === 'pending').length} NEW]` : ''}`, 
+              icon: Sparkles,
+              isUrgent: storeSetupRequests.filter(r => r.status === 'pending').length > 0,
+            },
+            { 
               id: 'owner_claims', 
               label: `Owner Claims (${claims.filter(c => c.status === 'pending_admin_approval').length})`, 
               icon: ShieldCheck 
@@ -1079,7 +1131,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             { id: 'analytics', label: 'Search Analytics', icon: BarChart3 },
             { id: 'settings', label: 'Settings & Supabase', icon: Settings },
             { id: 'system_intel', label: 'Website Specs & Timeline', icon: Terminal },
-          ].map((tab) => {
+          ].map((tab: any) => {
             const Icon = tab.icon;
             const isActive = activeSection === tab.id;
             return (
@@ -1089,6 +1141,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                   isActive
                     ? 'bg-rose-500 text-white shadow-xs'
+                    : tab.isUrgent
+                    ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
                     : 'text-slate-600 hover:bg-stone-100 hover:text-slate-900'
                 }`}
               >
@@ -1101,7 +1155,65 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
       </div>
 
       {/* Main Admin Workspace */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        {/* ================================================================ */}
+        {/* URGENT VIP STORE SETUP ALERT BANNER (VISIBLE ACROSS ALL TABS)     */}
+        {/* ================================================================ */}
+        {storeSetupRequests.some((r) => r.status === 'pending') && (
+          <div className="rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white p-5 sm:p-6 shadow-xl border-2 border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
+            <div className="flex items-start sm:items-center gap-3.5 z-10">
+              <span className="p-3 rounded-2xl bg-white/20 backdrop-blur-md text-amber-200 shrink-0">
+                <Sparkles className="w-6 h-6 animate-spin" />
+              </span>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-white text-rose-700 text-xs font-black uppercase tracking-wider shadow-xs">
+                    🚨 ACTION REQUIRED • ₹499 VIP CONCIERGE
+                  </span>
+                  <span className="text-xs font-bold text-amber-200">
+                    {storeSetupRequests.filter((r) => r.status === 'pending').length} Pending Store Digitization Request(s)
+                  </span>
+                </div>
+                <h3 className="font-heading font-black text-lg sm:text-xl text-white leading-tight">
+                  {storeSetupRequests.find((r) => r.status === 'pending')?.restaurant_name} requested full store setup for ₹499!
+                </h3>
+                <p className="text-xs text-stone-100 font-medium">
+                  Owner WhatsApp: <strong>+91 {storeSetupRequests.find((r) => r.status === 'pending')?.owner_phone}</strong>
+                  {storeSetupRequests.find((r) => r.status === 'pending')?.owner_name ? ` • Contact: ${storeSetupRequests.find((r) => r.status === 'pending')?.owner_name}` : ''}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 z-10 shrink-0 w-full md:w-auto">
+              <a
+                href={`https://wa.me/91${storeSetupRequests.find((r) => r.status === 'pending')?.owner_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${storeSetupRequests.find((r) => r.status === 'pending')?.owner_name || 'Cafe Owner'}, this is Menu Maps Admin! We received your ₹499 full store setup request for ${storeSetupRequests.find((r) => r.status === 'pending')?.restaurant_name}. Please send your counter menu card photos so we can begin digitization immediately!`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 md:flex-none px-5 py-3 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>1-Click WhatsApp Owner</span>
+              </a>
+
+              <a
+                href={`tel:+91${storeSetupRequests.find((r) => r.status === 'pending')?.owner_phone.replace(/\D/g, '')}`}
+                className="px-4 py-3 rounded-2xl bg-black/30 hover:bg-black/50 text-white font-bold text-xs flex items-center justify-center gap-1.5 border border-white/20 transition-all cursor-pointer"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>Call</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setActiveSection('store_setups')}
+                className="px-4 py-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-black text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
+              >
+                <span>View All ({storeSetupRequests.length}) &rarr;</span>
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* ================================================================ */}
         {/* 1. DASHBOARD OVERVIEW */}
@@ -2617,6 +2729,301 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                 Save Settings
               </button>
             </form>
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* VIP STORE SETUP REQUESTS (₹499 FULL STORE CONCIERGE)             */}
+        {/* ================================================================ */}
+        {activeSection === 'store_setups' && (
+          <div className="space-y-6">
+            {/* Header Hero */}
+            <div className="bg-gradient-to-r from-stone-900 via-[#1C1917] to-stone-900 rounded-3xl p-6 sm:p-8 text-white border border-stone-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>VIP Concierge Store Setup Requests (₹499 One-Time)</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const fresh = await api.getStoreSetupRequests();
+                      setStoreSetupRequests(fresh);
+                      showToast(`Refreshed! Loaded ${fresh.length} setup request(s).`, 'success');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <h2 className="font-heading font-black text-2xl sm:text-3xl text-white">
+                  VIP Store Digitization Pipeline
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+                  Cafe owners who requested automatic full store setup for ₹499. Quickly contact them on WhatsApp, collect their counter rate cards, and update their digitization status.
+                </p>
+              </div>
+
+              {/* KPI Stat Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                  <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider block">
+                    Total Requests
+                  </span>
+                  <span className="font-heading font-black text-2xl text-white">
+                    {storeSetupRequests.length}
+                  </span>
+                </div>
+                <div className="bg-amber-500/20 backdrop-blur-md rounded-2xl p-4 border border-amber-400/30">
+                  <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">
+                    Pending Action
+                  </span>
+                  <span className="font-heading font-black text-2xl text-amber-300">
+                    {storeSetupRequests.filter((r) => r.status === 'pending').length}
+                  </span>
+                </div>
+                <div className="bg-blue-500/20 backdrop-blur-md rounded-2xl p-4 border border-blue-400/30">
+                  <span className="text-[11px] font-bold text-blue-300 uppercase tracking-wider block">
+                    In Progress
+                  </span>
+                  <span className="font-heading font-black text-2xl text-blue-300">
+                    {storeSetupRequests.filter((r) => r.status === 'contacted').length}
+                  </span>
+                </div>
+                <div className="bg-emerald-500/20 backdrop-blur-md rounded-2xl p-4 border border-emerald-400/30">
+                  <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider block">
+                    Completed Revenue
+                  </span>
+                  <span className="font-heading font-black text-2xl text-emerald-300">
+                    ₹{storeSetupRequests.filter((r) => r.status === 'completed').length * 499}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                {[
+                  { id: 'all', label: `All (${storeSetupRequests.length})` },
+                  { id: 'pending', label: `Pending (${storeSetupRequests.filter((r) => r.status === 'pending').length})` },
+                  { id: 'contacted', label: `In Progress (${storeSetupRequests.filter((r) => r.status === 'contacted').length})` },
+                  { id: 'completed', label: `Completed (${storeSetupRequests.filter((r) => r.status === 'completed').length})` },
+                  { id: 'cancelled', label: `Cancelled (${storeSetupRequests.filter((r) => r.status === 'cancelled').length})` },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setSetupStatusFilter(f.id as any)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                      setupStatusFilter === f.id
+                        ? 'bg-rose-500 text-white shadow-xs'
+                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 sm:w-64">
+                <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                <input
+                  type="text"
+                  value={setupSearch}
+                  onChange={(e) => setSetupSearch(e.target.value)}
+                  placeholder="Search cafe, phone, or name..."
+                  className="bg-transparent text-xs text-stone-800 outline-none w-full"
+                />
+              </div>
+            </div>
+
+            {/* Requests List */}
+            {(() => {
+              const filtered = storeSetupRequests.filter((req) => {
+                if (setupStatusFilter !== 'all' && req.status !== setupStatusFilter) return false;
+                if (setupSearch.trim()) {
+                  const q = setupSearch.toLowerCase();
+                  const matchName = req.restaurant_name.toLowerCase().includes(q);
+                  const matchPhone = req.owner_phone.includes(q);
+                  const matchOwner = (req.owner_name || '').toLowerCase().includes(q);
+                  return matchName || matchPhone || matchOwner;
+                }
+                return true;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-400 flex items-center justify-center mx-auto text-xl">
+                      📂
+                    </div>
+                    <h4 className="font-heading font-black text-base text-stone-800">
+                      No VIP Store Setup Requests Found
+                    </h4>
+                    <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                      Requests submitted by cafe owners through their dashboard will appear here with instant 1-click WhatsApp messaging.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {filtered.map((req) => {
+                    const cleanPhone = req.owner_phone.replace(/\D/g, '');
+                    const waText = encodeURIComponent(
+                      `Hi ${req.owner_name || 'Cafe Owner'}, this is Menu Maps Admin regarding your ₹499 full store setup request for ${req.restaurant_name}. Please share your counter rate card photos so we can begin digitization immediately!`
+                    );
+                    const waUrl = `https://wa.me/91${cleanPhone}?text=${waText}`;
+
+                    return (
+                      <div
+                        key={req.id}
+                        className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-2xs hover:shadow-md transition-all space-y-4"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider ${
+                                  req.status === 'pending'
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                                    : req.status === 'contacted'
+                                    ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                                    : req.status === 'completed'
+                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                    : 'bg-stone-100 text-stone-600'
+                                }`}
+                              >
+                                {req.status === 'pending'
+                                  ? '🚨 Pending Action'
+                                  : req.status === 'contacted'
+                                  ? '⏳ In Progress'
+                                  : req.status === 'completed'
+                                  ? '✓ Completed'
+                                  : 'Cancelled'}
+                              </span>
+
+                              <span className="text-[11px] font-bold text-stone-400">
+                                Request ID: {req.id.slice(0, 8)}
+                              </span>
+
+                              <span className="text-[11px] font-bold text-stone-400">
+                                • {new Date(req.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                              </span>
+                            </div>
+
+                            <h3 className="font-heading font-black text-xl text-stone-900 flex items-center gap-2">
+                              <span>{req.restaurant_name}</span>
+                              {req.restaurant_slug && (
+                                <a
+                                  href={`/restaurant/${req.restaurant_slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-stone-400 hover:text-[#FF5A36] text-xs font-bold flex items-center gap-0.5"
+                                  title="View Cafe on Live Site"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </h3>
+
+                            <p className="text-xs text-stone-600 font-medium mt-0.5">
+                              Contact: <strong>{req.owner_name || 'Owner'}</strong> • Phone: <strong className="text-stone-900">+91 {req.owner_phone}</strong>
+                              {req.owner_email ? ` • Email: ${req.owner_email}` : ''}
+                            </p>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xl font-black text-[#D8350F] block leading-none">
+                              ₹{req.price || 499}
+                            </span>
+                            <span className="text-[10px] font-bold text-stone-400 uppercase">
+                              One-time digitization
+                            </span>
+                          </div>
+                        </div>
+
+                        {req.notes && (
+                          <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 text-xs text-stone-700">
+                            <span className="font-bold text-amber-900 block mb-0.5">📝 Notes from Owner:</span>
+                            <span>{req.notes}</span>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                          {/* 1-Click Action Buttons */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>1-Click WhatsApp Owner</span>
+                            </a>
+
+                            <a
+                              href={`tel:+91${cleanPhone}`}
+                              className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <PhoneCall className="w-3.5 h-3.5 text-stone-600" />
+                              <span>Call</span>
+                            </a>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(req.owner_phone);
+                                showToast(`Copied phone number: ${req.owner_phone}`, 'success');
+                              }}
+                              className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                              title="Copy Phone"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy</span>
+                            </button>
+                          </div>
+
+                          {/* Status Dropdown & Delete */}
+                          <div className="flex items-center gap-2 ml-auto">
+                            <span className="text-xs font-bold text-stone-500">Update Status:</span>
+                            <select
+                              value={req.status}
+                              disabled={updatingSetupId === req.id}
+                              onChange={(e) => handleUpdateSetupStatus(req.id, e.target.value as StoreSetupStatus)}
+                              className="px-3 py-2 rounded-xl bg-stone-100 border border-stone-200 text-xs font-bold text-stone-800 outline-none cursor-pointer"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="contacted">In Progress (Contacted)</option>
+                              <option value="completed">Completed (Paid &amp; Live)</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSetupRequest(req.id)}
+                              className="p-2 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Delete Request"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
 

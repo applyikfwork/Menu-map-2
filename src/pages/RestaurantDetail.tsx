@@ -68,6 +68,7 @@ import { TopPicksSpotlight } from '../components/restaurant/TopPicksSpotlight';
 import { UpsellPairingPrompt } from '../components/restaurant/UpsellPairingPrompt';
 import { NeighborStealBanner } from '../components/restaurant/NeighborStealBanner';
 import { SmartReviewShield } from '../components/restaurant/SmartReviewShield';
+import { getSmartDishImage } from '../lib/dishImageRegistry';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 
 const RestaurantQrModal = lazyWithRetry(
@@ -220,6 +221,8 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     loadRestaurantData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
+
     const handleQrConfigUpdated = (e: any) => {
       if (restaurant?.id && e.detail?.restaurantId === restaurant.id) {
         setQrConfig(e.detail.config);
@@ -228,11 +231,15 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
     window.addEventListener('menumaps_qr_config_updated', handleQrConfigUpdated);
 
     const handleAnnouncementUpdated = (e: any) => {
+      const detRestId = (e.detail?.restaurantId || '').toString().trim().toLowerCase();
+      const detSlug = (e.detail?.restaurantSlug || '').toString().trim().toLowerCase();
       if (
-        restaurant &&
-        (e.detail?.restaurantId === restaurant.id ||
-          e.detail?.restaurantId === restaurant.slug ||
-          e.detail?.restaurantSlug === restaurant.slug)
+        detRestId === cleanSlug ||
+        detSlug === cleanSlug ||
+        (restaurant && (
+          detRestId === restaurant.id.toLowerCase() ||
+          detSlug === restaurant.slug.toLowerCase()
+        ))
       ) {
         setActiveAnnouncement(e.detail.announcement);
       }
@@ -263,6 +270,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       setBookmarked(isBookmarked('restaurant', cachedRest.id));
       trackView('restaurant', cachedRest.id, cachedRest.name, cachedRest.slug);
       setLoading(false);
+
+      // Instantly load any active announcement from cache/table
+      api.getActiveRestaurantAnnouncement(cachedRest.id, cachedRest.slug, (cachedRest as any).announcements)
+        .then((ann) => {
+          if (ann) setActiveAnnouncement(ann);
+        })
+        .catch(() => {});
     } else if (!restaurant) {
       setLoading(true);
     }
@@ -280,18 +294,18 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       api.logItemClick('restaurant', rest.id);
 
       const [cats, items, revs, allRests, liveAnn, gallery] = await Promise.all([
-        api.getCategories(rest.id),
-        api.getMenuItems(rest.id),
-        api.getReviews(rest.id, true),
-        api.getRestaurants(true),
-        api.getActiveRestaurantAnnouncement(rest.id, rest.slug, (rest as any).announcements),
-        api.getRestaurantGallery(rest.id),
+        api.getCategories(rest.id).catch(() => []),
+        api.getMenuItems(rest.id).catch(() => []),
+        api.getReviews(rest.id, true).catch(() => []),
+        api.getRestaurants(true).catch(() => []),
+        api.getActiveRestaurantAnnouncement(rest.id, rest.slug, (rest as any).announcements).catch(() => null),
+        api.getRestaurantGallery(rest.id).catch(() => []),
       ]);
 
       setCategories(cats);
       setMenuItems(items);
       setReviews(revs);
-      setActiveAnnouncement(liveAnn);
+      if (liveAnn) setActiveAnnouncement(liveAnn);
       setGalleryImages(gallery);
       setOwnerSession(getCurrentOwnerSession());
       setQrConfig(getRestaurantQrConfig(rest.id, rest.whatsapp_number || rest.phone));
@@ -589,19 +603,22 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       ======================================================== */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-4 space-y-4">
         {/* 1.1 CINEMA VISUAL CANVAS (UNCLUTTERED, PURE PHOTOGRAPHY) */}
-        <div className="relative rounded-[32px] sm:rounded-[40px] overflow-hidden bg-stone-900 border border-stone-200/80 shadow-md group">
-          <div
-            className="w-full h-[240px] sm:h-[340px] lg:h-[400px] transition-transform duration-700 group-hover:scale-105"
-            style={{
-              backgroundImage: `url(${restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80'})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+        <div className="relative rounded-[32px] sm:rounded-[40px] overflow-hidden bg-stone-100 border border-[#E7E2DA] shadow-sm group">
+          <div className="w-full h-[240px] sm:h-[340px] lg:h-[400px] overflow-hidden relative">
+            <img
+              src={restaurant.cover_image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80'}
+              alt={`${restaurant.name} ambiance and facade`}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="eager"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src =
+                  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80';
+              }}
+            />
+          </div>
 
-          {/* Minimal Top & Bottom Edge Gradients (Retains maximum photo visibility) */}
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+          {/* Ultra-subtle Top Protection for white icons only — Zero dark overlay over photo */}
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/25 to-transparent pointer-events-none" />
 
           {/* Top Controls: Minimalist Clean Back Button & Actions */}
           <div className="absolute top-4 inset-x-4 sm:inset-x-6 flex items-center justify-between pointer-events-auto">
@@ -1319,14 +1336,100 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 </h2>
 
                 {filteredMenuItems.length === 0 ? (
-                  <div className="bg-white rounded-3xl border border-[#EFEAE2] p-8 text-center my-6">
-                    <p className="text-sm font-semibold text-stone-500">No dishes matched your filter or search.</p>
-                  </div>
+                  menuItems.length === 0 && restaurant.menu_pages && restaurant.menu_pages.length > 0 ? (
+                    <div className="bg-white rounded-3xl border border-[#EFEAE2] p-6 sm:p-8 space-y-4 my-6">
+                      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-stone-100">
+                        <div>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-2">
+                            <FileText className="w-3.5 h-3.5" />
+                            Verified Counter Paper Menu Active
+                          </span>
+                          <h3 className="font-heading font-black text-xl text-[#1C1917]">
+                            Real Counter Rate Card ({restaurant.menu_pages.length} Pages)
+                          </h3>
+                          <p className="text-xs text-stone-500">
+                            Counter prices photographed directly from {restaurant.name}. Tap any page to view full size.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPhysicalMenuModal(true)}
+                          className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>Open Fullscreen Flipbook</span>
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {restaurant.menu_pages.map((pageUrl, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => setShowPhysicalMenuModal(true)}
+                            className="aspect-[3/4] rounded-2xl overflow-hidden border border-stone-200 cursor-pointer group relative bg-stone-100 hover:shadow-md transition-all"
+                          >
+                            <img
+                              src={pageUrl}
+                              alt={`Menu Page ${idx + 1}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 text-white text-xs font-bold flex items-center justify-between">
+                              <span>Page {idx + 1}</span>
+                              <span className="text-[10px] text-emerald-300 font-normal">Verified Menu</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : menuItems.length === 0 ? (
+                    <div className="bg-white rounded-3xl border border-[#EFEAE2] p-8 text-center my-6 space-y-4">
+                      <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-2xl">
+                        📋
+                      </div>
+                      <div className="space-y-1 max-w-md mx-auto">
+                        <h3 className="font-heading font-black text-lg text-[#1C1917]">
+                          Counter Menu Digitization in Progress
+                        </h3>
+                        <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+                          This cafe was recently listed. Our menu team is uploading verified counter rates and dish photos. You can inquire directly with the cafe for today's live menu and specials.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const rawPhone = restaurant.whatsapp_number || restaurant.phone;
+                          if (rawPhone) {
+                            const phone = rawPhone.replace(/[^0-9]/g, '');
+                            window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your menu on MenuMaps. Could you please share today's menu card and prices?`)}`, '_blank');
+                          }
+                        }}
+                        className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-2xl shadow-sm inline-flex items-center gap-2 cursor-pointer"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Ask Counter on WhatsApp</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-3xl border border-[#EFEAE2] p-8 text-center my-6">
+                      <p className="text-sm font-semibold text-stone-500">No dishes matched your filter or search.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuSearch('');
+                          setDietaryFilter('all');
+                          setSelectedCategoryTab('all');
+                        }}
+                        className="mt-3 text-xs font-bold text-[#FF5A36] hover:underline cursor-pointer"
+                      >
+                        Clear Filters
+                      </button>
+                    </div>
+                  )
                 ) : (
                   <div className="mt-5 flex flex-col gap-3">
                     {filteredMenuItems.map((item) => {
                       const smartPairing = getSmartPairingForItem(item, menuItems);
                       const savings = calculateSavings(item.price);
+                      const dishImage = getSmartDishImage(item.name, undefined, item.image_url);
                       return (
                         <div key={item.id} className="item group flex flex-col sm:flex-row items-stretch sm:items-center">
                           <div className="flex items-center gap-3.5 flex-1 min-w-0">
@@ -1336,19 +1439,16 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                               className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 cursor-pointer hover:opacity-95 border border-stone-200/80 shadow-xs relative"
                               title={`View ${item.name} details & nutrition`}
                             >
-                              {item.image_url ? (
-                                <img
-                                  src={item.image_url}
-                                  alt={item.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src =
-                                      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500" />
-                              )}
+                              <img
+                                src={dishImage}
+                                alt={item.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src =
+                                    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+                                }}
+                              />
                             </div>
 
                             {/* Dish Info */}
@@ -1383,7 +1483,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
                               <h3
                                 onClick={() => setSelectedDishPreview(item)}
-                                className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-2 cursor-pointer hover:text-[#0F766E] transition-colors"
+                                className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-2 cursor-pointer hover:text-[#0F766E] transition-colors relative z-10"
                                 title={`Click to view ${item.name} details`}
                               >
                                 {item.name}

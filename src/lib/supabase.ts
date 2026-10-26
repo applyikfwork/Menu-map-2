@@ -24,6 +24,8 @@ import {
   RestaurantGalleryImage,
   AnnouncementBadge,
   GalleryCategory,
+  StoreSetupRequest,
+  StoreSetupStatus,
 } from '../types/database';
 import { discoveryEngine } from './engine/discoveryEngine';
 import { generateSeedData, SeedDataset } from './seedData';
@@ -2614,6 +2616,9 @@ export const api = {
   // RESTAURANT ANNOUNCEMENTS & LIVE BULLETIN ENGINE
   // --------------------------------------------------------------------------
   async getRestaurantAnnouncements(restaurantId: string, restaurantSlug?: string): Promise<RestaurantAnnouncement[]> {
+    const rId = (restaurantId || '').trim().toLowerCase();
+    const rSlug = (restaurantSlug || '').trim().toLowerCase();
+
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -2627,12 +2632,16 @@ export const api = {
         if (!error && data && data.length > 0) return data as RestaurantAnnouncement[];
       } catch (e) {}
     }
+
     const all = loadTable<RestaurantAnnouncement>('restaurant_announcements');
-    return all.filter((a) => 
-      a.restaurant_id === restaurantId || 
-      (restaurantSlug && a.restaurant_id === restaurantSlug) ||
-      (restaurantSlug && (a as any).restaurant_slug === restaurantSlug)
-    );
+    return all.filter((a) => {
+      const aId = (a.restaurant_id || '').trim().toLowerCase();
+      const aSlug = ((a as any).restaurant_slug || '').trim().toLowerCase();
+      return (
+        (rId && (aId === rId || aSlug === rId)) ||
+        (rSlug && (aId === rSlug || aSlug === rSlug))
+      );
+    });
   },
 
   async getActiveRestaurantAnnouncement(
@@ -2640,15 +2649,21 @@ export const api = {
     restaurantSlug?: string,
     inlineAnnouncements?: RestaurantAnnouncement[]
   ): Promise<RestaurantAnnouncement | null> {
+    const now = new Date().toISOString();
+
     // 1. Direct inline announcements on restaurant object
     if (inlineAnnouncements && Array.isArray(inlineAnnouncements) && inlineAnnouncements.length > 0) {
-      const activeInline = inlineAnnouncements.find((a) => a.is_active);
+      const activeInline = inlineAnnouncements.find((a) => {
+        if (!a.is_active) return false;
+        if (a.expires_at && a.expires_at < now) return false;
+        return true;
+      }) || inlineAnnouncements.find((a) => a.is_active);
       if (activeInline) return activeInline;
     }
 
     // 2. Database & local table lookup
     const list = await this.getRestaurantAnnouncements(restaurantId, restaurantSlug);
-    const now = new Date().toISOString();
+    if (!list || list.length === 0) return null;
     
     // First try active and unexpired
     const activeValid = list.find((a) => {
@@ -2696,6 +2711,19 @@ export const api = {
     const filtered = all.filter((a) => a.id !== record.id);
     filtered.unshift(record);
     saveTable('restaurant_announcements', filtered);
+
+    // Also attach to the restaurant in localStorage and discoveryEngine so it's instantly available without extra queries
+    try {
+      const restList = loadTable<Restaurant>('restaurants');
+      const targetRest = restList.find(
+        (r) => r.id === record.restaurant_id || (record.restaurant_slug && r.slug === record.restaurant_slug)
+      );
+      if (targetRest) {
+        (targetRest as any).announcements = [record];
+        saveTable('restaurants', restList);
+        discoveryEngine.upsertRestaurant(targetRest);
+      }
+    } catch (e) {}
 
     // Notify active listeners across tabs/components
     if (typeof window !== 'undefined') {
@@ -3138,6 +3166,110 @@ export const api = {
       success: false,
       error: 'Invalid or expired verification code. Please check the code or request a new one.',
     };
+  },
+
+  // --------------------------------------------------------------------------
+  // STORE SETUP REQUESTS (VIP CONCIERGE ONBOARDING & MENU DIGITIZATION - ₹499)
+  // --------------------------------------------------------------------------
+  async getStoreSetupRequests(): Promise<StoreSetupRequest[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('store_setup_requests')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) return data as StoreSetupRequest[];
+      } catch (e) {}
+    }
+    const all = loadTable<StoreSetupRequest>('store_setup_requests');
+    return all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+
+  async createStoreSetupRequest(params: {
+    restaurant_id: string;
+    restaurant_name: string;
+    restaurant_slug?: string;
+    owner_phone: string;
+    owner_name?: string;
+    owner_email?: string;
+    notes?: string;
+  }): Promise<StoreSetupRequest> {
+    const now = new Date().toISOString();
+    const record: StoreSetupRequest = {
+      id: crypto.randomUUID(),
+      restaurant_id: params.restaurant_id,
+      restaurant_name: params.restaurant_name,
+      restaurant_slug: params.restaurant_slug,
+      owner_phone: params.owner_phone.trim(),
+      owner_name: params.owner_name?.trim() || '',
+      owner_email: params.owner_email?.trim() || '',
+      plan: 'auto_499',
+      price: 499,
+      notes: params.notes?.trim() || '',
+      status: 'pending',
+      created_at: now,
+      updated_at: now,
+    };
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('store_setup_requests').upsert(record);
+      } catch (e) {
+        console.warn('Supabase store setup request upsert note:', e);
+      }
+    }
+
+    const all = loadTable<StoreSetupRequest>('store_setup_requests');
+    const filtered = all.filter((r) => r.id !== record.id);
+    filtered.unshift(record);
+    saveTable('store_setup_requests', filtered);
+
+    // Broadcast across browser tabs so Admin Panel immediately alerts
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('menumaps_store_setup_requested', {
+          detail: { request: record },
+        })
+      );
+    }
+
+    return record;
+  },
+
+  async updateStoreSetupRequestStatus(id: string, status: StoreSetupStatus): Promise<boolean> {
+    const now = new Date().toISOString();
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('store_setup_requests').update({ status, updated_at: now }).eq('id', id);
+      } catch (e) {}
+    }
+    const all = loadTable<StoreSetupRequest>('store_setup_requests');
+    const updated = all.map((r) => (r.id === id ? { ...r, status, updated_at: now } : r));
+    saveTable('store_setup_requests', updated);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('menumaps_store_setup_status_changed', {
+          detail: { id, status },
+        })
+      );
+    }
+    return true;
+  },
+
+  async deleteStoreSetupRequest(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('store_setup_requests').delete().eq('id', id);
+      } catch (e) {}
+    }
+    const all = loadTable<StoreSetupRequest>('store_setup_requests');
+    saveTable('store_setup_requests', all.filter((r) => r.id !== id));
+    return true;
   },
 };
 

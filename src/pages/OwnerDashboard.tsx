@@ -43,6 +43,7 @@ import {
   Store,
   Wifi,
   Copy,
+  MessageSquare,
   Gift,
   Download
 } from 'lucide-react';
@@ -57,7 +58,9 @@ import {
   RestaurantAnnouncement,
   RestaurantGalleryImage,
   AnnouncementBadge,
-  GalleryCategory
+  GalleryCategory,
+  StoreSetupRequest,
+  StoreSetupStatus
 } from '../types/database';
 import { 
   api, 
@@ -125,6 +128,16 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
   // Filter / Search inside dishes
   const [dishSearch, setDishSearch] = useState('');
   const [selectedCatFilter, setSelectedCatFilter] = useState('all');
+
+  // --------------------------------------------------------------------------
+  // ONBOARDING & STORE SETUP ASSISTANCE STATE (₹499 VIP CONCIERGE)
+  // --------------------------------------------------------------------------
+  const [showOnboardingChoiceModal, setShowOnboardingChoiceModal] = useState(false);
+  const [activeSetupRequest, setActiveSetupRequest] = useState<StoreSetupRequest | null>(null);
+  const [autoSetupStep, setAutoSetupStep] = useState<'compare' | 'form' | 'success'>('compare');
+  const [autoSetupPhone, setAutoSetupPhone] = useState('');
+  const [autoSetupNotes, setAutoSetupNotes] = useState('');
+  const [submittingAutoSetup, setSubmittingAutoSetup] = useState(false);
 
   // --------------------------------------------------------------------------
   // ANNOUNCEMENTS & LIVE NOTICE BOARD STATE
@@ -214,16 +227,32 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         setProfileData({ ...rest });
         setQrConfig(getRestaurantQrConfig(rest.id, rest.whatsapp_number || rest.phone));
 
-        const [cats, items, anns, gallery] = await Promise.all([
-          api.getCategories(rest.id),
-          api.getMenuItems(rest.id),
-          api.getRestaurantAnnouncements(rest.id),
-          api.getRestaurantGallery(rest.id),
+        const [cats, items, anns, gallery, setupRequests] = await Promise.all([
+          api.getCategories(rest.id).catch(() => []),
+          api.getMenuItems(rest.id).catch(() => []),
+          api.getRestaurantAnnouncements(rest.id).catch(() => []),
+          api.getRestaurantGallery(rest.id).catch(() => []),
+          api.getStoreSetupRequests().catch(() => []),
         ]);
         setCategories(cats);
         setMenuItems(items);
         setAnnouncements(anns);
         setGalleryImages(gallery);
+
+        const currentSetup = (setupRequests as StoreSetupRequest[]).find(
+          (r) => r.restaurant_id === rest.id || (rest.slug && r.restaurant_slug === rest.slug)
+        );
+        setActiveSetupRequest(currentSetup || null);
+
+        // Pre-fill phone for auto setup form
+        const phoneCandidate = owner.phone_number || rest.whatsapp_number || rest.phone || '';
+        setAutoSetupPhone(phoneCandidate.replace(/\D/g, '').slice(-10));
+
+        // Prompt onboarding if zero menu items and not dismissed yet
+        const dismissed = localStorage.getItem(`menumaps_onboarding_dismissed_${rest.id}`);
+        if (items.length === 0 && !currentSetup && !dismissed) {
+          setShowOnboardingChoiceModal(true);
+        }
 
         if (cats.length > 0 && !editingItem.category_id) {
           setEditingItem((prev) => ({ ...prev, category_id: cats[0].id }));
@@ -233,6 +262,51 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
       showToast('Error loading restaurant dashboard data.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // ONBOARDING & STORE SETUP HANDLERS
+  // --------------------------------------------------------------------------
+  const handleChooseManualSetup = () => {
+    if (restaurant) {
+      localStorage.setItem(`menumaps_onboarding_dismissed_${restaurant.id}`, 'true');
+    }
+    setShowOnboardingChoiceModal(false);
+    setAutoSetupStep('compare');
+    setActiveTab('menu');
+    showToast('Self-service setup active! Add your counter dishes and categories.', 'info');
+  };
+
+  const handleSubmitAutoSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!restaurant) return;
+    const cleanPhone = autoSetupPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      showToast('Please enter a valid 10-digit mobile number.', 'error');
+      return;
+    }
+
+    setSubmittingAutoSetup(true);
+    try {
+      const created = await api.createStoreSetupRequest({
+        restaurant_id: restaurant.id,
+        restaurant_name: restaurant.name,
+        restaurant_slug: restaurant.slug,
+        owner_name: session?.owner_name || restaurant.name + ' Owner',
+        owner_phone: cleanPhone.slice(-10),
+        owner_email: session?.owner_email || restaurant.email || '',
+        notes: autoSetupNotes.trim() || undefined,
+      });
+
+      setActiveSetupRequest(created);
+      localStorage.setItem(`menumaps_onboarding_dismissed_${restaurant.id}`, 'true');
+      setAutoSetupStep('success');
+      showToast('🎉 VIP Store Setup request submitted! Our team will contact you shortly.', 'success');
+    } catch (err) {
+      showToast('Failed to submit setup request. Please try again.', 'error');
+    } finally {
+      setSubmittingAutoSetup(false);
     }
   };
 
@@ -924,6 +998,82 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
                 </button>
               </div>
             </div>
+
+            {/* VIP Store Setup Status Banner */}
+            {activeSetupRequest && (
+              <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-emerald-500/15 border-2 border-amber-400 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      VIP Store Setup Active (₹499)
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      activeSetupRequest.status === 'completed'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : activeSetupRequest.status === 'contacted'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-amber-100 text-amber-800 animate-pulse'
+                    }`}>
+                      Status: {activeSetupRequest.status === 'completed' ? 'Digitization Completed' : activeSetupRequest.status === 'contacted' ? 'In Progress' : 'Menu Team Reviewing'}
+                    </span>
+                  </div>
+                  <h3 className="font-heading font-black text-lg text-stone-900">
+                    Menu Maps Concierge Store Digitization
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-600">
+                    Registered Mobile: <strong>+91 {activeSetupRequest.owner_phone}</strong> • Our team is formatting your counter menu items, categories, and verified photos.
+                  </p>
+                </div>
+
+                <a
+                  href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi Menu Maps Team, I requested VIP Store Setup (₹499) for ${restaurant.name} (Phone: ${activeSetupRequest.owner_phone}). Here are my paper menu photos:`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-3 rounded-2xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-extrabold text-xs flex items-center gap-2 shadow-sm shrink-0 cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Send Menu Photos on WhatsApp</span>
+                </a>
+              </div>
+            )}
+
+            {/* If no setup request yet and cafe has few dishes */}
+            {!activeSetupRequest && menuItems.length < 5 && (
+              <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-2 border-amber-300/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-[#FF5A36] text-white font-black text-[10px] uppercase tracking-wider shadow-xs flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      Store Setup Options
+                    </span>
+                    <span className="text-xs font-bold text-stone-600">
+                      Need help uploading your full menu?
+                    </span>
+                  </div>
+                  <h3 className="font-heading font-black text-lg text-stone-900">
+                    Get 100% Full Store Setup for ₹499 (One-Time)
+                  </h3>
+                  <p className="text-xs text-stone-600 max-w-xl">
+                    Don't have time to type dishes yourself? Send us photos of your counter rate card. Our experts will digitize 100% of your menu items, categories, and high-res food photos in 24 hours.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAutoSetupStep('compare');
+                      setShowOnboardingChoiceModal(true);
+                    }}
+                    className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#FF5A36] to-[#D8350F] hover:from-[#D8350F] hover:to-[#B52B0C] text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md cursor-pointer transition-transform active:scale-95"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-200" />
+                    <span>Choose Setup Mode (₹499 Auto / Free Manual)</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Quick Metrics Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -3050,6 +3200,301 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
             {selectedPhotoPreview.caption && (
               <div className="p-4 text-xs text-stone-200 font-medium">
                 {selectedPhotoPreview.caption}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ONBOARDING / STORE SETUP ASSISTANCE (₹499 AUTO vs FREE MANUAL) */}
+      {showOnboardingChoiceModal && restaurant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-stone-200 my-8 text-left relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowOnboardingChoiceModal(false);
+                setAutoSetupStep('compare');
+              }}
+              className="absolute top-5 right-5 p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* STEP 1: COMPARE DUAL OPTIONS */}
+            {autoSetupStep === 'compare' && (
+              <div className="space-y-6">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-[#D8350F] text-xs font-black uppercase tracking-wider mb-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Store Launch Options
+                  </div>
+                  <h3 className="font-heading font-black text-2xl sm:text-3xl text-stone-900 leading-tight">
+                    How would you like to set up {restaurant.name}?
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
+                    Choose self-service manual entry or let Menu Maps specialists digitize your full menu, prices, and photos.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* OPTION 1: MANUAL SETUP (FREE) */}
+                  <div className="rounded-3xl border-2 border-stone-200 hover:border-stone-400 p-5 sm:p-6 flex flex-col justify-between space-y-5 transition-all bg-stone-50/50 hover:bg-white hover:shadow-md">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="px-3 py-1 rounded-full bg-stone-200 text-stone-800 text-[11px] font-black uppercase">
+                          Self-Service
+                        </span>
+                        <span className="text-sm font-black text-stone-900">
+                          FREE
+                        </span>
+                      </div>
+
+                      <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-700 flex items-center justify-center font-bold">
+                        <UtensilsCrossed className="w-6 h-6 text-stone-800" />
+                      </div>
+
+                      <h4 className="font-heading font-black text-lg text-stone-900">
+                        Set Up Manually
+                      </h4>
+
+                      <ul className="text-xs text-stone-600 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Type dish names, descriptions &amp; prices</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Upload your own food photos</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Create category sections yourself</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Immediate access to dashboard tools</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleChooseManualSetup}
+                      className="w-full py-3.5 px-4 rounded-2xl border-2 border-stone-300 hover:border-stone-800 hover:bg-stone-900 hover:text-white text-stone-900 font-extrabold text-xs transition-all cursor-pointer"
+                    >
+                      I'll Set Up Manually &rarr;
+                    </button>
+                  </div>
+
+                  {/* OPTION 2: AUTOMATIC VIP CONCIERGE SETUP (₹499) */}
+                  <div className="rounded-3xl border-2 border-[#FF5A36] bg-gradient-to-b from-orange-50/70 to-rose-50/40 p-5 sm:p-6 flex flex-col justify-between space-y-5 transition-all shadow-md relative overflow-hidden">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 to-[#FF5A36] text-white text-[11px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-200" />
+                          Most Popular
+                        </span>
+                        <div className="text-right">
+                          <span className="text-lg font-black text-[#D8350F] block leading-none">
+                            ₹499
+                          </span>
+                          <span className="text-[10px] font-bold text-stone-500 uppercase">
+                            one-time full setup
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="w-12 h-12 rounded-2xl bg-[#FF5A36]/15 text-[#D8350F] flex items-center justify-center font-bold">
+                        <Sparkles className="w-6 h-6 text-[#FF5A36]" />
+                      </div>
+
+                      <h4 className="font-heading font-black text-lg text-stone-900">
+                        Set Up Automatically (Done-For-You)
+                      </h4>
+
+                      <ul className="text-xs text-stone-700 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-[#D8350F] shrink-0 mt-0.5" />
+                          <span><strong>100% Menu Digitization:</strong> We type all items, prices, and categories</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-[#D8350F] shrink-0 mt-0.5" />
+                          <span><strong>High-Res Food Photos:</strong> Matched to each dish automatically</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-[#D8350F] shrink-0 mt-0.5" />
+                          <span><strong>Table QR Standee &amp; Buzzers:</strong> Fully configured and printable</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-[#D8350F] shrink-0 mt-0.5" />
+                          <span><strong>Verified Green Shield Badge</strong> on live profile</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setAutoSetupStep('form')}
+                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#FF5A36] to-[#D8350F] hover:from-[#D8350F] hover:to-[#B52B0C] text-white font-black text-xs shadow-lg transition-transform active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-200" />
+                      <span>Set Up Automatically for ₹499 &rarr;</span>
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-center text-[11px] text-stone-500 font-medium">
+                  🔒 Zero recurring fees. 100% direct counter dining guide with zero commission markup.
+                </p>
+              </div>
+            )}
+
+            {/* STEP 2: PHONE SUBMISSION PROMPT */}
+            {autoSetupStep === 'form' && (
+              <form onSubmit={handleSubmitAutoSetup} className="space-y-5">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAutoSetupStep('compare')}
+                    className="p-1.5 rounded-xl hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
+                  >
+                    &larr; Back
+                  </button>
+                  <span className="text-xs font-bold text-stone-400">Step 2 of 2</span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-[#D8350F] text-xs font-black uppercase">
+                    ₹499 Full Store Concierge
+                  </div>
+                  <h3 className="font-heading font-black text-2xl text-stone-900">
+                    Enter your Mobile / WhatsApp Number
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-600">
+                    Our Delhi menu digitization specialists will WhatsApp you within 30 minutes to collect your menu card photos and digitize your entire store.
+                  </p>
+                </div>
+
+                <div className="space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-200">
+                  <div>
+                    <label className="block text-xs font-black text-stone-800 uppercase tracking-wider mb-1.5">
+                      Owner Mobile / WhatsApp Number *
+                    </label>
+                    <div className="flex items-center rounded-xl bg-white border border-stone-300 overflow-hidden focus-within:border-[#FF5A36]">
+                      <span className="px-3.5 py-2.5 text-xs font-black text-stone-500 bg-stone-100 border-r border-stone-300">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        value={autoSetupPhone}
+                        onChange={(e) => setAutoSetupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="9876543210"
+                        className="w-full px-3.5 py-2.5 text-sm font-bold text-stone-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">
+                      Notes or Link to Menu Card (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={autoSetupNotes}
+                      onChange={(e) => setAutoSetupNotes(e.target.value)}
+                      placeholder="e.g. Please use our Instagram photos, or we will share rate card photos on WhatsApp."
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-stone-300 text-xs font-medium outline-none focus:border-[#FF5A36]"
+                    />
+                  </div>
+
+                  <div className="text-[11px] text-stone-600 space-y-1 pt-1">
+                    <p className="flex items-center gap-1.5 font-bold text-stone-800">
+                      <span>🏷️ Price:</span>
+                      <span className="text-[#D8350F]">₹499 (One-Time Payment upon setup)</span>
+                    </p>
+                    <p className="text-stone-500">
+                      ⚡ Turnaround time: Under 24 hours. Includes 100% item typing, photo enhancement &amp; tabletop QR setup.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setAutoSetupStep('compare')}
+                    className="px-4 py-2.5 rounded-xl border border-stone-300 hover:bg-stone-100 text-stone-700 text-xs font-bold cursor-pointer"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingAutoSetup}
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#FF5A36] to-[#D8350F] hover:from-[#D8350F] hover:to-[#B52B0C] text-white font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {submittingAutoSetup ? (
+                      <span>Submitting...</span>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-amber-200" />
+                        <span>Submit Request (₹499 One-Time)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 3: SUCCESS CONFIRMATION */}
+            {autoSetupStep === 'success' && (
+              <div className="text-center space-y-5 py-4">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl">
+                  🎉
+                </div>
+
+                <div className="space-y-1.5">
+                  <h3 className="font-heading font-black text-2xl text-stone-900">
+                    VIP Store Setup Request Received!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
+                    Our Delhi store onboarding team has received your request for <strong>{restaurant.name}</strong>. We will WhatsApp you at <strong>+91 {autoSetupPhone}</strong> within 30 minutes to collect your counter rate card.
+                  </p>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 font-medium max-w-md mx-auto text-left space-y-1">
+                  <p className="font-bold">⚡ What happens next:</p>
+                  <p>1. Send us your paper menu photos on WhatsApp.</p>
+                  <p>2. We will digitize all dishes, prices, and categories in 24 hours.</p>
+                  <p>3. One-time fee of ₹499 is payable once your store is fully live.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <a
+                    href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi Menu Maps Team, I just submitted the ₹499 VIP Store Setup request for ${restaurant.name} (Phone: ${autoSetupPhone}). Here are my paper menu card photos:`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-3 rounded-2xl bg-[#0F766E] hover:bg-[#0D9488] text-white font-extrabold text-xs flex items-center gap-2 shadow-md cursor-pointer"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Send Menu Card on WhatsApp Now</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOnboardingChoiceModal(false);
+                      setAutoSetupStep('compare');
+                    }}
+                    className="px-5 py-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs cursor-pointer"
+                  >
+                    Explore Dashboard Meanwhile
+                  </button>
+                </div>
               </div>
             )}
           </div>

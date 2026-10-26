@@ -333,3 +333,22 @@ export interface ContactInquiry {
   created_at: string;
 }
 
+export type StoreSetupStatus = 'pending' | 'contacted' | 'completed' | 'cancelled';
+
+export interface StoreSetupRequest {
+  id: string;
+  restaurant_id: string;
+  restaurant_name: string;
+  restaurant_slug?: string;
+  owner_name?: string;
+  owner_phone: string;
+  owner_email?: string;
+  plan: 'auto_499';
+  price: number; // 499
+  notes?: string;
+  status: StoreSetupStatus;
+  created_at: string;
+  updated_at?: string;
+}
+
+
