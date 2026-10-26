@@ -134,6 +134,18 @@ function AppContent() {
       return <FoodDetail slug={slug} navigate={navigate} />;
     }
 
+    // 6.1. Dish Intelligence & Craving Radar Hub
+    if (
+      normPath === '/dishes' ||
+      normPath === '/dish-radar' ||
+      normPath === '/cravings' ||
+      normPath.startsWith('/dishes/') ||
+      normPath.startsWith('/dish-radar/') ||
+      normPath.startsWith('/cravings/')
+    ) {
+      return <DishRadar navigate={navigate} />;
+    }
+
     // 7. Legacy Iconic Area URL Redirect to /restaurants
     if (
       normPath === '/iconic-area' ||

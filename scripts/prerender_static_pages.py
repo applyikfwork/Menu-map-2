@@ -445,6 +445,9 @@ def main():
 
     # C) Static Utility Pages
     simple_pages = {
+        "dishes": ("Popular Dishes & Counter Price Radar | Menu Maps Delhi NCR", "Explore popular dishes across verified cafes in Delhi NCR. Compare real counter prices, view lowest to highest rates, and order direct at 0% delivery app markup."),
+        "dish-radar": ("Dish Intelligence & Counter Price Radar | Menu Maps Delhi NCR", "Explore popular dishes across verified cafes in Delhi NCR. Compare real counter prices, view lowest to highest rates, and order direct at 0% delivery app markup."),
+        "cravings": ("Popular Cravings & Counter Price Radar | Menu Maps Delhi NCR", "Explore popular cravings across verified cafes in Delhi NCR. Compare real counter prices, view lowest to highest rates, and order direct at 0% delivery app markup."),
         "list-cafe": ("List & Claim Your Cafe | 0% Commission Partner Network – Menu Maps", "Join Menu Maps partner network: Get 100% price control, zero-commission customer orders, direct WhatsApp ordering, and reach thousands of daily Delhi foodies."),
         "search": ("Search Cafes, Restaurants & Dishes | Menu Maps Delhi NCR", "Search verified menus, dishes, cafes, and restaurants across Delhi NCR on Menu Maps."),
         "about": ("About Menu Maps – Verified Food Discovery & 0% Markup Menus", "Menu Maps is Delhi NCR's premier food discovery platform offering 100% real dine-in menus, verified prices, and zero delivery app markups."),
