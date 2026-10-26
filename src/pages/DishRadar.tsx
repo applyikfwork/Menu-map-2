@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
   Sparkles, 
@@ -72,12 +72,57 @@ function hashStringToFloat(str: string): number {
   return (unsigned % 10000) / 10000;
 }
 
+/**
+ * Resolves raw category IDs (or UUIDs) into human-friendly culinary categories.
+ * Completely eliminates raw UUID codes like "22222222-0000-4000-8000-000000000017" from the UI.
+ */
+export function getCleanCategoryName(
+  categoryId: string | undefined,
+  dishName: string,
+  categoryMap: Map<string, string>
+): string {
+  if (categoryId && categoryMap.has(categoryId)) {
+    const mapped = categoryMap.get(categoryId)!;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}/i.test(mapped) && mapped.trim().length > 0) {
+      return mapped;
+    }
+  }
+
+  if (categoryId && !/^[0-9a-f]{8}-[0-9a-f]{4}/i.test(categoryId) && categoryId.length < 25) {
+    return categoryId;
+  }
+
+  // Infer friendly culinary category from dish name keywords
+  const lower = dishName.toLowerCase();
+  if (/momo|dimsum|bao|wonton/i.test(lower)) return 'Momos & Dimsums';
+  if (/pizza|calzone|bruschetta|garlic bread/i.test(lower)) return 'Italian & Pizzas';
+  if (/pasta|spaghetti|penne|lasagna|ravioli/i.test(lower)) return 'Gourmet Pastas';
+  if (/burger|sandwich|wrap|roll|frankie|hot dog/i.test(lower)) return 'Burgers & Rolls';
+  if (/coffee|brew|cappuccino|latte|espresso|mocha|frappe/i.test(lower)) return 'Specialty Coffee';
+  if (/chai|tea|kulhad|kahwa/i.test(lower)) return 'Chai & Beverages';
+  if (/shake|smoothie|mojito|cooler|lemonade|boba/i.test(lower)) return 'Shakes & Coolers';
+  if (/chaap|tikka|kebab|tandoori/i.test(lower)) return 'Tandoori & Starters';
+  if (/dal|paneer|curry|gravy|korma|butter chicken|kadhai|masala|saag/i.test(lower)) return 'Main Course Curries';
+  if (/thali|platter|combo/i.test(lower)) return 'Thalis & Combos';
+  if (/naan|roti|paratha|kulcha|bread/i.test(lower)) return 'Breads & Parathas';
+  if (/biryani|pulao|rice|khichdi/i.test(lower)) return 'Biryani & Rice';
+  if (/dosa|idli|vada|uttapam|sambar/i.test(lower)) return 'South Indian';
+  if (/noodle|chowmein|manchurian|fried rice|chilli potato/i.test(lower)) return 'Chinese & Wok';
+  if (/waffle|pancake|brownie|cake|pastry|ice cream|sundae|dessert|shake|sweet|gulab jamun/i.test(lower)) return 'Desserts & Bakes';
+
+  return 'Chef Special';
+}
+
 export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
   const { currentLocation } = useLocationContext();
   const { engine, isReady } = useDiscovery();
 
-  // Search & Filter State
+  // Search & Suggestions State
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filter State
   const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'trending' | 'budget' | 'gourmet'>('all');
   const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'non_veg'>('all');
   const [sortBy, setSortBy] = useState<'popular' | 'random' | 'price_asc' | 'price_desc' | 'distance'>('popular');
@@ -95,6 +140,29 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
 
   // Expanded fallback flag (when hyper-local area has few direct spots)
   const [isExpandedFallback, setIsExpandedFallback] = useState(false);
+
+  // Close search suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Category map cache from master seed data
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    try {
+      const seedCats = getMasterSeedData().categories || [];
+      seedCats.forEach((c) => {
+        if (c.id && c.name) map.set(c.id, c.name);
+      });
+    } catch {}
+    return map;
+  }, []);
 
   // Subscribe to live click and point updates
   useEffect(() => {
@@ -193,7 +261,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     return filtered;
   }, [engine, isReady, currentLocation, cleanLocalityKey, userCoords]);
 
-  // 2. Build Canonical Dish Clusters for this active location
+  // 2. Build Canonical Dish Clusters for this active location (Grouped across ALL cafes)
   const dishClusters: CanonicalDishCluster[] = useMemo(() => {
     const restMap = new Map<string, Restaurant>();
     areaRestaurants.forEach((r) => restMap.set(r.id, r));
@@ -206,11 +274,13 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       dietaryTags: Set<string>;
     }>();
 
-    // Clean dish name normalizer
+    // Comprehensive dish name normalizer that strips common preparation descriptors
+    // Ensures variants across multiple cafes ("Dal Makhani Handi", "Creamy Dal Makhani", "Special Dal Makhani")
+    // group together into the same dish cluster so ALL cafes serving that craving appear together!
     const normalizeKey = (name: string): string => {
       return name
         .toLowerCase()
-        .replace(/special|authentic|signature|chef's|style|deluxe|crispy|hot|fresh/gi, '')
+        .replace(/special|authentic|signature|chef's|style|deluxe|crispy|hot|fresh|creamy|handi|desi|shahi|classic|full|half|regular|plate|portion|combo/gi, '')
         .replace(/[^a-z0-9 ]/g, '')
         .trim();
     };
@@ -232,7 +302,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
         // Group into clusters
         let existingKey: string | null = null;
         for (const k of clustersMap.keys()) {
-          if (norm.includes(k) || k.includes(norm)) {
+          if (norm === k || (norm.length >= 4 && k.length >= 4 && (norm.includes(k) || k.includes(norm)))) {
             existingKey = k;
             break;
           }
@@ -245,10 +315,12 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
           distanceKm: distKm,
         };
 
+        const cleanCat = getCleanCategoryName(d.category_id, d.name, categoryMap);
+
         if (!clustersMap.has(clusterKey)) {
           clustersMap.set(clusterKey, {
             name: d.name,
-            category: d.category_id || 'Specials',
+            category: cleanCat,
             sampleDish: d,
             spots: [spot],
             dietaryTags: new Set(d.dietary_tags || []),
@@ -264,7 +336,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     const result: CanonicalDishCluster[] = [];
 
     clustersMap.forEach((entry, key) => {
-      // De-duplicate spots by restaurant so one restaurant doesn't show 5 duplicates of same item
+      // De-duplicate spots by restaurant so one restaurant doesn't show multiple duplicates of the exact same item
       const uniqueSpotsByRest = new Map<string, MatchingRestaurantSpot>();
       entry.spots.forEach((s) => {
         if (!uniqueSpotsByRest.has(s.restaurant.id) || s.dish.price < uniqueSpotsByRest.get(s.restaurant.id)!.dish.price) {
@@ -326,14 +398,15 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
 
       fallbackDishes.forEach((d) => {
         const fakeRest = areaRestaurants[0] || getMasterSeedData().restaurants[0];
-        const demandStats = getCombinedDishDemand(d.id, d.name, d.category_id || 'Specials', d.is_must_try, 4.3);
+        const cleanCat = getCleanCategoryName(d.category_id, d.name, categoryMap);
+        const demandStats = getCombinedDishDemand(d.id, d.name, cleanCat, d.is_must_try, 4.3);
         const isNonVeg = Boolean(d.dietary_tags?.some((t) => /non/i.test(t)) || /chicken|mutton|fish/i.test(d.name));
         const isEgg = Boolean(d.dietary_tags?.some((t) => /egg/i.test(t)));
         const isVeg = !isNonVeg && !isEgg;
         result.push({
           id: `fallback-${d.id}`,
           name: d.name,
-          category: d.category_id || 'Trending Special',
+          category: cleanCat,
           isVeg,
           isEgg,
           isNonVeg,
@@ -357,9 +430,24 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     }
 
     return result.sort((a, b) => b.demandScore - a.demandScore);
-  }, [areaRestaurants, engine, isReady, userCoords, demandRevision]);
+  }, [areaRestaurants, engine, isReady, userCoords, demandRevision, categoryMap]);
 
-  // 3. Build Story Reel Groups for Top Trending Avatars
+  // 3. Instant Character-by-Character Search Suggestions
+  const searchSuggestions = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || q.length < 1) return [];
+
+    return dishClusters
+      .filter((c) => {
+        const matchName = c.name.toLowerCase().includes(q);
+        const matchCat = c.category.toLowerCase().includes(q);
+        const matchSpot = c.spots.some((s) => s.restaurant.name.toLowerCase().includes(q));
+        return matchName || matchCat || matchSpot;
+      })
+      .slice(0, 6);
+  }, [dishClusters, searchQuery]);
+
+  // 4. Build Story Reel Groups for Top Trending Avatars
   const storyGroups: StoryDishGroup[] = useMemo(() => {
     return dishClusters.slice(0, 14).map((c, i) => ({
       id: c.id,
@@ -369,14 +457,14 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       maxPrice: c.maxPrice,
       avgPrice: c.avgPrice,
       restaurantCount: c.spots.length,
-      demandBadge: i === 0 ? '🔥 #1 Hot' : c.demandBadge,
+      demandBadge: i === 0 ? '🔥 #1 Hot' : undefined,
       demandPoints: c.totalPoints,
       totalClicks: c.totalClicks,
       isVeg: c.isVeg,
     }));
   }, [dishClusters]);
 
-  // 4. Handle "🎲 Shuffle Cravings" Re-roll
+  // 5. Handle "🎲 Shuffle Cravings" Re-roll
   const handleShuffleCravings = () => {
     setIsShuffling(true);
     setShuffleSeed((prev) => prev + 1);
@@ -388,13 +476,13 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
     }, 450);
   };
 
-  // 5. Handle Dish Card Click with Immediate Point Accrual
+  // 6. Handle Dish Card Click with Immediate Point Accrual
   const handleDishClick = (cluster: CanonicalDishCluster) => {
     recordDishInteraction(cluster.sampleDish.id, 'click');
     setSelectedCluster(cluster);
   };
 
-  // 6. Filter and Sort Clusters for Display
+  // 7. Filter and Sort Clusters for Display
   const filteredClusters = useMemo(() => {
     return dishClusters
       .filter((cluster) => {
@@ -402,8 +490,9 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchesName = cluster.name.toLowerCase().includes(q);
+          const matchesCategory = cluster.category.toLowerCase().includes(q);
           const matchesSpots = cluster.spots.some((s) => s.restaurant.name.toLowerCase().includes(q));
-          if (!matchesName && !matchesSpots) return false;
+          if (!matchesName && !matchesCategory && !matchesSpots) return false;
         }
 
         // Dietary
@@ -466,7 +555,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
             <div>
               <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-[#1C1917] tracking-tight leading-[1.1]">
                 Craving a specific dish?<br />
-                <span className="text-[#FF5A36]">Compare nearby counters &amp; prices.</span>
+                <span className="text-[#FF5A36]">Compare all local counters &amp; prices.</span>
               </h1>
               <p className="mt-2 text-sm sm:text-base text-[#57534E] max-w-2xl leading-relaxed">
                 Check which cafes in <strong className="text-[#1C1917]">{activeAreaName}</strong> serve your favorite food. Compare lowest to highest counter prices, view real menu rates, and skip delivery app surcharges.
@@ -511,24 +600,78 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
       <section className="max-w-[1280px] mx-auto px-4 sm:px-8 mt-6">
         <div className="bg-white border border-[#E7E2DA] rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
           <div className="flex flex-col md:flex-row items-center gap-3">
-            {/* Real-Time Dish Search Input */}
-            <div className="relative flex-1 w-full">
+            {/* Real-Time Dish Search Input with Live Character-by-Character Suggestions */}
+            <div className="relative flex-1 w-full" ref={searchContainerRef}>
               <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search dishes in ${activeAreaName} (e.g. Cold Brew, Momos, Butter Chicken, Pizza)...`}
-                className="w-full pl-11 pr-10 py-3 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA] focus:border-[#FF5A36] focus:bg-white text-xs sm:text-sm font-bold text-stone-900 outline-none transition-all shadow-inner"
+                onFocus={() => setIsSearchFocused(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
+                }}
+                placeholder={`Search dishes in ${activeAreaName} (e.g. Dal Makhani, Momos, Pizza, Cold Coffee)...`}
+                className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA] focus:border-[#FF5A36] focus:bg-white text-xs sm:text-sm font-bold text-stone-900 outline-none transition-all shadow-inner"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchFocused(false);
+                  }}
                   className="w-6 h-6 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-600 absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
+              )}
+
+              {/* Character-by-Character Instant Live Suggestions Dropdown */}
+              {isSearchFocused && searchQuery.trim().length > 0 && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-[#E7E2DA] shadow-xl p-3 z-30 space-y-1 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between px-2 pb-1.5 border-b border-stone-100 text-[11px] font-black uppercase tracking-wider text-stone-400">
+                    <span>Matching Dishes in {activeAreaName}</span>
+                    <span className="text-[#FF5A36] lowercase font-semibold">tap to compare cafes</span>
+                  </div>
+                  {searchSuggestions.map((sug) => (
+                    <div
+                      key={sug.id}
+                      onMouseDown={() => {
+                        setSearchQuery(sug.name);
+                        setIsSearchFocused(false);
+                        handleDishClick(sug);
+                      }}
+                      className="flex items-center justify-between p-2 rounded-xl hover:bg-orange-50/70 cursor-pointer transition-colors group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-stone-100 border border-stone-200">
+                          <img
+                            src={getSmartDishImage(sug.name, sug.category, sug.sampleDish.image_url)}
+                            alt={sug.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <strong className="text-xs font-bold text-stone-900 block truncate group-hover:text-[#FF5A36] transition-colors">
+                            {sug.name}
+                          </strong>
+                          <span className="text-[10px] text-stone-500 flex items-center gap-1.5">
+                            <span>{sug.category}</span>
+                            <span>•</span>
+                            <span className="text-emerald-700 font-bold">
+                              Available at {sug.spots.length} {sug.spots.length === 1 ? 'cafe' : 'cafes'}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-black text-[#D8350F]">₹{sug.minPrice}+</span>
+                        <span className="text-[9px] text-stone-400 block font-semibold">in-store</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -564,6 +707,25 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* Quick Trending Keywords Row */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <span className="text-[11px] font-bold text-stone-400 shrink-0">Popular:</span>
+            {['Dal Makhani', 'Paneer', 'Momos', 'Cold Coffee', 'Pizza', 'Burger', 'Chaap', 'Thali'].map((kw) => (
+              <button
+                key={kw}
+                type="button"
+                onClick={() => setSearchQuery(kw)}
+                className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                  searchQuery.toLowerCase() === kw.toLowerCase()
+                    ? 'bg-[#FF5A36] text-white shadow-xs'
+                    : 'bg-[#FAF8F5] text-stone-600 hover:bg-stone-200 border border-[#E7E2DA]'
+                }`}
+              >
+                {kw}
+              </button>
+            ))}
           </div>
 
           {/* Category & Dietary Filter Chips Row */}
@@ -706,7 +868,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
               const savings = calculateCounterSavings(cluster.minPrice);
               const imageUrl = getSmartDishImage(
                 cluster.name,
-                cluster.sampleDish.category_id || '',
+                cluster.category,
                 cluster.sampleDish.image_url
               );
 
@@ -734,6 +896,7 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
                       </div>
 
                       <div className="min-w-0 flex-1">
+                        {/* Clean Culinary Category (No raw UUID codes) + Consumer Badges (No raw click numbers) */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {cluster.isVeg ? (
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" title="Pure Veg" />
@@ -745,13 +908,20 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
                           <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">
                             {cluster.category}
                           </span>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-[#D8350F] border border-orange-200 text-[10px] font-black">
-                            <Flame className="w-2.5 h-2.5 fill-current text-orange-500" />
-                            <span>{cluster.totalClicks} clicks • {cluster.totalPoints} pts</span>
-                          </span>
-                          {cluster.liveClicks > 0 && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black animate-pulse">
-                              +{cluster.livePoints} live!
+                          {cluster.isTrending && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-[#D8350F] border border-orange-200 text-[10px] font-black uppercase tracking-wider">
+                              <Flame className="w-2.5 h-2.5 fill-current text-orange-500" />
+                              <span>High Demand</span>
+                            </span>
+                          )}
+                          {cluster.isBudgetSteal && !cluster.isTrending && (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
+                              Pocket Steal
+                            </span>
+                          )}
+                          {cluster.sampleDish.is_must_try && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold">
+                              ⭐ Must-Try
                             </span>
                           )}
                         </div>
@@ -760,8 +930,9 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
                           {cluster.name}
                         </h3>
 
-                        <p className="text-xs text-stone-500 mt-1 line-clamp-1">
-                          Available at {cluster.spots.length} {cluster.spots.length === 1 ? 'cafe' : 'cafes'} nearby
+                        {/* All Cafes in Active Area Display */}
+                        <p className="text-xs text-stone-500 mt-1 line-clamp-1 font-medium">
+                          Available at <strong className="text-stone-800 font-bold">{cluster.spots.length} verified {cluster.spots.length === 1 ? 'cafe' : 'cafes'}</strong> in {activeAreaName}
                         </p>
                       </div>
                     </div>
@@ -792,8 +963,8 @@ export const DishRadar: React.FC<DishRadarProps> = ({ navigate }) => {
                   </div>
 
                   {/* Bottom Comparison CTA Button */}
-                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-extrabold text-[#FF5A36] group-hover:text-[#D8350F]">
-                    <span>Compare {cluster.spots.length} nearby {cluster.spots.length === 1 ? 'spot' : 'spots'}</span>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-black text-[#FF5A36] group-hover:text-[#D8350F]">
+                    <span>Compare all {cluster.spots.length} {cluster.spots.length === 1 ? 'cafe' : 'cafes'}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>

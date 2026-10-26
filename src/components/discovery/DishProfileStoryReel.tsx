@@ -123,17 +123,12 @@ export const DishProfileStoryReel: React.FC<DishProfileStoryReelProps> = ({
                     </div>
                   </div>
 
-                  {/* Micro Badge Overlay (Top rank or Demand) */}
+                  {/* Micro Badge Overlay (Top rank or Price) */}
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
                     {index === 0 ? (
                       <span className="px-1.5 py-0.5 rounded-full bg-[#D8350F] text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-xs">
                         <Flame className="w-2.5 h-2.5 fill-current" />
                         <span>#1 Hot</span>
-                      </span>
-                    ) : group.demandPoints && group.demandPoints >= 200 ? (
-                      <span className="px-1.5 py-0.5 rounded-full bg-[#1C1917] text-amber-300 border border-amber-400/40 text-[9px] font-extrabold shadow-xs flex items-center gap-0.5">
-                        <Flame className="w-2 h-2 text-orange-400 fill-current" />
-                        <span>{group.demandPoints} pts</span>
                       </span>
                     ) : (
                       <span className="px-1.5 py-0.5 rounded-full bg-[#1C1917] text-amber-300 border border-amber-400/40 text-[9px] font-extrabold shadow-xs">

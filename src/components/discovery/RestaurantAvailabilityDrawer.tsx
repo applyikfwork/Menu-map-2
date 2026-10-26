@@ -99,16 +99,12 @@ export const RestaurantAvailabilityDrawer: React.FC<RestaurantAvailabilityDrawer
                     Dish Radar
                   </span>
                   <span className="text-xs text-stone-300 font-bold">
-                    Found at {spots.length} nearby {spots.length === 1 ? 'spot' : 'spots'}
+                    Available at all {spots.length} {spots.length === 1 ? 'cafe' : 'cafes'} in {activeLocationName}
                   </span>
-                  {Boolean(demandPoints || totalClicks) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold">
-                      <Flame className="w-2.5 h-2.5 fill-current text-orange-400" />
-                      <span>{demandPoints} pts</span>
-                      <span>•</span>
-                      <span>{totalClicks} foodies</span>
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold">
+                    <Flame className="w-2.5 h-2.5 fill-current text-orange-400" />
+                    <span>Popular in {activeLocationName}</span>
+                  </span>
                 </div>
                 <h3 className="font-heading font-black text-xl sm:text-2xl text-white mt-1">
                   Where to eat {dishName}
