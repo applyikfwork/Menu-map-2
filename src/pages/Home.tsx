@@ -184,7 +184,8 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
 
   // Restaurants filtered and sorted by proximity to the active user location
   const areaRestaurants = useMemo(() => {
-    const list = restaurants.filter((r) => {
+    // 1. Dietary / Amenity filter
+    let list = restaurants.filter((r) => {
       if (restaurantFilter === 'Pure Veg') {
         return r.dietary_options?.includes('Pure Veg');
       }
@@ -200,21 +201,53 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       return true;
     });
 
+    // 2. Locality filter when a specific neighborhood is active
+    if (!currentLocation.isAllDelhi) {
+      const qShort = (currentLocation.shortName || '').toLowerCase().trim();
+      const qName = (currentLocation.name || '').toLowerCase().trim();
+      const locId = (currentLocation.id || '').toLowerCase().trim();
+
+      const localityMatches = list.filter((r) => {
+        const rText = `${r.name} ${r.city || ''} ${r.address_line1 || ''} ${r.landmark || ''} ${r.metro_station || ''}`.toLowerCase();
+
+        // Exact locality or neighborhood match
+        if (qShort && rText.includes(qShort)) return true;
+        if (qName && rText.includes(qName)) return true;
+        if (locId && rText.includes(locId.replace(/-/g, ' '))) return true;
+
+        // Proximity match within 5.5 km of selected locality center if coordinates exist
+        if (userCoords && r.latitude && r.longitude) {
+          const dist = calculateDistanceKm(userCoords.latitude, userCoords.longitude, r.latitude, r.longitude);
+          if (dist <= 5.5) return true;
+        }
+
+        return false;
+      });
+
+      if (localityMatches.length > 0) {
+        list = localityMatches;
+      }
+    }
+
+    // 3. Proximity / Rating Sort
     if (userCoords) {
       return [...list].sort((a, b) => {
         const distA = calculateDistanceKm(userCoords.latitude, userCoords.longitude, a.latitude, a.longitude);
         const distB = calculateDistanceKm(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude);
-        return distA - distB;
+        if (Math.abs(distA - distB) > 0.6) return distA - distB;
+        return (b.rating_avg || 4.2) - (a.rating_avg || 4.2);
       });
     }
 
-    return list;
-  }, [restaurants, restaurantFilter, userCoords]);
+    // Default to sorting by highest rated spots across Delhi NCR (never hardcoding one area)
+    return [...list].sort((a, b) => (b.rating_avg || 4.2) - (a.rating_avg || 4.2));
+  }, [restaurants, restaurantFilter, userCoords, currentLocation]);
 
   // Multi-Factor Live Hero Ticket for active location (Warm & Cream UI Card)
   const heroTicketData = useMemo(() => {
-    return getLiveHeroTicket(restaurants, menuItems, userCoords);
-  }, [restaurants, menuItems, userCoords]);
+    const candidatePool = areaRestaurants.length > 0 ? areaRestaurants : restaurants;
+    return getLiveHeroTicket(candidatePool, menuItems, userCoords);
+  }, [areaRestaurants, restaurants, menuItems, userCoords]);
 
   const heroRestaurant = heroTicketData.restaurant;
   const heroTicketItems = heroTicketData.items;
@@ -223,7 +256,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   const activeLocationDishes = useMemo(() => {
     const topAreaRestIds = new Set(areaRestaurants.slice(0, 12).map((r) => r.id));
     const areaItems = menuItems.filter((i) => topAreaRestIds.has(i.restaurant_id));
-    const pool = areaItems.length >= 4 ? areaItems : menuItems;
+    const pool = areaItems.length >= 3 ? areaItems : (areaRestaurants.length > 0 && areaItems.length > 0 ? areaItems : menuItems);
 
     const gradients = [
       'linear-gradient(135deg, #FF6B4A 0%, #D8350F 100%)',

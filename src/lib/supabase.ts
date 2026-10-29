@@ -305,9 +305,9 @@ function saveTable<T>(table: string, data: T[]): void {
 
 // Default settings
 const DEFAULT_SETTINGS: SiteSettings = {
-  default_city: 'Nangloi, West Delhi',
-  default_lat: 28.6752,
-  default_lng: 77.0588,
+  default_city: 'Delhi NCR',
+  default_lat: 28.6139,
+  default_lng: 77.2090,
   currency_symbol: '₹',
   contact_email: 'xyzapplywork@gmail.com',
   brand_primary_color: '#FF5A36',

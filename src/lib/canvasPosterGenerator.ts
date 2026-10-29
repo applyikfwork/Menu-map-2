@@ -134,10 +134,10 @@ export async function renderPosterToCanvas({
   ctx.strokeStyle = '#F1ECE4';
   ctx.stroke();
 
-  // Draw Menu Maps Logo inside the pill
+  // Draw Menu Maps Logo inside the pill (using original uploaded logo image)
   try {
-    const logoImg = await loadImage('/logo.svg');
-    const innerIconPadding = 3.5 * scale;
+    const logoImg = await loadImage('/menumaps-qr-logo.png');
+    const innerIconPadding = 2.5 * scale;
     const innerIconSize = logoBadgeSize - innerIconPadding * 2;
     ctx.drawImage(
       logoImg,
@@ -147,8 +147,7 @@ export async function renderPosterToCanvas({
       innerIconSize
     );
   } catch (logoErr) {
-    // If SVG fails, fallback gracefully
-    console.warn('Could not load logo.svg for QR center:', logoErr);
+    console.warn('Could not load /menumaps-qr-logo.png for QR center:', logoErr);
   }
 
   ctx.restore();

@@ -146,17 +146,32 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (!silent) {
         showToast('Could not retrieve GPS location. Showing All Delhi.', 'info');
       }
+      // Guarantee fallback is All Delhi NCR, never a hardcoded single locality
+      setCurrentLocation((prev) => (prev.isLiveGps ? ALL_DELHI_LOCATION : prev));
     } finally {
       setIsLocating(false);
     }
   };
 
-  // On first-ever visit (no cached location in localStorage), attempt a silent auto-detection once
+  // Automatically fetch user's live location when website opens
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved && navigator.geolocation) {
-        // Only run silent auto-detect if the user hasn't explicitly chosen before
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      let isManualSpecificChoice = false;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // If the user previously manually chose a specific locality (not GPS and not 'all')
+          if (parsed && !parsed.isLiveGps && !parsed.isAllDelhi && parsed.id && parsed.id !== 'all') {
+            isManualSpecificChoice = true;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      // If no manual specific locality was selected, auto-fetch user's nearest area on site open
+      if (!isManualSpecificChoice) {
         detectLiveGps(true).catch(() => {});
       }
     }

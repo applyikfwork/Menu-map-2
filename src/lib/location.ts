@@ -45,6 +45,7 @@ export function getUserLocation(): Promise<GeoCoordinates> {
       return;
     }
 
+    // Attempt 1: Fast high accuracy GPS (4s timeout)
     navigator.geolocation.getCurrentPosition(
       (position) => {
         resolve({
@@ -53,10 +54,23 @@ export function getUserLocation(): Promise<GeoCoordinates> {
           accuracy: position.coords.accuracy,
         });
       },
-      (error) => {
-        reject(error);
+      (_firstErr) => {
+        // Attempt 2: Fallback to fast network/Wi-Fi triangulation without GPS chip requirement
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+            });
+          },
+          (finalErr) => {
+            reject(finalErr);
+          },
+          { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 }
+      { enableHighAccuracy: true, timeout: 4000, maximumAge: 120000 }
     );
   });
 }
