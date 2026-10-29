@@ -45,7 +45,8 @@ import {
   Copy,
   MessageSquare,
   Gift,
-  Download
+  Download,
+  Palette
 } from 'lucide-react';
 import { getRestaurantQrConfig, saveRestaurantQrConfig, RestaurantQrConfig, DEFAULT_PERK_IDS } from '../lib/qrConfig';
 import { 
@@ -2651,6 +2652,57 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
                   placeholder="e.g. Valid on direct WhatsApp counter orders above ₹200"
                   className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden"
                 />
+              </div>
+            </div>
+
+            {/* Ready-Made Marketing Poster & Table Standee Studio Showcase */}
+            <div className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-7 text-white border border-stone-800 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#FF5A36]/20 to-amber-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+              
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="space-y-2 max-w-xl">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5A36]/20 text-[#FF5A36] border border-[#FF5A36]/30 text-[10px] font-black uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>New Ready-Made Marketing Posters</span>
+                  </div>
+                  <h3 className="font-heading font-black text-xl sm:text-2xl text-white">
+                    Print-Ready Branded Posters &amp; Table QR Kits
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                    Generate studio-grade dining posters with your verified digital menu QR and custom vintage branding. Ready for A4 wall frames, counter display stands, and acrylic table tent cards.
+                  </p>
+                  <div className="pt-2 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowQrModal(true)}
+                      className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF5A36] to-amber-500 hover:from-[#ff4820] hover:to-amber-600 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
+                    >
+                      <Palette className="w-4 h-4" />
+                      <span>Open Ready-Made Poster Studio</span>
+                    </button>
+                    <span className="text-xs text-stone-400 font-medium">
+                      • 100% Free • Ultra-HD 300 DPI
+                    </span>
+                  </div>
+                </div>
+
+                {/* Poster Miniature Teaser */}
+                <div 
+                  onClick={() => setShowQrModal(true)}
+                  className="w-32 sm:w-40 shrink-0 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl hover:scale-105 transition-transform duration-300 cursor-pointer relative group"
+                  title="Click to open Poster Studio"
+                >
+                  <img
+                    src="/posters/delhi-heritage-bite.jpg"
+                    alt="Ready Made Delhi Heritage Poster Preview"
+                    className="w-full h-auto object-contain block"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-[10px] font-black uppercase bg-[#FF5A36] text-white px-2.5 py-1 rounded-full shadow-md">
+                      Customize
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
