@@ -42,6 +42,7 @@ function roundRect(
 
 /**
  * Composites a high-resolution marketing poster using HTML5 Canvas.
+ * Automatically stamps the Menu Maps verified logo in the center of the QR code.
  */
 export async function renderPosterToCanvas({
   template,
@@ -67,7 +68,7 @@ export async function renderPosterToCanvas({
   const bgImage = await loadImage(template.imageUrl);
   ctx.drawImage(bgImage, 0, 0, width, height);
 
-  // 2. Generate and Render High-Resolution QR Code
+  // 2. Generate and Render High-Resolution QR Code (Level 'H' for 30% error correction)
   const qrBox = template.qrBox;
   const qrX = qrBox.x * scale;
   const qrY = qrBox.y * scale;
@@ -76,14 +77,14 @@ export async function renderPosterToCanvas({
   const qrRadius = (qrBox.borderRadius || 18) * scale;
   const qrPadding = (qrBox.padding || 12) * scale;
 
-  // Generate crisp vector-like QR data URL
+  // Generate crisp vector-like QR data URL with High error correction for center logo badge
   const qrPixelSize = Math.max(qrW, qrH) * 2;
   const qrDataUrl = await QRCode.toDataURL(targetUrl, {
-    errorCorrectionLevel: 'M',
+    errorCorrectionLevel: 'H',
     margin: 1,
     width: qrPixelSize,
     color: {
-      dark: '#1C1917',
+      dark: '#14110F',
       light: '#FFFFFF',
     },
   });
@@ -105,6 +106,51 @@ export async function renderPosterToCanvas({
   const drawQrW = qrW - qrPadding * 2;
   const drawQrH = qrH - qrPadding * 2;
   ctx.drawImage(qrImage, drawQrX, drawQrY, drawQrW, drawQrH);
+
+  // 2.1 Draw Branded Menu Maps Logo Pin in Center of QR Code
+  const qrCenterX = drawQrX + drawQrW / 2;
+  const qrCenterY = drawQrY + drawQrH / 2;
+  const logoBadgeSize = Math.round(drawQrW * 0.22); // 22% diameter (well within 30% H-level tolerance)
+  const logoBadgeRadius = Math.round(logoBadgeSize * 0.26);
+
+  // Soft shadow behind white logo pill
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+  ctx.shadowBlur = 6 * scale;
+  ctx.shadowOffsetY = 2 * scale;
+  roundRect(
+    ctx,
+    qrCenterX - logoBadgeSize / 2,
+    qrCenterY - logoBadgeSize / 2,
+    logoBadgeSize,
+    logoBadgeSize,
+    logoBadgeRadius
+  );
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+
+  // Subtle clean border
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = 1.5 * scale;
+  ctx.strokeStyle = '#F1ECE4';
+  ctx.stroke();
+
+  // Draw Menu Maps Logo inside the pill
+  try {
+    const logoImg = await loadImage('/logo.svg');
+    const innerIconPadding = 3.5 * scale;
+    const innerIconSize = logoBadgeSize - innerIconPadding * 2;
+    ctx.drawImage(
+      logoImg,
+      qrCenterX - innerIconSize / 2,
+      qrCenterY - innerIconSize / 2,
+      innerIconSize,
+      innerIconSize
+    );
+  } catch (logoErr) {
+    // If SVG fails, fallback gracefully
+    console.warn('Could not load logo.svg for QR center:', logoErr);
+  }
+
   ctx.restore();
 
   // 3. Render Dynamic Restaurant Name & Table Details in Banner Area
@@ -142,19 +188,18 @@ export async function renderPosterToCanvas({
 
   if (isTableMode) {
     // Two-tier layout: Restaurant Name on line 1, Table Badge on line 2
-    const nameFontSize = Math.min(fontSize, 24 * scale);
+    const nameFontSize = Math.min(fontSize, 23 * scale);
     ctx.font = `bold ${nameFontSize}px ${banner.fontFamily}`;
     ctx.fillStyle = banner.color;
     
     // Draw restaurant name slightly above center
-    ctx.fillText(restaurantName, centerX, centerY - 10 * scale);
+    ctx.fillText(restaurantName, centerX, centerY - 11 * scale);
 
     // Draw Table Badge / Subtitle underneath with warm spice styling
-    const badgeFontSize = 11 * scale;
+    const badgeFontSize = 10.5 * scale;
     ctx.font = `900 ${badgeFontSize}px 'Plus Jakarta Sans', system-ui, sans-serif`;
     ctx.fillStyle = banner.secondaryColor || '#C25E20';
-    ctx.letterSpacing = '1px';
-    ctx.fillText(tableBadgeText, centerX, centerY + 16 * scale);
+    ctx.fillText(tableBadgeText, centerX, centerY + 14 * scale);
   } else if (!singleLineFits) {
     // Split long restaurant name into 2 balanced lines
     const words = restaurantName.split(' ');
@@ -162,7 +207,7 @@ export async function renderPosterToCanvas({
     const line1 = words.slice(0, mid).join(' ');
     const line2 = words.slice(mid).join(' ');
 
-    const twoLineFontSize = Math.max(minFontSize, 20 * scale);
+    const twoLineFontSize = Math.max(minFontSize, 19 * scale);
     ctx.font = `bold ${twoLineFontSize}px ${banner.fontFamily}`;
     ctx.fillStyle = banner.color;
     const lineHeight = twoLineFontSize * 1.15;

@@ -70,6 +70,8 @@ import {
 } from '../lib/supabase';
 import { compressImageFile, CompressionResult } from '../lib/imageCompressor';
 import { RestaurantQrModal } from '../components/RestaurantQrModal';
+import { POSTER_TEMPLATES, PosterTemplate } from '../lib/posterTemplates';
+import { renderPosterToCanvas, downloadPosterAsPng } from '../lib/canvasPosterGenerator';
 import { useToast } from '../components/Toast';
 
 interface OwnerDashboardProps {
@@ -125,6 +127,30 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
     tableCount: 20,
   }));
   const [selectedPreviewTable, setSelectedPreviewTable] = useState<string>('1');
+  const [selectedPosterTemplateId, setSelectedPosterTemplateId] = useState<string>('diwali-festive-feast');
+  const [downloadingPosterId, setDownloadingPosterId] = useState<string | null>(null);
+
+  const handleDirectPosterDownload = async (template: PosterTemplate) => {
+    if (!restaurant) return;
+    setDownloadingPosterId(template.id);
+    try {
+      const targetUrl = `${window.location.origin}/${restaurant.slug}?mode=dine_in`;
+      const canvas = await renderPosterToCanvas({
+        template,
+        restaurantName: restaurant.name,
+        targetUrl,
+        scale: 2.5, // 300 DPI master print resolution
+      });
+      const fileName = `${restaurant.slug}-${template.id}-poster.png`;
+      await downloadPosterAsPng(canvas, fileName);
+      showToast(`Downloaded ${template.name} poster!`, 'success');
+    } catch (err) {
+      console.error('Failed to download poster:', err);
+      showToast('Could not download poster. Please try opening studio.', 'error');
+    } finally {
+      setDownloadingPosterId(null);
+    }
+  };
 
   // Filter / Search inside dishes
   const [dishSearch, setDishSearch] = useState('');
@@ -2706,6 +2732,112 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
               </div>
             </div>
 
+            {/* Ready-Made Marketing Poster Gallery (All 6 Designs) */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading font-black text-lg text-slate-900">
+                      Ready-Made QR Poster Designs
+                    </h3>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {POSTER_TEMPLATES.length} Available
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Click <strong>Download PNG</strong> for an instant 300 DPI print-ready poster with your verified QR code, or click <strong>Customize</strong> to set table numbers.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQrModal(true)}
+                  className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  <Printer className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Open Full Print Studio</span>
+                </button>
+              </div>
+
+              {/* Responsive Grid of Templates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {POSTER_TEMPLATES.map((tmpl) => {
+                  const isDownloadingThis = downloadingPosterId === tmpl.id;
+                  return (
+                    <div
+                      key={tmpl.id}
+                      className="bg-stone-50/70 hover:bg-stone-50 rounded-2xl p-3.5 border border-stone-200 hover:border-amber-400/60 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
+                    >
+                      {/* Image Preview & Badges */}
+                      <div>
+                        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-stone-200 border border-stone-200 shadow-inner mb-3">
+                          <img
+                            src={tmpl.thumbnailUrl}
+                            alt={tmpl.name}
+                            className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-stone-900/85 backdrop-blur-xs text-white shadow-xs">
+                              {tmpl.badge}
+                            </span>
+                            {tmpl.isNew && (
+                              <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md bg-[#FF5A36] text-white shadow-xs animate-pulse">
+                                Just Added
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Title & Tagline */}
+                        <h4 className="font-heading font-black text-sm text-stone-900 leading-tight">
+                          {tmpl.name}
+                        </h4>
+                        <p className="text-[11px] text-stone-500 line-clamp-2 mt-1 leading-relaxed">
+                          {tmpl.tagline}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="pt-3.5 mt-2 border-t border-stone-200/80 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDirectPosterDownload(tmpl)}
+                          disabled={isDownloadingThis}
+                          className="flex-1 py-2 px-3 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+                          title="Instant 1-Click Download in 300 DPI"
+                        >
+                          {isDownloadingThis ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Rendering...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download PNG</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPosterTemplateId(tmpl.id);
+                            setShowQrModal(true);
+                          }}
+                          className="py-2 px-3 rounded-xl bg-white hover:bg-stone-100 text-stone-800 font-bold text-xs border border-stone-200 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          title="Customize table number & print"
+                        >
+                          <Palette className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Customize</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Table QR Kit & Standee Generator */}
             <div className="bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-stone-100">
@@ -3558,6 +3690,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ navigate }) => {
         <RestaurantQrModal
           restaurant={restaurant}
           isOpen={showQrModal}
+          initialTemplateId={selectedPosterTemplateId}
           onClose={() => setShowQrModal(false)}
         />
       )}

@@ -29,6 +29,7 @@ interface RestaurantQrModalProps {
   onClose: () => void;
   defaultTableNumber?: string | number;
   enabledPerkIds?: string[];
+  initialTemplateId?: string;
 }
 
 export const RestaurantQrModal: React.FC<RestaurantQrModalProps> = ({
@@ -36,13 +37,16 @@ export const RestaurantQrModal: React.FC<RestaurantQrModalProps> = ({
   isOpen,
   onClose,
   defaultTableNumber,
+  initialTemplateId,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const savedConfig = getRestaurantQrConfig(restaurant.id);
 
   // Studio Mode: Graphic Artwork Poster vs Minimal Table Standee
   const [activeTab, setActiveTab] = useState<'poster' | 'standee'>('poster');
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('delhi-heritage-bite');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    initialTemplateId || 'diwali-festive-feast'
+  );
   const [selectedTable, setSelectedTable] = useState<string>(
     defaultTableNumber ? String(defaultTableNumber) : 'master'
   );
@@ -328,6 +332,54 @@ export const RestaurantQrModal: React.FC<RestaurantQrModalProps> = ({
               </div>
             )}
           </div>
+
+          {/* Visual Thumbnail Carousel for Poster Templates */}
+          {activeTab === 'poster' && (
+            <div className="pt-2.5 border-t border-stone-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-[#FF5A36]" />
+                  <span>Choose Template ({POSTER_TEMPLATES.length} Designs):</span>
+                </span>
+                <span className="text-[10px] text-amber-800 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
+                  {selectedTemplate.badge}
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
+                {POSTER_TEMPLATES.map((tmpl) => {
+                  const isSelected = tmpl.id === selectedTemplateId;
+                  return (
+                    <button
+                      key={tmpl.id}
+                      type="button"
+                      onClick={() => setSelectedTemplateId(tmpl.id)}
+                      className={`group relative shrink-0 w-20 sm:w-24 h-28 sm:h-32 rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left ${
+                        isSelected
+                          ? 'border-[#FF5A36] ring-3 ring-[#FF5A36]/30 shadow-md scale-[1.02]'
+                          : 'border-stone-200 hover:border-stone-400 opacity-75 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={tmpl.thumbnailUrl}
+                        alt={tmpl.name}
+                        className="w-full h-full object-cover"
+                      />
+                      {tmpl.isNew && (
+                        <span className="absolute top-1 left-1 bg-[#FF5A36] text-white text-[8px] font-black px-1 py-0.5 rounded-md shadow-xs leading-none">
+                          NEW
+                        </span>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-1 sm:p-1.5">
+                        <p className="text-[9px] font-bold text-white truncate leading-tight">
+                          {tmpl.name}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Live Canvas / Standee Preview Area */}
