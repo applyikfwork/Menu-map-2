@@ -312,3 +312,195 @@ export const POPULAR_FOOD_HUBS: PopularFoodHub[] = DELHI_LOCATIONS.map((loc) => 
   zone: loc.zone,
   famousSpecialties: loc.famousSpecialties,
 }));
+
+/**
+ * Extract clean, normalized search tokens & synonyms for any Delhi location
+ */
+export function getLocationSearchTokens(loc: { id?: string; name?: string; shortName?: string }): string[] {
+  const tokens = new Set<string>();
+  const rawName = (loc.name || '').replace(/\(.*?\)/g, '').trim().toLowerCase();
+  const rawShort = (loc.shortName || '').replace(/\(.*?\)/g, '').trim().toLowerCase();
+  const rawId = (loc.id || '').toLowerCase();
+
+  for (const textVal of [rawName, rawShort]) {
+    if (!textVal) continue;
+    // Split on slashes, ampersands, commas, pluses
+    for (const part of textVal.split(/[/&,+-]+/)) {
+      const cleaned = part
+        .replace(/\b(hub|strip|corridor|central|boulevard|bazaar|dining|market|metro|line|phase|road|street|sec|sector|gateways|station)\b/g, '')
+        .trim();
+      if (cleaned.length >= 3) {
+        tokens.add(cleaned);
+      }
+    }
+  }
+
+  const idParts = rawId.split('-');
+  if (idParts[0] && idParts[0].length >= 3) {
+    tokens.add(idParts[0]);
+  }
+
+  // Common aliases & regional mapping
+  const aliasMap: Record<string, string[]> = {
+    cp: ['connaught place', 'connaught', 'cp', 'mandi house', 'bengali market'],
+    connaught: ['connaught place', 'connaught', 'cp', 'mandi house', 'bengali market'],
+    mkt: ['majnu ka tilla', 'majnu', 'mkt'],
+    majnu: ['majnu ka tilla', 'majnu', 'mkt'],
+    hkv: ['hauz khas', 'hkv', 'deer park'],
+    hauz: ['hauz khas', 'hkv'],
+    gk: ['greater kailash', 'gk 1', 'gk 2'],
+    greater: ['greater kailash', 'gk 1', 'gk 2'],
+    'kailash-1': ['greater kailash 1', 'gk 1', 'greater kailash'],
+    'kailash-2': ['greater kailash 2', 'gk 2', 'greater kailash'],
+    def: ['defence colony', 'def col'],
+    defence: ['defence colony', 'def col'],
+    nsp: ['netaji subhash', 'nsp', 'pitampura'],
+    'netaji-subhash': ['netaji subhash', 'nsp', 'pitampura'],
+    cr: ['cr park', 'chittaranjan'],
+    chittaranjan: ['cr park', 'chittaranjan'],
+    'old-rajendra': ['old rajinder', 'rajendra', 'rajinder'],
+    rajinder: ['old rajinder', 'rajendra', 'rajinder'],
+    rajendra: ['old rajinder', 'rajendra', 'rajinder'],
+    'champa-gali': ['saket', 'champa gali', 'saidulajab'],
+    saket: ['saket', 'champa gali', 'saidulajab'],
+    rohini: ['rohini', 'prashant vihar'],
+    dwarka: ['dwarka'],
+    'satya-niketan': ['satya niketan', 'south campus'],
+    satya: ['satya niketan', 'south campus'],
+    'kamla-nagar': ['kamla nagar', 'north campus'],
+    kamla: ['kamla nagar', 'north campus'],
+    'hudson-lane': ['hudson lane', 'north campus'],
+    hudson: ['hudson lane', 'north campus'],
+    aerocity: ['aerocity', 'mahipalpur', 'worldmark'],
+    noida: ['noida'],
+    gurgaon: ['gurgaon', 'gurugram'],
+    gurugram: ['gurgaon', 'gurugram'],
+    cyberhub: ['cyberhub', 'gurgaon', 'gurugram'],
+    indirapuram: ['indirapuram', 'vaibhav khand'],
+    nangloi: ['nangloi', 'rohtak road'],
+    malviya: ['malviya nagar', 'saket'],
+    nehru: ['nehru place'],
+    epicuria: ['nehru place'],
+    'model-town': ['model town'],
+    mukherjee: ['mukherjee nagar'],
+    'punjabi-bagh': ['punjabi bagh'],
+    'rajouri-garden': ['rajouri garden'],
+    rajouri: ['rajouri garden'],
+    'paschim-vihar': ['paschim vihar'],
+    paschim: ['paschim vihar'],
+    'tilak-nagar': ['tilak nagar'],
+    tilak: ['tilak nagar'],
+    janakpuri: ['janakpuri'],
+    'laxmi-nagar': ['laxmi nagar'],
+  };
+
+  for (const [key, aliases] of Object.entries(aliasMap)) {
+    if (rawId.includes(key) || rawName.includes(key) || rawShort.includes(key)) {
+      for (const a of aliases) {
+        tokens.add(a);
+      }
+    }
+  }
+
+  return Array.from(tokens);
+}
+
+/**
+ * Filter and sort restaurants dynamically for a selected location.
+ * - When All Delhi NCR is selected: returns city-wide spots balanced across iconic districts with Bayesian rating.
+ * - When a specific neighborhood is selected: returns real venues from that neighborhood, supplemented with closest adjacent venues if needed.
+ */
+export function getRestaurantsForLocation(
+  restaurants: Restaurant[],
+  location: { id: string; name: string; shortName?: string; isAllDelhi: boolean; latitude?: number; longitude?: number },
+  userCoords?: GeoCoordinates | null
+): Restaurant[] {
+  if (!restaurants || restaurants.length === 0) return [];
+
+  // 1. ALL DELHI NCR: Balanced city-wide ranking
+  if (location.isAllDelhi) {
+    return [...restaurants].sort((a, b) => {
+      // Bayesian score incorporating rating and review counts
+      const avgA = a.rating_avg || 4.2;
+      const countA = a.rating_count || 10;
+      const bayesA = (countA * avgA + 25 * 4.3) / (countA + 25);
+
+      const avgB = b.rating_avg || 4.2;
+      const countB = b.rating_count || 10;
+      const bayesB = (countB * avgB + 25 * 4.3) / (countB + 25);
+
+      return bayesB - bayesA;
+    });
+  }
+
+  // 2. SPECIFIC NEIGHBORHOOD: Tiered proximity + keyword matching
+  const targetLat = typeof location.latitude === 'number' ? location.latitude : userCoords?.latitude;
+  const targetLng = typeof location.longitude === 'number' ? location.longitude : userCoords?.longitude;
+  const hasCoords = typeof targetLat === 'number' && typeof targetLng === 'number';
+
+  const tokens = getLocationSearchTokens(location);
+
+  const tier1: Array<{ rest: Restaurant; dist: number }> = [];
+  const tier2: Array<{ rest: Restaurant; dist: number }> = [];
+
+  for (const r of restaurants) {
+    const rText = `${r.name} ${r.city || ''} ${r.address_line1 || ''} ${r.landmark || ''} ${r.metro_station || ''}`.toLowerCase();
+    const hasToken = tokens.length > 0 && tokens.some((t) => rText.includes(t));
+
+    let dist = 999;
+    if (hasCoords && typeof r.latitude === 'number' && typeof r.longitude === 'number') {
+      dist = calculateDistanceKm(targetLat!, targetLng!, r.latitude, r.longitude);
+    }
+
+    if (hasToken || dist <= 4.0) {
+      tier1.push({ rest: r, dist });
+    } else if (dist <= 8.5) {
+      tier2.push({ rest: r, dist });
+    }
+  }
+
+  // Sort Tier 1: by proximity first, then rating
+  tier1.sort((a, b) => {
+    if (Math.abs(a.dist - b.dist) > 0.8) return a.dist - b.dist;
+    return (b.rest.rating_avg || 4.2) - (a.rest.rating_avg || 4.2);
+  });
+
+  // Sort Tier 2: by proximity first, then rating
+  tier2.sort((a, b) => {
+    if (Math.abs(a.dist - b.dist) > 0.8) return a.dist - b.dist;
+    return (b.rest.rating_avg || 4.2) - (a.rest.rating_avg || 4.2);
+  });
+
+  const pool: Restaurant[] = tier1.map((x) => x.rest);
+
+  // If fewer than 8 cafes, supplement from Tier 2
+  if (pool.length < 8 && tier2.length > 0) {
+    const existingIds = new Set(pool.map((r) => r.id));
+    for (const item of tier2) {
+      if (!existingIds.has(item.rest.id)) {
+        pool.push(item.rest);
+        existingIds.add(item.rest.id);
+        if (pool.length >= 8) break;
+      }
+    }
+  }
+
+  // Outlying locations fallback: nearest cafes by distance
+  if (pool.length < 6 && hasCoords) {
+    const existingIds = new Set(pool.map((r) => r.id));
+    const sortedByDist = [...restaurants]
+      .filter((r) => typeof r.latitude === 'number' && typeof r.longitude === 'number' && !existingIds.has(r.id))
+      .sort((a, b) => {
+        const dA = calculateDistanceKm(targetLat!, targetLng!, a.latitude, a.longitude);
+        const dB = calculateDistanceKm(targetLat!, targetLng!, b.latitude, b.longitude);
+        return dA - dB;
+      });
+
+    for (const r of sortedByDist) {
+      pool.push(r);
+      if (pool.length >= 6) break;
+    }
+  }
+
+  return pool.length > 0 ? pool : restaurants;
+}

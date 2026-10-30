@@ -117,6 +117,7 @@ interface CuratedPlaylistsSectionProps {
   activeAreaName: string;
   navigate: (path: string) => void;
   userCoords?: GeoCoordinates | null;
+  isAllDelhi?: boolean;
 }
 
 export const CuratedPlaylistsSection: React.FC<CuratedPlaylistsSectionProps> = ({
@@ -124,17 +125,40 @@ export const CuratedPlaylistsSection: React.FC<CuratedPlaylistsSectionProps> = (
   activeAreaName,
   navigate,
   userCoords,
+  isAllDelhi = false,
 }) => {
   // Playlist 1: In the Spotlight / Top Rated
   const spotlightCafes = React.useMemo(() => {
-    return [...restaurants]
-      .filter((r) => r.rating_avg >= 4.3 || r.is_featured)
-      .sort((a, b) => b.rating_avg - a.rating_avg);
-  }, [restaurants]);
+    if (isAllDelhi) {
+      return [...restaurants].sort((a, b) => {
+        const bayesA = ((a.rating_count || 10) * (a.rating_avg || 4.2) + 25 * 4.3) / ((a.rating_count || 10) + 25);
+        const bayesB = ((b.rating_count || 10) * (b.rating_avg || 4.2) + 25 * 4.3) / ((b.rating_count || 10) + 25);
+        return bayesB - bayesA;
+      });
+    }
 
-  // Playlist 2: Pocket-Friendly Student Addas (Cost for two <= 400)
+    // For specific locality: take cafes from restaurants (already scoped to locality)
+    const rated = [...restaurants].filter((r) => (r.rating_avg || 4.2) >= 4.0 || r.is_featured);
+    const pool = rated.length >= 3 ? rated : restaurants;
+
+    return [...pool].sort((a, b) => {
+      if (userCoords && typeof a.latitude === 'number' && typeof b.latitude === 'number') {
+        const dA = calculateDistanceKm(userCoords.latitude, userCoords.longitude, a.latitude, a.longitude);
+        const dB = calculateDistanceKm(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude);
+        if (Math.abs(dA - dB) > 1.2) return dA - dB;
+      }
+      return (b.rating_avg || 4.2) - (a.rating_avg || 4.2);
+    });
+  }, [restaurants, isAllDelhi, userCoords]);
+
+  // Playlist 2: Pocket-Friendly Student Addas / Budget
   const budgetCafes = React.useMemo(() => {
-    return restaurants.filter((r) => (r.average_cost_for_two || 500) <= 400);
+    const under400 = restaurants.filter((r) => (r.average_cost_for_two || 500) <= 400);
+    if (under400.length >= 3) {
+      return [...under400].sort((a, b) => (b.rating_avg || 4.2) - (a.rating_avg || 4.2));
+    }
+    // Fallback: sort by most economical cost in this locality
+    return [...restaurants].sort((a, b) => (a.average_cost_for_two || 500) - (b.average_cost_for_two || 500));
   }, [restaurants]);
 
   // Playlist 3: Late Night Addas
@@ -153,7 +177,7 @@ export const CuratedPlaylistsSection: React.FC<CuratedPlaylistsSectionProps> = (
       {/* Shelf 1 */}
       <ShelfRow
         title={`Spotlight Counters in ${activeAreaName}`}
-        subtitle="Highest-rated dining spots with 100% verified printed menus & direct prices."
+        subtitle={`Highest-rated dining spots in ${activeAreaName} with 100% verified printed menus & direct prices.`}
         badge="Top Rated & Verified"
         icon={<Flame className="w-3.5 h-3.5 fill-[#FF5A36]" />}
         restaurants={spotlightCafes}
@@ -164,8 +188,12 @@ export const CuratedPlaylistsSection: React.FC<CuratedPlaylistsSectionProps> = (
 
       {/* Shelf 2 */}
       <ShelfRow
-        title="Pocket-Friendly DU & Student Legends"
-        subtitle="Verified cafe menus under ₹400 for two — maximum taste, zero surprise surcharge."
+        title={isAllDelhi ? 'Pocket-Friendly DU & Student Legends' : `Pocket-Friendly Spots in ${activeAreaName}`}
+        subtitle={
+          isAllDelhi
+            ? 'Verified cafe menus under ₹400 for two — maximum taste, zero surprise surcharge.'
+            : `Budget-friendly cafe menus under ₹400 for two near ${activeAreaName}.`
+        }
         badge="Budget Friendly"
         icon={<Wallet className="w-3.5 h-3.5" />}
         restaurants={budgetCafes}
@@ -177,8 +205,8 @@ export const CuratedPlaylistsSection: React.FC<CuratedPlaylistsSectionProps> = (
       {/* Shelf 3 */}
       {lateNightCafes.length > 0 && (
         <ShelfRow
-          title="Midnight Cravings & Late-Night Addas"
-          subtitle="Spots verified open past 11:00 PM with exact counter pricing."
+          title={isAllDelhi ? 'Midnight Cravings & Late-Night Addas' : `Late-Night Dining in ${activeAreaName}`}
+          subtitle={`Spots verified open late with exact counter pricing in ${activeAreaName}.`}
           badge="Open Late"
           icon={<Moon className="w-3.5 h-3.5" />}
           restaurants={lateNightCafes}

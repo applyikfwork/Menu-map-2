@@ -39,7 +39,8 @@ import {
   getCachedUserCoordinates,
   saveCachedUserCoordinates,
   detectAreaContext,
-  formatDistance
+  formatDistance,
+  getRestaurantsForLocation
 } from '../lib/location';
 import { DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
 import { 
@@ -182,10 +183,14 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
     return detectAreaContext(userCoords, restaurants);
   }, [userCoords, restaurants, activeDelhiLocation, activeAreaName]);
 
-  // Restaurants filtered and sorted by proximity to the active user location
+  // 1. All restaurants dynamically scoped to the active universal location (or balanced All Delhi)
+  const locationRestaurants = useMemo(() => {
+    return getRestaurantsForLocation(restaurants, currentLocation, userCoords);
+  }, [restaurants, currentLocation, userCoords]);
+
+  // 2. Restaurants filtered by user tab filter (Pure Veg, Rooftop, Late night, Budget)
   const areaRestaurants = useMemo(() => {
-    // 1. Dietary / Amenity filter
-    let list = restaurants.filter((r) => {
+    return locationRestaurants.filter((r) => {
       if (restaurantFilter === 'Pure Veg') {
         return r.dietary_options?.includes('Pure Veg');
       }
@@ -200,63 +205,22 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       }
       return true;
     });
-
-    // 2. Locality filter when a specific neighborhood is active
-    if (!currentLocation.isAllDelhi) {
-      const qShort = (currentLocation.shortName || '').toLowerCase().trim();
-      const qName = (currentLocation.name || '').toLowerCase().trim();
-      const locId = (currentLocation.id || '').toLowerCase().trim();
-
-      const localityMatches = list.filter((r) => {
-        const rText = `${r.name} ${r.city || ''} ${r.address_line1 || ''} ${r.landmark || ''} ${r.metro_station || ''}`.toLowerCase();
-
-        // Exact locality or neighborhood match
-        if (qShort && rText.includes(qShort)) return true;
-        if (qName && rText.includes(qName)) return true;
-        if (locId && rText.includes(locId.replace(/-/g, ' '))) return true;
-
-        // Proximity match within 5.5 km of selected locality center if coordinates exist
-        if (userCoords && r.latitude && r.longitude) {
-          const dist = calculateDistanceKm(userCoords.latitude, userCoords.longitude, r.latitude, r.longitude);
-          if (dist <= 5.5) return true;
-        }
-
-        return false;
-      });
-
-      if (localityMatches.length > 0) {
-        list = localityMatches;
-      }
-    }
-
-    // 3. Proximity / Rating Sort
-    if (userCoords) {
-      return [...list].sort((a, b) => {
-        const distA = calculateDistanceKm(userCoords.latitude, userCoords.longitude, a.latitude, a.longitude);
-        const distB = calculateDistanceKm(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude);
-        if (Math.abs(distA - distB) > 0.6) return distA - distB;
-        return (b.rating_avg || 4.2) - (a.rating_avg || 4.2);
-      });
-    }
-
-    // Default to sorting by highest rated spots across Delhi NCR (never hardcoding one area)
-    return [...list].sort((a, b) => (b.rating_avg || 4.2) - (a.rating_avg || 4.2));
-  }, [restaurants, restaurantFilter, userCoords, currentLocation]);
+  }, [locationRestaurants, restaurantFilter]);
 
   // Multi-Factor Live Hero Ticket for active location (Warm & Cream UI Card)
   const heroTicketData = useMemo(() => {
-    const candidatePool = areaRestaurants.length > 0 ? areaRestaurants : restaurants;
+    const candidatePool = locationRestaurants.length > 0 ? locationRestaurants : restaurants;
     return getLiveHeroTicket(candidatePool, menuItems, userCoords);
-  }, [areaRestaurants, restaurants, menuItems, userCoords]);
+  }, [locationRestaurants, restaurants, menuItems, userCoords]);
 
   const heroRestaurant = heroTicketData.restaurant;
   const heroTicketItems = heroTicketData.items;
 
   // Dishes available in this active location / top cafes
   const activeLocationDishes = useMemo(() => {
-    const topAreaRestIds = new Set(areaRestaurants.slice(0, 12).map((r) => r.id));
+    const topAreaRestIds = new Set(locationRestaurants.slice(0, 15).map((r) => r.id));
     const areaItems = menuItems.filter((i) => topAreaRestIds.has(i.restaurant_id));
-    const pool = areaItems.length >= 3 ? areaItems : (areaRestaurants.length > 0 && areaItems.length > 0 ? areaItems : menuItems);
+    const pool = areaItems.length >= 3 ? areaItems : (locationRestaurants.length > 0 && areaItems.length > 0 ? areaItems : menuItems);
 
     const gradients = [
       'linear-gradient(135deg, #FF6B4A 0%, #D8350F 100%)',
@@ -612,12 +576,13 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       {/* ========================================================
           1.7. CURATED EDITORIAL SHELVES (Spotlight, Budget, Late Night)
       ======================================================== */}
-      {restaurants.length > 0 && (
+      {locationRestaurants.length > 0 && (
         <CuratedPlaylistsSection
-          restaurants={restaurants}
+          restaurants={locationRestaurants}
           activeAreaName={activeAreaName}
           navigate={navigate}
           userCoords={userCoords}
+          isAllDelhi={currentLocation.isAllDelhi}
         />
       )}
 
@@ -653,29 +618,45 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
         </div>
 
         {/* Restaurant Cards Grid */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {areaRestaurants.slice(0, 6).map((restaurant) => {
-            const userDist = userCoords
-              ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, restaurant.latitude, restaurant.longitude)
-              : undefined;
+        {areaRestaurants.length > 0 ? (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {areaRestaurants.slice(0, 9).map((restaurant) => {
+              const userDist = userCoords
+                ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, restaurant.latitude, restaurant.longitude)
+                : undefined;
 
-            return (
-              <RestaurantCard
-                key={restaurant.id}
-                restaurant={restaurant}
-                navigate={navigate}
-                userDistanceKm={userDist}
-              />
-            );
-          })}
-        </div>
+              return (
+                <RestaurantCard
+                  key={restaurant.id}
+                  restaurant={restaurant}
+                  navigate={navigate}
+                  userDistanceKm={userDist}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-8 bg-stone-50 rounded-2xl p-8 text-center border border-[#E7E2DA]">
+            <p className="text-base font-bold text-stone-700">No {restaurantFilter} dining spots found in {activeAreaName}</p>
+            <p className="text-xs text-stone-500 mt-1">Try switching to &quot;All&quot; to see all verified menus in this area.</p>
+            <button
+              type="button"
+              onClick={() => setRestaurantFilter('All')}
+              className="btn mt-4 bg-[#D8350F] text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer"
+            >
+              Show all cafes in {activeAreaName}
+            </button>
+          </div>
+        )}
 
         <div className="mt-10 text-center">
           <button
             onClick={() => navigate('/restaurants')}
             className="btn bg-[#1C1917] text-white hover:bg-stone-800 min-h-[50px] px-8 rounded-full font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
           >
-            View all {restaurants.length || 770} verified counter menus in Delhi NCR →
+            {locationRestaurants.length > 0 && !currentLocation.isAllDelhi
+              ? `View all ${locationRestaurants.length} verified counter menus in ${activeAreaName} →`
+              : `View all ${restaurants.length || 770} verified counter menus in Delhi NCR →`}
           </button>
         </div>
       </section>

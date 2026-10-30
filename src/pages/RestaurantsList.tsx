@@ -27,7 +27,8 @@ import {
   getCachedUserCoordinates,
   saveCachedUserCoordinates,
   getNearestAreaName,
-  detectAreaContext
+  detectAreaContext,
+  getLocationSearchTokens
 } from '../lib/location';
 import { DELHI_ZONES, DELHI_LOCATIONS, DelhiLocation } from '../lib/delhiLocationsData';
 import { useToast } from '../components/Toast';
@@ -320,12 +321,11 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
 
       // 1. Locality Filter (When specific locality is chosen in Navbar)
       if (!currentLocation.isAllDelhi) {
-        const areaName = currentLocation.name.toLowerCase();
-        const shortName = (currentLocation.shortName || '').toLowerCase();
-        const rText = `${r.name} ${r.city} ${r.address_line1 || ''} ${r.landmark || ''} ${r.metro_station || ''}`.toLowerCase();
+        const tokens = getLocationSearchTokens(currentLocation);
+        const rText = `${r.name} ${r.city || ''} ${r.address_line1 || ''} ${r.landmark || ''} ${r.metro_station || ''}`.toLowerCase();
         
-        const matchesKeyword = rText.includes(shortName) || rText.includes(areaName);
-        const isNearbyLocality = typeof r.distanceKm === 'number' && r.distanceKm <= 6.0;
+        const matchesKeyword = tokens.length > 0 && tokens.some((t) => rText.includes(t));
+        const isNearbyLocality = typeof r.distanceKm === 'number' && r.distanceKm <= 7.0;
 
         if (!matchesKeyword && !isNearbyLocality) {
           return false;
@@ -337,7 +337,25 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
       if (sortBy === 'distance' && typeof a.distanceKm === 'number' && typeof b.distanceKm === 'number') {
         return a.distanceKm - b.distanceKm;
       }
-      if (sortBy === 'rating') return (b.rating_avg || 4.5) - (a.rating_avg || 4.5);
+      if (sortBy === 'rating') {
+        if (currentLocation.isAllDelhi) {
+          const countA = a.rating_count || 10;
+          const avgA = a.rating_avg || 4.2;
+          const bayesA = (countA * avgA + 25 * 4.3) / (countA + 25);
+
+          const countB = b.rating_count || 10;
+          const avgB = b.rating_avg || 4.2;
+          const bayesB = (countB * avgB + 25 * 4.3) / (countB + 25);
+
+          return bayesB - bayesA;
+        }
+
+        // When a specific locality is active and distance is available, prioritize closer spots
+        if (typeof a.distanceKm === 'number' && typeof b.distanceKm === 'number' && Math.abs(a.distanceKm - b.distanceKm) > 1.2) {
+          return a.distanceKm - b.distanceKm;
+        }
+        return (b.rating_avg || 4.5) - (a.rating_avg || 4.5);
+      }
       if (sortBy === 'cost_low') return (a.average_cost_for_two || 350) - (b.average_cost_for_two || 350);
       if (sortBy === 'cost_high') return (b.average_cost_for_two || 350) - (a.average_cost_for_two || 350);
       return 0;
