@@ -615,7 +615,12 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                 )}
                 {currentLocation.nearestMetro && (
                   <span className="text-[11px] text-stone-600 font-semibold flex items-center gap-1">
-                    <Train className="w-3 h-3 text-[#D8350F]" /> {currentLocation.nearestMetro}
+                    <Train className="w-3 h-3 text-[#D8350F]" />
+                    <span>
+                      {typeof currentLocation.nearestMetro === 'string'
+                        ? currentLocation.nearestMetro
+                        : `${currentLocation.nearestMetro.name} (${currentLocation.nearestMetro.walkingMinutes}m walk)`}
+                    </span>
                   </span>
                 )}
               </div>

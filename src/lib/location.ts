@@ -82,7 +82,10 @@ export interface NearestMetroInfo {
   name: string;
   line: string;
   distanceMeters: number;
+  distanceKm: number;
   walkingMinutes: number;
+  lineColor: string;
+  isInterchange?: boolean;
   label: string; // e.g. "Rohini West (Red Line) · 350 m (4 min walk)"
 }
 
@@ -101,11 +104,25 @@ export function getNearestMetroStation(lat: number, lon: number): NearestMetroIn
   const travel = calculateTravelEstimate(minDist);
   const lineLabel = closest.lines.join(' / ');
 
+  const primaryLine = closest.lines[0] || 'Yellow Line';
+  let lineColor = '#EAB308';
+  if (primaryLine.includes('Red')) lineColor = '#EF4444';
+  else if (primaryLine.includes('Yellow')) lineColor = '#EAB308';
+  else if (primaryLine.includes('Blue')) lineColor = '#3B82F6';
+  else if (primaryLine.includes('Pink')) lineColor = '#EC4899';
+  else if (primaryLine.includes('Magenta')) lineColor = '#A855F7';
+  else if (primaryLine.includes('Violet')) lineColor = '#8B5CF6';
+  else if (primaryLine.includes('Green')) lineColor = '#22C55E';
+  else if (primaryLine.includes('Airport') || primaryLine.includes('Orange')) lineColor = '#F97316';
+
   return {
     name: closest.name,
     line: lineLabel,
     distanceMeters: travel.distanceMeters,
+    distanceKm: travel.distanceKm,
     walkingMinutes: travel.walkingMinutes,
+    lineColor,
+    isInterchange: !!closest.isInterchange,
     label: `${closest.name} (${lineLabel}) · ${travel.distanceLabel} (${travel.walkingLabel})`,
   };
 }

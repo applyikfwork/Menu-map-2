@@ -6,7 +6,8 @@ import {
   GeoCoordinates, 
   getUserLocation, 
   resolveGroundLocation, 
-  getNearestMetroStation 
+  getNearestMetroStation,
+  NearestMetroInfo
 } from '../lib/location';
 import { useToast } from '../components/Toast';
 
@@ -18,13 +19,7 @@ export interface ActiveLocation {
   subLocality?: string; // e.g. "Sector 14"
   colony?: string; // e.g. "Rohini"
   zone?: string; // e.g. "North-West & NSP"
-  nearestMetro?: {
-    name: string;
-    line: string;
-    distanceMeters: number;
-    walkingMinutes: number;
-    label: string;
-  };
+  nearestMetro?: NearestMetroInfo;
   latitude?: number;
   longitude?: number;
   accuracyMeters?: number;
@@ -118,6 +113,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
       colony: loc.shortName || loc.name,
       zone: loc.zone,
       nearestMetro,
+      metroStation: nearestMetro.name,
       latitude: loc.latitude,
       longitude: loc.longitude,
       metroStation: loc.metroStation,
@@ -142,6 +138,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
       subLocality: pocket.subLocality,
       zone: pocket.zone,
       nearestMetro,
+      metroStation: nearestMetro.name,
       latitude: pocket.latitude,
       longitude: pocket.longitude,
       isAllDelhi: false,
@@ -185,6 +182,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
           subLocality: resolved.subLocality,
           zone: resolved.zone,
           nearestMetro: resolved.nearestMetro,
+          metroStation: resolved.nearestMetro?.name,
           latitude: coords.latitude,
           longitude: coords.longitude,
           accuracyMeters: resolved.accuracyMeters,

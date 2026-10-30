@@ -846,7 +846,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             {nearestMetro ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold shrink-0">
                 <Train className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{nearestMetro.station.name}</span>
+                <span>{nearestMetro.name}</span>
                 <span className="text-indigo-600 font-medium">({nearestMetro.walkingMinutes} min walk)</span>
               </div>
             ) : restaurant.metro_station ? (

@@ -158,7 +158,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
                 </div>
                 {currentLocation.nearestMetro && (
                   <div className="text-[11px] text-emerald-700 font-semibold mt-0.5 truncate">
-                    🚇 {currentLocation.nearestMetro.label}
+                    🚇 {typeof currentLocation.nearestMetro === 'string' ? currentLocation.nearestMetro : (currentLocation.nearestMetro.label || currentLocation.nearestMetro.name)}
                   </div>
                 )}
               </div>

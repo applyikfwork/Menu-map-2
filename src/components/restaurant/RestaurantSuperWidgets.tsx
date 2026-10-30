@@ -123,8 +123,8 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
         ? `${nearestMetroCalc.distanceMeters}m` 
         : `${nearestMetroCalc.distanceKm} km`;
       return {
-        station: nearestMetroCalc.station.name,
-        line: `${nearestMetroCalc.station.line} ${nearestMetroCalc.station.isInterchange ? '(Interchange)' : ''}`,
+        station: nearestMetroCalc.name,
+        line: `${nearestMetroCalc.line} ${nearestMetroCalc.isInterchange ? '(Interchange)' : ''}`,
         gate: `Direct Street Access (${distStr})`,
         rickshawFare: walkTime <= 5 
           ? `🚶 ${walkTime} min walk (${distStr})` 

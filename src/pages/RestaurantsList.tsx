@@ -1089,7 +1089,12 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                   )}
                   {currentLocation.nearestMetro && (
                     <span className="ml-2 inline-flex items-center gap-1 text-xs text-stone-500 font-semibold align-middle">
-                      <Train className="w-3 h-3 text-[#D8350F]" /> {currentLocation.nearestMetro}
+                      <Train className="w-3 h-3 text-[#D8350F]" />
+                      <span>
+                        {typeof currentLocation.nearestMetro === 'string'
+                          ? currentLocation.nearestMetro
+                          : `${currentLocation.nearestMetro.name} (${currentLocation.nearestMetro.walkingMinutes}m walk)`}
+                      </span>
                     </span>
                   )}
                 </>
