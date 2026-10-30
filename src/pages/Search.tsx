@@ -695,6 +695,7 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
                                 )
                               : undefined
                           }
+                          userCoords={userCoords}
                         />
                       ))}
                     </div>

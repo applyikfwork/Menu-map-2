@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Star, 
   MapPin, 
@@ -8,17 +8,25 @@ import {
   Check,
   MessageCircle,
   Train,
-  ArrowRight
+  ArrowRight,
+  Navigation
 } from 'lucide-react';
 import { Restaurant } from '../types/database';
 import { isBookmarked, toggleBookmark } from '../lib/bookmarks';
-import { formatDistance } from '../lib/location';
+import { 
+  formatDistance,
+  calculateTravelEstimate,
+  getGoogleMapsDirectionsUrl,
+  getNearestMetroStation,
+  GeoCoordinates
+} from '../lib/location';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   navigate?: (path: string) => void;
   onClick?: () => void;
   userDistanceKm?: number;
+  userCoords?: GeoCoordinates | null;
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
@@ -26,12 +34,39 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   navigate,
   onClick,
   userDistanceKm,
+  userCoords,
 }) => {
   const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
     setBookmarked(isBookmarked('restaurant', restaurant.id));
   }, [restaurant.id]);
+
+  const travel = typeof userDistanceKm === 'number' ? calculateTravelEstimate(userDistanceKm) : null;
+  const metroInfo = useMemo(() => {
+    if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
+      return getNearestMetroStation(restaurant.latitude, restaurant.longitude);
+    }
+    return null;
+  }, [restaurant.latitude, restaurant.longitude]);
+
+  const handleDirectionsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
+      const mode = travel?.primaryMode === 'walk' ? 'walking' : 'driving';
+      const url = getGoogleMapsDirectionsUrl(
+        restaurant.latitude,
+        restaurant.longitude,
+        restaurant.name,
+        userCoords,
+        mode
+      );
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      const query = encodeURIComponent(`${restaurant.name}, ${restaurant.address_line1 || ''}, ${restaurant.city}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const handleBookmarkToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -106,18 +141,26 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           </button>
         </div>
 
-        {/* Bottom Badges on Image */}
+        {/* Bottom Badges on Image (Real Ground Distance & Travel Time) */}
         <div className="absolute bottom-3 inset-x-3 flex items-center justify-between gap-2 text-white z-10">
           <div className="flex items-center gap-1.5 min-w-0">
-            {typeof userDistanceKm === 'number' ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-teal-300 truncate">
-                <MapPin className="w-3 h-3 text-[#2DD4BF] shrink-0" />
-                <span>{formatDistance(userDistanceKm)}</span>
-              </span>
-            ) : restaurant.metro_station ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-amber-300 truncate max-w-[180px]">
+            {travel ? (
+              <button
+                type="button"
+                onClick={handleDirectionsClick}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md text-xs font-bold text-teal-300 truncate transition-all cursor-pointer shadow-sm active:scale-95"
+                title="Click for turn-by-turn directions in Google Maps"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#2DD4BF] shrink-0" />
+                <span className="font-extrabold">{travel.distanceLabel}</span>
+                <span className="text-stone-300">·</span>
+                <span>{travel.primaryTimeLabel}</span>
+                <Navigation className="w-3 h-3 text-teal-300 ml-0.5 shrink-0" />
+              </button>
+            ) : metroInfo ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-amber-300 truncate max-w-[190px]">
                 <Train className="w-3 h-3 text-amber-300 shrink-0" />
-                <span className="truncate">{restaurant.metro_station.split('(')[0].trim()}</span>
+                <span className="truncate">{metroInfo.name}</span>
               </span>
             ) : (
               <span className="text-xs font-bold text-stone-200 drop-shadow-sm truncate max-w-[160px]">
@@ -143,6 +186,19 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               <Star className="w-3 h-3 fill-white" />
               {restaurant.rating_avg > 0 ? restaurant.rating_avg.toFixed(1) : '4.5'}
             </span>
+          </div>
+
+          {/* Real Ground Location & Landmark */}
+          <div className="mt-1 flex items-center gap-1.5 text-xs text-[#57534E] font-medium truncate">
+            <MapPin className="w-3 h-3 text-[#FF5A36] shrink-0" />
+            <span className="truncate">
+              {restaurant.landmark || restaurant.address_line1 || restaurant.city}
+            </span>
+            {metroInfo && (
+              <span className="hidden sm:inline text-stone-400 shrink-0">
+                · 🚇 {metroInfo.name}
+              </span>
+            )}
           </div>
 
           <p className="mt-1 text-xs text-[#78716C] line-clamp-1 font-medium">
@@ -177,6 +233,17 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Quick Directions Button */}
+            <button
+              type="button"
+              onClick={handleDirectionsClick}
+              className="w-8 h-8 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#D8350F] flex items-center justify-center transition-colors cursor-pointer"
+              title="Open turn-by-turn directions in Google Maps"
+              aria-label="Open Google Maps directions"
+            >
+              <Navigation className="w-4 h-4" />
+            </button>
+
             {(restaurant.whatsapp_number || restaurant.phone) && (
               <button
                 type="button"

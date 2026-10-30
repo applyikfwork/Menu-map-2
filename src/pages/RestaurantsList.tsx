@@ -57,7 +57,18 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   // Centralized Global Location from Navbar
   const { currentLocation, selectLocality, selectAllDelhi, openLocationModal } = useLocationContext();
 
+  const userCoords: GeoCoordinates | null = useMemo(() => {
+    if (typeof currentLocation.latitude === 'number' && typeof currentLocation.longitude === 'number') {
+      return {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      };
+    }
+    return null;
+  }, [currentLocation]);
+
   // Search & Filter state
+  const isNearbyMode = initialMode === 'near_me' || (typeof window !== 'undefined' && window.location.pathname === '/nearby');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [selectedCuisine, setSelectedCuisine] = useState<string>('all');
@@ -65,7 +76,9 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
   const [selectedDiet, setSelectedDiet] = useState<string>('all');
   const [selectedMeal, setSelectedMeal] = useState<string>('all');
   const [selectedAmenity, setSelectedAmenity] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'rating' | 'cost_low' | 'cost_high' | 'distance'>('rating');
+  const [sortBy, setSortBy] = useState<'rating' | 'cost_low' | 'cost_high' | 'distance'>(() =>
+    isNearbyMode || currentLocation.isLiveGps ? 'distance' : 'rating'
+  );
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -1068,6 +1081,17 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                     Showing {displayedRestaurants.length} verified counters
                   </strong>{' '}
                   in {currentLocation.name}
+                  {currentLocation.isLiveGps && (
+                    <span className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold align-middle">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Live GPS (±{currentLocation.accuracyMeters || 10}m)
+                    </span>
+                  )}
+                  {currentLocation.nearestMetro && (
+                    <span className="ml-2 inline-flex items-center gap-1 text-xs text-stone-500 font-semibold align-middle">
+                      <Train className="w-3 h-3 text-[#D8350F]" /> {currentLocation.nearestMetro}
+                    </span>
+                  )}
                 </>
               )}
             </p>
@@ -1152,6 +1176,7 @@ export const RestaurantsList: React.FC<RestaurantsListProps> = ({
                   restaurant={restaurant}
                   navigate={navigate}
                   userDistanceKm={restaurant.distanceKm}
+                  userCoords={userCoords}
                 />
               ))}
             </div>

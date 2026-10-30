@@ -38,7 +38,8 @@ import {
   Copy,
   ArrowLeft,
   Building2,
-  PhoneCall
+  PhoneCall,
+  Train
 } from 'lucide-react';
 import { 
   Restaurant, 
@@ -61,6 +62,14 @@ import { TableQrScannerModal } from '../components/restaurant/TableQrScannerModa
 import { updatePageSeo, buildRestaurantSchema } from '../lib/seo';
 import { useToast } from '../components/Toast';
 import { useDiscovery } from '../context/DiscoveryContext';
+import { useLocationContext } from '../context/LocationContext';
+import { 
+  calculateDistanceKm, 
+  calculateTravelEstimate, 
+  getGoogleMapsDirectionsUrl, 
+  getNearestMetroStation,
+  GeoCoordinates
+} from '../lib/location';
 import { RestaurantSuperWidgets } from '../components/restaurant/RestaurantSuperWidgets';
 import { HonestBillBox } from '../components/restaurant/HonestBillBox';
 import { CounterPulseTicker } from '../components/restaurant/CounterPulseTicker';
@@ -130,6 +139,7 @@ const formatOpeningHours = (hours?: any): string => {
 export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, navigate }) => {
   const { showToast } = useToast();
   const { engine, mealTimeInfo, trackView, calculateSavings } = useDiscovery();
+  const { currentLocation } = useLocationContext();
 
   const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
   const cachedInitialRest = engine.getRestaurantBySlug(cleanSlug) || engine.getRestaurantBySlug(slug) || null;
@@ -142,6 +152,55 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => cachedInitialItems);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [similarRestaurants, setSimilarRestaurants] = useState<Restaurant[]>([]);
+
+  // User Ground Location & Transit Discovery
+  const userCoords: GeoCoordinates | null = useMemo(() => {
+    if (typeof currentLocation.latitude === 'number' && typeof currentLocation.longitude === 'number') {
+      return {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      };
+    }
+    return null;
+  }, [currentLocation]);
+
+  const userDistanceKm = useMemo(() => {
+    if (!userCoords || !restaurant || typeof restaurant.latitude !== 'number' || typeof restaurant.longitude !== 'number') {
+      return null;
+    }
+    return calculateDistanceKm(userCoords.latitude, userCoords.longitude, restaurant.latitude, restaurant.longitude);
+  }, [userCoords, restaurant]);
+
+  const travelEstimate = useMemo(() => {
+    if (userDistanceKm === null) return null;
+    return calculateTravelEstimate(userDistanceKm);
+  }, [userDistanceKm]);
+
+  const nearestMetro = useMemo(() => {
+    if (!restaurant || typeof restaurant.latitude !== 'number' || typeof restaurant.longitude !== 'number') {
+      return null;
+    }
+    return getNearestMetroStation(restaurant.latitude, restaurant.longitude);
+  }, [restaurant]);
+
+  const directionsUrl = useMemo(() => {
+    if (!restaurant) return '';
+    if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
+      return getGoogleMapsDirectionsUrl(
+        restaurant.latitude,
+        restaurant.longitude,
+        restaurant.name,
+        userCoords,
+        travelEstimate?.primaryMode || 'driving'
+      );
+    }
+    if (restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5) {
+      return restaurant.google_maps_url;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${restaurant.name}, ${restaurant.address_line1 || ''}, ${restaurant.city || ''}`
+    )}`;
+  }, [restaurant, userCoords, travelEstimate]);
 
   // Navigation tab
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('all');
@@ -771,14 +830,31 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
               <MapPin className="w-4 h-4 text-[#FF5A36] shrink-0" />
               <span className="font-medium truncate">{restaurant.address_line1}, {restaurant.city}</span>
+              {restaurant.landmark && (
+                <span className="text-xs text-stone-500 font-normal hidden md:inline">({restaurant.landmark})</span>
+              )}
             </div>
 
-            {restaurant.metro_station && (
+            {travelEstimate && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold shrink-0">
+                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{travelEstimate.distanceLabel}</span>
+                <span className="text-emerald-700">· {travelEstimate.primaryTimeLabel}</span>
+              </div>
+            )}
+
+            {nearestMetro ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold shrink-0">
+                <Train className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{nearestMetro.station.name}</span>
+                <span className="text-indigo-600 font-medium">({nearestMetro.walkingMinutes} min walk)</span>
+              </div>
+            ) : restaurant.metro_station ? (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold shrink-0">
                 <span>🚇 {restaurant.metro_station}</span>
                 {restaurant.metro_gate && <span className="text-indigo-600 font-medium">Gate {restaurant.metro_gate}</span>}
               </div>
-            )}
+            ) : null}
 
             <button
               type="button"
@@ -821,19 +897,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
 
             {/* Directions Link */}
             <a
-              href={
-                restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5
-                  ? restaurant.google_maps_url
-                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      `${restaurant.name}, ${restaurant.address_line1}, ${restaurant.city}`
-                    )}`
-              }
+              href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn bg-white hover:bg-stone-100 text-[#1C1917] border border-stone-200 shadow-sm min-h-[48px] px-5 text-sm font-bold flex items-center gap-2 cursor-pointer"
+              className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white shadow-sm min-h-[48px] px-5 text-sm font-extrabold flex items-center gap-2 cursor-pointer"
             >
-              <Navigation className="w-4 h-4 text-rose-500" />
-              <span>Directions</span>
+              <Navigation className="w-4 h-4 text-emerald-200" />
+              <span>{travelEstimate ? `Navigate (${travelEstimate.primaryTimeLabel})` : 'Directions'}</span>
             </a>
 
             {/* Paper Flipbook Modal */}
@@ -2172,13 +2242,20 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {similarRestaurants.map((simRest) => (
-              <RestaurantCard
-                key={simRest.id}
-                restaurant={simRest}
-                onClick={() => navigate(`/${simRest.slug}`)}
-              />
-            ))}
+            {similarRestaurants.map((simRest) => {
+              const simDist = userCoords && typeof simRest.latitude === 'number' && typeof simRest.longitude === 'number'
+                ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, simRest.latitude, simRest.longitude)
+                : undefined;
+              return (
+                <RestaurantCard
+                  key={simRest.id}
+                  restaurant={simRest}
+                  onClick={() => navigate(`/${simRest.slug}`)}
+                  userDistanceKm={simDist}
+                  userCoords={userCoords}
+                />
+              );
+            })}
           </div>
         </section>
       )}

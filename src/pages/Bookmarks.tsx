@@ -6,6 +6,8 @@ import { getBookmarks, clearAllBookmarks } from '../lib/bookmarks';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { FoodItemCard } from '../components/FoodItemCard';
 import { useToast } from '../components/Toast';
+import { useLocationContext } from '../context/LocationContext';
+import { calculateDistanceKm, GeoCoordinates } from '../lib/location';
 
 interface BookmarksProps {
   navigate: (path: string) => void;
@@ -19,7 +21,9 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
   const [loading, setLoading] = useState(true);
 
   const [bookmarkedRestaurants, setBookmarkedRestaurants] = useState<Restaurant[]>([]);
-  const [bookmarkedDishes, setBookmarkedDishes] = useState<MenuItem[]>([]);  const [restaurantsMap, setRestaurantsMap] = useState<Record<string, Restaurant>>({});
+  const [bookmarkedDishes, setBookmarkedDishes] = useState<MenuItem[]>([]);
+  const { currentLocation } = useLocationContext();
+  const userCoords: GeoCoordinates | null = currentLocation.latitude && currentLocation.longitude ? { latitude: currentLocation.latitude, longitude: currentLocation.longitude } : null;  const [restaurantsMap, setRestaurantsMap] = useState<Record<string, Restaurant>>({});
 
   useEffect(() => {
     loadSavedData();
@@ -116,7 +120,7 @@ export const Bookmarks: React.FC<BookmarksProps> = ({ navigate }) => {
         bookmarkedRestaurants.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {bookmarkedRestaurants.map((r) => (
-              <RestaurantCard key={r.id} restaurant={r} navigate={navigate} />
+              <RestaurantCard key={r.id} restaurant={r} navigate={navigate} userCoords={userCoords} userDistanceKm={userCoords && typeof r.latitude === 'number' && typeof r.longitude === 'number' ? calculateDistanceKm(userCoords.latitude, userCoords.longitude, r.latitude, r.longitude) : undefined} />
             ))}
           </div>
         ) : (

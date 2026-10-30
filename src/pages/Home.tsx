@@ -600,6 +600,26 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Showing verified dining spots with 100% digital counter menus</span>
             </p>
+
+            {currentLocation.isLiveGps && (
+              <div className="mt-3 inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                </span>
+                <span>Live Ground GPS: Near {currentLocation.name}</span>
+                {currentLocation.accuracyMeters && (
+                  <span className="text-[11px] text-emerald-700 font-semibold bg-white/90 px-2 py-0.5 rounded-full border border-emerald-100">
+                    ±{currentLocation.accuracyMeters}m ground accuracy
+                  </span>
+                )}
+                {currentLocation.nearestMetro && (
+                  <span className="text-[11px] text-stone-600 font-semibold flex items-center gap-1">
+                    <Train className="w-3 h-3 text-[#D8350F]" /> {currentLocation.nearestMetro}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Filter Pills */}
@@ -631,6 +651,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                   restaurant={restaurant}
                   navigate={navigate}
                   userDistanceKm={userDist}
+                  userCoords={userCoords}
                 />
               );
             })}

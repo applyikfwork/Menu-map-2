@@ -21,6 +21,14 @@ import {
 } from 'lucide-react';
 import { Restaurant, MenuItem } from '../../types/database';
 import { useToast } from '../Toast';
+import { useLocationContext } from '../../context/LocationContext';
+import { 
+  calculateDistanceKm, 
+  calculateTravelEstimate, 
+  getGoogleMapsDirectionsUrl, 
+  getNearestMetroStation,
+  GeoCoordinates
+} from '../../lib/location';
 
 interface RestaurantSuperWidgetsProps {
   restaurant: Restaurant;
@@ -47,6 +55,56 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
   // Active Base Cost (uses cart total if cart > 0, otherwise restaurant average cost)
   const basePrice = cartTotalAmount > 0 ? cartTotalAmount : (restaurant.average_cost_for_two || 400);
 
+  // User Ground Location & Transit Discovery
+  const { currentLocation } = useLocationContext();
+
+  const userCoords = useMemo(() => {
+    if (typeof currentLocation.latitude === 'number' && typeof currentLocation.longitude === 'number') {
+      return {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      };
+    }
+    return null;
+  }, [currentLocation]);
+
+  const nearestMetroCalc = useMemo(() => {
+    if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
+      return getNearestMetroStation(restaurant.latitude, restaurant.longitude);
+    }
+    return null;
+  }, [restaurant.latitude, restaurant.longitude]);
+
+  const liveDistanceKm = useMemo(() => {
+    if (!userCoords || typeof restaurant.latitude !== 'number' || typeof restaurant.longitude !== 'number') {
+      return null;
+    }
+    return calculateDistanceKm(userCoords.latitude, userCoords.longitude, restaurant.latitude, restaurant.longitude);
+  }, [userCoords, restaurant.latitude, restaurant.longitude]);
+
+  const liveTravelEstimate = useMemo(() => {
+    if (liveDistanceKm === null) return null;
+    return calculateTravelEstimate(liveDistanceKm);
+  }, [liveDistanceKm]);
+
+  const navUrl = useMemo(() => {
+    if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
+      return getGoogleMapsDirectionsUrl(
+        restaurant.latitude,
+        restaurant.longitude,
+        restaurant.name,
+        userCoords,
+        liveTravelEstimate?.primaryMode || 'driving'
+      );
+    }
+    if (restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5) {
+      return restaurant.google_maps_url;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${restaurant.name}, ${restaurant.address_line1 || ''}, ${restaurant.city || ''}`
+    )}`;
+  }, [restaurant, userCoords, liveTravelEstimate]);
+
   // Delivery Markup Calculation Formula
   // Food aggregators markup dish prices by ~25-30% + packaging fee ₹35 + platform fee ₹10 + delivery/surge fee ₹50
   const deliveryFoodMarkup = Math.round(basePrice * 0.28);
@@ -59,6 +117,22 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
 
   // Metro & Transit Context
   const metroDetails = useMemo(() => {
+    if (nearestMetroCalc) {
+      const walkTime = nearestMetroCalc.walkingMinutes;
+      const distStr = nearestMetroCalc.distanceMeters < 1000 
+        ? `${nearestMetroCalc.distanceMeters}m` 
+        : `${nearestMetroCalc.distanceKm} km`;
+      return {
+        station: nearestMetroCalc.station.name,
+        line: `${nearestMetroCalc.station.line} ${nearestMetroCalc.station.isInterchange ? '(Interchange)' : ''}`,
+        gate: `Direct Street Access (${distStr})`,
+        rickshawFare: walkTime <= 5 
+          ? `🚶 ${walkTime} min walk (${distStr})` 
+          : `₹10-15 Shared E-Rickshaw (${walkTime} min walk / ${distStr})`,
+        lineColor: nearestMetroCalc.lineColor,
+      };
+    }
+
     const rawLandmark = restaurant.landmark || '';
     const city = restaurant.city_area || restaurant.city || 'Delhi';
     
@@ -67,6 +141,7 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
     let line = 'Yellow Line';
     let gate = 'Exit Gate 2 or 3';
     let rickshawFare = '₹10 Shared E-Rickshaw (3 mins)';
+    let lineColor = '#EAB308';
 
     if (city.toLowerCase().includes('hudson') || city.toLowerCase().includes('north campus')) {
       station = 'GTB Nagar Metro Station';
@@ -95,8 +170,8 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
       rickshawFare = '₹20 Auto to M-Block Market';
     }
 
-    return { station, line, gate, rickshawFare };
-  }, [restaurant]);
+    return { station, line, gate, rickshawFare, lineColor: lineColor || '#EAB308' };
+  }, [restaurant, nearestMetroCalc]);
 
   // Vibe Tags
   const vibeBadges = useMemo(() => {
@@ -413,6 +488,33 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
           </span>
         </div>
 
+        {liveTravelEstimate && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-emerald-600 text-white font-bold text-sm shrink-0">
+                📍
+              </span>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                  Live Ground Route from {currentLocation.name}
+                </div>
+                <div className="text-sm font-black text-emerald-950">
+                  {liveTravelEstimate.distanceLabel} · {liveTravelEstimate.primaryTimeLabel}
+                </div>
+              </div>
+            </div>
+            <a
+              href={navUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn bg-emerald-700 hover:bg-emerald-800 text-white min-h-[38px] px-4 text-xs font-extrabold flex items-center gap-1.5 shadow-sm rounded-xl"
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              Start Live Navigation &rarr;
+            </a>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
           <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA]">
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-stone-500 block mb-1">
@@ -442,19 +544,13 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
         {/* 1-Tap Directions & Ride Buttons */}
         <div className="flex flex-wrap gap-2.5 pt-2">
           <a
-            href={
-              restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5
-                ? restaurant.google_maps_url
-                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    `${restaurant.name}, ${restaurant.address_line1}, ${restaurant.city}`
-                  )}`
-            }
+            href={navUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white min-h-[44px] px-5 text-xs font-bold flex items-center gap-1.5 shadow-sm"
           >
             <Navigation className="w-3.5 h-3.5" />
-            Open in Google Maps
+            Turn-by-Turn in Google Maps {liveTravelEstimate ? `(${liveTravelEstimate.primaryTimeLabel})` : ''}
           </a>
 
           <a

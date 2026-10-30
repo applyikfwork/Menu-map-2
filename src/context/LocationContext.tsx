@@ -1,14 +1,33 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { DelhiLocation, DELHI_LOCATIONS } from '../lib/delhiLocationsData';
-import { calculateDistanceKm, GeoCoordinates, getUserLocation } from '../lib/location';
+import { DelhiGroundPocket } from '../lib/delhiGroundData';
+import { 
+  calculateDistanceKm, 
+  GeoCoordinates, 
+  getUserLocation, 
+  resolveGroundLocation, 
+  getNearestMetroStation 
+} from '../lib/location';
 import { useToast } from '../components/Toast';
 
 export interface ActiveLocation {
-  id: string; // 'all' or locality id
-  name: string; // 'All Delhi NCR' or 'Pitampura'
-  shortName: string; // 'All Delhi' or 'Pitampura'
+  id: string; // 'all' or locality id or 'ground-gps'
+  name: string; // e.g. "Sector 14, Rohini" or "All Delhi NCR"
+  shortName: string; // e.g. "Rohini Sec 14" or "All Delhi"
+  groundAddress?: string; // e.g. "Sector 14, Rohini, North-West Delhi"
+  subLocality?: string; // e.g. "Sector 14"
+  colony?: string; // e.g. "Rohini"
+  zone?: string; // e.g. "North-West & NSP"
+  nearestMetro?: {
+    name: string;
+    line: string;
+    distanceMeters: number;
+    walkingMinutes: number;
+    label: string;
+  };
   latitude?: number;
   longitude?: number;
+  accuracyMeters?: number;
   metroStation?: string;
   isAllDelhi: boolean;
   isLiveGps: boolean;
@@ -25,6 +44,7 @@ export const ALL_DELHI_LOCATION: ActiveLocation = {
 interface LocationContextType {
   currentLocation: ActiveLocation;
   selectLocality: (loc: DelhiLocation) => void;
+  selectGroundPocket: (pocket: DelhiGroundPocket) => void;
   selectAllDelhi: () => void;
   detectLiveGps: (silent?: boolean) => Promise<void>;
   isLocating: boolean;
@@ -89,10 +109,15 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // User manually selects a locality: user choice is king!
   const selectLocality = (loc: DelhiLocation) => {
+    const nearestMetro = getNearestMetroStation(loc.latitude, loc.longitude);
     const next: ActiveLocation = {
       id: loc.id,
       name: loc.name,
       shortName: loc.shortName || loc.name,
+      groundAddress: `${loc.name}, ${loc.zone}`,
+      colony: loc.shortName || loc.name,
+      zone: loc.zone,
+      nearestMetro,
       latitude: loc.latitude,
       longitude: loc.longitude,
       metroStation: loc.metroStation,
@@ -105,6 +130,29 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     showToast(`Location set to ${loc.shortName || loc.name}`, 'success');
   };
 
+  // User manually selects a granular ground pocket (sector, colony, market)
+  const selectGroundPocket = (pocket: DelhiGroundPocket) => {
+    const nearestMetro = getNearestMetroStation(pocket.latitude, pocket.longitude);
+    const next: ActiveLocation = {
+      id: pocket.id,
+      name: pocket.name,
+      shortName: pocket.shortName,
+      groundAddress: `${pocket.name}, ${pocket.zone}`,
+      colony: pocket.colony,
+      subLocality: pocket.subLocality,
+      zone: pocket.zone,
+      nearestMetro,
+      latitude: pocket.latitude,
+      longitude: pocket.longitude,
+      isAllDelhi: false,
+      isLiveGps: false,
+    };
+
+    setCurrentLocation(next);
+    setIsLocationModalOpen(false);
+    showToast(`Ground location set to ${pocket.name}`, 'success');
+  };
+
   // User selects All Delhi NCR
   const selectAllDelhi = () => {
     setCurrentLocation(ALL_DELHI_LOCATION);
@@ -112,14 +160,16 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     showToast('Showing all verified cafes across Delhi NCR', 'info');
   };
 
-  // Detect live GPS
+  // Detect live GPS with real ground resolution
   const detectLiveGps = async (silent = false) => {
     setIsLocating(true);
     try {
       const coords = await getUserLocation();
-      const { loc, distKm } = findClosestLocality(coords);
+      const resolved = await resolveGroundLocation(coords);
 
-      if (distKm > 40) {
+      // Distance from central Delhi (Connaught Place reference)
+      const distFromDelhi = calculateDistanceKm(coords.latitude, coords.longitude, 28.6139, 77.2090);
+      if (distFromDelhi > 60) {
         // User is outside Delhi NCR
         setCurrentLocation(ALL_DELHI_LOCATION);
         if (!silent) {
@@ -127,18 +177,24 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
       } else {
         const next: ActiveLocation = {
-          id: loc.id,
-          name: loc.name,
-          shortName: loc.shortName || loc.name,
+          id: resolved.id,
+          name: resolved.name,
+          shortName: resolved.shortName,
+          groundAddress: resolved.groundAddress,
+          colony: resolved.colony,
+          subLocality: resolved.subLocality,
+          zone: resolved.zone,
+          nearestMetro: resolved.nearestMetro,
           latitude: coords.latitude,
           longitude: coords.longitude,
-          metroStation: loc.metroStation,
+          accuracyMeters: resolved.accuracyMeters,
           isAllDelhi: false,
           isLiveGps: true,
         };
         setCurrentLocation(next);
         if (!silent) {
-          showToast(`Detected nearest neighborhood: ${loc.shortName || loc.name}`, 'success');
+          const accStr = resolved.accuracyMeters ? ` (±${resolved.accuracyMeters}m accuracy)` : '';
+          showToast(`🎯 Ground Location: ${resolved.shortName}${accStr}`, 'success');
         }
       }
       setIsLocationModalOpen(false);
@@ -184,6 +240,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     () => ({
       currentLocation,
       selectLocality,
+      selectGroundPocket,
       selectAllDelhi,
       detectLiveGps,
       isLocating,
