@@ -103,6 +103,42 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                 >
                   Saved Bookmarks
                 </a>
+                <a
+                  href="/discovery"
+                  onClick={(e) => { e.preventDefault(); navigate('/discovery'); }}
+                  className="nl text-left font-semibold text-[#5EEAD4] hover:text-[#2DD4BF] flex items-center gap-1.5"
+                >
+                  <span>Student Discovery</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#0F766E]/40 text-[#5EEAD4] font-black uppercase">Hub</span>
+                </a>
+                <a
+                  href="/discovery/competitions"
+                  onClick={(e) => { e.preventDefault(); navigate('/discovery/competitions'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
+                >
+                  Competitions & Challenges
+                </a>
+                <a
+                  href="/discovery/food-discoveries"
+                  onClick={(e) => { e.preventDefault(); navigate('/discovery/food-discoveries'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
+                >
+                  Hidden Food Gems
+                </a>
+                <a
+                  href="/discovery/trails"
+                  onClick={(e) => { e.preventDefault(); navigate('/discovery/trails'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
+                >
+                  Curated Food Trails
+                </a>
+                <a
+                  href="/discovery/hall-of-fame"
+                  onClick={(e) => { e.preventDefault(); navigate('/discovery/hall-of-fame'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B]"
+                >
+                  Hall of Fame
+                </a>
               </div>
             </div>
 

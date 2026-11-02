@@ -29,6 +29,24 @@ const ListCafe = lazyWithRetry(() => import('./pages/ListCafe'), 'ListCafe', 'Li
 const ClaimVerify = lazyWithRetry(() => import('./pages/ClaimVerify'), 'ClaimVerify', 'ClaimVerify');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound', 'NotFound');
 
+// Discovery Ecosystem Lazy Routes
+const DiscoveryHome = lazyWithRetry(() => import('./discovery/pages/DiscoveryHome'), 'DiscoveryHome', 'DiscoveryHome');
+const CompetitionsList = lazyWithRetry(() => import('./discovery/pages/CompetitionsList'), 'CompetitionsList', 'CompetitionsList');
+const CompetitionDetail = lazyWithRetry(() => import('./discovery/pages/CompetitionDetail'), 'CompetitionDetail', 'CompetitionDetail');
+const StudentCreations = lazyWithRetry(() => import('./discovery/pages/StudentCreations'), 'StudentCreations', 'StudentCreations');
+const ProjectDetail = lazyWithRetry(() => import('./discovery/pages/ProjectDetail'), 'ProjectDetail', 'ProjectDetail');
+const FoodTrailsList = lazyWithRetry(() => import('./discovery/pages/FoodTrailsList'), 'FoodTrailsList', 'FoodTrailsList');
+const FoodDiscoveriesList = lazyWithRetry(() => import('./discovery/pages/FoodDiscoveriesList'), 'FoodDiscoveriesList', 'FoodDiscoveriesList');
+const ContributorsList = lazyWithRetry(() => import('./discovery/pages/ContributorsList'), 'ContributorsList', 'ContributorsList');
+const ContributorProfile = lazyWithRetry(() => import('./discovery/pages/ContributorProfile'), 'ContributorProfile', 'ContributorProfile');
+const HallOfFame = lazyWithRetry(() => import('./discovery/pages/HallOfFame'), 'HallOfFame', 'HallOfFame');
+const CertificateVerification = lazyWithRetry(() => import('./discovery/pages/CertificateVerification'), 'CertificateVerification', 'CertificateVerification');
+const StudentAuth = lazyWithRetry(() => import('./discovery/pages/StudentAuth'), 'StudentAuth', 'StudentAuth');
+const StudentDashboard = lazyWithRetry(() => import('./discovery/pages/StudentDashboard'), 'StudentDashboard', 'StudentDashboard');
+const DiscoveryAdminPanel = lazyWithRetry(() => import('./discovery/pages/DiscoveryAdminPanel'), 'DiscoveryAdminPanel', 'DiscoveryAdminPanel');
+
+import { StudentAuthProvider } from './discovery/context/StudentAuthContext';
+
 import { ADMIN_EMAIL, getCurrentAdminSession } from './lib/supabase';
 
 // Local stub for platform analytics
@@ -188,12 +206,70 @@ function AppContent() {
       return <ClaimVerify navigate={navigate} searchParams={searchParams} />;
     }
 
+    // 11.6. Menu Maps Discovery Ecosystem
+    if (normPath === '/discovery') {
+      return <DiscoveryHome navigate={navigate} />;
+    }
+    if (normPath === '/discovery/competitions') {
+      return <CompetitionsList navigate={navigate} />;
+    }
+    if (normPath.startsWith('/discovery/competitions/')) {
+      const slug = normPath.slice('/discovery/competitions/'.length).split('/')[0].trim();
+      return <CompetitionDetail slug={slug} navigate={navigate} />;
+    }
+    if (normPath === '/discovery/creations') {
+      return <StudentCreations navigate={navigate} />;
+    }
+    if (normPath.startsWith('/discovery/creations/')) {
+      const slug = normPath.slice('/discovery/creations/'.length).split('/')[0].trim();
+      return <ProjectDetail slug={slug} navigate={navigate} />;
+    }
+    if (normPath === '/discovery/trails') {
+      return <FoodTrailsList navigate={navigate} />;
+    }
+    if (normPath === '/discovery/food-discoveries') {
+      return <FoodDiscoveriesList navigate={navigate} />;
+    }
+    if (normPath === '/discovery/contributors') {
+      return <ContributorsList navigate={navigate} />;
+    }
+    if (normPath.startsWith('/discovery/contributors/')) {
+      const slug = normPath.slice('/discovery/contributors/'.length).split('/')[0].trim();
+      return <ContributorProfile slug={slug} navigate={navigate} />;
+    }
+    if (normPath === '/discovery/hall-of-fame') {
+      return <HallOfFame navigate={navigate} />;
+    }
+    if (normPath === '/discovery/certificates' || normPath.startsWith('/discovery/certificates/')) {
+      const certId = normPath.startsWith('/discovery/certificates/')
+        ? normPath.slice('/discovery/certificates/'.length).split('/')[0].trim()
+        : (searchParams.get('id') || '');
+      return <CertificateVerification certificateId={certId} navigate={navigate} />;
+    }
+    if (normPath === '/discovery/login') {
+      return <StudentAuth initialMode="login" navigate={navigate} />;
+    }
+    if (normPath === '/discovery/register') {
+      return <StudentAuth initialMode="register" navigate={navigate} />;
+    }
+    if (normPath === '/discovery/dashboard') {
+      return (
+        <StudentDashboard
+          navigate={navigate}
+          initialTab={searchParams.get('tab') || 'overview'}
+        />
+      );
+    }
+    if (normPath === '/discovery/admin') {
+      return <DiscoveryAdminPanel navigate={navigate} />;
+    }
+
     // 12. Direct Clean Restaurant Slug Route: /:slug (e.g. /the-pizza-family)
     const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
       'restaurants', 'restaurant', 'food', 'dish', 'dishes', 'dish-radar', 'cravings', 'nearby', 'bookmarks', 'about', 'contact',
-      'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
+      'terms', 'privacy', 'claim-verify', 'discovery', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
     ]);
 
@@ -239,10 +315,12 @@ export default function App() {
     <ErrorBoundary>
       <ToastProvider>
         <LocationProvider>
+          <StudentAuthProvider>
           <DiscoveryProvider>
             <AppContent />
             <Analytics />
           </DiscoveryProvider>
+          </StudentAuthProvider>
         </LocationProvider>
       </ToastProvider>
     </ErrorBoundary>

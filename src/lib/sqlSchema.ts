@@ -594,3 +594,324 @@ CREATE POLICY "Public and Admin full access on restaurant_owners" ON public.rest
 
 
 export const ICONIC_AREAS_SQL_FEATURE = `-- Feature removed: Iconic Area Guides`;
+
+// ========================================================
+// MENU MAPS DISCOVERY ECOSYSTEM SQL SCHEMA
+// ========================================================
+export const DISCOVERY_SQL_SCHEMA = `-- ========================================================
+-- MENU MAPS DISCOVERY ECOSYSTEM SCHEMA
+-- Covers student profiles, competitions, teams, submissions,
+-- discoveries, trails, projects, credits, achievements & certs
+-- ========================================================
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. Student Profiles
+CREATE TABLE IF NOT EXISTS public.discovery_profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT,
+  full_name TEXT NOT NULL,
+  college_name TEXT NOT NULL,
+  programme TEXT NOT NULL,
+  study_year TEXT NOT NULL,
+  city TEXT DEFAULT 'Delhi NCR',
+  avatar_url TEXT,
+  bio TEXT,
+  contributor_level TEXT DEFAULT 'Explorer',
+  contributor_title TEXT DEFAULT 'Community Explorer',
+  total_credits INTEGER DEFAULT 0,
+  total_contributions_count INTEGER DEFAULT 0,
+  published_projects_count INTEGER DEFAULT 0,
+  competitions_count INTEGER DEFAULT 0,
+  portfolio_slug TEXT UNIQUE,
+  is_public_profile BOOLEAN DEFAULT TRUE,
+  public_consent_attribution BOOLEAN DEFAULT TRUE,
+  public_consent_college BOOLEAN DEFAULT TRUE,
+  is_suspended BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Discovery Competitions
+CREATE TABLE IF NOT EXISTS public.discovery_competitions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  short_description TEXT NOT NULL,
+  description TEXT NOT NULL,
+  cover_image_url TEXT NOT NULL,
+  category TEXT NOT NULL,
+  format TEXT DEFAULT 'Online',
+  is_team_competition BOOLEAN DEFAULT FALSE,
+  min_team_size INTEGER DEFAULT 1,
+  max_team_size INTEGER DEFAULT 1,
+  eligibility TEXT NOT NULL,
+  allowed_colleges JSONB DEFAULT '[]'::jsonb,
+  allowed_locations JSONB DEFAULT '[]'::jsonb,
+  registration_start_date TIMESTAMPTZ NOT NULL,
+  registration_end_date TIMESTAMPTZ NOT NULL,
+  competition_start_date TIMESTAMPTZ NOT NULL,
+  competition_end_date TIMESTAMPTZ NOT NULL,
+  submission_deadline TIMESTAMPTZ NOT NULL,
+  rules JSONB DEFAULT '[]'::jsonb,
+  tasks_instructions JSONB DEFAULT '[]'::jsonb,
+  required_deliverables JSONB DEFAULT '[]'::jsonb,
+  allowed_file_formats JSONB DEFAULT '["PDF", "PNG", "JPG", "Figma Link"]'::jsonb,
+  max_file_size_mb INTEGER DEFAULT 25,
+  judging_criteria JSONB DEFAULT '[]'::jsonb,
+  rewards JSONB DEFAULT '[]'::jsonb,
+  certificate_eligibility TEXT,
+  faqs JSONB DEFAULT '[]'::jsonb,
+  contact_info TEXT,
+  terms_and_conditions JSONB DEFAULT '[]'::jsonb,
+  status TEXT DEFAULT 'Upcoming',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Competition Registrations & Teams
+CREATE TABLE IF NOT EXISTS public.competition_registrations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  competition_id UUID REFERENCES public.discovery_competitions(id) ON DELETE CASCADE,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  is_team BOOLEAN DEFAULT FALSE,
+  team_id UUID,
+  status TEXT DEFAULT 'Registered',
+  registration_notes TEXT,
+  registered_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.competition_teams (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  competition_id UUID REFERENCES public.discovery_competitions(id) ON DELETE CASCADE,
+  team_name TEXT NOT NULL,
+  team_code TEXT UNIQUE NOT NULL,
+  leader_student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.competition_team_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  team_id UUID REFERENCES public.competition_teams(id) ON DELETE CASCADE,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  student_name TEXT NOT NULL,
+  student_email TEXT NOT NULL,
+  college_name TEXT,
+  role TEXT DEFAULT 'Member',
+  status TEXT DEFAULT 'Accepted',
+  joined_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Submissions
+CREATE TABLE IF NOT EXISTS public.competition_submissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  reference_id TEXT UNIQUE NOT NULL,
+  competition_id UUID REFERENCES public.discovery_competitions(id) ON DELETE CASCADE,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  team_id UUID REFERENCES public.competition_teams(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  project_summary TEXT,
+  attachments JSONB DEFAULT '[]'::jsonb,
+  external_prototype_url TEXT,
+  external_video_url TEXT,
+  external_presentation_url TEXT,
+  status TEXT DEFAULT 'Submitted',
+  internal_admin_notes TEXT,
+  student_visible_feedback TEXT,
+  submitted_at TIMESTAMPTZ DEFAULT NOW(),
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by TEXT,
+  is_published_to_gallery BOOLEAN DEFAULT FALSE
+);
+
+-- 5. Food Discoveries (Verification Engine)
+CREATE TABLE IF NOT EXISTS public.food_discoveries (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  contributor_name TEXT NOT NULL,
+  food_place_name TEXT NOT NULL,
+  neighbourhood TEXT NOT NULL,
+  full_address TEXT NOT NULL,
+  latitude NUMERIC,
+  longitude NUMERIC,
+  category TEXT NOT NULL,
+  featured_dish TEXT NOT NULL,
+  counter_price_observed NUMERIC,
+  price_notes TEXT,
+  photo_urls JSONB DEFAULT '[]'::jsonb,
+  evidence_description TEXT,
+  verification_status TEXT DEFAULT 'Student Submitted',
+  verified_counter_rate NUMERIC,
+  verified_by TEXT,
+  verification_date TIMESTAMPTZ,
+  verification_notes TEXT,
+  is_promoted_to_main_directory BOOLEAN DEFAULT FALSE,
+  public_attribution_preference TEXT DEFAULT 'With Name',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. Student Food Trails
+CREATE TABLE IF NOT EXISTS public.student_food_trails (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  neighbourhood TEXT NOT NULL,
+  description TEXT NOT NULL,
+  cover_image_url TEXT NOT NULL,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  creator_name TEXT NOT NULL,
+  creator_college TEXT,
+  total_duration_estimate TEXT DEFAULT '2 hours',
+  budget_estimate_for_one NUMERIC DEFAULT 250,
+  stops JSONB DEFAULT '[]'::jsonb,
+  status TEXT DEFAULT 'Approved',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. Student Creations (Public Gallery)
+CREATE TABLE IF NOT EXISTS public.student_projects (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  category TEXT NOT NULL,
+  short_description TEXT NOT NULL,
+  description TEXT NOT NULL,
+  cover_image_url TEXT NOT NULL,
+  media_urls JSONB DEFAULT '[]'::jsonb,
+  prototype_url TEXT,
+  video_url TEXT,
+  presentation_url TEXT,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  creator_name TEXT NOT NULL,
+  creator_college TEXT,
+  competition_id UUID REFERENCES public.discovery_competitions(id) ON DELETE SET NULL,
+  competition_title TEXT,
+  credit_awarded TEXT,
+  published_date TIMESTAMPTZ DEFAULT NOW(),
+  views_count INTEGER DEFAULT 0,
+  likes_count INTEGER DEFAULT 0
+);
+
+-- 8. Contribution Credits
+CREATE TABLE IF NOT EXISTS public.contribution_credits (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  category TEXT NOT NULL,
+  points INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  awarded_by TEXT DEFAULT 'Admin',
+  reference_type TEXT,
+  reference_id TEXT,
+  awarded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. Achievements & Passport Stamps
+CREATE TABLE IF NOT EXISTS public.student_achievements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  stamp_key TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  icon TEXT DEFAULT '🏆',
+  badge_color TEXT DEFAULT '#0F766E',
+  earned_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 10. Hall of Fame
+CREATE TABLE IF NOT EXISTS public.discovery_hall_of_fame (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  competition_id UUID REFERENCES public.discovery_competitions(id) ON DELETE CASCADE,
+  competition_title TEXT NOT NULL,
+  award_rank TEXT NOT NULL,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  winner_name TEXT NOT NULL,
+  college_name TEXT,
+  team_name TEXT,
+  project_title TEXT NOT NULL,
+  project_id UUID REFERENCES public.student_projects(id) ON DELETE SET NULL,
+  citation TEXT,
+  awarded_at TIMESTAMPTZ DEFAULT NOW(),
+  year INTEGER DEFAULT 2026
+);
+
+-- 11. Certificates
+CREATE TABLE IF NOT EXISTS public.discovery_certificates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  certificate_number TEXT UNIQUE NOT NULL,
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  student_name TEXT NOT NULL,
+  college_name TEXT,
+  activity_title TEXT NOT NULL,
+  certificate_type TEXT NOT NULL,
+  issue_date TIMESTAMPTZ DEFAULT NOW(),
+  issuing_body TEXT DEFAULT 'Menu Maps Delhi NCR',
+  signature_title TEXT DEFAULT 'Head of Community & Platform Architecture',
+  verification_url TEXT NOT NULL,
+  is_valid BOOLEAN DEFAULT TRUE
+);
+
+-- 12. Announcements
+CREATE TABLE IF NOT EXISTS public.discovery_announcements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  body TEXT NOT NULL,
+  opportunity_type TEXT DEFAULT 'Announcement',
+  action_label TEXT,
+  action_url TEXT,
+  is_pinned BOOLEAN DEFAULT FALSE,
+  published_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 13. Notifications
+CREATE TABLE IF NOT EXISTS public.discovery_notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id UUID REFERENCES public.discovery_profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  link_url TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 14. Indexes
+CREATE INDEX IF NOT EXISTS idx_discovery_profiles_email ON public.discovery_profiles (LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_discovery_profiles_slug ON public.discovery_profiles (portfolio_slug);
+CREATE INDEX IF NOT EXISTS idx_discovery_comp_slug ON public.discovery_competitions (slug);
+CREATE INDEX IF NOT EXISTS idx_discovery_comp_status ON public.discovery_competitions (status);
+CREATE INDEX IF NOT EXISTS idx_comp_sub_student ON public.competition_submissions (student_id);
+CREATE INDEX IF NOT EXISTS idx_comp_sub_comp ON public.competition_submissions (competition_id);
+CREATE INDEX IF NOT EXISTS idx_food_disc_status ON public.food_discoveries (verification_status);
+CREATE INDEX IF NOT EXISTS idx_certs_number ON public.discovery_certificates (certificate_number);
+
+-- 15. RLS Policies
+ALTER TABLE public.discovery_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discovery_competitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.competition_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.competition_teams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.competition_team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.competition_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.food_discoveries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_food_trails ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contribution_credits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_achievements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discovery_hall_of_fame ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discovery_certificates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discovery_announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discovery_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Allow public read of published resources and admin/user full management
+CREATE POLICY "Public read on discovery_competitions" ON public.discovery_competitions FOR SELECT USING (TRUE);
+CREATE POLICY "Public read on student_projects" ON public.student_projects FOR SELECT USING (TRUE);
+CREATE POLICY "Public read on student_food_trails" ON public.student_food_trails FOR SELECT USING (TRUE);
+CREATE POLICY "Public read on discovery_hall_of_fame" ON public.discovery_hall_of_fame FOR SELECT USING (TRUE);
+CREATE POLICY "Public read on discovery_certificates" ON public.discovery_certificates FOR SELECT USING (TRUE);
+CREATE POLICY "Public read on discovery_announcements" ON public.discovery_announcements FOR SELECT USING (TRUE);
+CREATE POLICY "Public read on approved food discoveries" ON public.food_discoveries FOR SELECT USING (verification_status = 'Verified by Menu Maps');
+CREATE POLICY "Full access on discovery tables" ON public.discovery_profiles FOR ALL USING (TRUE) WITH CHECK (TRUE);
+`;
