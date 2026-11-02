@@ -188,12 +188,18 @@ function AppContent() {
       return <ClaimVerify navigate={navigate} searchParams={searchParams} />;
     }
 
+    // 11.6. Safe redirect for legacy discovery routes
+    if (normPath.startsWith('/discovery')) {
+      navigate('/');
+      return null;
+    }
+
     // 12. Direct Clean Restaurant Slug Route: /:slug (e.g. /the-pizza-family)
     const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
       'restaurants', 'restaurant', 'food', 'dish', 'dishes', 'dish-radar', 'cravings', 'nearby', 'bookmarks', 'about', 'contact',
-      'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
+      'terms', 'privacy', 'claim-verify', 'discovery', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
     ]);
 
