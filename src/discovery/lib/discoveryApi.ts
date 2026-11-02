@@ -5,7 +5,7 @@
  * Features dual-persistence: Remote Supabase PostgreSQL + Local Storage synchronization.
  */
 
-import { getSupabaseClient } from '../../lib/supabase';
+import { getSupabaseClient, getMasterSeedData } from '../../lib/supabase';
 import {
   DiscoveryCompetition,
   CompetitionRegistration,
@@ -21,7 +21,16 @@ import {
   DiscoveryAnnouncement,
   DiscoveryNotification,
   StudentProfile,
+  MarketFoodGuide,
+  FoodStoryItem,
+  BudgetFoodDish,
 } from '../types/discovery';
+import {
+  OFFICIAL_APPROVED_DISCOVERIES,
+  OFFICIAL_MARKET_GUIDES,
+  OFFICIAL_FOOD_TRAILS,
+  OFFICIAL_FOOD_STORIES,
+} from './discoveryContentSeed';
 
 const PREFIX = 'menumap_tbl_';
 
@@ -761,9 +770,19 @@ export const discoveryApi = {
       } catch (e) {}
     }
 
-    return getLocalTable<FoodDiscoveryItem>('food_discoveries').filter(
-      (d) => d.verification_status === 'Verified by Menu Maps'
-    );
+    let locals = getLocalTable<FoodDiscoveryItem>('food_discoveries');
+    let needsSave = false;
+    for (const official of OFFICIAL_APPROVED_DISCOVERIES) {
+      if (!locals.some((d) => d.id === official.id || d.food_place_name === official.food_place_name)) {
+        locals.push(official);
+        needsSave = true;
+      }
+    }
+    if (needsSave) {
+      saveLocalTable('food_discoveries', locals);
+    }
+
+    return locals.filter((d) => d.verification_status === 'Verified by Menu Maps');
   },
 
   async getAllFoodDiscoveries(): Promise<FoodDiscoveryItem[]> {
@@ -778,7 +797,18 @@ export const discoveryApi = {
       } catch (e) {}
     }
 
-    return getLocalTable<FoodDiscoveryItem>('food_discoveries');
+    let locals = getLocalTable<FoodDiscoveryItem>('food_discoveries');
+    let needsSave = false;
+    for (const official of OFFICIAL_APPROVED_DISCOVERIES) {
+      if (!locals.some((d) => d.id === official.id)) {
+        locals.push(official);
+        needsSave = true;
+      }
+    }
+    if (needsSave) {
+      saveLocalTable('food_discoveries', locals);
+    }
+    return locals;
   },
 
   async getStudentFoodDiscoveries(studentId: string): Promise<FoodDiscoveryItem[]> {
@@ -802,7 +832,18 @@ export const discoveryApi = {
       } catch (e) {}
     }
 
-    const locals = getLocalTable<StudentFoodTrail>('student_food_trails');
+    let locals = getLocalTable<StudentFoodTrail>('student_food_trails');
+    let needsSave = false;
+    for (const official of OFFICIAL_FOOD_TRAILS) {
+      if (!locals.some((t) => t.id === official.id || t.slug === official.slug)) {
+        locals.push(official);
+        needsSave = true;
+      }
+    }
+    if (needsSave) {
+      saveLocalTable('student_food_trails', locals);
+    }
+
     if (approvedOnly) {
       return locals.filter((t) => t.status === 'Approved' || t.status === 'Featured');
     }
@@ -823,6 +864,205 @@ export const discoveryApi = {
     else locals.unshift(trail);
     saveLocalTable('student_food_trails', locals);
     return trail;
+  },
+
+  // ==========================================================================
+  // 5.5 MARKET FOOD GUIDES
+  // ==========================================================================
+  async getMarketGuides(publishedOnly = true): Promise<MarketFoodGuide[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        let query = supabase.from('market_food_guides').select('*').order('published_date', { ascending: false });
+        if (publishedOnly) query = query.eq('is_published', true);
+        const { data, error } = await query;
+        if (data && !error && data.length > 0) return data;
+      } catch (e) {}
+    }
+
+    let locals = getLocalTable<MarketFoodGuide>('market_food_guides');
+    let needsSave = false;
+    for (const official of OFFICIAL_MARKET_GUIDES) {
+      if (!locals.some((m) => m.id === official.id || m.slug === official.slug)) {
+        locals.push(official);
+        needsSave = true;
+      }
+    }
+    if (needsSave) {
+      saveLocalTable('market_food_guides', locals);
+    }
+
+    if (publishedOnly) {
+      return locals.filter((m) => m.is_published);
+    }
+    return locals;
+  },
+
+  async getMarketGuideBySlug(slug: string): Promise<MarketFoodGuide | null> {
+    const clean = slug.trim().toLowerCase();
+    const all = await this.getMarketGuides(false);
+    return all.find((m) => m.slug.toLowerCase() === clean) || null;
+  },
+
+  async saveMarketGuide(guide: MarketFoodGuide): Promise<MarketFoodGuide> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('market_food_guides').upsert(guide);
+      } catch (e) {}
+    }
+    const locals = getLocalTable<MarketFoodGuide>('market_food_guides');
+    const idx = locals.findIndex((m) => m.id === guide.id);
+    if (idx !== -1) locals[idx] = guide;
+    else locals.unshift(guide);
+    saveLocalTable('market_food_guides', locals);
+    return guide;
+  },
+
+  // ==========================================================================
+  // 5.6 EDITORIAL FOOD STORIES & GUIDES
+  // ==========================================================================
+  async getFoodStories(publishedOnly = true): Promise<FoodStoryItem[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        let query = supabase.from('food_stories').select('*').order('published_date', { ascending: false });
+        if (publishedOnly) query = query.eq('is_published', true);
+        const { data, error } = await query;
+        if (data && !error && data.length > 0) return data;
+      } catch (e) {}
+    }
+
+    let locals = getLocalTable<FoodStoryItem>('food_stories');
+    let needsSave = false;
+    for (const official of OFFICIAL_FOOD_STORIES) {
+      if (!locals.some((s) => s.id === official.id || s.slug === official.slug)) {
+        locals.push(official);
+        needsSave = true;
+      }
+    }
+    if (needsSave) {
+      saveLocalTable('food_stories', locals);
+    }
+
+    if (publishedOnly) {
+      return locals.filter((s) => s.is_published);
+    }
+    return locals;
+  },
+
+  async getFoodStoryBySlug(slug: string): Promise<FoodStoryItem | null> {
+    const clean = slug.trim().toLowerCase();
+    const all = await this.getFoodStories(false);
+    return all.find((s) => s.slug.toLowerCase() === clean) || null;
+  },
+
+  async saveFoodStory(story: FoodStoryItem): Promise<FoodStoryItem> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('food_stories').upsert(story);
+      } catch (e) {}
+    }
+    const locals = getLocalTable<FoodStoryItem>('food_stories');
+    const idx = locals.findIndex((s) => s.id === story.id);
+    if (idx !== -1) locals[idx] = story;
+    else locals.unshift(story);
+    saveLocalTable('food_stories', locals);
+    return story;
+  },
+
+  // ==========================================================================
+  // 5.7 BUDGET FOOD EXPLORER (GENUINE MENU MAPS VERIFIED RATES)
+  // ==========================================================================
+  getBudgetFoodDishes(tier?: 'under-50' | 'under-100' | 'under-150' | 'under-200', category?: string): BudgetFoodDish[] {
+    const seed = getMasterSeedData();
+    const restaurants = seed.restaurants || [];
+    const results: BudgetFoodDish[] = [];
+
+    for (const rest of restaurants) {
+      const menus = rest.menu || [];
+      for (const item of menus) {
+        const price = Number(item.price);
+        if (!price || price > 200) continue;
+
+        let budgetTier: 'under-50' | 'under-100' | 'under-150' | 'under-200' = 'under-200';
+        if (price <= 50) budgetTier = 'under-50';
+        else if (price <= 100) budgetTier = 'under-100';
+        else if (price <= 150) budgetTier = 'under-150';
+
+        if (tier && budgetTier !== tier) continue;
+
+        const cat = item.category || 'Specialty';
+        if (category && category !== 'All' && !cat.toLowerCase().includes(category.toLowerCase())) continue;
+
+        results.push({
+          dish_name: item.name,
+          category: cat,
+          price: price,
+          budget_tier: budgetTier,
+          restaurant_name: rest.name,
+          restaurant_slug: rest.slug || rest.id,
+          neighbourhood: rest.location?.neighborhood || rest.location?.address || 'Delhi NCR',
+          price_type: 'Counter Verified',
+          photo_url: item.image_url || rest.cover_image_url,
+          contributor_attribution: 'Physical counter record verified by Menu Maps',
+        });
+      }
+    }
+
+    return results;
+  },
+
+  // ==========================================================================
+  // 5.8 DISCOVER BY DISH DIRECTORY
+  // ==========================================================================
+  getDishesDirectory() {
+    const seed = getMasterSeedData();
+    const restaurants = seed.restaurants || [];
+    const dishKeywords = [
+      { id: 'momos', label: 'Momos & Dimsums', icon: '🥟', keywords: ['momo', 'dimsum'] },
+      { id: 'chole-bhature', label: 'Chole Bhature', icon: '🫓', keywords: ['chole bhature', 'bhatura', 'pindi chana'] },
+      { id: 'dosa', label: 'Dosa & South Indian', icon: '🥞', keywords: ['dosa', 'uttapam', 'idli'] },
+      { id: 'rolls', label: 'Kathi Rolls & Shawarma', icon: '🌯', keywords: ['roll', 'shawarma', 'frankie'] },
+      { id: 'pizza', label: 'Pizza & Garlic Bread', icon: '🍕', keywords: ['pizza', 'calzone'] },
+      { id: 'chaat', label: 'Chaat & Street Bites', icon: '🍲', keywords: ['chaat', 'gol gappe', 'puchka', 'dahi bhalla', 'papdi'] },
+      { id: 'burgers', label: 'Burgers & Sandwiches', icon: '🍔', keywords: ['burger', 'sandwich'] },
+      { id: 'sweets', label: 'Sweets & Desserts', icon: '🍨', keywords: ['jalebi', 'kulfi', 'gulab jamun', 'falooda', 'rasgulla', 'waffle'] },
+      { id: 'biryani', label: 'Biryani & Rice Bowls', icon: '🍚', keywords: ['biryani', 'pulao', 'fried rice'] },
+      { id: 'coffee-chai', label: 'Chai & Cold Coffee', icon: '☕', keywords: ['chai', 'coffee', 'shake', 'lassi'] },
+    ];
+
+    return dishKeywords.map((group) => {
+      const matchingItems: Array<{ dish_name: string; price: number; restaurant_name: string; restaurant_slug: string; neighbourhood: string; photo_url?: string }> = [];
+
+      for (const rest of restaurants) {
+        for (const item of (rest.menu || [])) {
+          const nameLower = (item.name || '').toLowerCase();
+          const matches = group.keywords.some((k) => nameLower.includes(k));
+          if (matches) {
+            matchingItems.push({
+              dish_name: item.name,
+              price: Number(item.price) || 0,
+              restaurant_name: rest.name,
+              restaurant_slug: rest.slug || rest.id,
+              neighbourhood: rest.location?.neighborhood || 'Delhi NCR',
+              photo_url: item.image_url || rest.cover_image_url,
+            });
+          }
+        }
+      }
+
+      const prices = matchingItems.map((m) => m.price).filter((p) => p > 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 40;
+
+      return {
+        ...group,
+        total_places_count: new Set(matchingItems.map((m) => m.restaurant_name)).size,
+        min_price: minPrice,
+        sample_dishes: matchingItems.slice(0, 8),
+      };
+    });
   },
 
   // ==========================================================================

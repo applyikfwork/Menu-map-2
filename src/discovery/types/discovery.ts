@@ -478,3 +478,90 @@ export interface DiscoveryNotification {
   is_read: boolean;
   created_at: string;
 }
+
+// 15. Market Food Guides
+export interface MarketFoodOutlet {
+  outlet_name: string;
+  signature_dish: string;
+  price_estimate: number;
+  counter_price_verified: boolean;
+  why_famous: string;
+  address_or_landmark: string;
+  image_url?: string;
+  restaurant_slug?: string;
+}
+
+export interface MarketBudgetDeal {
+  dish_name: string;
+  outlet_name: string;
+  price: number;
+  is_verified: boolean;
+}
+
+export interface MarketFoodGuide {
+  id: string;
+  slug: string; // e.g. "connaught-place", "kamla-nagar"
+  market_name: string;
+  tagline: string;
+  neighbourhood: string;
+  metro_station: string;
+  short_description: string;
+  description: string;
+  cover_image_url: string;
+  total_outlets_count: number;
+  budget_range: string; // e.g. "₹50 - ₹250"
+  best_time_to_visit: string;
+  iconic_outlets: MarketFoodOutlet[];
+  budget_deals: MarketBudgetDeal[];
+  food_categories: string[];
+  contributor_attribution?: string;
+  contributor_id?: string;
+  verification_status: 'Verified by Menu Maps' | 'Community Curated';
+  is_published: boolean;
+  published_date: string;
+}
+
+// 16. Food Stories & Guides
+export type StoryCategory =
+  | 'Neighbourhood Culture'
+  | 'Dish Origins'
+  | 'Budget Guide'
+  | 'Market Heritage'
+  | 'Street Food Craft';
+
+export interface FoodStoryItem {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  category: StoryCategory;
+  cover_image_url: string;
+  reading_time_minutes: number;
+  summary: string;
+  content_paragraphs: string[];
+  featured_places: Array<{
+    name: string;
+    dish: string;
+    price?: number;
+    address: string;
+    restaurant_slug?: string;
+  }>;
+  contributor_attribution?: string;
+  contributor_id?: string;
+  is_published: boolean;
+  published_date: string;
+}
+
+// 17. Budget Food Recommendation
+export interface BudgetFoodDish {
+  dish_name: string;
+  category: string; // "Snacks" | "Rolls" | "Meals" | "Beverages" | "Dessert"
+  price: number;
+  budget_tier: 'under-50' | 'under-100' | 'under-150' | 'under-200';
+  restaurant_name: string;
+  restaurant_slug: string;
+  neighbourhood: string;
+  price_type: 'Counter Verified' | 'Outlet Confirmed' | 'Menu Record';
+  photo_url?: string;
+  contributor_attribution?: string;
+}

@@ -1,19 +1,22 @@
 /**
  * Menu Maps Discovery - Responsive Sub-Navigation Bar
- * Unified, sleek navigation bar for the Discovery ecosystem.
+ * Public Food Exploration Navigation Bar.
  * Responsive across mobile (<640px), tablet (640px-1024px), and desktop (>1024px).
  */
 
 import React from 'react';
 import {
   Compass,
+  MapPin,
+  IndianRupee,
+  Store,
+  UtensilsCrossed,
+  Footprints,
+  BookOpen,
   Trophy,
   Sparkles,
-  MapPin,
-  BookOpen,
   Award,
   User,
-  Users,
 } from 'lucide-react';
 import { useStudentAuth } from '../context/StudentAuthContext';
 
@@ -36,12 +39,15 @@ export const DiscoveryNavbar: React.FC<DiscoveryNavbarProps> = ({
 
   const navItems = [
     { id: 'overview', label: 'Overview', path: '/discovery', icon: Compass },
-    { id: 'competitions', label: 'Competitions', path: '/discovery/competitions', icon: Trophy },
     { id: 'discoveries', label: 'Discoveries', path: '/discovery/food-discoveries', icon: MapPin },
-    { id: 'trails', label: 'Food Trails', path: '/discovery/trails', icon: BookOpen },
-    { id: 'creations', label: 'Creations', path: '/discovery/creations', icon: Sparkles },
+    { id: 'budget-food', label: 'Budget Food', path: '/discovery/budget-food', icon: IndianRupee },
+    { id: 'markets', label: 'Markets', path: '/discovery/markets', icon: Store },
+    { id: 'dishes', label: 'By Dish', path: '/discovery/dishes', icon: UtensilsCrossed },
+    { id: 'trails', label: 'Food Trails', path: '/discovery/food-trails', icon: Footprints },
+    { id: 'stories', label: 'Stories', path: '/discovery/stories', icon: BookOpen },
+    { id: 'competitions', label: 'Challenges', path: '/discovery/competitions', icon: Trophy },
+    { id: 'creations', label: 'Creations', path: '/discovery/creations', icon: Sparkles, desktopOnly: true },
     { id: 'hall-of-fame', label: 'Hall of Fame', path: '/discovery/hall-of-fame', icon: Award, desktopOnly: true },
-    { id: 'contributors', label: 'Contributors', path: '/discovery/contributors', icon: Users, desktopOnly: true },
   ];
 
   return (
@@ -56,14 +62,14 @@ export const DiscoveryNavbar: React.FC<DiscoveryNavbarProps> = ({
                 activeTab === item.id ||
                 (item.path === '/discovery'
                   ? currentPath === '/discovery' || currentPath === '/discovery/'
-                  : currentPath.startsWith(item.path));
+                  : currentPath.startsWith(item.path) || (item.id === 'trails' && currentPath.startsWith('/discovery/trails')));
 
               return (
                 <button
                   key={item.label}
                   onClick={() => navigate(item.path)}
                   className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
-                    item.desktopOnly ? 'hidden md:flex' : 'flex'
+                    item.desktopOnly ? 'hidden xl:flex' : 'flex'
                   } ${
                     isActive
                       ? 'bg-[#0F766E] text-white shadow-2xs font-bold'
@@ -78,7 +84,7 @@ export const DiscoveryNavbar: React.FC<DiscoveryNavbarProps> = ({
           </nav>
         </div>
 
-        {/* Right Section: My Discovery Dashboard or Student Portal */}
+        {/* Right Section: My Discovery Dashboard or Contributor Portal */}
         <div className="flex items-center gap-1.5 shrink-0 pl-1">
           {isAuthenticated && student ? (
             <button
@@ -105,10 +111,10 @@ export const DiscoveryNavbar: React.FC<DiscoveryNavbarProps> = ({
           ) : (
             <button
               onClick={() => (onOpenAuth ? onOpenAuth('login') : navigate('/discovery/login'))}
-              className="px-3 py-1 sm:py-1.5 bg-[#0F766E] hover:bg-[#0d635c] text-white text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#0F766E] hover:bg-[#0d635c] text-white text-[11px] sm:text-xs font-bold rounded-full flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             >
               <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>Student Portal</span>
+              <span>Contributor Portal</span>
             </button>
           )}
         </div>

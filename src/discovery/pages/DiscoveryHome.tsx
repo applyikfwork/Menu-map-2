@@ -1,33 +1,56 @@
 /**
- * Menu Maps Discovery - Master Homepage (/discovery)
- * Premium, structured editorial ecosystem connecting food discoveries, student creations,
- * flagship competitions, neighbourhood trails, contributors, and the Hall of Fame.
- * Responsive across mobile (<640px), tablet (640px-1024px), and laptop/desktop (>1024px).
+ * Menu Maps Discovery - Public Food Discovery Platform
+ * Master Homepage (/discovery)
+ *
+ * Repositioned as a public food exploration destination for everyone,
+ * powered by verified community and student contributions.
+ *
+ * 12-Section Architecture:
+ * 1. Hero Section (Public Discovery Value Proposition)
+ * 2. Explore by Category (6 Core Discovery Pillars)
+ * 3. Featured Food Discoveries (Real verified gems with counter prices)
+ * 4. Explore Markets (Comprehensive Delhi Market Food Guides)
+ * 5. Food Under Your Budget (Real dishes cross-checked at physical counters)
+ * 6. Discover by Dish (Iconic Delhi cravings directory)
+ * 7. Featured Food Trails (Walkable student crawls with exact budgets)
+ * 8. Food Stories & Guides (Editorial culture, history & neighbourhood pieces)
+ * 9. Latest Approved Discoveries (Live verified community submissions)
+ * 10. Made Possible by Contributors (Attribution & Hall of Fame spotlight)
+ * 11. Menu Maps Discovery League — Season 01 (Content-creation challenge engine)
+ * 12. Become a Contributor (Invitation & portfolio submission CTA)
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Compass,
+  MapPin,
+  IndianRupee,
+  Store,
+  UtensilsCrossed,
+  Footprints,
+  BookOpen,
   Trophy,
   Sparkles,
-  MapPin,
-  Users,
   Award,
-  BookOpen,
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
   Calendar,
-  Layers,
-  Utensils,
-  ExternalLink,
-  ChevronRight,
-  UserPlus,
   Clock,
-  Laptop,
   Flame,
   Zap,
+  ChevronRight,
+  Star,
+  Users,
   Check,
+  ExternalLink,
+  Layers,
+  Search,
+  Coffee,
+  Tag,
+  Heart,
+  TrendingUp,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { discoveryApi } from '../lib/discoveryApi';
 import {
@@ -37,11 +60,12 @@ import {
   StudentProject,
   StudentProfile,
   HallOfFameEntry,
+  MarketFoodGuide,
+  FoodStoryItem,
+  BudgetFoodDish,
 } from '../types/discovery';
 import { DiscoveryNavbar } from '../components/DiscoveryNavbar';
-import { CompetitionCard } from '../components/CompetitionCard';
 import { FoodDiscoveryCard } from '../components/FoodDiscoveryCard';
-import { StudentProjectCard } from '../components/StudentProjectCard';
 import { FoodTrailCard } from '../components/FoodTrailCard';
 import { ContributorCard } from '../components/ContributorCard';
 import { StudentAuth } from './StudentAuth';
@@ -51,51 +75,72 @@ interface DiscoveryHomeProps {
   navigate: (path: string) => void;
 }
 
-type ShowcaseTab = 'all' | 'discoveries' | 'projects' | 'trails';
-
 export const DiscoveryHome: React.FC<DiscoveryHomeProps> = ({ navigate }) => {
   const { student, isAuthenticated } = useStudentAuth();
 
-  // Real Database Datasets
+  // Datasets from real seed & Supabase
   const [loading, setLoading] = useState(true);
-  const [competitions, setCompetitions] = useState<DiscoveryCompetition[]>([]);
   const [foodDiscoveries, setFoodDiscoveries] = useState<FoodDiscoveryItem[]>([]);
-  const [studentProjects, setStudentProjects] = useState<StudentProject[]>([]);
+  const [marketGuides, setMarketGuides] = useState<MarketFoodGuide[]>([]);
   const [foodTrails, setFoodTrails] = useState<StudentFoodTrail[]>([]);
+  const [foodStories, setFoodStories] = useState<FoodStoryItem[]>([]);
+  const [competitions, setCompetitions] = useState<DiscoveryCompetition[]>([]);
   const [contributors, setContributors] = useState<StudentProfile[]>([]);
   const [hallOfFame, setHallOfFame] = useState<HallOfFameEntry[]>([]);
 
-  // Interactive Showcase Tab Filter
-  const [showcaseTab, setShowcaseTab] = useState<ShowcaseTab>('all');
+  // Budget Tier Interactive State
+  const [selectedBudgetTier, setSelectedBudgetTier] = useState<
+    'under-50' | 'under-100' | 'under-150' | 'under-200'
+  >('under-100');
+  const [budgetSampleDishes, setBudgetSampleDishes] = useState<BudgetFoodDish[]>([]);
 
-  // Auth modal state
+  // Dishes directory
+  const [dishCategories, setDishCategories] = useState<any[]>([]);
+
+  // Auth Modal State
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
-    loadDiscoveryData();
+    loadAllDiscoveryData();
   }, []);
 
-  const loadDiscoveryData = async () => {
+  useEffect(() => {
+    // Update budget sample dishes whenever tier changes
+    const dishes = discoveryApi.getBudgetFoodDishes(selectedBudgetTier);
+    setBudgetSampleDishes(dishes.slice(0, 4));
+  }, [selectedBudgetTier]);
+
+  const loadAllDiscoveryData = async () => {
     setLoading(true);
     try {
-      const [comps, discs, projs, trails, conts, hof] = await Promise.all([
-        discoveryApi.getCompetitions(true),
+      const [discs, markets, trails, stories, comps, conts, hof] = await Promise.all([
         discoveryApi.getApprovedFoodDiscoveries(),
-        discoveryApi.getStudentProjects(),
+        discoveryApi.getMarketGuides(true),
         discoveryApi.getFoodTrails(true),
+        discoveryApi.getFoodStories(true),
+        discoveryApi.getCompetitions(true),
         discoveryApi.getPublicContributors(),
         discoveryApi.getHallOfFameEntries(),
       ]);
 
-      setCompetitions(comps);
       setFoodDiscoveries(discs);
-      setStudentProjects(projs);
+      setMarketGuides(markets);
       setFoodTrails(trails);
+      setFoodStories(stories);
+      setCompetitions(comps);
       setContributors(conts);
       setHallOfFame(hof);
+
+      // Load dishes directory
+      const directory = discoveryApi.getDishesDirectory();
+      setDishCategories(directory);
+
+      // Initialize budget dishes
+      const initialDishes = discoveryApi.getBudgetFoodDishes('under-100');
+      setBudgetSampleDishes(initialDishes.slice(0, 4));
     } catch (e) {
-      console.error('Error loading discovery data', e);
+      console.error('Error loading Discovery platform data', e);
     } finally {
       setLoading(false);
     }
@@ -104,16 +149,6 @@ export const DiscoveryHome: React.FC<DiscoveryHomeProps> = ({ navigate }) => {
   const openAuth = (mode: 'login' | 'register' = 'login') => {
     setAuthInitialMode(mode);
     setAuthModalOpen(true);
-  };
-
-  const scrollToLeague = () => {
-    const el = document.getElementById('discovery-league');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const scrollToShowcase = () => {
-    const el = document.getElementById('community-showcase');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -126,141 +161,167 @@ export const DiscoveryHome: React.FC<DiscoveryHomeProps> = ({ navigate }) => {
       />
 
       {/* =========================================================================
-          SECTION 1: HERO — WHERE CREATIVITY MEETS GROUND FOOD DISCOVERY
+          SECTION 1: HERO — PUBLIC FOOD DISCOVERY PLATFORM
       ========================================================================= */}
       <section className="relative overflow-hidden pt-8 sm:pt-12 md:pt-16 pb-12 sm:pb-16 border-b border-[#E7E2DA]/80 bg-gradient-to-b from-white via-[#FAF8F5] to-[#FAF8F5]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
             {/* Left Narrative Column */}
-            <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-center lg:text-left">
+            <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#0F766E] text-[11px] sm:text-xs font-black uppercase tracking-wider">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Menu Maps Discovery Ecosystem</span>
+                <span>Menu Maps Discovery • Verified Food Platform</span>
               </div>
 
               <h1 className="hd text-3xl sm:text-5xl lg:text-6xl font-black text-[#1C1917] tracking-tight leading-[1.12]">
                 Discover Hidden Food. <br className="hidden sm:inline" />
-                Create Digital Experiences. <br className="hidden sm:inline" />
-                <span className="text-[#0F766E]">Make Your Mark.</span>
+                Uncover Delhi&apos;s Best <br className="hidden sm:inline" />
+                <span className="text-[#0F766E]">Neighbourhood Flavours.</span>
               </h1>
 
               <p className="text-sm sm:text-base lg:text-lg text-[#57534E] leading-relaxed max-w-xl mx-auto lg:mx-0">
-                Explore real neighbourhood food with 100% verified counter pricing, take on creative student challenges, build digital food products, and earn official portfolio credits.
+                Explore real neighbourhood food places, market-wise culinary guides, budget-friendly eats with verified counter pricing, and iconic local food stories — curated with student and community researchers.
               </p>
 
-              {/* Dual Primary Call-to-Actions */}
-              <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+              {/* Primary Call to Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3 pt-1">
                 <button
-                  onClick={scrollToLeague}
-                  className="btn bg-[#0F766E] hover:bg-[#0d635c] text-white min-h-[46px] sm:min-h-[50px] px-6 sm:px-7 rounded-2xl text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                  onClick={() => navigate('/discovery/food-discoveries')}
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-[#0F766E] hover:bg-[#0d635c] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 >
-                  <Trophy className="w-4 h-4 text-amber-300" />
-                  <span>Join Discovery League S01</span>
-                </button>
-
-                <button
-                  onClick={scrollToShowcase}
-                  className="btn bg-white hover:bg-stone-50 border border-[#E7E2DA] text-[#1C1917] min-h-[46px] sm:min-h-[50px] px-5 sm:px-6 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 shadow-2xs transition-all cursor-pointer"
-                >
-                  <MapPin className="w-4 h-4 text-[#FF5A36]" />
+                  <MapPin className="w-4 h-4 text-emerald-300" />
                   <span>Explore Discoveries</span>
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (isAuthenticated) navigate('/discovery/dashboard');
-                    else openAuth('register');
-                  }}
-                  className="btn bg-[#FAF8F5] hover:bg-orange-50/80 border border-orange-200/90 text-[#D8350F] min-h-[46px] sm:min-h-[50px] px-4 sm:px-5 rounded-2xl text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all cursor-pointer"
+                  onClick={() => navigate('/discovery/markets')}
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white hover:bg-stone-100 text-[#1C1917] border border-[#E7E2DA] text-xs sm:text-sm font-bold shadow-2xs hover:shadow-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>{isAuthenticated ? 'My Dashboard' : 'Become a Contributor'}</span>
+                  <Store className="w-4 h-4 text-[#0F766E]" />
+                  <span>Market Guides</span>
+                </button>
+
+                <button
+                  onClick={() => navigate('/discovery/food-trails')}
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white hover:bg-stone-100 text-[#1C1917] border border-[#E7E2DA] text-xs sm:text-sm font-bold shadow-2xs hover:shadow-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Footprints className="w-4 h-4 text-amber-600" />
+                  <span>Food Trails</span>
                 </button>
               </div>
 
-              {/* Trust Metric Badges */}
-              <div className="pt-3 sm:pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 text-xs text-stone-600 font-semibold">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#E7E2DA] shadow-2xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#0F766E]" />
-                  100% Counter Verified
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#E7E2DA] shadow-2xs">
-                  <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
-                  Verifiable Student Portfolios
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#E7E2DA] shadow-2xs">
-                  <Award className="w-3.5 h-3.5 text-amber-600" />
-                  Official Certificates
-                </span>
+              {/* Trust Indicators */}
+              <div className="pt-2 sm:pt-4 border-t border-[#E7E2DA]/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#0F766E] shrink-0" />
+                  <div>
+                    <div className="text-xs sm:text-sm font-black text-stone-900">770+ Outlets</div>
+                    <div className="text-[10px] text-stone-500">Verified Delhi Venues</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-[#0F766E] shrink-0" />
+                  <div>
+                    <div className="text-xs sm:text-sm font-black text-stone-900">Counter Prices</div>
+                    <div className="text-[10px] text-stone-500">100% Physical Rates</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[#0F766E] shrink-0" />
+                  <div>
+                    <div className="text-xs sm:text-sm font-black text-stone-900">Campus Credits</div>
+                    <div className="text-[10px] text-stone-500">Documented by Students</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#0F766E] shrink-0" />
+                  <div>
+                    <div className="text-xs sm:text-sm font-black text-stone-900">Zero Fake Data</div>
+                    <div className="text-[10px] text-stone-500">Strict Human Review</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right Interactive Hero Showcase Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="rounded-3xl bg-gradient-to-br from-stone-900 via-stone-850 to-stone-950 p-5 sm:p-6 text-white shadow-xl border border-stone-800 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-stone-800">
+            {/* Right Visual Feature Card */}
+            <div className="lg:col-span-5">
+              <div className="relative rounded-3xl overflow-hidden bg-white border border-[#E7E2DA] shadow-xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-bold text-stone-300 uppercase tracking-wider">
-                      Discovery League: Season 01
-                    </span>
+                    <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0F766E]">
+                      <Compass className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-stone-900">Delhi Food Radar</div>
+                      <div className="text-[10px] text-stone-500">Curated by Menu Maps Community</div>
+                    </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase">
-                    Live Challenges
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#0F766E] text-[10px] font-black uppercase">
+                    Live Feed
                   </span>
                 </div>
 
-                {/* Challenge Spotlight 1: Great Market Mission */}
-                <div
-                  onClick={() => navigate('/discovery/competitions/great-market-mission')}
-                  className="p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group flex items-start gap-3"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5A36]/20 border border-[#FF5A36]/30 text-[#FF5A36] flex items-center justify-center text-lg shrink-0">
-                    🧭
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-xs sm:text-sm text-white group-hover:text-amber-300 transition-colors">
-                        The Great Market Mission
-                      </h4>
-                      <span className="text-[10px] text-orange-400 font-bold uppercase">Offline</span>
-                    </div>
-                    <p className="text-[11px] text-stone-400 line-clamp-1 mt-0.5">
-                      Explore Delhi NCR markets • 4 Mission Tasks • Teams of 2–3
-                    </p>
-                  </div>
-                </div>
-
-                {/* Challenge Spotlight 2: The Foodverse Challenge */}
-                <div
-                  onClick={() => navigate('/discovery/competitions/foodverse-challenge')}
-                  className="p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group flex items-start gap-3"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 text-teal-300 flex items-center justify-center text-lg shrink-0">
-                    💡
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-xs sm:text-sm text-white group-hover:text-teal-300 transition-colors">
-                        The Foodverse Challenge
-                      </h4>
-                      <span className="text-[10px] text-teal-400 font-bold uppercase">Online</span>
-                    </div>
-                    <p className="text-[11px] text-stone-400 line-clamp-1 mt-0.5">
-                      Build clickable digital prototypes • 5 Tracks • Secret Drops
-                    </p>
-                  </div>
-                </div>
-
-                {/* Footer Metric Note */}
-                <div className="pt-2 flex items-center justify-between text-[11px] text-stone-400">
-                  <span>Jury Scorecard: 100 Points Total</span>
-                  <button
-                    onClick={() => navigate('/discovery/competitions/discovery-league')}
-                    className="text-amber-400 hover:underline font-bold flex items-center gap-1"
+                {/* Mini Preview Outlets */}
+                <div className="space-y-2.5">
+                  <div
+                    onClick={() => navigate('/discovery/markets/kamla-nagar')}
+                    className="p-3 rounded-2xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/60 transition-all cursor-pointer flex items-center justify-between"
                   >
-                    <span>Series Hub</span>
-                    <ArrowRight className="w-3 h-3" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-black text-sm shrink-0">
+                        KN
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900">Kamla Nagar Market Guide</div>
+                        <div className="text-[11px] text-stone-500">North Campus • ₹80–₹180 / person</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-400" />
+                  </div>
+
+                  <div
+                    onClick={() => navigate('/discovery/budget-food?tier=under-50')}
+                    className="p-3 rounded-2xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/60 transition-all cursor-pointer flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-teal-100 text-[#0F766E] flex items-center justify-center font-black text-sm shrink-0">
+                        ₹
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900">Eats Under ₹50</div>
+                        <div className="text-[11px] text-stone-500">Laphing, Chai, Bread Pakora & Kachori</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-400" />
+                  </div>
+
+                  <div
+                    onClick={() => navigate('/discovery/food-trails')}
+                    className="p-3 rounded-2xl bg-stone-50 hover:bg-stone-100/80 border border-stone-200/60 transition-all cursor-pointer flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-black text-sm shrink-0">
+                        🗺️
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900">North Campus Student Crawl</div>
+                        <div className="text-[11px] text-stone-500">4 stops • 55 mins • Under ₹150 total</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-400" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => navigate('/discovery/food-discoveries')}
+                    className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Browse All Delhi Discoveries</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -270,608 +331,776 @@ export const DiscoveryHome: React.FC<DiscoveryHomeProps> = ({ navigate }) => {
       </section>
 
       {/* =========================================================================
-          SECTION 2: FLAGSHIP ARENA — MENU MAPS DISCOVERY LEAGUE: SEASON 01
+          SECTION 2: EXPLORE BY CATEGORY (6 CORE DISCOVERY PILLARS)
       ========================================================================= */}
-      <section id="discovery-league" className="py-12 sm:py-16 md:py-20 border-b border-[#E7E2DA]/80 bg-white">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-10">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold uppercase tracking-wider mb-2">
-                <Trophy className="w-3.5 h-3.5 text-amber-600" />
-                <span>Flagship Series</span>
-              </div>
-              <h2 className="hd text-2xl sm:text-4xl font-black text-[#1C1917] tracking-tight">
-                MENU MAPS DISCOVERY LEAGUE — SEASON 01
-              </h2>
-              <p className="text-xs sm:text-sm text-[#FF5A36] font-semibold mt-1">
-                "Two challenges. Two different experiences. One opportunity to discover, create and get recognised."
-              </p>
-            </div>
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80">
+        <div className="space-y-1 mb-8">
+          <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+            Explore Discovery Channels
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+            How Would You Like to Explore Today?
+          </h2>
+          <p className="text-xs sm:text-sm text-stone-600 max-w-2xl">
+            Choose your preferred way to discover Delhi&apos;s food — by budget, market, cravings, walking trails, or local stories.
+          </p>
+        </div>
 
-            <button
-              onClick={() => navigate('/discovery/competitions/discovery-league')}
-              className="px-4 py-2 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-800 text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer self-start md:self-auto"
-            >
-              <span>Explore Series Hub & Rules</span>
-              <ChevronRight className="w-3.5 h-3.5 text-stone-500" />
-            </button>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          {/* 1. Budget Food */}
+          <div
+            onClick={() => navigate('/discovery/budget-food')}
+            className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0F766E] flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                <IndianRupee className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors">
+                  Budget Food
+                </h3>
+                <p className="text-[11px] text-stone-500 mt-1 line-clamp-2">
+                  Eats under ₹50, ₹100, ₹150, & ₹200
+                </p>
+              </div>
+            </div>
+            <div className="pt-3 flex items-center text-[10px] font-bold text-[#0F766E]">
+              <span>Explore rates</span>
+              <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </div>
 
-          {/* Two Flagship Competition Arena Cards Side-by-Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            {/* 1. The Great Market Mission */}
-            <div className="bg-[#FAF8F5] rounded-3xl border border-[#E7E2DA] shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
-              <div>
-                <div className="relative h-48 sm:h-56 bg-stone-900 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80"
-                    alt="The Great Market Mission"
-                    className="w-full h-full object-cover opacity-85 hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
-                  <div className="absolute top-4 left-4 flex gap-2">
-                    <span className="px-3 py-1 rounded-full bg-[#FF5A36] text-white text-[11px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> Offline Exploration
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs text-stone-900 text-[11px] font-bold">
-                      Teams of 2–3
-                    </span>
-                  </div>
-                  <div className="absolute bottom-4 left-5 right-5 text-white">
-                    <p className="text-[11px] uppercase tracking-widest text-amber-300 font-bold">Challenge 01</p>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold">THE GREAT MARKET MISSION</h3>
-                    <p className="text-xs text-stone-200 line-clamp-1 italic mt-0.5">
-                      "One Market. Hidden Food Stories. Can Your Team Discover Them All?"
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-5 sm:p-6 space-y-4">
-                  <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
-                    Explore real Delhi NCR neighbourhood markets. Audit honest counter pricing, uncover hidden gem food stalls, curate a budget feast under ₹200, and design a structured food discovery map.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs">
-                      <span className="font-bold text-[#0F766E] block">4 Field Missions</span>
-                      <p className="text-stone-500 text-[11px]">100 Points Total</p>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs">
-                      <span className="font-bold text-[#0F766E] block">8 Delhi Markets</span>
-                      <p className="text-stone-500 text-[11px]">North Campus to CR Park</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 pt-1">
-                    <span className="flex items-center gap-1 font-medium">
-                      <Clock className="w-3.5 h-3.5 text-stone-400" />
-                      10 Days Duration
-                    </span>
-                    <span>•</span>
-                    <span className="font-medium">Deadline: Configurable</span>
-                  </div>
-                </div>
+          {/* 2. Market Guides */}
+          <div
+            onClick={() => navigate('/discovery/markets')}
+            className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                <Store className="w-5 h-5" />
               </div>
-
-              <div className="p-5 sm:p-6 bg-white border-t border-stone-200/70 flex items-center gap-3">
-                <button
-                  onClick={() => navigate('/discovery/competitions/great-market-mission')}
-                  className="flex-1 py-2.5 px-4 bg-[#0F766E] text-white font-bold text-xs rounded-xl hover:bg-[#0d635c] transition-colors shadow-2xs text-center cursor-pointer"
-                >
-                  View Details & Rules
-                </button>
-                <button
-                  onClick={() => {
-                    if (isAuthenticated) {
-                      navigate('/discovery/competitions/great-market-mission');
-                    } else {
-                      openAuth('register');
-                    }
-                  }}
-                  className="py-2.5 px-4 bg-stone-50 border border-stone-200 text-stone-800 font-bold text-xs rounded-xl hover:bg-stone-100 transition-colors cursor-pointer"
-                >
-                  Register Team
-                </button>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors">
+                  Market Guides
+                </h3>
+                <p className="text-[11px] text-stone-500 mt-1 line-clamp-2">
+                  CP, Kamla Nagar, Chandni Chowk, MKT & more
+                </p>
               </div>
             </div>
+            <div className="pt-3 flex items-center text-[10px] font-bold text-[#0F766E]">
+              <span>6 deep guides</span>
+              <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
 
-            {/* 2. The Foodverse Challenge */}
-            <div className="bg-[#FAF8F5] rounded-3xl border border-[#E7E2DA] shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+          {/* 3. Hidden Discoveries */}
+          <div
+            onClick={() => navigate('/discovery/food-discoveries')}
+            className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0F766E] flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                <MapPin className="w-5 h-5" />
+              </div>
               <div>
-                <div className="relative h-48 sm:h-56 bg-stone-900 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"
-                    alt="The Foodverse Challenge"
-                    className="w-full h-full object-cover opacity-85 hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
-                  <div className="absolute top-4 left-4 flex gap-2">
-                    <span className="px-3 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
-                      <Laptop className="w-3 h-3" /> Online Digital Challenge
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs text-stone-900 text-[11px] font-bold">
-                      Solo or Teams (1–4)
-                    </span>
-                  </div>
-                  <div className="absolute bottom-4 left-5 right-5 text-white">
-                    <p className="text-[11px] uppercase tracking-widest text-teal-300 font-bold">Challenge 02</p>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold">THE FOODVERSE CHALLENGE</h3>
-                    <p className="text-xs text-stone-200 line-clamp-1 italic mt-0.5">
-                      "Imagine the Future of Food Discovery. Then Build It."
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-5 sm:p-6 space-y-4">
-                  <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
-                    Choose from 5 challenge tracks (₹150 Food Explorer, Veg Hunter, Hidden Delhi, Friends Planner, Best Dish). Build an original clickable prototype, digital map, or interactive product concept.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs">
-                      <span className="font-bold text-[#FF5A36] block">5 Focus Tracks</span>
-                      <p className="text-stone-500 text-[11px]">Select 1 to solve</p>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs">
-                      <span className="font-bold text-[#FF5A36] block">Secret Drops</span>
-                      <p className="text-stone-500 text-[11px]">Day 03, 05, 07 prompts</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 pt-1">
-                    <span className="flex items-center gap-1 font-medium">
-                      <Clock className="w-3.5 h-3.5 text-stone-400" />
-                      14 Days Duration
-                    </span>
-                    <span>•</span>
-                    <span className="font-medium">Deadline: Configurable</span>
-                  </div>
-                </div>
+                <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors">
+                  Hidden Gems
+                </h3>
+                <p className="text-[11px] text-stone-500 mt-1 line-clamp-2">
+                  Secret alleyways and student icons
+                </p>
               </div>
+            </div>
+            <div className="pt-3 flex items-center text-[10px] font-bold text-[#0F766E]">
+              <span>Verified gems</span>
+              <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
 
-              <div className="p-5 sm:p-6 bg-white border-t border-stone-200/70 flex items-center gap-3">
-                <button
-                  onClick={() => navigate('/discovery/competitions/foodverse-challenge')}
-                  className="flex-1 py-2.5 px-4 bg-[#0F766E] text-white font-bold text-xs rounded-xl hover:bg-[#0d635c] transition-colors shadow-2xs text-center cursor-pointer"
-                >
-                  View Details & Tracks
-                </button>
-                <button
-                  onClick={() => {
-                    if (isAuthenticated) {
-                      navigate('/discovery/competitions/foodverse-challenge');
-                    } else {
-                      openAuth('register');
-                    }
-                  }}
-                  className="py-2.5 px-4 bg-stone-50 border border-stone-200 text-stone-800 font-bold text-xs rounded-xl hover:bg-stone-100 transition-colors cursor-pointer"
-                >
-                  Register (Free)
-                </button>
+          {/* 4. Food Trails */}
+          <div
+            onClick={() => navigate('/discovery/food-trails')}
+            className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                <Footprints className="w-5 h-5" />
               </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors">
+                  Food Trails
+                </h3>
+                <p className="text-[11px] text-stone-500 mt-1 line-clamp-2">
+                  Walkable crawls with exact budgets
+                </p>
+              </div>
+            </div>
+            <div className="pt-3 flex items-center text-[10px] font-bold text-[#0F766E]">
+              <span>Curated crawls</span>
+              <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+
+          {/* 5. Discover by Dish */}
+          <div
+            onClick={() => navigate('/discovery/dishes')}
+            className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-700 flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                <UtensilsCrossed className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors">
+                  By Dish
+                </h3>
+                <p className="text-[11px] text-stone-500 mt-1 line-clamp-2">
+                  Momos, Chole Bhature, Dosa, Rolls & more
+                </p>
+              </div>
+            </div>
+            <div className="pt-3 flex items-center text-[10px] font-bold text-[#0F766E]">
+              <span>Craving radar</span>
+              <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+
+          {/* 6. Food Stories */}
+          <div
+            onClick={() => navigate('/discovery/stories')}
+            className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors">
+                  Food Stories
+                </h3>
+                <p className="text-[11px] text-stone-500 mt-1 line-clamp-2">
+                  Food culture, origins & neighbourhood essays
+                </p>
+              </div>
+            </div>
+            <div className="pt-3 flex items-center text-[10px] font-bold text-[#0F766E]">
+              <span>Read essays</span>
+              <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          SECTION 3: THE 4 DISCOVERY PATHWAYS (STRUCTURED VISUAL EXPLORER)
+          SECTION 3: FEATURED FOOD DISCOVERIES
       ========================================================================= */}
-      <section className="py-12 sm:py-16 border-b border-[#E7E2DA]/80">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10 space-y-2">
-            <span className="text-xs font-black uppercase tracking-widest text-[#0F766E]">
-              The 4 Pillars
-            </span>
-            <h2 className="hd text-2xl sm:text-4xl font-black text-[#1C1917]">
-              Ways to Explore & Contribute
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Handpicked Highlights
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Featured Food Discoveries
             </h2>
-            <p className="text-xs sm:text-sm text-stone-500">
-              Discover authentic counter rates, explore neighbourhood trails, or build original digital food experiences.
+            <p className="text-xs sm:text-sm text-stone-600">
+              Community-recommended outlets with physical counter verification and student researcher credit.
             </p>
           </div>
+          <button
+            onClick={() => navigate('/discovery/food-discoveries')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>View all discoveries</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
 
-          {/* 4-Pillar Grid: 2-col on mobile, 2-col on tablet, 4-col on laptop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[
-              {
-                title: 'Food Discoveries',
-                desc: 'Uncover hidden street gems, hole-in-the-wall cafes, and authentic counter bills verified in-person.',
-                icon: '📍',
-                tag: 'Counter Verified',
-                path: '/discovery/food-discoveries',
-                color: 'from-teal-500/10 to-emerald-500/5',
-              },
-              {
-                title: 'Market Missions',
-                desc: 'Compete in live offline and online design challenges across Delhi NCR neighbourhoods.',
-                icon: '🧭',
-                tag: 'Competitions',
-                path: '/discovery/competitions',
-                color: 'from-orange-500/10 to-amber-500/5',
-              },
-              {
-                title: 'Student Food Trails',
-                desc: 'Curated walking crawls with exact budgets, walking times, and student signature dish picks.',
-                icon: '🗺️',
-                tag: 'Curated Trails',
-                path: '/discovery/trails',
-                color: 'from-blue-500/10 to-cyan-500/5',
-              },
-              {
-                title: 'Student Creations',
-                desc: 'Browse jury-approved clickable prototypes, interactive maps, and design decks built by peers.',
-                icon: '✨',
-                tag: 'Portfolio Gallery',
-                path: '/discovery/creations',
-                color: 'from-purple-500/10 to-indigo-500/5',
-              },
-            ].map((card) => (
-              <div
-                key={card.title}
-                onClick={() => navigate(card.path)}
-                className={`p-5 sm:p-6 rounded-3xl border border-[#E7E2DA] bg-gradient-to-br ${card.color} bg-white hover:border-[#0F766E] shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3.5">
-                    <span className="text-2xl sm:text-3xl p-2 rounded-2xl bg-white border border-[#E7E2DA] shadow-2xs">
-                      {card.icon}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-white text-[10px] font-black uppercase tracking-wider text-stone-600 border border-[#E7E2DA]">
-                      {card.tag}
-                    </span>
-                  </div>
-
-                  <h3 className="hd text-base sm:text-lg font-bold text-[#1C1917] group-hover:text-[#0F766E] transition-colors leading-snug">
-                    {card.title}
-                  </h3>
-
-                  <p className="text-xs text-[#57534E] leading-relaxed mt-1.5">
-                    {card.desc}
-                  </p>
-                </div>
-
-                <div className="mt-5 pt-3.5 border-t border-stone-200/50 flex items-center justify-between text-xs font-extrabold text-[#0F766E]">
-                  <span>Explore</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {foodDiscoveries.slice(0, 3).map((item) => (
+            <FoodDiscoveryCard key={item.id} item={item} navigate={navigate} />
+          ))}
         </div>
       </section>
 
       {/* =========================================================================
-          SECTION 4: COMMUNITY SHOWCASE FEED (UNIFIED & DYNAMIC FILTER TABS)
+          SECTION 4: EXPLORE MARKETS (MARKET-WISE FOOD GUIDES)
       ========================================================================= */}
-      <section id="community-showcase" className="py-12 sm:py-16 md:py-20 border-b border-[#E7E2DA]/80 bg-white">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-            <div>
-              <span className="text-xs font-black uppercase tracking-widest text-[#0F766E]">
-                Community Intel & Deliverables
-              </span>
-              <h2 className="hd text-2xl sm:text-4xl font-black text-[#1C1917] mt-1">
-                Community Creations & Discoveries
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-500 mt-1">
-                Physical counter-verified food spots, student-built digital prototypes, and curated neighbourhood crawls.
-              </p>
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80 bg-[#FAF8F5]">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Neighbourhood Hubs
             </div>
-
-            {/* Interactive Tab Selectors */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 bg-stone-100 p-1 rounded-2xl border border-stone-200/80 self-start md:self-auto shrink-0">
-              <button
-                onClick={() => setShowcaseTab('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  showcaseTab === 'all'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-extrabold'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                ✨ All Highlights
-              </button>
-              <button
-                onClick={() => setShowcaseTab('discoveries')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  showcaseTab === 'discoveries'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-extrabold'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                📍 Discoveries ({foodDiscoveries.length})
-              </button>
-              <button
-                onClick={() => setShowcaseTab('projects')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  showcaseTab === 'projects'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-extrabold'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                🎨 Student Projects ({studentProjects.length})
-              </button>
-              <button
-                onClick={() => setShowcaseTab('trails')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  showcaseTab === 'trails'
-                    ? 'bg-white text-[#0F766E] shadow-2xs font-extrabold'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                🗺️ Trails ({foodTrails.length})
-              </button>
-            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Explore Delhi&apos;s Iconic Food Markets
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              In-depth food guides covering famous stalls, secret corners, and average student budgets.
+            </p>
           </div>
-
-          {/* Dynamic Feed Display */}
-          {(() => {
-            const hasDiscoveries = foodDiscoveries.length > 0;
-            const hasProjects = studentProjects.length > 0;
-            const hasTrails = foodTrails.length > 0;
-
-            if (showcaseTab === 'discoveries') {
-              return hasDiscoveries ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {foodDiscoveries.map((disc) => (
-                    <FoodDiscoveryCard key={disc.id} item={disc} navigate={navigate} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyShowcaseCard
-                  icon="📍"
-                  title="No food discoveries listed yet"
-                  desc="Be the first student or community explorer to uncover a hidden counter-priced eatery in your neighborhood."
-                  actionLabel="Submit a Food Discovery"
-                  onAction={() => (isAuthenticated ? navigate('/discovery/dashboard?tab=discoveries') : openAuth('register'))}
-                />
-              );
-            }
-
-            if (showcaseTab === 'projects') {
-              return hasProjects ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {studentProjects.map((proj) => (
-                    <StudentProjectCard key={proj.id} project={proj} navigate={navigate} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyShowcaseCard
-                  icon="🎨"
-                  title="Student project gallery is open"
-                  desc="Submissions from The Foodverse Challenge and Market Missions will be showcased here once evaluated by the jury."
-                  actionLabel="Submit Your Project Concept"
-                  onAction={() => navigate('/discovery/competitions')}
-                />
-              );
-            }
-
-            if (showcaseTab === 'trails') {
-              return hasTrails ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {foodTrails.map((trail) => (
-                    <FoodTrailCard key={trail.id} trail={trail} navigate={navigate} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyShowcaseCard
-                  icon="🗺️"
-                  title="Campus food trails are forming"
-                  desc="Design a walkable food crawl across your campus or market with budget breakdowns."
-                  actionLabel="Submit a Food Trail"
-                  onAction={() => (isAuthenticated ? navigate('/discovery/dashboard?tab=trails') : openAuth('register'))}
-                />
-              );
-            }
-
-            // 'all' tab: Combines available items or shows an inviting welcome
-            const anyData = hasDiscoveries || hasProjects || hasTrails;
-
-            if (!anyData) {
-              return (
-                <div className="bg-[#FAF8F5] border border-stone-200/90 rounded-3xl p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 text-[#0F766E] flex items-center justify-center text-xl mx-auto">
-                    🌱
-                  </div>
-                  <h3 className="hd text-xl font-bold text-stone-900">
-                    Be an Inaugural Campus Contributor
-                  </h3>
-                  <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto">
-                    Menu Maps Discovery is 100% powered by real students and community food lovers. Submit your favorite hidden spot, create a trail, or join Season 01.
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                    <button
-                      onClick={() => navigate('/discovery/competitions')}
-                      className="px-5 py-2.5 bg-[#0F766E] text-white text-xs font-bold rounded-xl hover:bg-[#0d635c] transition-colors shadow-2xs"
-                    >
-                      Browse Season 01 Challenges
-                    </button>
-                    <button
-                      onClick={() => (isAuthenticated ? navigate('/discovery/dashboard') : openAuth('register'))}
-                      className="px-5 py-2.5 bg-white border border-stone-200 text-stone-800 text-xs font-bold rounded-xl hover:bg-stone-50 transition-colors"
-                    >
-                      Join Contributor Network
-                    </button>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {foodDiscoveries.slice(0, 3).map((disc) => (
-                  <FoodDiscoveryCard key={disc.id} item={disc} navigate={navigate} />
-                ))}
-                {studentProjects.slice(0, 3).map((proj) => (
-                  <StudentProjectCard key={proj.id} project={proj} navigate={navigate} />
-                ))}
-                {foodTrails.slice(0, 3).map((trail) => (
-                  <FoodTrailCard key={trail.id} trail={trail} navigate={navigate} />
-                ))}
-              </div>
-            );
-          })()}
+          <button
+            onClick={() => navigate('/discovery/markets')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>All 6 Market Guides</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
-      </section>
 
-      {/* =========================================================================
-          SECTION 5: THE HONOR ROLL (HALL OF FAME & CONTRIBUTORS)
-      ========================================================================= */}
-      <section className="py-12 sm:py-16 md:py-20 border-b border-[#E7E2DA]/80">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-            {/* Left: Hall of Fame (7 Cols) */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-black uppercase tracking-widest text-[#EAB308]">
-                    Honour Roll & Awards
-                  </span>
-                  <h3 className="hd text-xl sm:text-2xl font-black text-[#1C1917] mt-0.5">
-                    Discovery Hall of Fame
-                  </h3>
-                </div>
-                <button
-                  onClick={() => navigate('/discovery/hall-of-fame')}
-                  className="text-xs font-bold text-[#0F766E] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span>View All</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {hallOfFame.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {hallOfFame.slice(0, 4).map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="bg-white border border-[#E7E2DA] rounded-2xl p-5 shadow-2xs space-y-2 flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xl">🏆</span>
-                          <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-black uppercase">
-                            {entry.award_rank}
-                          </span>
-                        </div>
-                        <h4 className="font-bold text-sm text-stone-900">{entry.winner_name}</h4>
-                        <p className="text-[11px] text-stone-500 font-medium truncate">{entry.competition_title}</p>
-                        <p className="text-xs text-stone-700 font-semibold mt-1 truncate">"{entry.project_title}"</p>
-                      </div>
-                      <span className="text-[10px] text-stone-400 block pt-2 border-t border-stone-100">
-                        {entry.college_name || 'Recognized Student'} • {entry.year}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E7E2DA] text-center space-y-2">
-                  <Award className="w-10 h-10 text-amber-500/60 mx-auto" />
-                  <h4 className="hd text-base font-bold text-stone-800">
-                    Season 01 Hall of Fame in Progress
-                  </h4>
-                  <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                    Champions of The Great Market Mission and The Foodverse Challenge will be inducted following official jury deliberations.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Featured Contributors (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-black uppercase tracking-widest text-[#0F766E]">
-                    Community Explorers
-                  </span>
-                  <h3 className="hd text-xl sm:text-2xl font-black text-[#1C1917] mt-0.5">
-                    People Behind Menu Maps
-                  </h3>
-                </div>
-                <button
-                  onClick={() => navigate('/discovery/contributors')}
-                  className="text-xs font-bold text-[#0F766E] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span>All Contributors</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {contributors.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {contributors.slice(0, 4).map((c) => (
-                    <ContributorCard key={c.id} profile={c} navigate={navigate} />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E7E2DA] text-center space-y-2">
-                  <Users className="w-10 h-10 text-teal-600/60 mx-auto" />
-                  <h4 className="hd text-base font-bold text-stone-800">
-                    Join the Contributor Network
-                  </h4>
-                  <p className="text-xs text-stone-500 max-w-xs mx-auto">
-                    Sign up as an official student contributor to earn contribution credits and build public portfolio recognition.
-                  </p>
-                  <button
-                    onClick={() => (isAuthenticated ? navigate('/discovery/dashboard') : openAuth('register'))}
-                    className="px-4 py-2 bg-[#0F766E] text-white text-xs font-bold rounded-xl hover:bg-[#0d635c] transition-colors mt-2 inline-block cursor-pointer"
-                  >
-                    Register as Contributor
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SECTION 6: CONTRIBUTOR CHARTER & PORTFOLIO INVITATION (HIGH IMPACT)
-      ========================================================================= */}
-      <section className="py-14 sm:py-20 bg-gradient-to-br from-[#1C1917] via-stone-900 to-black text-white relative overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 text-center relative z-10 space-y-5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-xl shadow-inner">
-            🧭
-          </div>
-
-          <h2 className="hd text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight max-w-2xl mx-auto leading-tight">
-            Build Your Food Tech & Creative Portfolio
-          </h2>
-
-          <p className="text-stone-300 text-xs sm:text-sm lg:text-base max-w-xl mx-auto leading-relaxed">
-            Gain verified ground contribution credits, earn official digital certificates, tackle real creative briefs, and help make counter rates transparent across Delhi NCR.
-          </p>
-
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={() => {
-                if (isAuthenticated) navigate('/discovery/dashboard');
-                else openAuth('register');
-              }}
-              className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white min-h-[46px] sm:min-h-[48px] px-7 rounded-2xl text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+          {marketGuides.slice(0, 3).map((market) => (
+            <div
+              key={market.id}
+              onClick={() => navigate(`/discovery/markets/${market.slug}`)}
+              className="bg-white rounded-3xl border border-[#E7E2DA] overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
             >
-              <span>{isAuthenticated ? 'Open My Discovery Dashboard' : 'Register as a Student Contributor'}</span>
+              <div>
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={market.cover_image_url}
+                    alt={market.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-xs text-stone-900 text-[10px] font-black">
+                      {market.nearest_metro}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <h3 className="text-base font-black leading-tight drop-shadow-xs">
+                      {market.title}
+                    </h3>
+                    <div className="text-[11px] text-stone-200 mt-0.5">{market.location_area}</div>
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 space-y-3">
+                  <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                    {market.overview}
+                  </p>
+
+                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 text-[11px]">Avg. Meal Budget</span>
+                    <span className="font-bold text-stone-900">{market.estimated_budget}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {market.iconic_outlets.slice(0, 2).map((outlet) => (
+                      <span
+                        key={outlet.name}
+                        className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[10px] font-bold"
+                      >
+                        {outlet.name}
+                      </span>
+                    ))}
+                    {market.iconic_outlets.length > 2 && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-500 text-[10px]">
+                        +{market.iconic_outlets.length - 2} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 pt-0">
+                <div className="w-full py-2 rounded-xl bg-stone-50 group-hover:bg-[#0F766E] text-stone-700 group-hover:text-white text-xs font-bold transition-all text-center flex items-center justify-center gap-1">
+                  <span>Explore Market Guide</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 5: FOOD UNDER YOUR BUDGET (BUDGET-FRIENDLY FOOD DISCOVERIES)
+      ========================================================================= */}
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              100% Counter Verified Pricing
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Eat Good On Any Budget
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Real dishes cross-checked from physical counters across 770+ verified Delhi restaurants.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/discovery/budget-food')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>Explore All Budget Dishes</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Budget Tier Selector Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6">
+          {(
+            [
+              { id: 'under-50', label: 'Under ₹50', sub: 'Snacks, Chai & Laphing' },
+              { id: 'under-100', label: 'Under ₹100', sub: 'Chole Bhature, Momos & Rolls' },
+              { id: 'under-150', label: 'Under ₹150', sub: 'Dosas, Burgers & Pastas' },
+              { id: 'under-200', label: 'Under ₹200', sub: 'Full Thalis & Pizza Combos' },
+            ] as const
+          ).map((tier) => {
+            const isSelected = selectedBudgetTier === tier.id;
+            return (
+              <button
+                key={tier.id}
+                onClick={() => setSelectedBudgetTier(tier.id)}
+                className={`px-4 py-2 rounded-2xl text-left transition-all shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#0F766E] text-white shadow-sm'
+                    : 'bg-white border border-[#E7E2DA] text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                <div className="text-xs font-black">{tier.label}</div>
+                <div
+                  className={`text-[10px] ${
+                    isSelected ? 'text-teal-100' : 'text-stone-500'
+                  }`}
+                >
+                  {tier.sub}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Dynamic Budget Dishes Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {budgetSampleDishes.map((dish, idx) => (
+            <div
+              key={idx}
+              onClick={() => navigate(`/restaurant/${dish.restaurant_slug}`)}
+              className="bg-white rounded-2xl border border-[#E7E2DA] p-4 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="relative h-32 rounded-xl overflow-hidden bg-stone-100">
+                  <img
+                    src={dish.photo_url}
+                    alt={dish.dish_name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full bg-[#0F766E] text-white text-xs font-black shadow-xs">
+                    ₹{dish.price}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors line-clamp-1">
+                    {dish.dish_name}
+                  </h4>
+                  <div className="text-[11px] font-medium text-stone-600 line-clamp-1">
+                    {dish.restaurant_name}
+                  </div>
+                  <div className="text-[10px] text-stone-400 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-stone-400" />
+                    <span>{dish.neighbourhood}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 mt-3 border-t border-stone-100 flex items-center justify-between text-[10px]">
+                <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Counter Verified
+                </span>
+                <span className="text-[#0F766E] font-bold group-hover:translate-x-0.5 transition-transform">
+                  View Menu →
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 6: DISCOVER BY DISH (ICONIC DELHI CRAVINGS)
+      ========================================================================= */}
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Iconic Cravings
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Discover by Dish
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Craving something specific? Explore top spots across 770+ verified outlets.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/discovery/dishes')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>View All Cravings</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          {dishCategories.slice(0, 6).map((group) => (
+            <div
+              key={group.id}
+              onClick={() => navigate(`/discovery/dishes?c=${group.id}`)}
+              className="p-4 rounded-2xl bg-white border border-[#E7E2DA] hover:border-[#0F766E]/50 shadow-2xs hover:shadow-md transition-all cursor-pointer group text-center space-y-2 flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-3xl group-hover:scale-110 transition-transform py-1">
+                  {group.icon}
+                </div>
+                <h3 className="text-xs sm:text-sm font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors line-clamp-1">
+                  {group.label}
+                </h3>
+                <div className="text-[10px] text-stone-500 mt-0.5">
+                  {group.total_places_count} verified places
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-stone-100 text-[10px] font-bold text-[#0F766E]">
+                From ₹{group.min_price}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 7: FEATURED FOOD TRAILS (WALKABLE STUDENT CRAWLS)
+      ========================================================================= */}
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80 bg-[#FAF8F5]">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Walking Crawls
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Featured Food Trails
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Neighbourhood walking routes tested for distance, walking time, and realistic budgets.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/discovery/food-trails')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>View all trails</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {foodTrails.slice(0, 3).map((trail) => (
+            <FoodTrailCard key={trail.id} trail={trail} navigate={navigate} />
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 8: FOOD STORIES AND GUIDES (EDITORIAL CULTURE & ESSAYS)
+      ========================================================================= */}
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Food Culture & History
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Food Stories & Neighbourhood Guides
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Read editorial deep-dives into culinary origins, student eating rituals, and secret recipes.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/discovery/stories')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>Read All Stories</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+          {foodStories.slice(0, 3).map((story) => (
+            <div
+              key={story.id}
+              onClick={() => navigate(`/discovery/stories/${story.slug}`)}
+              className="bg-white rounded-3xl border border-[#E7E2DA] overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div>
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={story.cover_image_url}
+                    alt={story.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 rounded-full bg-stone-900/80 backdrop-blur-xs text-white text-[10px] font-bold">
+                      {story.category}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] text-stone-500">
+                    <Clock className="w-3 h-3" />
+                    <span>{story.reading_time_minutes} min read</span>
+                    <span>•</span>
+                    <span>By {story.author_name}</span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-stone-900 group-hover:text-[#0F766E] transition-colors leading-snug">
+                    {story.title}
+                  </h3>
+
+                  <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                    {story.excerpt}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 pt-0">
+                <div className="text-xs font-bold text-[#0F766E] group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                  <span>Read full story</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 9: LATEST APPROVED DISCOVERIES (LIVE VERIFIED FEED)
+      ========================================================================= */}
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Live Verified Feed
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Latest Approved Community Discoveries
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Verified contributions documented and submitted by students and local explorers.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/discovery/food-discoveries')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+          >
+            <span>Browse all verified</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {foodDiscoveries.slice(3, 6).map((item) => (
+            <FoodDiscoveryCard key={item.id} item={item} navigate={navigate} />
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 10: MADE POSSIBLE BY CONTRIBUTORS (HONOR ROLL & ATTRIBUTION)
+      ========================================================================= */}
+      <section className="py-10 sm:py-14 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80 bg-[#FAF8F5]">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] font-black uppercase text-[#0F766E] tracking-wider">
+              Community Researchers
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              Made Possible by Campus Contributors
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Meet the student explorers, photographers, and researchers whose field contributions power Menu Maps Discovery.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => navigate('/discovery/hall-of-fame')}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-amber-700 hover:text-amber-800 transition-colors cursor-pointer"
+            >
+              <Award className="w-4 h-4" />
+              <span>Hall of Fame</span>
+            </button>
+            <button
+              onClick={() => navigate('/discovery/contributors')}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#0F766E] hover:text-[#0d635c] transition-colors cursor-pointer"
+            >
+              <span>All Contributors</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-
-            <button
-              onClick={() => navigate('/discovery/competitions/discovery-league')}
-              className="btn bg-white/10 hover:bg-white/15 text-white border border-white/20 min-h-[46px] sm:min-h-[48px] px-6 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <span>Explore Season 01 Hub</span>
-            </button>
           </div>
+        </div>
 
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-stone-400">
-            <span className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400" /> 100% Free & Voluntary
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {contributors.slice(0, 4).map((contrib) => (
+            <ContributorCard key={contrib.id} contributor={contrib} navigate={navigate} />
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 11: MENU MAPS DISCOVERY LEAGUE — SEASON 01 (CHALLENGE ENGINE)
+      ========================================================================= */}
+      <section
+        id="discovery-league"
+        className="py-12 sm:py-16 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 border-b border-[#E7E2DA]/80"
+      >
+        <div className="bg-stone-900 text-white rounded-3xl p-6 sm:p-10 lg:p-12 relative overflow-hidden">
+          {/* Subtle Background Glow */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-400/20 border border-teal-400/30 text-teal-300 text-[11px] font-black uppercase tracking-wider mb-3">
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>The Content Creation Engine</span>
+                </div>
+                <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                  CREATE SOMETHING WORTH DISCOVERING.
+                </h2>
+                <p className="text-xs sm:text-sm text-stone-300 max-w-2xl mt-1 leading-relaxed">
+                  Menu Maps Discovery League is our premier challenge series where university students explore real neighbourhood markets, document physical counter pricing, and build creative digital experiences.
+                </p>
+              </div>
+
+              <button
+                onClick={() => navigate('/discovery/competitions/discovery-league')}
+                className="px-5 py-2.5 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs sm:text-sm font-bold transition-all shadow-md shrink-0 cursor-pointer"
+              >
+                <span>Season 01 Details</span>
+              </button>
+            </div>
+
+            {/* The 2 Competitions Side-by-Side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+              {/* Competition 1: The Great Market Mission */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 space-y-4 flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">
+                      Offline Exploration
+                    </span>
+                    <span className="text-[11px] text-stone-400">Teams of 2–3</span>
+                  </div>
+                  <h3 className="text-lg font-black text-white">THE GREAT MARKET MISSION</h3>
+                  <div className="text-xs text-amber-300 font-bold">
+                    &quot;One Market. Hidden Food Stories. Can Your Team Discover Them All?&quot;
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    Explore real Delhi markets like Kamla Nagar, Chandni Chowk, or CR Park. Document hidden food gems, verify counter menus, and curate high-utility budget maps.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[11px] text-stone-400">8 Supported Markets</span>
+                  <button
+                    onClick={() => navigate('/discovery/competitions/great-market-mission')}
+                    className="text-xs font-bold text-teal-300 hover:text-teal-200 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View Mission Tasks</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Competition 2: The Foodverse Challenge */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 space-y-4 flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-black uppercase">
+                      Online Digital Innovation
+                    </span>
+                    <span className="text-[11px] text-stone-400">Solo or Team (1–4)</span>
+                  </div>
+                  <h3 className="text-lg font-black text-white">THE FOODVERSE CHALLENGE</h3>
+                  <div className="text-xs text-teal-300 font-bold">
+                    &quot;Imagine the Future of Food Discovery. Then Build It.&quot;
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    Solve real-world food discovery problems through UI/UX prototypes, data visualisations, algorithmic matchers, and innovative campus food concepts.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[11px] text-stone-400">5 Tracks • 3 Secret Drops</span>
+                  <button
+                    onClick={() => navigate('/discovery/competitions/foodverse-challenge')}
+                    className="text-xs font-bold text-teal-300 hover:text-teal-200 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View Challenge Tracks</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 12: BECOME A CONTRIBUTOR (INVITATION & PORTFOLIO CTA)
+      ========================================================================= */}
+      <section className="py-12 sm:py-16 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
+        <div className="bg-gradient-to-br from-teal-900 via-[#0F766E] to-teal-950 text-white rounded-3xl p-6 sm:p-10 lg:p-12 shadow-xl relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl space-y-4 text-center sm:text-left">
+            <span className="px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-wider inline-block">
+              Open Community Network
             </span>
-            <span className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400" /> Verifiable Digital Certificates
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400" /> Student Ownership of Work
-            </span>
+
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              Know a Hidden Gem in Your College Market?
+            </h2>
+
+            <p className="text-xs sm:text-sm text-teal-100 leading-relaxed">
+              Help thousands of students and food lovers discover honest prices, legendary stalls, and great meals. Every approved contribution earns official Menu Maps portfolio credit and digital verification.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2">
+              {isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/discovery/dashboard?tab=submit')}
+                  className="px-6 py-3 rounded-full bg-white text-[#0F766E] hover:bg-stone-100 text-xs sm:text-sm font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span>Submit a Food Discovery</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => openAuth('register')}
+                  className="px-6 py-3 rounded-full bg-white text-[#0F766E] hover:bg-stone-100 text-xs sm:text-sm font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Register as Contributor</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => navigate('/discovery/competitions')}
+                className="px-6 py-3 rounded-full bg-teal-800/60 hover:bg-teal-800 text-white border border-teal-600/60 text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Trophy className="w-4 h-4" />
+                <span>Browse Active Competitions</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -879,39 +1108,17 @@ export const DiscoveryHome: React.FC<DiscoveryHomeProps> = ({ navigate }) => {
       {/* Auth Modal */}
       {authModalOpen && (
         <StudentAuth
-          navigate={navigate}
           initialMode={authInitialMode}
-          isModal={true}
-          onClose={() => setAuthModalOpen(false)}
+          navigate={navigate}
           onSuccess={() => {
             setAuthModalOpen(false);
             navigate('/discovery/dashboard');
           }}
+          onClose={() => setAuthModalOpen(false)}
         />
       )}
     </div>
   );
 };
 
-// Reusable Empty Showcase Fallback Card
-const EmptyShowcaseCard: React.FC<{
-  icon: string;
-  title: string;
-  desc: string;
-  actionLabel: string;
-  onAction: () => void;
-}> = ({ icon, title, desc, actionLabel, onAction }) => (
-  <div className="bg-[#FAF8F5] border border-stone-200/90 rounded-3xl p-8 sm:p-10 text-center max-w-lg mx-auto space-y-3">
-    <span className="text-3xl p-2 rounded-2xl bg-white border border-stone-200 inline-block shadow-2xs">
-      {icon}
-    </span>
-    <h3 className="hd text-base sm:text-lg font-bold text-stone-800">{title}</h3>
-    <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">{desc}</p>
-    <button
-      onClick={onAction}
-      className="px-4 py-2 bg-[#0F766E] text-white text-xs font-bold rounded-xl hover:bg-[#0d635c] transition-colors shadow-2xs cursor-pointer inline-block mt-1"
-    >
-      {actionLabel}
-    </button>
-  </div>
-);
+export default DiscoveryHome;

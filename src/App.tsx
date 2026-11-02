@@ -38,6 +38,12 @@ const StudentCreations = lazyWithRetry(() => import('./discovery/pages/StudentCr
 const ProjectDetail = lazyWithRetry(() => import('./discovery/pages/ProjectDetail'), 'ProjectDetail', 'ProjectDetail');
 const FoodTrailsList = lazyWithRetry(() => import('./discovery/pages/FoodTrailsList'), 'FoodTrailsList', 'FoodTrailsList');
 const FoodDiscoveriesList = lazyWithRetry(() => import('./discovery/pages/FoodDiscoveriesList'), 'FoodDiscoveriesList', 'FoodDiscoveriesList');
+const BudgetFoodDiscovery = lazyWithRetry(() => import('./discovery/pages/BudgetFoodDiscovery'), 'BudgetFoodDiscovery', 'BudgetFoodDiscovery');
+const MarketGuidesList = lazyWithRetry(() => import('./discovery/pages/MarketGuidesList'), 'MarketGuidesList', 'MarketGuidesList');
+const MarketGuideDetail = lazyWithRetry(() => import('./discovery/pages/MarketGuideDetail'), 'MarketGuideDetail', 'MarketGuideDetail');
+const DiscoverByDish = lazyWithRetry(() => import('./discovery/pages/DiscoverByDish'), 'DiscoverByDish', 'DiscoverByDish');
+const FoodStoriesList = lazyWithRetry(() => import('./discovery/pages/FoodStoriesList'), 'FoodStoriesList', 'FoodStoriesList');
+const FoodStoryDetail = lazyWithRetry(() => import('./discovery/pages/FoodStoryDetail'), 'FoodStoryDetail', 'FoodStoryDetail');
 const ContributorsList = lazyWithRetry(() => import('./discovery/pages/ContributorsList'), 'ContributorsList', 'ContributorsList');
 const ContributorProfile = lazyWithRetry(() => import('./discovery/pages/ContributorProfile'), 'ContributorProfile', 'ContributorProfile');
 const HallOfFame = lazyWithRetry(() => import('./discovery/pages/HallOfFame'), 'HallOfFame', 'HallOfFame');
@@ -211,6 +217,26 @@ function AppContent() {
     if (normPath === '/discovery') {
       return <DiscoveryHome navigate={navigate} />;
     }
+    if (normPath === '/discovery/budget-food') {
+      return <BudgetFoodDiscovery navigate={navigate} />;
+    }
+    if (normPath === '/discovery/markets') {
+      return <MarketGuidesList navigate={navigate} />;
+    }
+    if (normPath.startsWith('/discovery/markets/')) {
+      const slug = normPath.slice('/discovery/markets/'.length).split('/')[0].trim();
+      return <MarketGuideDetail slug={slug} navigate={navigate} />;
+    }
+    if (normPath === '/discovery/dishes') {
+      return <DiscoverByDish navigate={navigate} />;
+    }
+    if (normPath === '/discovery/stories') {
+      return <FoodStoriesList navigate={navigate} />;
+    }
+    if (normPath.startsWith('/discovery/stories/')) {
+      const slug = normPath.slice('/discovery/stories/'.length).split('/')[0].trim();
+      return <FoodStoryDetail slug={slug} navigate={navigate} />;
+    }
     if (normPath === '/discovery/competitions') {
       return <CompetitionsList navigate={navigate} />;
     }
@@ -228,7 +254,7 @@ function AppContent() {
       const slug = normPath.slice('/discovery/creations/'.length).split('/')[0].trim();
       return <ProjectDetail slug={slug} navigate={navigate} />;
     }
-    if (normPath === '/discovery/trails') {
+    if (normPath === '/discovery/trails' || normPath === '/discovery/food-trails') {
       return <FoodTrailsList navigate={navigate} />;
     }
     if (normPath === '/discovery/food-discoveries') {
