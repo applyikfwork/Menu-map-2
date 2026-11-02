@@ -42,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate }) => {
   const navLinks = [
     { label: 'Restaurants', path: '/restaurants' },
     { label: 'Dishes & Cravings', path: '/dishes' },
+    { label: 'Discovery', path: '/discovery' },
     { label: 'Saved', path: '/bookmarks', badge: savedCount > 0 ? savedCount : undefined },
   ];
 
@@ -86,6 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, navigate }) => {
               const isActive =
                 (link.path === '/restaurants' && (currentPath === '/restaurants' || currentPath.startsWith('/restaurant/'))) ||
                 (link.path === '/dishes' && (currentPath === '/dishes' || currentPath === '/dish-radar' || currentPath === '/cravings' || currentPath.startsWith('/food/') || currentPath.startsWith('/dish/'))) ||
+                (link.path === '/discovery' && (currentPath === '/discovery' || currentPath.startsWith('/discovery/'))) ||
                 (link.path === '/bookmarks' && currentPath === '/bookmarks');
 
               return (

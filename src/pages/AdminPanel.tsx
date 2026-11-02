@@ -95,6 +95,7 @@ import { SUPABASE_SQL_SCHEMA, ICONIC_AREAS_SQL_FEATURE, OWNERSHIP_CLAIMS_SQL_FEA
 import { MenuMapLogo } from '../components/Logo';
 import { useToast } from '../components/Toast';
 import { getSmartDishImage, DISH_IMAGE_PRESETS } from '../lib/dishImageRegistry';
+import { AdminDiscoveryReviewPanel } from '../discovery/components/AdminDiscoveryReviewPanel';
 
 interface AdminPanelProps {
   navigate: (path: string) => void;
@@ -110,7 +111,8 @@ export type AdminSection =
   | 'reviews'
   | 'analytics'
   | 'settings'
-  | 'system_intel';
+  | 'system_intel'
+  | 'discovery_submissions';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const { showToast } = useToast();
@@ -1130,6 +1132,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             { id: 'reviews', label: `Reviews (${reviews.length})`, icon: MessageSquare },
             { id: 'analytics', label: 'Search Analytics', icon: BarChart3 },
             { id: 'settings', label: 'Settings & Supabase', icon: Settings },
+            { id: 'discovery_submissions', label: 'Discoveries Review', icon: Compass },
             { id: 'system_intel', label: 'Website Specs & Timeline', icon: Terminal },
           ].map((tab: any) => {
             const Icon = tab.icon;
@@ -3374,6 +3377,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             reviews={reviews}
             analytics={analytics}
           />
+        )}
+
+        {/* 10. DISCOVERY SUBMISSIONS & CONTENT MANAGEMENT */}
+        {activeSection === 'discovery_submissions' && (
+          <AdminDiscoveryReviewPanel navigate={navigate} />
         )}
 
       </main>

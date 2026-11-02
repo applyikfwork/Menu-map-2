@@ -69,6 +69,39 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
 
           {/* Nav Columns */}
           <div className="flex flex-wrap gap-10 sm:gap-16">
+            {/* Discover & Contribute */}
+            <div>
+              <div className="hd text-xs font-extrabold tracking-wider uppercase text-[#1FB5A0]">
+                Discover & Contribute
+              </div>
+              <p className="mt-2 text-xs text-stone-400 max-w-[200px] leading-relaxed">
+                Discover interesting food, explore local experiences and contribute your discoveries.
+              </p>
+              <div className="mt-3 flex flex-col gap-2.5 text-[15px]">
+                <a
+                  href="/discovery"
+                  onClick={(e) => { e.preventDefault(); navigate('/discovery'); }}
+                  className="nl text-left transition-colors hover:text-[#1FB5A0] font-medium"
+                >
+                  Discovery
+                </a>
+                <a
+                  href="/competitions"
+                  onClick={(e) => { e.preventDefault(); navigate('/competitions'); }}
+                  className="nl text-left transition-colors hover:text-[#1FB5A0] font-medium"
+                >
+                  Competitions
+                </a>
+                <a
+                  href="/student-dashboard"
+                  onClick={(e) => { e.preventDefault(); navigate('/student-dashboard'); }}
+                  className="nl text-left transition-colors hover:text-[#1FB5A0] font-medium"
+                >
+                  Student Dashboard
+                </a>
+              </div>
+            </div>
+
             {/* Discover */}
             <div>
               <div className="hd text-xs font-extrabold tracking-wider uppercase text-[#78716C]">

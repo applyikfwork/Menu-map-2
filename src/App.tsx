@@ -29,6 +29,14 @@ const ListCafe = lazyWithRetry(() => import('./pages/ListCafe'), 'ListCafe', 'Li
 const ClaimVerify = lazyWithRetry(() => import('./pages/ClaimVerify'), 'ClaimVerify', 'ClaimVerify');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound', 'NotFound');
 
+// Discovery Ecosystem Routes
+const DiscoveryPage = lazyWithRetry(() => import('./discovery/pages/DiscoveryPage'), 'DiscoveryPage', 'DiscoveryPage');
+const DiscoveryDetail = lazyWithRetry(() => import('./discovery/pages/DiscoveryDetail'), 'DiscoveryDetail', 'DiscoveryDetail');
+const CompetitionsPage = lazyWithRetry(() => import('./discovery/pages/CompetitionsPage'), 'CompetitionsPage', 'CompetitionsPage');
+const StudentDashboard = lazyWithRetry(() => import('./discovery/pages/StudentDashboard'), 'StudentDashboard', 'StudentDashboard');
+
+import { StudentAuthProvider } from './discovery/context/StudentAuthContext';
+
 import { ADMIN_EMAIL, getCurrentAdminSession } from './lib/supabase';
 
 // Local stub for platform analytics
@@ -188,10 +196,24 @@ function AppContent() {
       return <ClaimVerify navigate={navigate} searchParams={searchParams} />;
     }
 
-    // 11.6. Safe redirect for legacy discovery routes
-    if (normPath.startsWith('/discovery')) {
-      navigate('/');
-      return null;
+    // 11.6. Menu Maps Discovery Ecosystem
+    if (normPath === '/discovery') {
+      return <DiscoveryPage navigate={navigate} />;
+    }
+    if (normPath.startsWith('/discovery/')) {
+      const slug = normPath.slice('/discovery/'.length).split('/')[0].trim();
+      return <DiscoveryDetail slug={slug} navigate={navigate} />;
+    }
+    if (normPath === '/competitions') {
+      return <CompetitionsPage navigate={navigate} />;
+    }
+    if (normPath === '/student-dashboard') {
+      return (
+        <StudentDashboard
+          navigate={navigate}
+          initialTab={searchParams.get('tab') || 'overview'}
+        />
+      );
     }
 
     // 12. Direct Clean Restaurant Slug Route: /:slug (e.g. /the-pizza-family)
@@ -199,7 +221,7 @@ function AppContent() {
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
       'restaurants', 'restaurant', 'food', 'dish', 'dishes', 'dish-radar', 'cravings', 'nearby', 'bookmarks', 'about', 'contact',
-      'terms', 'privacy', 'claim-verify', 'discovery', 'api', 'assets', 'favicon.ico',
+      'terms', 'privacy', 'claim-verify', 'discovery', 'competitions', 'student-dashboard', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
     ]);
 
@@ -246,8 +268,10 @@ export default function App() {
       <ToastProvider>
         <LocationProvider>
           <DiscoveryProvider>
-            <AppContent />
-            <Analytics />
+            <StudentAuthProvider>
+              <AppContent />
+              <Analytics />
+            </StudentAuthProvider>
           </DiscoveryProvider>
         </LocationProvider>
       </ToastProvider>
