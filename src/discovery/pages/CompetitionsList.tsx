@@ -17,8 +17,7 @@ interface CompetitionsListProps {
 export const CompetitionsList: React.FC<CompetitionsListProps> = ({ navigate }) => {
   const [competitions, setCompetitions] = useState<DiscoveryCompetition[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFormat, setSelectedFormat] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -36,12 +35,12 @@ export const CompetitionsList: React.FC<CompetitionsListProps> = ({ navigate }) 
   };
 
   const filteredCompetitions = competitions.filter((c) => {
-    if (selectedFormat !== 'all' && c.format.toLowerCase() !== selectedFormat.toLowerCase()) {
-      return false;
-    }
-    if (selectedCategory !== 'all' && c.category.toLowerCase() !== selectedCategory.toLowerCase()) {
-      return false;
-    }
+    if (selectedFilter === 'offline' && c.format.toLowerCase() !== 'offline') return false;
+    if (selectedFilter === 'online' && c.format.toLowerCase() !== 'online') return false;
+    if (selectedFilter === 'open' && c.status !== 'Registration Open') return false;
+    if (selectedFilter === 'upcoming' && c.status !== 'Upcoming') return false;
+    if (selectedFilter === 'completed' && c.status !== 'Completed') return false;
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const match =
@@ -58,6 +57,28 @@ export const CompetitionsList: React.FC<CompetitionsListProps> = ({ navigate }) 
       <DiscoveryNavbar currentPath="/discovery/competitions" navigate={navigate} />
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 py-10 sm:py-14">
+        {/* Discovery League Flagship Callout Banner */}
+        <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-white shadow-md mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-stone-800">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              <span>Menu Maps Discovery League • Season 01</span>
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-white">
+              The Great Market Mission & The Foodverse Challenge
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+              Two flagship competitions. Compare challenges, check mission tasks, and register your team.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/discovery/competitions/discovery-league')}
+            className="px-5 py-3 rounded-2xl bg-[#0F766E] hover:bg-[#0d635c] text-white text-xs sm:text-sm font-bold shadow-sm transition-all whitespace-nowrap shrink-0 text-center"
+          >
+            Explore Season 01 League &rarr;
+          </button>
+        </div>
+
         {/* Header */}
         <div className="space-y-3 mb-8">
           <button
@@ -92,19 +113,26 @@ export const CompetitionsList: React.FC<CompetitionsListProps> = ({ navigate }) 
               />
             </div>
 
-            {/* Format Filter */}
+            {/* Filter Pills: All, Offline, Online, Registration Open, Upcoming, Completed */}
             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-              {['all', 'Online', 'Offline', 'Hybrid'].map((fmt) => (
+              {[
+                { id: 'all', label: 'All Competitions' },
+                { id: 'offline', label: 'Offline' },
+                { id: 'online', label: 'Online' },
+                { id: 'open', label: 'Registration Open' },
+                { id: 'upcoming', label: 'Upcoming' },
+                { id: 'completed', label: 'Completed' },
+              ].map((f) => (
                 <button
-                  key={fmt}
-                  onClick={() => setSelectedFormat(fmt)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition-all whitespace-nowrap cursor-pointer ${
-                    selectedFormat.toLowerCase() === fmt.toLowerCase()
+                  key={f.id}
+                  onClick={() => setSelectedFilter(f.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                    selectedFilter === f.id
                       ? 'bg-[#0F766E] text-white shadow-2xs'
                       : 'bg-stone-50 text-stone-600 hover:bg-stone-100'
                   }`}
                 >
-                  {fmt === 'all' ? 'All Formats' : fmt}
+                  {f.label}
                 </button>
               ))}
             </div>

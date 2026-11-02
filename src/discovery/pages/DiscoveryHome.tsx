@@ -318,6 +318,191 @@ export const DiscoveryHome: React.FC<DiscoveryHomeProps> = ({ navigate }) => {
       </section>
 
       {/* ========================================================
+          FLAGSHIP SECTION: MENU MAPS DISCOVERY LEAGUE — SEASON 01
+      ======================================================== */}
+      <section className="py-12 sm:py-16 border-b border-[#E7E2DA] bg-gradient-to-b from-stone-50/50 via-white to-stone-50/50">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold uppercase tracking-wider mb-2">
+                <Trophy className="w-3.5 h-3.5 text-amber-600" />
+                <span>Flagship Series</span>
+              </div>
+              <h2 className="hd text-2xl sm:text-4xl font-black text-[#1C1917] tracking-tight">
+                MENU MAPS DISCOVERY LEAGUE — SEASON 01
+              </h2>
+              <p className="text-xs sm:text-sm text-[#FF5A36] font-semibold mt-1">
+                "Two challenges. Two different experiences. One opportunity to discover, create and get recognised."
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate('/discovery/competitions/discovery-league')}
+              className="px-4 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 hover:text-[#0F766E] text-xs font-bold shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <span>Explore Series Overview</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Two Flagship Competition Cards Side-by-Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            {/* 1. The Great Market Mission */}
+            <div className="bg-white rounded-3xl border border-[#E7E2DA] shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="relative h-48 sm:h-56 bg-stone-900 overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80"
+                    alt="The Great Market Mission"
+                    className="w-full h-full object-cover opacity-85 hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <span className="px-3 py-1 rounded-full bg-[#FF5A36] text-white text-[11px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> Offline Exploration
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs text-stone-900 text-[11px] font-bold">
+                      Teams of 2–3
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-5 right-5 text-white">
+                    <p className="text-[11px] uppercase tracking-widest text-amber-300 font-bold">Challenge 01</p>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold">THE GREAT MARKET MISSION</h3>
+                    <p className="text-xs text-stone-200 line-clamp-1 italic mt-0.5">
+                      "One Market. Hidden Food Stories. Can Your Team Discover Them All?"
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 sm:p-6 space-y-4">
+                  <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
+                    Explore a real Delhi neighbourhood market. Investigate honest counter pricing, discover two hidden gem stalls, design a ₹200 budget feast, and publish a visual food discovery map.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                      <span className="font-bold text-[#0F766E]">4 Field Missions</span>
+                      <p className="text-stone-500 text-[11px]">100 Points Total</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                      <span className="font-bold text-[#0F766E]">Budget Battle</span>
+                      <p className="text-stone-500 text-[11px]">Best Feast Under ₹200</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 pt-1">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-stone-400" />
+                      10 Days Duration
+                    </span>
+                    <span>•</span>
+                    <span>Deadline: June 26, 2026</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 sm:p-6 bg-stone-50 border-t border-stone-100 flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/discovery/competitions/great-market-mission')}
+                  className="flex-1 py-2.5 px-4 bg-[#0F766E] text-white font-bold text-xs rounded-xl hover:bg-[#0d635c] transition-colors shadow-2xs text-center"
+                >
+                  View Details & Rules
+                </button>
+                <button
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      navigate('/discovery/competitions/great-market-mission');
+                    } else {
+                      openAuth('register');
+                    }
+                  }}
+                  className="py-2.5 px-4 bg-white border border-stone-200 text-stone-800 font-bold text-xs rounded-xl hover:bg-stone-50 transition-colors"
+                >
+                  Register Team
+                </button>
+              </div>
+            </div>
+
+            {/* 2. The Foodverse Challenge */}
+            <div className="bg-white rounded-3xl border border-[#E7E2DA] shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="relative h-48 sm:h-56 bg-stone-900 overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"
+                    alt="The Foodverse Challenge"
+                    className="w-full h-full object-cover opacity-85 hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <span className="px-3 py-1 rounded-full bg-[#0F766E] text-white text-[11px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                      <Laptop className="w-3 h-3" /> Online Digital Challenge
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs text-stone-900 text-[11px] font-bold">
+                      Individual or Teams (1–4)
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-5 right-5 text-white">
+                    <p className="text-[11px] uppercase tracking-widest text-teal-300 font-bold">Challenge 02</p>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold">THE FOODVERSE CHALLENGE</h3>
+                    <p className="text-xs text-stone-200 line-clamp-1 italic mt-0.5">
+                      "Imagine the Future of Food Discovery. Then Build It."
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 sm:p-6 space-y-4">
+                  <p className="text-xs sm:text-sm text-[#57534E] leading-relaxed">
+                    Choose from 5 challenge tracks (₹150 Food Explorer, Veg Hunter, Hidden Delhi, Friends Planner, Best Dish). Build an original clickable prototype, digital map, or app concept.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                      <span className="font-bold text-[#FF5A36]">5 Focus Tracks</span>
+                      <p className="text-stone-500 text-[11px]">Choose 1 to solve</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                      <span className="font-bold text-[#FF5A36]">Challenge Drops</span>
+                      <p className="text-stone-500 text-[11px]">Days 03, 05, 07 prompts</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 pt-1">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-stone-400" />
+                      14 Days Duration
+                    </span>
+                    <span>•</span>
+                    <span>Deadline: July 05, 2026</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 sm:p-6 bg-stone-50 border-t border-stone-100 flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/discovery/competitions/foodverse-challenge')}
+                  className="flex-1 py-2.5 px-4 bg-[#0F766E] text-white font-bold text-xs rounded-xl hover:bg-[#0d635c] transition-colors shadow-2xs text-center"
+                >
+                  View Details & Tracks
+                </button>
+                <button
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      navigate('/discovery/competitions/foodverse-challenge');
+                    } else {
+                      openAuth('register');
+                    }
+                  }}
+                  className="py-2.5 px-4 bg-white border border-stone-200 text-stone-800 font-bold text-xs rounded-xl hover:bg-stone-50 transition-colors"
+                >
+                  Register (Free)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================
           SECTION 3: LIVE COMPETITIONS
       ======================================================== */}
       <section className="py-12 sm:py-16 border-b border-[#E7E2DA] bg-white">

@@ -114,6 +114,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [submissionCoverUrl, setSubmissionCoverUrl] = useState('');
   const [submittingProject, setSubmittingProject] = useState(false);
 
+  // Great Market Mission submission fields
+  const [gmmHiddenGem1, setGmmHiddenGem1] = useState('');
+  const [gmmHiddenGem2, setGmmHiddenGem2] = useState('');
+  const [gmmMenuDetective, setGmmMenuDetective] = useState('');
+  const [gmmBudgetBattle, setGmmBudgetBattle] = useState('');
+  const [gmmMarketMapNotes, setGmmMarketMapNotes] = useState('');
+
+  // Foodverse Challenge submission fields
+  const [fvcTrack, setFvcTrack] = useState('Track 01 — ₹150 Food Explorer');
+  const [fvcProblem, setFvcProblem] = useState('');
+  const [fvcTargetUser, setFvcTargetUser] = useState('');
+  const [fvcSolution, setFvcSolution] = useState('');
+
   // New Discovery Form State
   const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
   const [discPlaceName, setDiscPlaceName] = useState('');
@@ -262,6 +275,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     setSubmittingProject(true);
     try {
       const selectedComp = competitionsMap[submissionCompId];
+      const isGMM = selectedComp?.slug === 'great-market-mission';
+      const isFVC = selectedComp?.slug === 'foodverse-challenge';
+
       const newSub: CompetitionSubmission = {
         id: 'sub_' + crypto.randomUUID(),
         reference_id: 'MM-SUB-' + new Date().getFullYear() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
@@ -270,6 +286,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
         title: submissionTitle.trim(),
         description: submissionDescription.trim(),
         project_summary: submissionSummary.trim() || submissionDescription.slice(0, 160),
+        selected_track: isFVC ? fvcTrack : undefined,
+        mission_entries: isGMM
+          ? {
+              hidden_gem_1: { name: gmmHiddenGem1, location: '', category: '', why_interesting: '', dishes: '' },
+              hidden_gem_2: { name: gmmHiddenGem2, location: '', category: '', why_interesting: '', dishes: '' },
+              budget_battle: { outlets: '', dishes: '', total_budget: 200, selection_rationale: gmmBudgetBattle },
+              market_map: { map_format: 'Visual Map', map_url: submissionPrototypeUrl || '', exploration_order: '', notes: gmmMarketMapNotes },
+            }
+          : undefined,
+        foodverse_entry: isFVC
+          ? {
+              problem_statement: fvcProblem,
+              target_user: fvcTargetUser,
+              proposed_solution: fvcSolution,
+              main_features: [submissionDescription],
+              prototype_url: submissionPrototypeUrl,
+              video_url: submissionVideoUrl,
+            }
+          : undefined,
         attachments: submissionCoverUrl
           ? [
               {
@@ -840,58 +875,135 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               <div className="space-y-4">
                 {registrations.map((reg) => {
                   const comp = competitionsMap[reg.competition_id];
+                  const sub = submissions.find((s) => s.competition_id === reg.competition_id);
+
+                  // 8-step progress calculation
+                  let stepIndex = 2; // Default: Registered
+                  if (sub) {
+                    if (sub.status === 'Draft') stepIndex = 4;
+                    else if (sub.status === 'Submitted') stepIndex = 5;
+                    else if (sub.status === 'Under Review' || sub.status === 'Needs Correction') stepIndex = 6;
+                    else if (sub.status === 'Accepted' || sub.status === 'Published' || sub.status === 'Rejected') stepIndex = 7;
+                  }
+
+                  const steps = [
+                    'Not Registered',
+                    'Registered',
+                    'Participation Started',
+                    'Submission In Progress',
+                    'Submitted',
+                    'Under Review',
+                    'Result Published',
+                    'Certificate Issued',
+                  ];
+
+                  const publishedDrops = comp?.challenge_drops?.filter((d) => d.is_published) || [];
+
                   return (
                     <div
                       key={reg.id}
-                      className="bg-white rounded-2xl p-6 border border-stone-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6"
+                      className="bg-white rounded-2xl p-6 border border-stone-200 shadow-2xs space-y-4"
                     >
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-[#0F766E] border border-teal-200">
-                            {comp ? comp.category : 'Challenge'}
-                          </span>
-                          <span className="text-xs text-stone-400">•</span>
-                          <span className="text-xs text-stone-500 font-medium">
-                            {reg.is_team ? 'Team Registration' : 'Individual Participant'}
-                          </span>
-                        </div>
-                        <h3 className="font-serif text-xl font-bold text-stone-900">
-                          {comp ? comp.title : 'Competition ID: ' + reg.competition_id}
-                        </h3>
-                        <p className="text-xs text-stone-600 mt-1 line-clamp-2">
-                          {comp ? comp.short_description : 'Registered challenge'}
-                        </p>
-
-                        {comp && (
-                          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-stone-500">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5 text-stone-400" />
-                              Deadline: {new Date(comp.submission_deadline).toLocaleDateString()}
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-[#0F766E] border border-teal-200">
+                              {comp ? comp.category : 'Challenge'}
                             </span>
-                            <span>Format: {comp.format}</span>
+                            <span className="text-xs text-stone-400">•</span>
+                            <span className="text-xs text-stone-500 font-medium">
+                              {reg.is_team ? 'Team Registration' : 'Individual Participant'}
+                            </span>
+                            {reg.selected_market && (
+                              <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold">
+                                Market: {reg.selected_market}
+                              </span>
+                            )}
+                            {reg.selected_track && (
+                              <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200 text-[10px] font-bold">
+                                {reg.selected_track}
+                              </span>
+                            )}
                           </div>
-                        )}
+                          <h3 className="font-serif text-xl font-bold text-stone-900">
+                            {comp ? comp.title : 'Competition ID: ' + reg.competition_id}
+                          </h3>
+                          <p className="text-xs text-stone-600 mt-1 line-clamp-2">
+                            {comp ? comp.short_description : 'Registered challenge'}
+                          </p>
+
+                          {comp && (
+                            <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-stone-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-stone-400" />
+                                Deadline: {comp.submission_deadline ? new Date(comp.submission_deadline).toLocaleDateString() : 'TBA'}
+                              </span>
+                              <span>Format: {comp.format}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          {comp && (
+                            <button
+                              onClick={() => navigate(`/discovery/competitions/${comp.slug}`)}
+                              className="px-4 py-2 border border-stone-200 rounded-xl text-xs font-semibold text-stone-700 hover:bg-stone-50 transition-colors"
+                            >
+                              View Guidelines
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setSubmissionCompId(reg.competition_id);
+                              setShowSubmitModal(true);
+                            }}
+                            className="px-4 py-2 bg-[#0F766E] text-white rounded-xl text-xs font-semibold hover:bg-[#0d635c] transition-colors shadow-2xs"
+                          >
+                            Submit Deliverables
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        {comp && (
-                          <button
-                            onClick={() => navigate(`/discovery/competitions/${comp.slug}`)}
-                            className="px-4 py-2 border border-stone-200 rounded-xl text-xs font-semibold text-stone-700 hover:bg-stone-50 transition-colors"
-                          >
-                            View Guidelines
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            setSubmissionCompId(reg.competition_id);
-                            setShowSubmitModal(true);
-                          }}
-                          className="px-4 py-2 bg-[#0F766E] text-white rounded-xl text-xs font-semibold hover:bg-[#0d635c] transition-colors shadow-2xs"
-                        >
-                          Submit Work
-                        </button>
+                      {/* 8-Step Meaningful Progress Tracker */}
+                      <div className="pt-3 border-t border-stone-100 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-stone-500">
+                          <span>Progress: {steps[stepIndex - 1]}</span>
+                          <span>Step {stepIndex} of 8</span>
+                        </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
+                          {steps.map((stepName, sIdx) => {
+                            const isDone = sIdx + 1 <= stepIndex;
+                            const isCurrent = sIdx + 1 === stepIndex;
+                            return (
+                              <div
+                                key={stepName}
+                                className={`p-1.5 rounded-lg text-center text-[9px] font-bold leading-tight transition-colors ${
+                                  isCurrent
+                                    ? 'bg-[#0F766E] text-white ring-2 ring-[#0F766E]/30'
+                                    : isDone
+                                    ? 'bg-emerald-100 text-emerald-900'
+                                    : 'bg-stone-100 text-stone-400'
+                                }`}
+                              >
+                                {stepName}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
+
+                      {/* Active Challenge Drops Notification Box */}
+                      {publishedDrops.length > 0 && (
+                        <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs space-y-1">
+                          <span className="font-bold text-amber-950 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                            Active Challenge Drop ({publishedDrops[publishedDrops.length - 1].day_label}):
+                          </span>
+                          <p className="text-amber-900 text-[11px] leading-relaxed">
+                            "{publishedDrops[publishedDrops.length - 1].prompt}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1508,6 +1620,131 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <option value="Presentation">Presentation</option>
                 </select>
               </div>
+
+              {/* Great Market Mission Specific 4-Mission Fields */}
+              {competitionsMap[submissionCompId]?.slug === 'great-market-mission' && (
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-3 text-xs">
+                  <span className="font-bold text-amber-950 flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
+                    <MapPin className="w-3.5 h-3.5 text-[#FF5A36]" />
+                    4 Mission Deliverables Checklist
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Mission 01: Hidden Gem #1</label>
+                      <input
+                        type="text"
+                        placeholder="Outlet Name & Dish"
+                        value={gmmHiddenGem1}
+                        onChange={(e) => setGmmHiddenGem1(e.target.value)}
+                        className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Hidden Gem #2</label>
+                      <input
+                        type="text"
+                        placeholder="Outlet Name & Dish"
+                        value={gmmHiddenGem2}
+                        onChange={(e) => setGmmHiddenGem2(e.target.value)}
+                        className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Mission 02: Menu Detective (3 Verified Dishes & Counter Prices)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Chole Bhature ₹70 (Board), Lassi ₹40 (Counter printed), Samosa ₹15 (Paid receipt)"
+                      value={gmmMenuDetective}
+                      onChange={(e) => setGmmMenuDetective(e.target.value)}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Mission 03: Budget Battle (Feast Under ₹200 Rationale)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Roll (₹80) + Cold Coffee (₹50) + Sweet (₹40) = ₹170 total"
+                      value={gmmBudgetBattle}
+                      onChange={(e) => setGmmBudgetBattle(e.target.value)}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Mission 04: Market Map Walking Tips & Exploration Order</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Start at Metro Gate 2 -> Lane 4 -> Alley 2 (Attach map file below)"
+                      value={gmmMarketMapNotes}
+                      onChange={(e) => setGmmMarketMapNotes(e.target.value)}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Foodverse Challenge Specific Fields */}
+              {competitionsMap[submissionCompId]?.slug === 'foodverse-challenge' && (
+                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200/80 space-y-3 text-xs">
+                  <span className="font-bold text-teal-950 flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
+                    <Laptop className="w-3.5 h-3.5 text-[#0F766E]" />
+                    Foodverse Challenge Track & Concept Details
+                  </span>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Primary Challenge Track</label>
+                    <select
+                      value={fvcTrack}
+                      onChange={(e) => setFvcTrack(e.target.value)}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                    >
+                      <option value="Track 01 — ₹150 Food Explorer">Track 01 — ₹150 Food Explorer</option>
+                      <option value="Track 02 — Vegetarian Food Hunter">Track 02 — Vegetarian Food Hunter</option>
+                      <option value="Track 03 — Hidden Delhi Food Explorer">Track 03 — Hidden Delhi Food Explorer</option>
+                      <option value="Track 04 — Friends Food Planner">Track 04 — Friends Food Planner</option>
+                      <option value="Track 05 — Best Dish for Your Budget">Track 05 — Best Dish for Your Budget</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Problem Statement</label>
+                      <input
+                        type="text"
+                        placeholder="What exact friction are you solving?"
+                        value={fvcProblem}
+                        onChange={(e) => setFvcProblem(e.target.value)}
+                        className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Target Audience</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Commuters, hostelers"
+                        value={fvcTargetUser}
+                        onChange={(e) => setFvcTargetUser(e.target.value)}
+                        className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-stone-600 block mb-0.5">Proposed Digital Solution</label>
+                    <input
+                      type="text"
+                      placeholder="Summary of how your design / app solves the problem"
+                      value={fvcSolution}
+                      onChange={(e) => setFvcSolution(e.target.value)}
+                      className="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-stone-700 mb-1">Detailed Description & Methodology</label>

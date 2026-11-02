@@ -1,7 +1,7 @@
 /**
  * Menu Maps Discovery - Competition Detail Page (/discovery/competitions/:slug)
  * Comprehensive, production-grade challenge page with real registration, team formation,
- * tasks, judging criteria, timeline, rewards, and FAQs.
+ * tasks, missions, challenge tracks, drops, judging criteria, timeline, rewards, and FAQs.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -22,6 +22,12 @@ import {
   Check,
   Send,
   UserCheck,
+  MapPin,
+  Laptop,
+  ShieldCheck,
+  Flame,
+  Layers,
+  ChevronRight,
 } from 'lucide-react';
 import { discoveryApi } from '../lib/discoveryApi';
 import { DiscoveryCompetition, CompetitionRegistration, CompetitionTeam } from '../types/discovery';
@@ -43,10 +49,23 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
   const [isRegistered, setIsRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
 
-  // Team Registration Form
+  // Common Registration State
   const [teamName, setTeamName] = useState('');
   const [teamCodeGenerated, setTeamCodeGenerated] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Great Market Mission Specific Registration State
+  const [selectedMarket, setSelectedMarket] = useState('Kamla Nagar');
+  const [member2Name, setMember2Name] = useState('');
+  const [member2Email, setMember2Email] = useState('');
+  const [member3Name, setMember3Name] = useState('');
+  const [member3Email, setMember3Email] = useState('');
+  const [safetyConfirmed, setSafetyConfirmed] = useState(false);
+
+  // Foodverse Challenge Specific Registration State
+  const [isTeamMode, setIsTeamMode] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState('Track 01 — ₹150 Food Explorer');
+  const [rulesAgreed, setRulesAgreed] = useState(false);
 
   useEffect(() => {
     loadDetail();
@@ -79,18 +98,52 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
 
     if (!competition) return;
 
-    if (competition.is_team_competition && !teamName.trim()) {
-      showToast('Please provide a team name for team registration.', 'error');
+    const isGMM = competition.slug === 'great-market-mission';
+    const isFVC = competition.slug === 'foodverse-challenge';
+
+    // Great Market Mission validation
+    if (isGMM) {
+      if (!teamName.trim()) {
+        showToast('Please provide a squad/team name.', 'error');
+        return;
+      }
+      if (!member2Name.trim() || !member2Email.trim()) {
+        showToast('The Great Market Mission requires at least 2 team members. Please provide Member 2 details.', 'error');
+        return;
+      }
+      if (!safetyConfirmed) {
+        showToast('Please confirm agreement to the safety and vendor etiquette rules.', 'error');
+        return;
+      }
+    }
+
+    // Foodverse validation
+    if (isFVC && isTeamMode && !teamName.trim()) {
+      showToast('Please enter a team name for team participation.', 'error');
       return;
     }
+
+    const teamMembersInfo = [];
+    if (isGMM && member2Name.trim()) {
+      teamMembersInfo.push({ name: member2Name.trim(), email: member2Email.trim() });
+    }
+    if (isGMM && member3Name.trim()) {
+      teamMembersInfo.push({ name: member3Name.trim(), email: member3Email.trim() });
+    }
+
+    const effectiveIsTeam = isGMM ? true : (isFVC ? isTeamMode : competition.is_team_competition);
 
     setRegistering(true);
     try {
       const res = await discoveryApi.registerForCompetition({
         competitionId: competition.id,
         studentId: student.id,
-        isTeam: competition.is_team_competition,
-        teamName: competition.is_team_competition ? teamName.trim() : undefined,
+        isTeam: effectiveIsTeam,
+        teamName: effectiveIsTeam ? teamName.trim() : undefined,
+        selectedMarket: isGMM ? selectedMarket : undefined,
+        selectedTrack: isFVC ? selectedTrack : undefined,
+        safetyRulesConfirmed: isGMM ? safetyConfirmed : true,
+        teamMembersInfo: teamMembersInfo.length > 0 ? teamMembersInfo : undefined,
       });
 
       if (res.success) {
@@ -142,7 +195,7 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
             onClick={() => navigate('/discovery/competitions')}
             className="btn bg-[#0F766E] text-white px-5 py-2.5 rounded-xl text-xs font-bold"
           >
-            Browse All Challenges
+            Browse All Competitions
           </button>
         </div>
       </div>
@@ -150,67 +203,99 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
   }
 
   const isRegistrationOpen = competition.status === 'Registration Open';
+  const isGMM = competition.slug === 'great-market-mission';
+  const isFVC = competition.slug === 'foodverse-challenge';
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1917]">
       <DiscoveryNavbar currentPath={`/discovery/competitions/${slug}`} navigate={navigate} />
 
-      {/* Hero Banner */}
-      <section className="bg-white border-b border-[#E7E2DA] pt-8 pb-12 sm:pb-16">
+      {/* Series Header Pill Banner */}
+      {competition.series_name && (
+        <div className="bg-[#FAF8F5] border-b border-[#E7E2DA] py-2 px-4 text-center">
+          <button
+            onClick={() => navigate('/discovery/competitions/discovery-league')}
+            className="inline-flex items-center gap-2 text-xs font-bold text-[#0F766E] hover:underline"
+          >
+            <Trophy className="w-3.5 h-3.5 text-amber-500" />
+            <span>Part of {competition.series_name} • {competition.season || 'Season 01'}</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Hero Section */}
+      <section className="bg-white border-b border-[#E7E2DA] pt-8 sm:pt-12 pb-10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
           <button
             onClick={() => navigate('/discovery/competitions')}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-900 mb-6 cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#78716C] hover:text-[#0F766E] mb-6 transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to All Competitions</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>All Competitions</span>
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-8 space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                  {competition.status}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                  competition.format === 'Offline'
+                    ? 'bg-[#FF5A36] text-white'
+                    : 'bg-[#0F766E] text-white'
+                }`}>
+                  {competition.format === 'Offline' ? <MapPin className="w-3 h-3 inline mr-1" /> : <Laptop className="w-3 h-3 inline mr-1" />}
+                  {competition.format} Exploration
                 </span>
                 <span className="px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-xs font-bold">
-                  {competition.format}
-                </span>
-                <span className="px-3 py-1 rounded-full bg-teal-50 text-[#0F766E] text-xs font-bold">
                   {competition.category}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold">
+                  {competition.is_team_competition
+                    ? `Teams of ${competition.min_team_size}–${competition.max_team_size}`
+                    : 'Individual or Squads'}
                 </span>
               </div>
 
-              <h1 className="hd text-3xl sm:text-5xl font-black text-[#1C1917] tracking-tight leading-tight">
+              <h1 className="hd text-3xl sm:text-4xl md:text-5xl font-black text-[#1C1917] tracking-tight">
                 {competition.title}
               </h1>
+
+              {competition.tagline && (
+                <p className="font-serif italic text-lg sm:text-xl text-[#FF5A36] font-semibold">
+                  "{competition.tagline}"
+                </p>
+              )}
 
               <p className="text-sm sm:text-base text-[#57534E] leading-relaxed max-w-2xl">
                 {competition.short_description}
               </p>
 
-              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-stone-600 pt-2">
+              <div className="pt-2 flex flex-wrap gap-4 text-xs font-bold text-stone-600">
                 <span className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-[#0F766E]" />
+                  <Calendar className="w-4 h-4 text-[#0F766E]" />
                   <span>
-                    {competition.is_team_competition
-                      ? `Team (${competition.min_team_size}–${competition.max_team_size} members)`
-                      : 'Individual participation'}
+                    {competition.submission_deadline
+                      ? `Deadline: ${new Date(competition.submission_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                      : 'Dates to be announced by Admin'}
                   </span>
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-[#FF5A36]" />
-                  <span>Submissions close {new Date(competition.submission_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </span>
+                <span>•</span>
+                <span>No Purchase Required</span>
+                <span>•</span>
+                <span>Free Student Participation</span>
               </div>
             </div>
 
-            {/* Quick Action Box */}
+            {/* Quick Action / Registration Box */}
             <div className="lg:col-span-4 bg-[#FAF8F5] border border-[#E7E2DA] rounded-3xl p-6 space-y-4 shadow-2xs">
               <div className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
                   Challenge Status
                 </span>
-                <div className="font-bold text-base text-[#1C1917]">{competition.status}</div>
+                <div className="font-bold text-base text-[#1C1917] flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{competition.status}</span>
+                </div>
               </div>
 
               {isRegistered ? (
@@ -220,18 +305,170 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
                     <span>You are registered for this challenge</span>
                   </div>
                   <p className="text-[11px] text-emerald-800">
-                    Prepare your deliverables and submit work directly from your student dashboard before the deadline.
+                    Submit your deliverables or track jury review directly from your dashboard.
                   </p>
                   <button
-                    onClick={() => navigate('/discovery/dashboard?tab=submissions')}
-                    className="btn w-full bg-[#0F766E] text-white min-h-[40px] text-xs font-bold rounded-xl mt-1"
+                    onClick={() => navigate('/discovery/dashboard?tab=competitions')}
+                    className="w-full py-2.5 bg-[#0F766E] text-white text-xs font-bold rounded-xl mt-1 hover:bg-[#0d635c] transition-colors"
                   >
-                    Open Submission Desk &rarr;
+                    Open Student Dashboard &rarr;
                   </button>
                 </div>
               ) : isRegistrationOpen ? (
                 <div className="space-y-3">
-                  {competition.is_team_competition && (
+                  {/* Great Market Mission Registration Form */}
+                  {isGMM && (
+                    <div className="space-y-2.5 text-xs">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-0.5">
+                          Squad / Team Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={teamName}
+                          onChange={(e) => setTeamName(e.target.value)}
+                          placeholder="e.g. North Campus Foodies"
+                          className="w-full bg-white border border-[#E7E2DA] rounded-xl px-3 py-2 text-xs outline-hidden focus:ring-1 focus:ring-[#0F766E]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-0.5">
+                          Market to Explore *
+                        </label>
+                        <select
+                          value={selectedMarket}
+                          onChange={(e) => setSelectedMarket(e.target.value)}
+                          className="w-full bg-white border border-[#E7E2DA] rounded-xl px-3 py-2 text-xs outline-hidden focus:ring-1 focus:ring-[#0F766E]"
+                        >
+                          {competition.allowed_locations?.map((loc) => (
+                            <option key={loc} value={loc}>
+                              {loc}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white border border-[#E7E2DA] space-y-2">
+                        <p className="font-bold text-[10px] uppercase text-stone-500">Team Members (2–3 Students):</p>
+                        <p className="text-[10px] text-stone-400">Leader: {student?.full_name || 'You (Logged In)'}</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Member 2 Name *"
+                            value={member2Name}
+                            onChange={(e) => setMember2Name(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-[11px]"
+                          />
+                          <input
+                            type="email"
+                            placeholder="Member 2 Email *"
+                            value={member2Email}
+                            onChange={(e) => setMember2Email(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-[11px]"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Member 3 (Optional)"
+                            value={member3Name}
+                            onChange={(e) => setMember3Name(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-[11px]"
+                          />
+                          <input
+                            type="email"
+                            placeholder="Member 3 Email"
+                            value={member3Email}
+                            onChange={(e) => setMember3Email(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-[11px]"
+                          />
+                        </div>
+                      </div>
+
+                      <label className="flex items-start gap-2 cursor-pointer pt-1">
+                        <input
+                          type="checkbox"
+                          checked={safetyConfirmed}
+                          onChange={(e) => setSafetyConfirmed(e.target.checked)}
+                          className="w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E] mt-0.5"
+                        />
+                        <span className="text-[10px] text-stone-600 leading-snug">
+                          My team agrees to daytime public exploration, vendor courtesy, no trespassing, and honest counter rates.
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Foodverse Challenge Registration Form */}
+                  {isFVC && (
+                    <div className="space-y-2.5 text-xs">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-0.5">
+                          Participation Format
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsTeamMode(false)}
+                            className={`py-1.5 rounded-xl font-bold border transition-colors ${
+                              !isTeamMode
+                                ? 'bg-[#0F766E] text-white border-[#0F766E]'
+                                : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                            }`}
+                          >
+                            Individual (Solo)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsTeamMode(true)}
+                            className={`py-1.5 rounded-xl font-bold border transition-colors ${
+                              isTeamMode
+                                ? 'bg-[#0F766E] text-white border-[#0F766E]'
+                                : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                            }`}
+                          >
+                            Team (Up to 4)
+                          </button>
+                        </div>
+                      </div>
+
+                      {isTeamMode && (
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-0.5">
+                            Team Name *
+                          </label>
+                          <input
+                            type="text"
+                            value={teamName}
+                            onChange={(e) => setTeamName(e.target.value)}
+                            placeholder="e.g. Pixel Cravers"
+                            className="w-full bg-white border border-[#E7E2DA] rounded-xl px-3 py-2 text-xs outline-hidden"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-0.5">
+                          Primary Challenge Track
+                        </label>
+                        <select
+                          value={selectedTrack}
+                          onChange={(e) => setSelectedTrack(e.target.value)}
+                          className="w-full bg-white border border-[#E7E2DA] rounded-xl px-3 py-2 text-xs outline-hidden"
+                        >
+                          <option value="Track 01 — ₹150 Food Explorer">Track 01 — ₹150 Food Explorer</option>
+                          <option value="Track 02 — Vegetarian Food Hunter">Track 02 — Vegetarian Food Hunter</option>
+                          <option value="Track 03 — Hidden Delhi Food Explorer">Track 03 — Hidden Delhi Food Explorer</option>
+                          <option value="Track 04 — Friends Food Planner">Track 04 — Friends Food Planner</option>
+                          <option value="Track 05 — Best Dish for Your Budget">Track 05 — Best Dish for Your Budget</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Generic Challenge Fallback Form */}
+                  {!isGMM && !isFVC && competition.is_team_competition && (
                     <div>
                       <label className="text-[11px] font-bold uppercase tracking-wider text-stone-600 block mb-1">
                         Team Name *
@@ -249,13 +486,13 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
                   <button
                     onClick={handleRegister}
                     disabled={registering}
-                    className="btn w-full bg-[#0F766E] hover:bg-[#0D9488] text-white min-h-[46px] rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 bg-[#0F766E] hover:bg-[#0d635c] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer disabled:opacity-50"
                   >
                     {registering ? 'Confirming Registration...' : 'Register for Challenge (Free)'}
                   </button>
 
                   <p className="text-[10px] text-stone-400 text-center">
-                    Registration is 100% free for verified students.
+                    100% free for all students. Zero mandatory purchases.
                   </p>
                 </div>
               ) : (
@@ -275,7 +512,7 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
                     </button>
                   </div>
                   <p className="text-[10px] text-amber-800">
-                    Share this code with your teammates so they can link their accounts to your squad.
+                    Share this code with teammates so they can link their profiles to your squad.
                   </p>
                 </div>
               )}
@@ -288,7 +525,7 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
       <section className="py-12 max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-10">
-            {/* 1. About */}
+            {/* 1. About the Challenge */}
             <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-4">
               <h2 className="hd text-xl sm:text-2xl font-bold text-[#1C1917]">About the Challenge</h2>
               <div className="text-xs sm:text-sm text-[#57534E] leading-relaxed whitespace-pre-line">
@@ -296,26 +533,191 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
               </div>
             </div>
 
-            {/* 2. Tasks & Instructions */}
-            {competition.tasks_instructions && competition.tasks_instructions.length > 0 && (
+            {/* 2. THE 4 MISSION TASKS (for Great Market Mission) */}
+            {competition.missions && competition.missions.length > 0 && (
+              <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-6">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#0F766E] bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
+                    Core Mission Structure (100 Points Total)
+                  </span>
+                  <h2 className="hd text-xl sm:text-2xl font-bold text-[#1C1917] mt-2">
+                    The Four Field Missions
+                  </h2>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Your team must complete all four sequential missions in your selected market:
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {competition.missions.map((mission) => (
+                    <div
+                      key={mission.mission_number}
+                      className="p-5 rounded-2xl border border-stone-200 bg-[#FAF8F5]/80 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-serif text-base font-bold text-stone-900">
+                          Mission 0{mission.mission_number} — {mission.title}
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-teal-100 text-[#0F766E] font-black text-xs">
+                          {mission.points} Points
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-700 font-semibold">{mission.task_summary}</p>
+                      
+                      <div className="space-y-1.5 text-xs text-stone-600">
+                        {mission.instructions.map((inst, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="text-[#0F766E] font-bold">•</span>
+                            <span>{inst}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 border-t border-stone-200/60 flex flex-wrap items-center gap-4 text-[11px] text-stone-500">
+                        <span><strong>Deliverable:</strong> {mission.deliverables.join(', ')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2b. MYSTERY BONUS CHALLENGES (Great Market Mission) */}
+            {competition.bonus_challenges && competition.bonus_challenges.length > 0 && (
               <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-4">
-                <h2 className="hd text-xl font-bold text-[#1C1917]">Tasks & Instructions</h2>
-                <ul className="space-y-2.5 text-xs sm:text-sm text-[#57534E]">
-                  {competition.tasks_instructions.map((task, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-teal-50 text-[#0F766E] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span>{task}</span>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  <h3 className="hd text-xl font-bold text-[#1C1917]">Optional Mystery Bonus Challenges</h3>
+                </div>
+                <p className="text-xs text-stone-500">
+                  Earn extra bonus points for your team! Fixed transparent scoring rules apply.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {competition.bonus_challenges.map((bonus, idx) => (
+                    <div key={idx} className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-1 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-amber-950">{bonus.title}</span>
+                        <span className="font-black text-emerald-700">+{bonus.points} Pts</span>
+                      </div>
+                      <p className="text-stone-700">{bonus.description}</p>
+                      <p className="text-[11px] text-stone-500 italic mt-1">{bonus.condition}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. CHALLENGE TRACKS (for Foodverse Challenge) */}
+            {competition.tracks && competition.tracks.length > 0 && (
+              <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-6">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5A36] bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">
+                    5 Challenge Tracks
+                  </span>
+                  <h2 className="hd text-xl sm:text-2xl font-bold text-[#1C1917] mt-2">
+                    Choose Your Focus Track
+                  </h2>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Select one real food discovery problem to research and solve:
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {competition.tracks.map((track) => (
+                    <div
+                      key={track.track_number}
+                      className="p-5 rounded-2xl border border-stone-200 bg-[#FAF8F5]/80 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-serif text-base font-bold text-stone-900">
+                          Track 0{track.track_number}: {track.title}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-stone-200 text-stone-800 text-[10px] font-bold">
+                          Selectable Track
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-800 font-semibold italic">"{track.problem_statement}"</p>
+                      <p className="text-xs text-stone-600">
+                        <strong>Target User:</strong> {track.target_user}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {track.suggested_features.map((f, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-white border border-stone-200 text-[11px] text-stone-700 font-medium">
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3b. SECRET CHALLENGE DROPS (Foodverse Challenge) */}
+            {competition.challenge_drops && competition.challenge_drops.length > 0 && (
+              <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-[#FF5A36]" />
+                    <h3 className="hd text-xl font-bold text-[#1C1917]">Foodverse Challenge Drops</h3>
+                  </div>
+                  <span className="text-xs text-stone-400 font-medium">Released during challenge</span>
+                </div>
+                <p className="text-xs text-stone-500">
+                  Surprise creative prompts dropped to stretch your product design and test real-world user empathy:
+                </p>
+
+                <div className="space-y-3">
+                  {competition.challenge_drops.map((drop) => (
+                    <div
+                      key={drop.id}
+                      className={`p-4 rounded-2xl border text-xs space-y-1.5 transition-colors ${
+                        drop.is_published
+                          ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                          : 'bg-stone-50 border-stone-200 text-stone-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold flex items-center gap-1.5">
+                          <span>{drop.day_label}: {drop.title}</span>
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          drop.is_published ? 'bg-amber-200 text-amber-900' : 'bg-stone-200 text-stone-600'
+                        }`}>
+                          {drop.is_published ? 'Released' : 'Secret until Scheduled Day'}
+                        </span>
+                      </div>
+                      <p className="text-stone-700 leading-relaxed">
+                        {drop.is_published ? drop.prompt : 'Locked challenge constraint. Unlocks for all participants on schedule.'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 4. Safety & Fair Participation Rules */}
+            {competition.safety_guidelines && competition.safety_guidelines.length > 0 && (
+              <div className="bg-stone-50 border border-stone-200 rounded-3xl p-6 sm:p-8 space-y-3">
+                <h3 className="hd text-lg font-bold text-stone-900 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-[#0F766E]" />
+                  <span>Safety, Ethics & Fair Participation Rules</span>
+                </h3>
+                <ul className="space-y-1.5 text-xs text-stone-600">
+                  {competition.safety_guidelines.map((rule, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0F766E] shrink-0 mt-0.5" />
+                      <span>{rule}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* 3. Deliverables & Required Formats */}
+            {/* 5. Required Deliverables */}
             <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-4">
-              <h2 className="hd text-xl font-bold text-[#1C1917]">Required Deliverables</h2>
+              <h2 className="hd text-xl sm:text-2xl font-bold text-[#1C1917]">Required Deliverables</h2>
               <ul className="space-y-2 text-xs sm:text-sm text-[#57534E]">
                 {competition.required_deliverables?.map((deliv, idx) => (
                   <li key={idx} className="flex items-center gap-2">
@@ -330,15 +732,15 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
                   Accepted Formats: <strong className="text-stone-800">{competition.allowed_file_formats?.join(', ')}</strong>
                 </span>
                 <span className="text-stone-500 font-medium">
-                  Max Size: <strong className="text-stone-800">{competition.max_file_size_mb} MB</strong>
+                  Max File Limit: <strong className="text-stone-800">{competition.max_file_size_mb} MB</strong>
                 </span>
               </div>
             </div>
 
-            {/* 4. Judging Criteria */}
+            {/* 6. 100-Point Judging Criteria */}
             {competition.judging_criteria && competition.judging_criteria.length > 0 && (
               <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-4">
-                <h2 className="hd text-xl font-bold text-[#1C1917]">Judging Criteria</h2>
+                <h2 className="hd text-xl sm:text-2xl font-bold text-[#1C1917]">Official 100-Point Evaluation Matrix</h2>
                 <div className="space-y-3">
                   {competition.judging_criteria.map((crit, idx) => (
                     <div key={idx} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA] flex items-start justify-between gap-4">
@@ -347,7 +749,7 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
                         <p className="text-xs text-stone-500 mt-0.5">{crit.description}</p>
                       </div>
                       <span className="px-3 py-1 rounded-full bg-teal-100 text-[#0F766E] text-xs font-black shrink-0">
-                        {crit.weight_percent}%
+                        {crit.weight_percent} Points
                       </span>
                     </div>
                   ))}
@@ -355,10 +757,10 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
               </div>
             )}
 
-            {/* 5. FAQs */}
+            {/* 7. FAQs */}
             {competition.faqs && competition.faqs.length > 0 && (
               <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 sm:p-8 space-y-4">
-                <h2 className="hd text-xl font-bold text-[#1C1917]">Frequently Asked Questions</h2>
+                <h2 className="hd text-xl sm:text-2xl font-bold text-[#1C1917]">Frequently Asked Questions</h2>
                 <div className="space-y-3">
                   {competition.faqs.map((faq, idx) => (
                     <div key={idx} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E7E2DA] space-y-1">
@@ -406,28 +808,34 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
             <div className="bg-white border border-[#E7E2DA] rounded-3xl p-6 space-y-4 shadow-2xs text-xs">
               <h3 className="hd text-base font-bold text-[#1C1917] flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[#0F766E]" />
-                <span>Important Dates</span>
+                <span>Timeline & Schedule</span>
               </h3>
 
               <div className="space-y-3">
-                <div>
-                  <span className="text-stone-400 block font-medium">Registration Window</span>
-                  <span className="font-bold text-stone-800">
-                    {new Date(competition.registration_start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(competition.registration_end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                </div>
+                {competition.registration_start_date && (
+                  <div>
+                    <span className="text-stone-400 block font-medium">Registration Window</span>
+                    <span className="font-bold text-stone-800">
+                      {new Date(competition.registration_start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {competition.registration_end_date ? new Date(competition.registration_end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'}
+                    </span>
+                  </div>
+                )}
 
-                <div>
-                  <span className="text-stone-400 block font-medium">Challenge Duration</span>
-                  <span className="font-bold text-stone-800">
-                    {new Date(competition.competition_start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(competition.competition_end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                </div>
+                {competition.competition_start_date && (
+                  <div>
+                    <span className="text-stone-400 block font-medium">Active Challenge Days</span>
+                    <span className="font-bold text-stone-800">
+                      {new Date(competition.competition_start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {competition.competition_end_date ? new Date(competition.competition_end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'}
+                    </span>
+                  </div>
+                )}
 
                 <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200">
                   <span className="text-rose-700 block font-bold">Hard Submission Deadline</span>
                   <span className="font-black text-sm text-[#D8350F]">
-                    {new Date(competition.submission_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {competition.submission_deadline
+                      ? new Date(competition.submission_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : 'Dates to be announced'}
                   </span>
                 </div>
               </div>
@@ -440,7 +848,7 @@ export const CompetitionDetail: React.FC<CompetitionDetailProps> = ({ slug, navi
                 <span>Support & Queries</span>
               </h4>
               <p className="text-stone-500 leading-relaxed">
-                {competition.contact_info || 'Reach out to the community jury team at contact@menumaps.in for questions.'}
+                {competition.contact_info || 'Reach out to the community jury team at discovery@menumaps.in for questions.'}
               </p>
             </div>
           </div>

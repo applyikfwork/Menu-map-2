@@ -32,6 +32,7 @@ const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound', 'No
 // Discovery Ecosystem Lazy Routes
 const DiscoveryHome = lazyWithRetry(() => import('./discovery/pages/DiscoveryHome'), 'DiscoveryHome', 'DiscoveryHome');
 const CompetitionsList = lazyWithRetry(() => import('./discovery/pages/CompetitionsList'), 'CompetitionsList', 'CompetitionsList');
+const DiscoveryLeagueSeries = lazyWithRetry(() => import('./discovery/pages/DiscoveryLeagueSeries'), 'DiscoveryLeagueSeries', 'DiscoveryLeagueSeries');
 const CompetitionDetail = lazyWithRetry(() => import('./discovery/pages/CompetitionDetail'), 'CompetitionDetail', 'CompetitionDetail');
 const StudentCreations = lazyWithRetry(() => import('./discovery/pages/StudentCreations'), 'StudentCreations', 'StudentCreations');
 const ProjectDetail = lazyWithRetry(() => import('./discovery/pages/ProjectDetail'), 'ProjectDetail', 'ProjectDetail');
@@ -212,6 +213,9 @@ function AppContent() {
     }
     if (normPath === '/discovery/competitions') {
       return <CompetitionsList navigate={navigate} />;
+    }
+    if (normPath === '/discovery/competitions/discovery-league') {
+      return <DiscoveryLeagueSeries navigate={navigate} />;
     }
     if (normPath.startsWith('/discovery/competitions/')) {
       const slug = normPath.slice('/discovery/competitions/'.length).split('/')[0].trim();

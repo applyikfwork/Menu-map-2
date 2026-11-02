@@ -74,10 +74,50 @@ export interface CompetitionJudgingCriterion {
   description: string;
 }
 
+export interface CompetitionMissionTask {
+  mission_number: number;
+  title: string;
+  points: number;
+  task_summary: string;
+  instructions: string[];
+  deliverables: string[];
+  evaluation_criteria: string[];
+}
+
+export interface CompetitionBonusChallenge {
+  title: string;
+  points: number;
+  description: string;
+  condition: string;
+}
+
+export interface CompetitionTrack {
+  track_number: number;
+  title: string;
+  problem_statement: string;
+  target_user: string;
+  suggested_features: string[];
+  possible_deliverables: string[];
+}
+
+export interface FoodverseChallengeDrop {
+  id: string;
+  drop_number: number;
+  day_label: string; // e.g. "Day 03"
+  title: string;
+  prompt: string;
+  scheduled_date: string;
+  is_published: boolean;
+  published_at?: string;
+}
+
 export interface DiscoveryCompetition {
   id: string;
+  series_name?: string; // e.g. "Menu Maps Discovery League"
+  season?: string; // e.g. "Season 01"
   title: string;
   slug: string;
+  tagline: string;
   short_description: string;
   description: string;
   cover_image_url: string;
@@ -89,11 +129,11 @@ export interface DiscoveryCompetition {
   eligibility: string;
   allowed_colleges?: string[];
   allowed_locations?: string[];
-  registration_start_date: string;
-  registration_end_date: string;
-  competition_start_date: string;
-  competition_end_date: string;
-  submission_deadline: string;
+  registration_start_date?: string;
+  registration_end_date?: string;
+  competition_start_date?: string;
+  competition_end_date?: string;
+  submission_deadline?: string;
   rules: string[];
   tasks_instructions: string[];
   required_deliverables: string[];
@@ -105,6 +145,11 @@ export interface DiscoveryCompetition {
   faqs: CompetitionFaq[];
   contact_info: string;
   terms_and_conditions: string[];
+  missions?: CompetitionMissionTask[];
+  bonus_challenges?: CompetitionBonusChallenge[];
+  tracks?: CompetitionTrack[];
+  safety_guidelines?: string[];
+  challenge_drops?: FoodverseChallengeDrop[];
   status: CompetitionStatus;
   created_at: string;
   updated_at: string;
@@ -117,6 +162,10 @@ export interface CompetitionRegistration {
   student_id: string;
   is_team: boolean;
   team_id?: string;
+  selected_track?: string;
+  selected_market?: string;
+  safety_rules_confirmed?: boolean;
+  team_members_info?: Array<{ name: string; email: string; college?: string }>;
   status: 'Registered' | 'Confirmed' | 'Withdrawn';
   registration_notes?: string;
   registered_at: string;
@@ -169,11 +218,31 @@ export interface CompetitionSubmission {
   title: string;
   description: string;
   project_summary?: string;
+  selected_track?: string;
+  selected_market?: string;
+  mission_entries?: {
+    hidden_gem_1?: { name: string; location: string; category: string; why_interesting: string; dishes: string; evidence_url?: string };
+    hidden_gem_2?: { name: string; location: string; category: string; why_interesting: string; dishes: string; evidence_url?: string };
+    menu_detective?: Array<{ outlet_name: string; dish_name: string; listed_price: number; evidence_type: string; evidence_url?: string; observations?: string }>;
+    budget_battle?: { outlets: string; dishes: string; total_budget: number; selection_rationale: string; evidence_url?: string };
+    market_map?: { map_format: string; map_url: string; exploration_order: string; notes: string };
+  };
+  foodverse_entry?: {
+    problem_statement: string;
+    target_user: string;
+    proposed_solution: string;
+    main_features: string[];
+    prototype_url?: string;
+    video_url?: string;
+    research_notes?: string;
+  };
   attachments: SubmissionAttachment[];
   external_prototype_url?: string;
   external_video_url?: string;
   external_presentation_url?: string;
   status: SubmissionStatus;
+  judge_scores?: Array<{ criterion_title: string; score: number; max_score: number; comment?: string }>;
+  total_score?: number;
   internal_admin_notes?: string;
   student_visible_feedback?: string;
   submitted_at: string;

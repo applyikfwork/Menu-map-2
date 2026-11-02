@@ -24,8 +24,18 @@ import {
   Sparkles,
   Calendar,
   Building,
+  Upload,
+  Image as ImageIcon,
+  CheckCircle2,
+  Clock,
+  Compass,
+  Layers,
+  Zap,
+  ChevronRight,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { discoveryApi } from '../lib/discoveryApi';
+import { compressImageFile } from '../../lib/imageCompressor';
 import {
   DiscoveryCompetition,
   CompetitionSubmission,
@@ -34,6 +44,7 @@ import {
   DiscoveryCertificate,
   HallOfFameEntry,
   StudentProfile,
+  CompetitionRegistration,
   SubmissionStatus,
   FoodDiscoveryVerificationStatus,
   AwardRank,
@@ -49,13 +60,13 @@ interface DiscoveryAdminPanelProps {
   navigate: (path: string) => void;
 }
 
-type AdminTab = 'competitions' | 'submissions' | 'discoveries' | 'credits_certs' | 'hall_of_fame';
+type AdminTab = 'league' | 'submissions' | 'discoveries' | 'competitions' | 'credits_certs' | 'hall_of_fame';
 
 export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ navigate }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPasscode, setAdminPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState<AdminTab>('submissions');
+  const [activeTab, setActiveTab] = useState<AdminTab>('league');
 
   // Datasets
   const [competitions, setCompetitions] = useState<DiscoveryCompetition[]>([]);
@@ -63,15 +74,36 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
   const [discoveries, setDiscoveries] = useState<FoodDiscoveryItem[]>([]);
   const [hallOfFame, setHallOfFame] = useState<HallOfFameEntry[]>([]);
   const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [registrations, setRegistrations] = useState<CompetitionRegistration[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Success Feedback
   const [toastMsg, setToastMsg] = useState('');
 
-  // Selected for review modal
+  // League Image Manager state
+  const [selectedCompForImage, setSelectedCompForImage] = useState('great-market-mission');
+  const [compImageUrl, setCompImageUrl] = useState('');
+  const [updatingImage, setUpdatingImage] = useState(false);
+  const [compressingCover, setCompressingCover] = useState(false);
+  const [coverFileStats, setCoverFileStats] = useState<{ sizeKb: number } | null>(null);
+
+  // Challenge Drops state
+  const [showDropModal, setShowDropModal] = useState(false);
+  const [dropTitle, setDropTitle] = useState('');
+  const [dropPrompt, setDropPrompt] = useState('');
+  const [dropDayLabel, setDropDayLabel] = useState('Day 03 Drop');
+
+  // Selected for review modal & scoring
   const [activeSubmission, setActiveSubmission] = useState<CompetitionSubmission | null>(null);
   const [feedbackInput, setFeedbackInput] = useState('');
+  const [internalNotesInput, setInternalNotesInput] = useState('');
   const [subStatusInput, setSubStatusInput] = useState<SubmissionStatus>('Under Review');
+  const [score1, setScore1] = useState(20);
+  const [score2, setScore2] = useState(25);
+  const [score3, setScore3] = useState(25);
+  const [score4, setScore4] = useState(20);
+  const [score5, setScore5] = useState(10);
+  const [score6, setScore6] = useState(10);
 
   // Discovery Verification modal/state
   const [activeDiscovery, setActiveDiscovery] = useState<FoodDiscoveryItem | null>(null);
@@ -146,12 +178,13 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [comps, subs, discs, hofs, studs] = await Promise.all([
+      const [comps, subs, discs, hofs, studs, regs] = await Promise.all([
         discoveryApi.getCompetitions(false),
         discoveryApi.getAllSubmissions(),
         discoveryApi.getAllFoodDiscoveries(),
         discoveryApi.getHallOfFameEntries(),
         discoveryApi.getPublicContributors(),
+        discoveryApi.getAllRegistrations(),
       ]);
 
       setCompetitions(comps);
@@ -159,6 +192,7 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
       setDiscoveries(discs);
       setHallOfFame(hofs);
       setStudents(studs);
+      setRegistrations(regs);
     } catch (e) {
       console.error('Failed to load admin data', e);
     } finally {
@@ -171,16 +205,104 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
     setTimeout(() => setToastMsg(''), 4000);
   };
 
-  // 1. Save Submission Review
+  // Image Upload with Auto-Compression (<1 MB)
+  const handleUploadCoverFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setCompressingCover(true);
+      const result = await compressImageFile(file, 1600, 950 * 1024);
+      setCompImageUrl(result.dataUrl);
+      setCoverFileStats({ sizeKb: result.compressedSizeKb });
+      notifySuccess(`Cover photo compressed to ${result.compressedSizeKb} KB (< 1 MB). Ready to save!`);
+    } catch (err) {
+      console.error('Image compression error:', err);
+      alert('Failed to compress image. Please choose another image file.');
+    } finally {
+      setCompressingCover(false);
+    }
+  };
+
+  const handleSaveCompetitionImage = async () => {
+    if (!compImageUrl.trim()) {
+      alert('Please upload an image or provide an image URL first.');
+      return;
+    }
+    setUpdatingImage(true);
+    try {
+      const ok = await discoveryApi.updateCompetitionImage(selectedCompForImage, compImageUrl);
+      if (ok) {
+        notifySuccess('Competition cover image successfully updated!');
+        setCompImageUrl('');
+        setCoverFileStats(null);
+        loadAdminData();
+      } else {
+        alert('Could not update cover image for selected competition.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating cover image.');
+    } finally {
+      setUpdatingImage(false);
+    }
+  };
+
+  const handlePublishDrop = async (dropId: string) => {
+    try {
+      const ok = await discoveryApi.publishChallengeDrop('foodverse-challenge', dropId);
+      if (ok) {
+        notifySuccess('Challenge Drop published! It is now active on student dashboards.');
+        loadAdminData();
+      } else {
+        alert('Could not publish drop.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error publishing challenge drop.');
+    }
+  };
+
+  // 1. Save Submission Review with 100-Point Scoring
   const handleSaveSubmissionReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeSubmission) return;
 
     try {
+      const isGMM =
+        activeSubmission.competition_id === 'great-market-mission' ||
+        activeSubmission.title.toLowerCase().includes('market');
+
+      let judgeScores = [];
+      let calculatedTotal = 0;
+
+      if (isGMM) {
+        judgeScores = [
+          { criterion_title: 'Mission Task 1: Hidden Food Gems', score: Number(score1) || 0, max_score: 20 },
+          { criterion_title: 'Mission Task 2: Menu Detective', score: Number(score2) || 0, max_score: 25 },
+          { criterion_title: 'Mission Task 3: Budget Battle', score: Number(score3) || 0, max_score: 25 },
+          { criterion_title: 'Mission Task 4: Interactive Market Map', score: Number(score4) || 0, max_score: 30 },
+          { criterion_title: 'Mystery Bonus & Ground Authenticity', score: Number(score5) || 0, max_score: 10 },
+        ];
+        calculatedTotal = (Number(score1) || 0) + (Number(score2) || 0) + (Number(score3) || 0) + (Number(score4) || 0) + (Number(score5) || 0);
+      } else {
+        judgeScores = [
+          { criterion_title: 'Problem Understanding & Research', score: Number(score1) || 0, max_score: 20 },
+          { criterion_title: 'Innovation & Originality', score: Number(score2) || 0, max_score: 20 },
+          { criterion_title: 'Usability & Practical Value', score: Number(score3) || 0, max_score: 20 },
+          { criterion_title: 'Creativity & Visual/Design Quality', score: Number(score4) || 0, max_score: 20 },
+          { criterion_title: 'Presentation & Explanation', score: Number(score5) || 0, max_score: 10 },
+          { criterion_title: 'Completeness & Feasibility', score: Number(score6) || 0, max_score: 10 },
+        ];
+        calculatedTotal = (Number(score1) || 0) + (Number(score2) || 0) + (Number(score3) || 0) + (Number(score4) || 0) + (Number(score5) || 0) + (Number(score6) || 0);
+      }
+
       const updated: CompetitionSubmission = {
         ...activeSubmission,
         status: subStatusInput,
+        judge_scores: judgeScores,
+        total_score: calculatedTotal,
         student_visible_feedback: feedbackInput.trim() || undefined,
+        internal_admin_notes: internalNotesInput.trim() || undefined,
         reviewed_at: new Date().toISOString(),
         reviewed_by: ADMIN_EMAIL,
         is_published_to_gallery: subStatusInput === 'Published' || subStatusInput === 'Accepted',
@@ -199,7 +321,7 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
           id: 'proj_' + updated.id,
           title: updated.title,
           slug: slug + '-' + Math.random().toString(36).substring(2, 6),
-          category: 'Digital Prototype',
+          category: isGMM ? 'Market Mission Map' : 'Digital Prototype',
           short_description: updated.project_summary || updated.description.slice(0, 160),
           description: updated.description,
           cover_image_url:
@@ -210,7 +332,7 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
           student_id: updated.student_id,
           creator_name: 'Student Contributor',
           competition_id: updated.competition_id,
-          credit_awarded: 'Jury Approved',
+          credit_awarded: `Jury Score: ${calculatedTotal}/100`,
           published_date: new Date().toISOString(),
           views_count: 1,
           likes_count: 0,
@@ -218,7 +340,7 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
       }
 
       setActiveSubmission(null);
-      notifySuccess(`Submission ${updated.reference_id} marked as ${updated.status}.`);
+      notifySuccess(`Submission ${updated.reference_id} marked as ${updated.status} with Jury Score ${calculatedTotal}/100.`);
       loadAdminData();
     } catch (err) {
       console.error(err);
@@ -504,6 +626,17 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
         {/* Tab Bar */}
         <div className="max-w-6xl mx-auto mt-6 pt-4 border-t border-stone-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
           <button
+            onClick={() => setActiveTab('league')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+              activeTab === 'league'
+                ? 'bg-[#0F766E] text-white shadow-sm'
+                : 'text-stone-600 hover:bg-stone-100'
+            }`}
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>Discovery League S01</span>
+          </button>
+          <button
             onClick={() => setActiveTab('submissions')}
             className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
               activeTab === 'submissions'
@@ -564,6 +697,365 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
             {toastMsg}
           </div>
         )}
+
+        {/* ========================================================================= */}
+        {/* TAB 0: DISCOVERY LEAGUE SEASON 01 CONTROL CENTER */}
+        {/* ========================================================================= */}
+        {activeTab === 'league' && (() => {
+          const gmmComp = competitions.find(c => c.slug === 'great-market-mission' || c.id === 'great-market-mission');
+          const fvcComp = competitions.find(c => c.slug === 'foodverse-challenge' || c.id === 'foodverse-challenge');
+          const gmmRegs = registrations.filter(r => r.competition_id === 'great-market-mission' || r.competition_id?.includes('market'));
+          const fvcRegs = registrations.filter(r => r.competition_id === 'foodverse-challenge' || r.competition_id?.includes('foodverse'));
+          const gmmSubs = submissions.filter(s => s.competition_id === 'great-market-mission' || s.title?.toLowerCase().includes('market'));
+          const fvcSubs = submissions.filter(s => s.competition_id === 'foodverse-challenge' || s.title?.toLowerCase().includes('foodverse'));
+          const currentTargetComp = competitions.find(c => c.slug === selectedCompForImage || c.id === selectedCompForImage);
+          const currentPreviewUrl = compImageUrl || currentTargetComp?.cover_image_url || '';
+
+          return (
+            <div className="space-y-8">
+              {/* Season 01 Banner */}
+              <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Official Flagship Series
+                      </span>
+                      <span className="text-xs text-stone-400">•</span>
+                      <span className="text-xs text-stone-300 font-medium">Season 01 Live</span>
+                    </div>
+                    <h2 className="font-serif text-2xl sm:text-3xl font-extrabold tracking-tight">
+                      Menu Maps Discovery League: Season 01
+                    </h2>
+                    <p className="text-stone-300 text-xs sm:text-sm mt-1 max-w-2xl">
+                      "Discover More. Create More. Make Your Mark." Real-time control center for The Great Market Mission (Offline) and The Foodverse Challenge (Online).
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 shrink-0">
+                    <button
+                      onClick={() => navigate('/discovery/competitions/discovery-league')}
+                      className="px-4 py-2.5 bg-white text-stone-900 text-xs font-bold rounded-xl hover:bg-stone-100 transition-colors shadow-sm"
+                    >
+                      View Public Series Hub
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2 Flagship Challenge Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Competition 1: The Great Market Mission */}
+                <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-[#FF5A36] border border-orange-200">
+                        Offline Exploration
+                      </span>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Registration Open
+                      </span>
+                    </div>
+
+                    <div className="flex gap-4 items-start mb-4">
+                      {gmmComp?.cover_image_url && (
+                        <img
+                          src={gmmComp.cover_image_url}
+                          alt="Great Market Mission"
+                          className="w-20 h-20 rounded-2xl object-cover shrink-0 border border-stone-200"
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-serif text-lg font-bold text-stone-900">The Great Market Mission</h3>
+                        <p className="text-xs text-stone-500 italic mt-0.5">
+                          "One Market. Hidden Food Stories. Can Your Team Discover Them All?"
+                        </p>
+                        <p className="text-[11px] text-stone-600 font-medium mt-1">
+                          Teams of 2–3 • 4 Mission Tasks • 8 Delhi NCR Markets
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-2 p-3 bg-stone-50 rounded-2xl border border-stone-200/70 text-center">
+                      <div>
+                        <p className="text-lg font-bold text-stone-900">{gmmRegs.length}</p>
+                        <p className="text-[10px] text-stone-500 font-medium uppercase">Registrations</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-stone-900">
+                          {gmmRegs.filter(r => r.is_team).length}
+                        </p>
+                        <p className="text-[10px] text-stone-500 font-medium uppercase">Teams Formed</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-stone-900">{gmmSubs.length}</p>
+                        <p className="text-[10px] text-stone-500 font-medium uppercase">Submissions</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-stone-100 flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        setSelectedCompForImage('great-market-mission');
+                        setCompImageUrl('');
+                      }}
+                      className="text-xs font-semibold text-[#0F766E] hover:underline flex items-center gap-1"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" /> Edit Cover Image
+                    </button>
+                    <button
+                      onClick={() => navigate('/discovery/competitions/great-market-mission')}
+                      className="px-3.5 py-1.5 bg-stone-900 text-white text-xs font-semibold rounded-xl hover:bg-black transition-colors"
+                    >
+                      Live Competition Page
+                    </button>
+                  </div>
+                </div>
+
+                {/* Competition 2: The Foodverse Challenge */}
+                <div className="bg-white rounded-3xl p-6 border border-stone-200/90 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-[#0F766E] border border-teal-200">
+                        Online Challenge
+                      </span>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Registration Open
+                      </span>
+                    </div>
+
+                    <div className="flex gap-4 items-start mb-4">
+                      {fvcComp?.cover_image_url && (
+                        <img
+                          src={fvcComp.cover_image_url}
+                          alt="The Foodverse Challenge"
+                          className="w-20 h-20 rounded-2xl object-cover shrink-0 border border-stone-200"
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-serif text-lg font-bold text-stone-900">The Foodverse Challenge</h3>
+                        <p className="text-xs text-stone-500 italic mt-0.5">
+                          "Imagine the Future of Food Discovery. Then Build It."
+                        </p>
+                        <p className="text-[11px] text-stone-600 font-medium mt-1">
+                          Solo or Teams (1–4) • 5 Tracks • Secret Drops
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-2 p-3 bg-stone-50 rounded-2xl border border-stone-200/70 text-center">
+                      <div>
+                        <p className="text-lg font-bold text-stone-900">{fvcRegs.length}</p>
+                        <p className="text-[10px] text-stone-500 font-medium uppercase">Registrations</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-stone-900">
+                          {fvcComp?.challenge_drops?.filter(d => d.is_published).length || 0} / 3
+                        </p>
+                        <p className="text-[10px] text-stone-500 font-medium uppercase">Drops Live</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-stone-900">{fvcSubs.length}</p>
+                        <p className="text-[10px] text-stone-500 font-medium uppercase">Submissions</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-stone-100 flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        setSelectedCompForImage('foodverse-challenge');
+                        setCompImageUrl('');
+                      }}
+                      className="text-xs font-semibold text-[#0F766E] hover:underline flex items-center gap-1"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" /> Edit Cover Image
+                    </button>
+                    <button
+                      onClick={() => navigate('/discovery/competitions/foodverse-challenge')}
+                      className="px-3.5 py-1.5 bg-stone-900 text-white text-xs font-semibold rounded-xl hover:bg-black transition-colors"
+                    >
+                      Live Competition Page
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* COVER IMAGE MANAGER (Admin requested: if any place need images then i add from admin panel) */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-sm">
+                <div className="flex items-center gap-2 mb-2 text-[#0F766E]">
+                  <ImageIcon className="w-5 h-5" />
+                  <h3 className="font-serif text-lg font-bold text-stone-900">
+                    Competition Cover Image Manager
+                  </h3>
+                </div>
+                <p className="text-xs text-stone-600 mb-6 max-w-2xl">
+                  Upload an image from your device (auto-compressed &lt; 1MB) or paste an image URL to replace the official cover photo on any competition. Changes reflect instantly across the homepage, directory, and detail pages.
+                </p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left: Preview */}
+                  <div className="lg:col-span-5 bg-stone-50 rounded-2xl p-4 border border-stone-200">
+                    <p className="text-xs font-bold text-stone-700 mb-2">Live Preview for Selected Challenge</p>
+                    <div className="aspect-video w-full rounded-xl overflow-hidden bg-stone-200 relative border border-stone-300">
+                      {currentPreviewUrl ? (
+                        <img
+                          src={currentPreviewUrl}
+                          alt="Cover Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-stone-400">
+                          No cover photo assigned
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-2 truncate">
+                      {currentTargetComp?.title || 'Selected Competition'}
+                    </p>
+                  </div>
+
+                  {/* Right: Controls */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-700 mb-1">
+                        Select Competition
+                      </label>
+                      <select
+                        value={selectedCompForImage}
+                        onChange={(e) => {
+                          setSelectedCompForImage(e.target.value);
+                          setCompImageUrl('');
+                          setCoverFileStats(null);
+                        }}
+                        className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+                      >
+                        <option value="great-market-mission">The Great Market Mission (Offline Exploration)</option>
+                        <option value="foodverse-challenge">The Foodverse Challenge (Online Innovation)</option>
+                        {competitions
+                          .filter(c => c.slug !== 'great-market-mission' && c.slug !== 'foodverse-challenge')
+                          .map(c => (
+                            <option key={c.id} value={c.slug || c.id}>
+                              {c.title}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-700 mb-1">
+                        Option A: Upload Photo from Phone / PC (&lt; 1MB Auto-Compressed)
+                      </label>
+                      <label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-stone-200 hover:border-[#0F766E] rounded-xl cursor-pointer bg-stone-50 hover:bg-stone-100 transition-colors">
+                        <Upload className="w-4 h-4 text-stone-500" />
+                        <span className="text-xs font-semibold text-stone-700">
+                          {compressingCover ? 'Compressing Image...' : 'Click to Upload Image File'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadCoverFile}
+                          disabled={compressingCover}
+                          className="hidden"
+                        />
+                      </label>
+                      {coverFileStats && (
+                        <p className="text-[11px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> Compressed to {coverFileStats.sizeKb} KB (&lt; 1MB)
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-700 mb-1">
+                        Option B: Or Enter Image URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/... or cloud URL"
+                        value={compImageUrl}
+                        onChange={(e) => setCompImageUrl(e.target.value)}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleSaveCompetitionImage}
+                      disabled={updatingImage || compressingCover}
+                      className="w-full py-2.5 bg-[#0F766E] text-white text-xs font-semibold rounded-xl hover:bg-[#0d635c] transition-colors shadow-sm disabled:opacity-50"
+                    >
+                      {updatingImage ? 'Saving Cover Image...' : 'Save & Publish Cover Image'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECRET CHALLENGE DROPS MANAGER */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <Zap className="w-5 h-5" />
+                    <h3 className="font-serif text-lg font-bold text-stone-900">
+                      The Foodverse Challenge — Secret Challenge Drops
+                    </h3>
+                  </div>
+                  <span className="text-xs text-stone-500 font-medium">
+                    {fvcComp?.challenge_drops?.length || 0} Secret Drops Configured
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 mb-6 max-w-2xl">
+                  Challenge Drops are surprise bonus constraints released during the competition to stretch student creativity. Once published, students see the prompt inside their dashboard.
+                </p>
+
+                <div className="space-y-4">
+                  {(fvcComp?.challenge_drops || []).map((drop) => (
+                    <div
+                      key={drop.id}
+                      className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-stone-200 text-stone-700 px-2 py-0.5 rounded">
+                            {drop.day_label}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              drop.is_published
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-900 border border-amber-200'
+                            }`}
+                          >
+                            {drop.is_published ? '✓ Published & Visible' : '⏳ Scheduled'}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-stone-900">{drop.title}</h4>
+                        <p className="text-xs text-stone-600 mt-1">{drop.prompt}</p>
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-2">
+                        {drop.is_published ? (
+                          <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                            Active on Dashboard
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handlePublishDrop(drop.id)}
+                            className="px-4 py-2 bg-amber-600 text-white text-xs font-semibold rounded-xl hover:bg-amber-700 transition-colors shadow-2xs"
+                          >
+                            Publish Drop Now
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ========================================================================= */}
         {/* TAB 1: SUBMISSIONS REVIEW */}
@@ -635,10 +1127,26 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
                         setActiveSubmission(sub);
                         setSubStatusInput(sub.status);
                         setFeedbackInput(sub.student_visible_feedback || '');
+                        setInternalNotesInput(sub.internal_admin_notes || '');
+                        if (sub.judge_scores && sub.judge_scores.length >= 4) {
+                          setScore1(sub.judge_scores[0]?.score ?? 20);
+                          setScore2(sub.judge_scores[1]?.score ?? 25);
+                          setScore3(sub.judge_scores[2]?.score ?? 25);
+                          setScore4(sub.judge_scores[3]?.score ?? 20);
+                          setScore5(sub.judge_scores[4]?.score ?? 10);
+                          setScore6(sub.judge_scores[5]?.score ?? 10);
+                        } else {
+                          setScore1(20);
+                          setScore2(25);
+                          setScore3(25);
+                          setScore4(20);
+                          setScore5(10);
+                          setScore6(10);
+                        }
                       }}
                       className="px-4 py-2 bg-stone-900 text-white text-xs font-semibold rounded-xl hover:bg-black transition-colors shrink-0"
                     >
-                      Review & Publish
+                      Review & Score
                     </button>
                   </div>
                 ))}
@@ -1028,60 +1536,324 @@ export const DiscoveryAdminPanel: React.FC<DiscoveryAdminPanelProps> = ({ naviga
       </div>
 
       {/* Review Submission Modal */}
-      {activeSubmission && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-xl my-8">
-            <h3 className="font-serif text-xl font-bold text-stone-900 mb-1">
-              Review: {activeSubmission.title}
-            </h3>
-            <p className="text-xs text-stone-500 font-mono mb-4">Ref: {activeSubmission.reference_id}</p>
+      {activeSubmission && (() => {
+        const isGMM =
+          activeSubmission.competition_id === 'great-market-mission' ||
+          activeSubmission.title.toLowerCase().includes('market');
+        const calculatedTotal = isGMM
+          ? (Number(score1) || 0) + (Number(score2) || 0) + (Number(score3) || 0) + (Number(score4) || 0) + (Number(score5) || 0)
+          : (Number(score1) || 0) + (Number(score2) || 0) + (Number(score3) || 0) + (Number(score4) || 0) + (Number(score5) || 0) + (Number(score6) || 0);
 
-            <form onSubmit={handleSaveSubmissionReview} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">Evaluation Decision</label>
-                <select
-                  value={subStatusInput}
-                  onChange={(e) => setSubStatusInput(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
-                >
-                  <option value="Under Review">Under Review</option>
-                  <option value="Accepted">Accepted (Eligible for Certificate)</option>
-                  <option value="Published">Published (Add to Public Gallery)</option>
-                  <option value="Needs Correction">Needs Correction</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-xl my-8 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-600 px-2 py-0.5 rounded">
+                    Ref: {activeSubmission.reference_id}
+                  </span>
+                  <h3 className="font-serif text-xl font-bold text-stone-900 mt-1">
+                    {activeSubmission.title}
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Challenge: {isGMM ? 'The Great Market Mission (Offline)' : 'The Foodverse Challenge (Online)'}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-center">
+                    <span className="text-[10px] font-bold text-[#0F766E] uppercase block">Jury Score</span>
+                    <span className="text-lg font-black text-[#0F766E]">{calculatedTotal} / 100</span>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">Student Visible Feedback / Notes</label>
-                <textarea
-                  rows={3}
-                  placeholder="Provide constructive feedback that the student will see in their dashboard..."
-                  value={feedbackInput}
-                  onChange={(e) => setFeedbackInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
-                />
+              {/* Deliverable Details Preview */}
+              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-6 space-y-3">
+                <p className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Deliverable Summary
+                </p>
+                <p className="text-xs text-stone-700">{activeSubmission.description}</p>
+
+                <div className="flex flex-wrap gap-3 text-xs">
+                  {activeSubmission.external_prototype_url && (
+                    <a
+                      href={activeSubmission.external_prototype_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#0F766E] font-semibold underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Open Prototype / Deck Link
+                    </a>
+                  )}
+                  {activeSubmission.external_video_url && (
+                    <a
+                      href={activeSubmission.external_video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#FF5A36] font-semibold underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Watch Video Walkthrough
+                    </a>
+                  )}
+                  {activeSubmission.attachments && activeSubmission.attachments.length > 0 && (
+                    <span className="text-stone-500">
+                      📎 {activeSubmission.attachments.length} attachment(s)
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100">
-                <button
-                  type="button"
-                  onClick={() => setActiveSubmission(null)}
-                  className="px-4 py-2 border border-stone-200 rounded-xl text-xs font-semibold text-stone-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-[#0F766E] text-white text-xs font-semibold rounded-xl hover:bg-[#0d635c]"
-                >
-                  Save Decision
-                </button>
-              </div>
-            </form>
+              <form onSubmit={handleSaveSubmissionReview} className="space-y-6">
+                {/* 100-Point Scoring Breakdown */}
+                <div className="border border-stone-200 rounded-2xl p-4 bg-white space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <SlidersHorizontal className="w-4 h-4 text-[#0F766E]" />
+                      <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                        Official 100-Point Jury Scorecard
+                      </h4>
+                    </div>
+                    <span className="text-xs font-bold text-stone-500">Total: {calculatedTotal}/100</span>
+                  </div>
+
+                  {isGMM ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>Mission 1: Hidden Gems</span>
+                            <span className="font-bold">{score1} / 20</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            value={score1}
+                            onChange={(e) => setScore1(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>Mission 2: Menu Detective</span>
+                            <span className="font-bold">{score2} / 25</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="25"
+                            value={score2}
+                            onChange={(e) => setScore2(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>Mission 3: Budget Battle</span>
+                            <span className="font-bold">{score3} / 25</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="25"
+                            value={score3}
+                            onChange={(e) => setScore3(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>Mission 4: Market Map</span>
+                            <span className="font-bold">{score4} / 30</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="30"
+                            value={score4}
+                            onChange={(e) => setScore4(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                          <span>Mystery Bonus & Ground Verification Authenticity</span>
+                          <span className="font-bold">{score5} / 10</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          value={score5}
+                          onChange={(e) => setScore5(parseInt(e.target.value, 10))}
+                          className="w-full accent-[#0F766E]"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>1. Problem Understanding</span>
+                            <span className="font-bold">{score1} / 20</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            value={score1}
+                            onChange={(e) => setScore1(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>2. Innovation & Originality</span>
+                            <span className="font-bold">{score2} / 20</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            value={score2}
+                            onChange={(e) => setScore2(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>3. Usability & Utility</span>
+                            <span className="font-bold">{score3} / 20</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            value={score3}
+                            onChange={(e) => setScore3(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>4. Creativity & Visual Polish</span>
+                            <span className="font-bold">{score4} / 20</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            value={score4}
+                            onChange={(e) => setScore4(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>5. Presentation / Walkthrough</span>
+                            <span className="font-bold">{score5} / 10</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="10"
+                            value={score5}
+                            onChange={(e) => setScore5(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-medium text-stone-700 mb-1">
+                            <span>6. Completeness & Drops</span>
+                            <span className="font-bold">{score6} / 10</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="10"
+                            value={score6}
+                            onChange={(e) => setScore6(parseInt(e.target.value, 10))}
+                            className="w-full accent-[#0F766E]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">Evaluation Decision</label>
+                  <select
+                    value={subStatusInput}
+                    onChange={(e) => setSubStatusInput(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+                  >
+                    <option value="Under Review">Under Review</option>
+                    <option value="Accepted">Accepted (Eligible for Certificate & Credits)</option>
+                    <option value="Published">Published (Add to Public Student Showcase)</option>
+                    <option value="Needs Correction">Needs Correction</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Student Visible Feedback / Jury Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Provide constructive feedback that the student will see in their dashboard..."
+                    value={feedbackInput}
+                    onChange={(e) => setFeedbackInput(e.target.value)}
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    Internal Jury Notes (Confidential)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Private notes for jury audit..."
+                    value={internalNotesInput}
+                    onChange={(e) => setInternalNotesInput(e.target.value)}
+                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubmission(null)}
+                    className="px-4 py-2 border border-stone-200 rounded-xl text-xs font-semibold text-stone-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#0F766E] text-white text-xs font-semibold rounded-xl hover:bg-[#0d635c] transition-colors shadow-sm"
+                  >
+                    Save Jury Decision & Score ({calculatedTotal}/100)
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Verify Food Discovery Modal */}
       {activeDiscovery && (
