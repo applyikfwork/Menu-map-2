@@ -532,17 +532,21 @@ export const CompetitionSubmissionModal: React.FC<CompetitionSubmissionModalProp
                   onChange={(e) => setTrackId(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E2DA] bg-white font-bold text-xs outline-hidden"
                 >
-                  {competition.tracks?.map((track) => (
-                    <option key={track.id} value={track.id}>
-                      {track.title}
-                    </option>
-                  ))}
+                  {(competition.tracks || []).map((track: any, idx: number) => {
+                    const tId = typeof track === 'object' ? track.id : `track_${idx + 1}`;
+                    const tTitle = typeof track === 'object' ? track.title : String(track);
+                    return (
+                      <option key={tId} value={tId}>
+                        {tTitle}
+                      </option>
+                    );
+                  })}
                 </select>
                 {selectedTrack && (
                   <div className="text-xs text-stone-600 bg-white p-3 rounded-xl border border-stone-100">
                     <p className="font-bold text-stone-800">{selectedTrack.description}</p>
                     <div className="mt-1 text-[11px] text-stone-500">
-                      <strong>Possible concepts:</strong> {selectedTrack.ideas.join(' • ')}
+                      <strong>Possible concepts:</strong> {(Array.isArray(selectedTrack.ideas) ? selectedTrack.ideas : []).join(' • ')}
                     </div>
                   </div>
                 )}

@@ -628,7 +628,7 @@ export const AdminCompetitionManager: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {editingComp.missions.map((mission, idx) => (
+                {(editingComp.missions || []).map((mission, idx) => (
                   <div
                     key={mission.id}
                     className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 space-y-3 text-xs"
@@ -704,7 +704,7 @@ export const AdminCompetitionManager: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {editingComp.tracks.map((track, idx) => (
+                {(editingComp.tracks || []).map((track, idx) => (
                   <div
                     key={track.id}
                     className="p-5 rounded-2xl border border-stone-200 bg-stone-50/50 space-y-3 text-xs"
@@ -743,7 +743,7 @@ export const AdminCompetitionManager: React.FC = () => {
                       </label>
                       <textarea
                         rows={2}
-                        value={track.ideas.join('\n')}
+                        value={(Array.isArray(track.ideas) ? track.ideas : []).join('\n')}
                         onChange={(e) => {
                           const updated = [...(editingComp.tracks || [])];
                           updated[idx].ideas = e.target.value.split('\n').filter(Boolean);
@@ -1127,7 +1127,7 @@ export const AdminCompetitionManager: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  {currentCompForJudging.scoring_criteria.map((sc, i) => (
+                  {(currentCompForJudging.scoring_criteria || []).map((sc, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between p-3 rounded-xl border border-stone-200 bg-white"

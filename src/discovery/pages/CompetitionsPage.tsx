@@ -694,7 +694,25 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {foodverseComp.tracks?.map((track, idx) => (
+                  {(foodverseComp?.tracks || []).map((rawTrack: any, idx: number) => {
+                    const track = typeof rawTrack === 'string'
+                      ? {
+                          id: `track_${idx + 1}`,
+                          track_number: idx + 1,
+                          title: rawTrack,
+                          description: 'Design a practical and creative food exploration experience for this challenge.',
+                          ideas: ['Budget food finder', 'Map discovery concept', 'Recommendation interface'],
+                          enabled: true,
+                        }
+                      : {
+                          ...rawTrack,
+                          id: rawTrack.id || `track_${idx + 1}`,
+                          title: rawTrack.title || `Track 0${idx + 1}`,
+                          description: rawTrack.description || 'Design a practical food exploration solution.',
+                          ideas: Array.isArray(rawTrack.ideas) ? rawTrack.ideas : [],
+                        };
+
+                    return (
                     <div
                       key={track.id}
                       className="p-5 rounded-3xl bg-[#FAFAF7] border border-[#E7E2DA] space-y-3 flex flex-col justify-between"
@@ -719,7 +737,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
                           Possible Ideas:
                         </span>
                         <ul className="space-y-1 text-[11px] text-stone-600">
-                          {track.ideas.map((idea, i) => (
+                          {(Array.isArray(track.ideas) ? track.ideas : []).map((idea: string, i: number) => (
                             <li key={i} className="flex items-center gap-1.5">
                               <span className="text-[#1FB5A0] font-bold">•</span>
                               <span>{idea}</span>
@@ -728,7 +746,8 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
                         </ul>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* What Can You Create & Deliverables */}

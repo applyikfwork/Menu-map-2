@@ -62,7 +62,18 @@ function ensureSeeded() {
   }
 
   const existingComps = getLocalTable<DiscoveryCompetition>('competitions');
-  if (existingComps.length === 0 || !existingComps.some(c => (c.missions && c.missions.length > 0) || (c.tracks && c.tracks.length > 0))) {
+  const needsUpgrade =
+    existingComps.length < 2 ||
+    !existingComps.some((c) => Array.isArray(c.missions) && c.missions.length >= 4) ||
+    !existingComps.some(
+      (c) =>
+        Array.isArray(c.tracks) &&
+        c.tracks.length >= 5 &&
+        typeof c.tracks[0] === 'object' &&
+        Array.isArray((c.tracks[0] as any)?.ideas)
+    );
+
+  if (needsUpgrade) {
     saveLocalTable('competitions', OFFICIAL_COMPETITIONS);
   }
 }
