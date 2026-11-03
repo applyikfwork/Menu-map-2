@@ -427,6 +427,15 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Mission 01 */}
                   <div className="p-6 rounded-3xl bg-[#FAFAF7] border border-[#E7E2DA] space-y-3 flex flex-col justify-between">
+                    {gmmComp.missions?.[0]?.image_url && (
+                      <div className="w-full h-40 rounded-2xl overflow-hidden mb-2 border border-stone-200">
+                        <img
+                          src={gmmComp.missions[0].image_url}
+                          alt={gmmComp.missions[0].title || 'Mission 01'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase">
@@ -453,6 +462,15 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
 
                   {/* Mission 02 */}
                   <div className="p-6 rounded-3xl bg-[#FAFAF7] border border-[#E7E2DA] space-y-3 flex flex-col justify-between">
+                    {gmmComp.missions?.[1]?.image_url && (
+                      <div className="w-full h-40 rounded-2xl overflow-hidden mb-2 border border-stone-200">
+                        <img
+                          src={gmmComp.missions[1].image_url}
+                          alt={gmmComp.missions[1].title || 'Mission 02'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-3 py-1 rounded-full bg-teal-100 text-teal-900 text-xs font-black uppercase">
@@ -478,6 +496,15 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
 
                   {/* Mission 03 */}
                   <div className="p-6 rounded-3xl bg-[#FAFAF7] border border-[#E7E2DA] space-y-3 flex flex-col justify-between">
+                    {gmmComp.missions?.[2]?.image_url && (
+                      <div className="w-full h-40 rounded-2xl overflow-hidden mb-2 border border-stone-200">
+                        <img
+                          src={gmmComp.missions[2].image_url}
+                          alt={gmmComp.missions[2].title || 'Mission 03'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-black uppercase">
@@ -503,6 +530,15 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
 
                   {/* Mission 04 */}
                   <div className="p-6 rounded-3xl bg-[#FAFAF7] border border-[#E7E2DA] space-y-3 flex flex-col justify-between">
+                    {gmmComp.missions?.[3]?.image_url && (
+                      <div className="w-full h-40 rounded-2xl overflow-hidden mb-2 border border-stone-200">
+                        <img
+                          src={gmmComp.missions[3].image_url}
+                          alt={gmmComp.missions[3].title || 'Mission 04'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 text-xs font-black uppercase">
@@ -717,6 +753,15 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({ navigate }) 
                       key={track.id}
                       className="p-5 rounded-3xl bg-[#FAFAF7] border border-[#E7E2DA] space-y-3 flex flex-col justify-between"
                     >
+                      {track.image_url && (
+                        <div className="w-full h-36 rounded-2xl overflow-hidden mb-2 border border-stone-200">
+                          <img
+                            src={track.image_url}
+                            alt={track.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="w-6 h-6 rounded-full bg-[#1FB5A0] text-white flex items-center justify-center font-bold text-xs">

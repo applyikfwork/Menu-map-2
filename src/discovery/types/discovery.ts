@@ -136,6 +136,7 @@ export interface CompetitionMission {
   points: number;
   description: string;
   requirements: string[];
+  image_url?: string;
   enabled: boolean;
 }
 
@@ -145,6 +146,7 @@ export interface CompetitionTrack {
   title: string;
   description: string;
   ideas: string[];
+  image_url?: string;
   enabled: boolean;
 }
 

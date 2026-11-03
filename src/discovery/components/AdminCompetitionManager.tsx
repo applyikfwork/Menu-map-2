@@ -33,7 +33,10 @@ import {
   Compass,
   Laptop,
   Layers,
+  Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
+import { compressImageFile } from '../../lib/imageCompressor';
 import {
   DiscoveryCompetition,
   CompetitionRegistration,
@@ -131,6 +134,62 @@ export const AdminCompetitionManager: React.FC = () => {
     const target = competitions.find((c) => c.id === id);
     if (target) {
       setEditingComp(JSON.parse(JSON.stringify(target)));
+    }
+  };
+
+  // Image Upload from Device Handlers
+  const handleCoverImageDeviceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      showToast('Compressing and uploading cover image from device...', 'info');
+      const result = await compressImageFile(file, 1600, 850 * 1024);
+      setEditingComp((prev) => (prev ? { ...prev, cover_image: result.dataUrl } : null));
+      showToast(`Cover image uploaded from device (${result.compressedSizeKb} KB)`, 'success');
+    } catch (err) {
+      showToast('Failed to process image from device', 'error');
+    }
+  };
+
+  const handleMissionImageDeviceUpload = async (
+    missionIdx: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      showToast('Processing mission image from device...', 'info');
+      const result = await compressImageFile(file, 1200, 600 * 1024);
+      setEditingComp((prev) => {
+        if (!prev || !prev.missions) return prev;
+        const updated = [...prev.missions];
+        updated[missionIdx] = { ...updated[missionIdx], image_url: result.dataUrl };
+        return { ...prev, missions: updated };
+      });
+      showToast(`Mission image updated (${result.compressedSizeKb} KB)`, 'success');
+    } catch (err) {
+      showToast('Failed to process image from device', 'error');
+    }
+  };
+
+  const handleTrackImageDeviceUpload = async (
+    trackIdx: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      showToast('Processing track image from device...', 'info');
+      const result = await compressImageFile(file, 1200, 600 * 1024);
+      setEditingComp((prev) => {
+        if (!prev || !prev.tracks) return prev;
+        const updated = [...prev.tracks];
+        updated[trackIdx] = { ...updated[trackIdx], image_url: result.dataUrl };
+        return { ...prev, tracks: updated };
+      });
+      showToast(`Track image updated (${result.compressedSizeKb} KB)`, 'success');
+    } catch (err) {
+      showToast('Failed to process image from device', 'error');
     }
   };
 
@@ -442,14 +501,72 @@ export const AdminCompetitionManager: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-stone-700 mb-1">Cover Image URL</label>
-                <input
-                  type="url"
-                  value={editingComp.cover_image}
-                  onChange={(e) => setEditingComp({ ...editingComp, cover_image: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 outline-hidden"
-                />
+              <div className="sm:col-span-2 space-y-2">
+                <label className="block font-bold text-stone-800">
+                  Competition Cover Image (Upload from Device or URL)
+                </label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                  {editingComp.cover_image ? (
+                    <div className="relative w-40 h-28 rounded-2xl overflow-hidden border border-stone-300 shrink-0 bg-stone-100 group shadow-2xs">
+                      <img
+                        src={editingComp.cover_image}
+                        alt={editingComp.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditingComp({ ...editingComp, cover_image: '' })}
+                        className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 hover:bg-rose-600 text-white rounded-lg transition-colors cursor-pointer"
+                        title="Remove cover image"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-40 h-28 rounded-2xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-stone-400 shrink-0 bg-white">
+                      <ImageIcon className="w-7 h-7 text-stone-300" />
+                      <span className="text-[11px] font-bold mt-1 text-stone-500">No Image</span>
+                    </div>
+                  )}
+
+                  <div className="flex-1 space-y-2.5 w-full">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="px-4 py-2.5 rounded-xl bg-[#1FB5A0] hover:bg-[#199d8b] text-white text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition-colors">
+                        <Upload className="w-4 h-4" />
+                        <span>Upload Image from Device</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverImageDeviceUpload}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {editingComp.cover_image && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingComp({ ...editingComp, cover_image: '' })}
+                          className="px-3 py-2 rounded-xl border border-stone-200 hover:bg-white text-stone-600 text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] text-stone-500 block mb-1">
+                        Or enter direct image URL:
+                      </span>
+                      <input
+                        type="url"
+                        value={editingComp.cover_image}
+                        onChange={(e) => setEditingComp({ ...editingComp, cover_image: e.target.value })}
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full px-3.5 py-2 rounded-xl border border-stone-200 bg-white text-xs outline-hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -664,18 +781,79 @@ export const AdminCompetitionManager: React.FC = () => {
                       </div>
                     </div>
 
+$1
+
                     <div>
-                      <label className="block font-bold text-stone-700 mb-1">Description</label>
-                      <textarea
-                        rows={2}
-                        value={mission.description}
-                        onChange={(e) => {
-                          const updated = [...(editingComp.missions || [])];
-                          updated[idx].description = e.target.value;
-                          setEditingComp({ ...editingComp, missions: updated });
-                        }}
-                        className="w-full px-3 py-1.5 rounded-xl border border-stone-200 bg-white"
-                      />
+                      <label className="block font-bold text-stone-700 mb-1">
+                        Mission Visual Image (Upload from Device or URL)
+                      </label>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-xl bg-white border border-stone-200">
+                        {mission.image_url ? (
+                          <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-stone-200 shrink-0 bg-stone-100 shadow-2xs">
+                            <img
+                              src={mission.image_url}
+                              alt={mission.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...(editingComp.missions || [])];
+                                updated[idx] = { ...updated[idx], image_url: '' };
+                                setEditingComp({ ...editingComp, missions: updated });
+                              }}
+                              className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-rose-600 text-white rounded-md transition-colors cursor-pointer"
+                              title="Remove image"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-28 h-20 rounded-xl border border-dashed border-stone-300 flex flex-col items-center justify-center text-stone-400 shrink-0 bg-stone-50">
+                            <ImageIcon className="w-5 h-5 text-stone-300" />
+                            <span className="text-[10px] font-bold mt-0.5 text-stone-400">No Image</span>
+                          </div>
+                        )}
+
+                        <div className="flex-1 space-y-2 w-full">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="px-3 py-1.5 rounded-lg bg-[#1FB5A0] hover:bg-[#199d8b] text-white text-[11px] font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Upload from Device</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleMissionImageDeviceUpload(idx, e)}
+                                className="hidden"
+                              />
+                            </label>
+                            {mission.image_url && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...(editingComp.missions || [])];
+                                  updated[idx] = { ...updated[idx], image_url: '' };
+                                  setEditingComp({ ...editingComp, missions: updated });
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-600 text-[11px] font-bold transition-colors cursor-pointer"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                          <input
+                            type="url"
+                            value={mission.image_url || ''}
+                            onChange={(e) => {
+                              const updated = [...(editingComp.missions || [])];
+                              updated[idx] = { ...updated[idx], image_url: e.target.value };
+                              setEditingComp({ ...editingComp, missions: updated });
+                            }}
+                            placeholder="Or paste image URL (https://...)"
+                            className="w-full px-3 py-1 rounded-lg border border-stone-200 text-xs outline-hidden"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -723,18 +901,79 @@ export const AdminCompetitionManager: React.FC = () => {
                       />
                     </div>
 
+$1
+
                     <div>
-                      <label className="block font-bold text-stone-700 mb-1">Description</label>
-                      <textarea
-                        rows={2}
-                        value={track.description}
-                        onChange={(e) => {
-                          const updated = [...(editingComp.tracks || [])];
-                          updated[idx].description = e.target.value;
-                          setEditingComp({ ...editingComp, tracks: updated });
-                        }}
-                        className="w-full px-3 py-1.5 rounded-xl border border-stone-200 bg-white"
-                      />
+                      <label className="block font-bold text-stone-700 mb-1">
+                        Track Visual Image (Upload from Device or URL)
+                      </label>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-xl bg-white border border-stone-200">
+                        {track.image_url ? (
+                          <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-stone-200 shrink-0 bg-stone-100 shadow-2xs">
+                            <img
+                              src={track.image_url}
+                              alt={track.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...(editingComp.tracks || [])];
+                                updated[idx] = { ...updated[idx], image_url: '' };
+                                setEditingComp({ ...editingComp, tracks: updated });
+                              }}
+                              className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-rose-600 text-white rounded-md transition-colors cursor-pointer"
+                              title="Remove image"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-28 h-20 rounded-xl border border-dashed border-stone-300 flex flex-col items-center justify-center text-stone-400 shrink-0 bg-stone-50">
+                            <ImageIcon className="w-5 h-5 text-stone-300" />
+                            <span className="text-[10px] font-bold mt-0.5 text-stone-400">No Image</span>
+                          </div>
+                        )}
+
+                        <div className="flex-1 space-y-2 w-full">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="px-3 py-1.5 rounded-lg bg-[#1FB5A0] hover:bg-[#199d8b] text-white text-[11px] font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Upload from Device</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleTrackImageDeviceUpload(idx, e)}
+                                className="hidden"
+                              />
+                            </label>
+                            {track.image_url && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...(editingComp.tracks || [])];
+                                  updated[idx] = { ...updated[idx], image_url: '' };
+                                  setEditingComp({ ...editingComp, tracks: updated });
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-600 text-[11px] font-bold transition-colors cursor-pointer"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                          <input
+                            type="url"
+                            value={track.image_url || ''}
+                            onChange={(e) => {
+                              const updated = [...(editingComp.tracks || [])];
+                              updated[idx] = { ...updated[idx], image_url: e.target.value };
+                              setEditingComp({ ...editingComp, tracks: updated });
+                            }}
+                            placeholder="Or paste image URL (https://...)"
+                            className="w-full px-3 py-1 rounded-lg border border-stone-200 text-xs outline-hidden"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
