@@ -94,7 +94,7 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
         restaurant.longitude,
         restaurant.name,
         userCoords,
-        liveTravelEstimate?.primaryMode || 'driving'
+        liveTravelEstimate?.primaryMode === 'walk' ? 'walking' : 'driving'
       );
     }
     if (restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5) {

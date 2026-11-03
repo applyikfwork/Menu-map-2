@@ -54,7 +54,8 @@ import {
   ArrowUpRight,
   PhoneCall,
   ArrowRight,
-  Terminal
+  Terminal,
+  Trophy
 } from 'lucide-react';
 import { SystemIntelVault } from '../components/admin/SystemIntelVault';
 import { 

@@ -113,10 +113,9 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
       colony: loc.shortName || loc.name,
       zone: loc.zone,
       nearestMetro,
-      metroStation: nearestMetro.name,
+      metroStation: loc.metroStation || nearestMetro.name,
       latitude: loc.latitude,
       longitude: loc.longitude,
-      metroStation: loc.metroStation,
       isAllDelhi: false,
       isLiveGps: false,
     };

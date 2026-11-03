@@ -206,7 +206,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     type="text"
                     required
                     value={authCollege}
-                    onChange={(e) => setCollege(e.target.value)}
+                    onChange={(e) => setAuthCollege(e.target.value)}
                     placeholder="e.g. Kirori Mal College, DU"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E2DA] text-xs font-medium focus:ring-2 focus:ring-[#1FB5A0] outline-hidden"
                   />

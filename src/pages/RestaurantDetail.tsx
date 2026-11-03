@@ -191,7 +191,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
         restaurant.longitude,
         restaurant.name,
         userCoords,
-        travelEstimate?.primaryMode || 'driving'
+        travelEstimate?.primaryMode === 'walk' ? 'walking' : 'driving'
       );
     }
     if (restaurant.google_maps_url && restaurant.google_maps_url.trim().length > 5) {
