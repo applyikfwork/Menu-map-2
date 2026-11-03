@@ -27,7 +27,16 @@ export const StudentAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [student, setStudent] = useState<StudentProfile | null>(() => {
     try {
       const saved = localStorage.getItem(SESSION_KEY);
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (!parsed) return null;
+      return {
+        ...parsed,
+        name: parsed.name || parsed.full_name || parsed.email?.split('@')[0] || 'Student Explorer',
+        college_university: parsed.college_university || parsed.institution || 'University of Delhi',
+        points: parsed.points ?? 50,
+        badges: Array.isArray(parsed.badges) && parsed.badges.length > 0 ? parsed.badges : ['Campus Contributor'],
+      };
     } catch (e) {
       return null;
     }

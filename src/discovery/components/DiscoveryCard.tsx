@@ -128,10 +128,10 @@ export const DiscoveryCard: React.FC<DiscoveryCardProps> = ({
           <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-[#1FB5A0]/10 text-[#1FB5A0] flex items-center justify-center font-bold text-xs">
-                {discovery.contributor_name.charAt(0)}
+                {(discovery.contributor_name || 'M').charAt(0).toUpperCase()}
               </div>
               <div>
-                <div className="font-bold text-stone-800">{discovery.contributor_name}</div>
+                <div className="font-bold text-stone-800">{discovery.contributor_name || 'Menu Maps Contributor'}</div>
                 {discovery.contributor_college && (
                   <div className="text-[10px] text-stone-400">{discovery.contributor_college}</div>
                 )}

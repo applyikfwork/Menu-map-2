@@ -96,6 +96,7 @@ import { MenuMapLogo } from '../components/Logo';
 import { useToast } from '../components/Toast';
 import { getSmartDishImage, DISH_IMAGE_PRESETS } from '../lib/dishImageRegistry';
 import { AdminDiscoveryReviewPanel } from '../discovery/components/AdminDiscoveryReviewPanel';
+import { AdminCompetitionManager } from '../discovery/components/AdminCompetitionManager';
 
 interface AdminPanelProps {
   navigate: (path: string) => void;
@@ -112,7 +113,8 @@ export type AdminSection =
   | 'analytics'
   | 'settings'
   | 'system_intel'
-  | 'discovery_submissions';
+  | 'discovery_submissions'
+  | 'competition_management';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
   const { showToast } = useToast();
@@ -1133,6 +1135,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
             { id: 'analytics', label: 'Search Analytics', icon: BarChart3 },
             { id: 'settings', label: 'Settings & Supabase', icon: Settings },
             { id: 'discovery_submissions', label: 'Discoveries Review', icon: Compass },
+            { id: 'competition_management', label: 'Competition Management', icon: Trophy },
             { id: 'system_intel', label: 'Website Specs & Timeline', icon: Terminal },
           ].map((tab: any) => {
             const Icon = tab.icon;
@@ -3382,6 +3385,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
         {/* 10. DISCOVERY SUBMISSIONS & CONTENT MANAGEMENT */}
         {activeSection === 'discovery_submissions' && (
           <AdminDiscoveryReviewPanel navigate={navigate} />
+        )}
+
+        {/* 11. COMPETITION MANAGEMENT */}
+        {activeSection === 'competition_management' && (
+          <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-xs">
+            <AdminCompetitionManager />
+          </div>
         )}
 
       </main>

@@ -38,10 +38,12 @@ import {
   DiscoveryItem,
   DiscoveryCompetition,
   CompetitionRegistration,
+  CompetitionSubmission,
 } from '../types/discovery';
 import { discoveryApi } from '../lib/discoveryApi';
 import { useStudentAuth } from '../context/StudentAuthContext';
 import { DiscoveryEditor } from '../components/DiscoveryEditor';
+import { CompetitionSubmissionModal } from '../components/CompetitionSubmissionModal';
 import { useToast } from '../../components/Toast';
 
 interface StudentDashboardProps {
@@ -73,6 +75,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [studentDiscoveries, setStudentDiscoveries] = useState<DiscoveryItem[]>([]);
   const [registrations, setRegistrations] = useState<CompetitionRegistration[]>([]);
   const [competitions, setCompetitions] = useState<DiscoveryCompetition[]>([]);
+  const [compSubmissions, setCompSubmissions] = useState<CompetitionSubmission[]>([]);
+  const [activeCompSubmissionTarget, setActiveCompSubmissionTarget] = useState<{
+    competition: DiscoveryCompetition;
+    registration: CompetitionRegistration;
+    existingSubmission?: CompetitionSubmission | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Discovery Editor State
@@ -99,14 +107,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     if (!student) return;
     setLoading(true);
     try {
-      const [discs, regs, comps] = await Promise.all([
+      const [discs, regs, comps, subs] = await Promise.all([
         discoveryApi.getStudentDiscoveries(student.id),
         discoveryApi.getStudentRegistrations(student.id),
         discoveryApi.getCompetitions(),
+        discoveryApi.getStudentCompetitionSubmissions(student.id),
       ]);
       setStudentDiscoveries(discs);
       setRegistrations(regs);
       setCompetitions(comps);
+      setCompSubmissions(subs);
     } catch (e) {
       console.error('Failed to load student dashboard data', e);
     } finally {
@@ -274,6 +284,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     );
   }
 
+  const displayName = student?.name || student?.email?.split('@')[0] || 'Student Explorer';
+  const displayInit = displayName.charAt(0).toUpperCase();
+  const displayCollege = student?.college_university || 'Student Contributor';
+  const studentPoints = student?.points ?? 50;
+  const studentBadges = Array.isArray(student?.badges) && student.badges.length > 0 ? student.badges : ['Campus Contributor'];
+
   return (
     <div className="min-h-screen bg-[#FAFAF7] text-[#1C1917]">
       {/* Top Bar with Student Info */}
@@ -281,11 +297,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#1FB5A0] text-white flex items-center justify-center font-bold text-xs">
-              {student.name.charAt(0)}
+              {displayInit}
             </div>
             <div>
-              <div className="text-xs font-bold text-stone-900 leading-tight">{student.name}</div>
-              <div className="text-[10px] text-stone-500">{student.college_university}</div>
+              <div className="text-xs font-bold text-stone-900 leading-tight">{displayName}</div>
+              <div className="text-[10px] text-stone-500">{displayCollege}</div>
             </div>
           </div>
 
@@ -368,7 +384,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     <span className="text-[10px] font-black uppercase tracking-wider text-teal-200">
                       Menu Maps Creator Workspace
                     </span>
-                    <h2 className="text-2xl font-black">Welcome, {student.name}!</h2>
+                    <h2 className="text-2xl font-black">Welcome, {displayName}!</h2>
                     <p className="text-xs text-teal-100 max-w-md">
                       Explore Delhi markets, document authentic counter prices, and earn official credits for your portfolio.
                     </p>
@@ -520,13 +536,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {registrations.map((reg) => {
-                      const comp = competitions.find((c) => c.id === reg.competition_id);
+                      const comp = competitions.find((c) => c.id === reg.competition_id || c.slug === reg.competition_id);
+                      const sub = compSubmissions.find((s) => s.competition_id === reg.competition_id);
+                      const isEvaluated = sub?.status === 'Evaluated';
+                      const isSubmitted = sub?.status === 'Submitted';
+                      const isDraft = sub?.status === 'Draft';
+
                       return (
                         <div
                           key={reg.id}
                           className="bg-white rounded-3xl border border-[#E7E2DA] p-6 space-y-4 shadow-xs flex flex-col justify-between"
                         >
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <div className="flex items-center justify-between">
                               <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#1FB5A0] text-[10px] font-black uppercase">
                                 {reg.participation_mode === 'team' ? `Team: ${reg.team_name}` : 'Individual'}
@@ -538,22 +559,75 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
                             <h4 className="text-base font-black text-stone-900">{reg.competition_title}</h4>
                             {comp && <p className="text-xs text-stone-600 line-clamp-2">{comp.description}</p>}
+
+                            {/* Submission Status Pill */}
+                            <div className="pt-2">
+                              {isEvaluated && (
+                                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-1">
+                                  <div className="flex items-center justify-between font-black">
+                                    <span className="flex items-center gap-1.5">
+                                      <Award className="w-3.5 h-3.5 text-emerald-600" />
+                                      <span>Official Score</span>
+                                    </span>
+                                    <span className="text-sm text-emerald-700">{sub.total_score} / 100 pts</span>
+                                  </div>
+                                  {sub.recognition_award && (
+                                    <div className="text-[11px] font-bold text-amber-800">
+                                      🏆 {sub.recognition_award}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {isSubmitted && !isEvaluated && (
+                                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-bold flex items-center gap-2">
+                                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                  <span>Submitted for Evaluation • Awaiting Jury Review</span>
+                                </div>
+                              )}
+
+                              {isDraft && (
+                                <div className="p-2.5 rounded-xl bg-stone-100 text-xs text-stone-600 font-medium">
+                                  📝 Draft Saved • Not submitted yet
+                                </div>
+                              )}
+
+                              {!sub && (
+                                <div className="text-[11px] text-stone-400 font-medium">
+                                  ⚪ No submission recorded yet. Complete your missions and submit before the deadline.
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
-                            <button
-                              onClick={() => {
-                                setEditingItem(null);
-                                setActiveTab('create');
-                              }}
-                              className="px-4 py-2 rounded-full bg-[#1FB5A0] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
-                            >
-                              <PlusCircle className="w-3.5 h-3.5" />
-                              <span>Submit Discovery for Competition</span>
-                            </button>
+                          <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
+                            {comp ? (
+                              <button
+                                onClick={() =>
+                                  setActiveCompSubmissionTarget({
+                                    competition: comp,
+                                    registration: reg,
+                                    existingSubmission: sub,
+                                  })
+                                }
+                                className="px-4 py-2 rounded-full bg-[#1FB5A0] hover:bg-[#199d8b] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                              >
+                                <Trophy className="w-3.5 h-3.5" />
+                                <span>
+                                  {isEvaluated
+                                    ? 'View Score & Feedback'
+                                    : isSubmitted
+                                    ? 'View / Edit Submission'
+                                    : isDraft
+                                    ? 'Continue Submission'
+                                    : 'Submit Missions / Project'}
+                                </span>
+                              </button>
+                            ) : null}
+
                             <button
                               onClick={() => navigate('/competitions')}
-                              className="text-xs font-bold text-stone-500 hover:text-stone-900"
+                              className="text-xs font-bold text-stone-500 hover:text-stone-900 px-2 py-1"
                             >
                               Rules →
                             </button>
@@ -785,7 +859,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <div className="p-5 rounded-3xl bg-white border border-[#E7E2DA] space-y-2 text-center">
                     <Award className="w-8 h-8 text-[#FFC84A] mx-auto" />
                     <div className="text-xs text-stone-500 font-bold uppercase">Contribution Score</div>
-                    <div className="text-3xl font-black text-stone-900">{student.points} pts</div>
+                    <div className="text-3xl font-black text-stone-900">{studentPoints} pts</div>
                   </div>
 
                   <div className="p-5 rounded-3xl bg-white border border-[#E7E2DA] space-y-2 text-center">
@@ -797,14 +871,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <div className="p-5 rounded-3xl bg-white border border-[#E7E2DA] space-y-2 text-center">
                     <Trophy className="w-8 h-8 text-[#FF6B4A] mx-auto" />
                     <div className="text-xs text-stone-500 font-bold uppercase">Badges Earned</div>
-                    <div className="text-3xl font-black text-stone-900">{student.badges.length}</div>
+                    <div className="text-3xl font-black text-stone-900">{studentBadges.length}</div>
                   </div>
                 </div>
 
                 <div className="p-6 rounded-3xl bg-white border border-[#E7E2DA] space-y-3">
                   <h4 className="text-sm font-bold text-stone-900">Earned Badges</h4>
                   <div className="flex flex-wrap gap-2">
-                    {student.badges.map((b, i) => (
+                    {studentBadges.map((b, i) => (
                       <span
                         key={i}
                         className="px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-[#1FB5A0] text-xs font-bold flex items-center gap-1.5"
@@ -831,7 +905,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     <label className="block text-xs font-bold text-stone-700 mb-1">Display Name</label>
                     <input
                       type="text"
-                      value={student.name}
+                      value={student?.name || ''}
                       onChange={(e) => updateProfile({ name: e.target.value })}
                       className="w-full px-3.5 py-2 rounded-xl border border-[#E7E2DA] text-xs font-medium"
                     />
@@ -842,7 +916,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     <input
                       type="email"
                       disabled
-                      value={student.email}
+                      value={student?.email || ''}
                       className="w-full px-3.5 py-2 rounded-xl border border-[#E7E2DA] bg-stone-50 text-xs font-medium text-stone-500"
                     />
                   </div>
@@ -853,7 +927,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={student.college_university}
+                      value={student?.college_university || ''}
                       onChange={(e) => updateProfile({ college_university: e.target.value })}
                       className="w-full px-3.5 py-2 rounded-xl border border-[#E7E2DA] text-xs font-medium"
                     />
@@ -863,7 +937,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     <label className="block text-xs font-bold text-stone-700 mb-1">Bio (Optional)</label>
                     <textarea
                       rows={3}
-                      value={student.bio || ''}
+                      value={student?.bio || ''}
                       onChange={(e) => updateProfile({ bio: e.target.value })}
                       placeholder="e.g. History enthusiast and street food hunter..."
                       className="w-full px-3.5 py-2 rounded-xl border border-[#E7E2DA] text-xs resize-none"
@@ -883,6 +957,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </main>
         </div>
       </div>
+
+      {/* Dedicated Competition Submission Modal */}
+      {activeCompSubmissionTarget && (
+        <CompetitionSubmissionModal
+          competition={activeCompSubmissionTarget.competition}
+          registration={activeCompSubmissionTarget.registration}
+          existingSubmission={activeCompSubmissionTarget.existingSubmission}
+          onClose={() => setActiveCompSubmissionTarget(null)}
+          onSaved={() => loadDashboardData()}
+        />
+      )}
     </div>
   );
 };

@@ -32,6 +32,7 @@ import {
   PriceVerificationType,
 } from '../types/discovery';
 import { discoveryApi } from '../lib/discoveryApi';
+import { AdminCompetitionManager } from './AdminCompetitionManager';
 import { useToast } from '../../components/Toast';
 
 interface AdminDiscoveryReviewPanelProps {
@@ -43,7 +44,7 @@ export const AdminDiscoveryReviewPanel: React.FC<AdminDiscoveryReviewPanelProps>
 }) => {
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'submissions' | 'revisions' | 'reports'>('submissions');
+  const [activeTab, setActiveTab] = useState<'submissions' | 'competitions' | 'revisions' | 'reports'>('submissions');
   const [discoveries, setDiscoveries] = useState<DiscoveryItem[]>([]);
   const [revisions, setRevisions] = useState<DiscoveryRevision[]>([]);
   const [reports, setReports] = useState<DiscoveryReport[]>([]);
@@ -200,6 +201,14 @@ export const AdminDiscoveryReviewPanel: React.FC<AdminDiscoveryReviewPanelProps>
             }`}
           >
             Submissions Queue ({pendingSubmissionsCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('competitions')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'competitions' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Competition Management
           </button>
           <button
             onClick={() => setActiveTab('revisions')}
@@ -379,6 +388,13 @@ export const AdminDiscoveryReviewPanel: React.FC<AdminDiscoveryReviewPanelProps>
                 </div>
               ))}
           </div>
+        </div>
+      )}
+
+      {/* COMPETITIONS MANAGEMENT TAB */}
+      {activeTab === 'competitions' && (
+        <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-xs">
+          <AdminCompetitionManager />
         </div>
       )}
 

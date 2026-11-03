@@ -16,6 +16,9 @@ import {
   DiscoveryReport,
   DiscoveryCompetition,
   CompetitionRegistration,
+  CompetitionSubmission,
+  CompetitionMission,
+  CompetitionTrack,
 } from '../types/discovery';
 import { OFFICIAL_SEED_DISCOVERIES, OFFICIAL_COMPETITIONS } from './discoverySeed';
 
@@ -59,7 +62,7 @@ function ensureSeeded() {
   }
 
   const existingComps = getLocalTable<DiscoveryCompetition>('competitions');
-  if (existingComps.length === 0) {
+  if (existingComps.length === 0 || !existingComps.some(c => (c.missions && c.missions.length > 0) || (c.tracks && c.tracks.length > 0))) {
     saveLocalTable('competitions', OFFICIAL_COMPETITIONS);
   }
 }
@@ -429,6 +432,25 @@ export const discoveryApi = {
     return all.find((c) => c.slug.toLowerCase() === clean || c.id === clean) || null;
   },
 
+  async saveCompetition(comp: DiscoveryCompetition): Promise<DiscoveryCompetition> {
+    const comps = getLocalTable<DiscoveryCompetition>('competitions');
+    const idx = comps.findIndex((c) => c.id === comp.id || c.slug === comp.slug);
+    if (idx >= 0) {
+      comps[idx] = { ...comps[idx], ...comp };
+    } else {
+      comps.push(comp);
+    }
+    saveLocalTable('competitions', comps);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('discovery_competitions').upsert(comp);
+      } catch (e) {}
+    }
+    return comp;
+  },
+
   async registerForCompetition(reg: CompetitionRegistration): Promise<CompetitionRegistration> {
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -449,9 +471,115 @@ export const discoveryApi = {
     return reg;
   },
 
+  async getCompetitionRegistrations(competitionId?: string): Promise<CompetitionRegistration[]> {
+    const all = getLocalTable<CompetitionRegistration>('competition_registrations');
+    if (competitionId) {
+      return all.filter((r) => r.competition_id === competitionId);
+    }
+    return all;
+  },
+
   async getStudentRegistrations(studentId: string): Promise<CompetitionRegistration[]> {
     const locals = getLocalTable<CompetitionRegistration>('competition_registrations');
     return locals.filter((r) => r.student_id === studentId);
+  },
+
+  async updateRegistrationStatus(id: string, status: 'Registered' | 'Submitted' | 'Reviewed'): Promise<void> {
+    const all = getLocalTable<CompetitionRegistration>('competition_registrations');
+    const idx = all.findIndex((r) => r.id === id);
+    if (idx >= 0) {
+      all[idx].status = status;
+      saveLocalTable('competition_registrations', all);
+    }
+  },
+
+  // ---------------------------------------------------------------------------
+  // COMPETITION SUBMISSIONS & JUDGING
+  // ---------------------------------------------------------------------------
+
+  async getCompetitionSubmissions(competitionId?: string): Promise<CompetitionSubmission[]> {
+    const all = getLocalTable<CompetitionSubmission>('competition_submissions');
+    if (competitionId) {
+      return all.filter((s) => s.competition_id === competitionId);
+    }
+    return all;
+  },
+
+  async getStudentCompetitionSubmissions(studentId: string): Promise<CompetitionSubmission[]> {
+    const all = getLocalTable<CompetitionSubmission>('competition_submissions');
+    return all.filter((s) => s.student_id === studentId);
+  },
+
+  async saveCompetitionSubmission(sub: CompetitionSubmission): Promise<CompetitionSubmission> {
+    const all = getLocalTable<CompetitionSubmission>('competition_submissions');
+    const idx = all.findIndex((s) => s.id === sub.id || (s.competition_id === sub.competition_id && s.student_id === sub.student_id));
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], ...sub, updated_at: new Date().toISOString() };
+      sub = all[idx];
+    } else {
+      all.unshift(sub);
+    }
+    saveLocalTable('competition_submissions', all);
+
+    // Also update registration status to Submitted if not Draft
+    const regs = getLocalTable<CompetitionRegistration>('competition_registrations');
+    const reg = regs.find((r) => r.competition_id === sub.competition_id && r.student_id === sub.student_id);
+    if (reg && reg.status !== 'Submitted' && sub.status !== 'Draft') {
+      reg.status = 'Submitted';
+      saveLocalTable('competition_registrations', regs);
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('competition_submissions').upsert(sub);
+      } catch (e) {}
+    }
+    return sub;
+  },
+
+  async scoreCompetitionSubmission(
+    submissionId: string,
+    scores: Record<string, number>,
+    judgingNotes?: string,
+    correctionsRequested?: string,
+    recognitionAward?: string,
+    status: 'Under Review' | 'Evaluated' = 'Evaluated'
+  ): Promise<CompetitionSubmission | null> {
+    const all = getLocalTable<CompetitionSubmission>('competition_submissions');
+    const sub = all.find((s) => s.id === submissionId);
+    if (!sub) return null;
+
+    // Auto-calculate sum clamped at 100
+    const rawTotal = Object.values(scores).reduce((sum, v) => sum + (Number(v) || 0), 0);
+    const totalScore = Math.min(100, Math.max(0, rawTotal));
+
+    sub.scores = scores;
+    sub.total_score = totalScore;
+    if (judgingNotes !== undefined) sub.judging_notes = judgingNotes;
+    if (correctionsRequested !== undefined) sub.corrections_requested = correctionsRequested;
+    if (recognitionAward !== undefined) sub.recognition_award = recognitionAward;
+    sub.status = status;
+    sub.updated_at = new Date().toISOString();
+
+    saveLocalTable('competition_submissions', all);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('competition_submissions').update({
+          scores,
+          total_score: totalScore,
+          judging_notes: judgingNotes,
+          corrections_requested: correctionsRequested,
+          recognition_award: recognitionAward,
+          status,
+          updated_at: sub.updated_at,
+        }).eq('id', submissionId);
+      } catch (e) {}
+    }
+
+    return sub;
   },
 
   // =========================================================================

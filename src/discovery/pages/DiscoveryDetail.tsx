@@ -269,11 +269,11 @@ export const DiscoveryDetail: React.FC<DiscoveryDetailProps> = ({ slug, navigate
             <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2DA] flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#1FB5A0]/10 text-[#1FB5A0] flex items-center justify-center font-bold text-sm shrink-0">
-                  {discovery.contributor_name.charAt(0)}
+                  {(discovery.contributor_name || 'M').charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <div className="text-xs font-black text-stone-900">
-                    Discovered by {discovery.contributor_name}
+                    Discovered by {discovery.contributor_name || 'Community Contributor'}
                   </div>
                   <div className="text-[11px] text-stone-500">
                     {discovery.contributor_college || 'Student Contributor'} • Verified by Menu Maps Team
