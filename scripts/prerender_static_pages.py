@@ -550,6 +550,341 @@ def main():
         f_out.write(home_html)
     print("Pre-rendered homepage (dist/index.html) with top verified cafes and 770+ counter menus.")
 
+    # -------------------------------------------------------------
+    # 5. PRE-RENDER FOOD DECISION GUIDES (/guides and /guides/[slug])
+    # -------------------------------------------------------------
+    food_guides = data.get("food_guides", [])
+    if food_guides:
+        # 5.1 Pre-render /guides/index.html (The Food Guides Hub)
+        hub_url = f"{DOMAIN}/guides"
+        hub_title = "Food Decision Guides & What to Eat in Delhi NCR | Menu Maps"
+        hub_desc = "Stuck on what to eat? Explore high-intent food decision guides across Delhi NCR. Discover real dishes, transparent counter rates, dinner ideas, budget meals, and late-night eats on Menu Maps."
+        
+        hub_cards_html = ""
+        hub_items_schema = []
+        for i, g in enumerate(food_guides):
+            g_slug = g.get("slug", "")
+            g_title = g.get("title", "")
+            g_summary = g.get("summary", "")
+            g_badge = g.get("badge", "Guide")
+            g_read = g.get("readTime", "4 min read")
+            g_img = g.get("heroImage", "https://menumaps.in/logo.jpg")
+            g_url = f"/guides/{g_slug}"
+            
+            hub_items_schema.append({
+                "@type": "ListItem",
+                "position": i + 1,
+                "name": g_title,
+                "url": f"{DOMAIN}{g_url}"
+            })
+            
+            hub_cards_html += f"""
+            <article style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div>
+                    <div style="height: 180px; overflow: hidden; position: relative;">
+                        <img src="{escape_html(g_img)}" alt="{escape_html(g_title)}" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <span style="position: absolute; top: 12px; left: 12px; background: #FF5A36; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase;">{escape_html(g_badge)}</span>
+                        <span style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 9999px;">{escape_html(g_read)}</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h2 style="font-size: 18px; font-weight: 800; color: #1C1917; margin: 0 0 8px 0; line-height: 1.3;">
+                            <a href="{g_url}" style="color: inherit; text-decoration: none;">{escape_html(g_title)}</a>
+                        </h2>
+                        <p style="font-size: 13px; color: #57534E; line-height: 1.5; margin: 0;">{escape_html(g_summary)}</p>
+                    </div>
+                </div>
+                <div style="padding: 14px 20px; background: #FAF8F5; border-top: 1px solid #E7E2DA; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700;">
+                    <span style="color: #0F766E;">✓ Real Dishes &amp; Menus</span>
+                    <a href="{g_url}" style="color: #FF5A36; text-decoration: none;">Explore Guide &rarr;</a>
+                </div>
+            </article>
+            """
+            
+        hub_schema = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "CollectionPage",
+                    "@id": f"{hub_url}#collection",
+                    "name": hub_title,
+                    "description": hub_desc,
+                    "url": hub_url,
+                    "publisher": {
+                        "@type": "Organization",
+                        "name": "Menu Maps",
+                        "url": DOMAIN,
+                        "logo": f"{DOMAIN}/logo.jpg"
+                    }
+                },
+                {
+                    "@type": "ItemList",
+                    "@id": f"{hub_url}#items",
+                    "name": "Menu Maps Editorial Food Decision Guides",
+                    "itemListElement": hub_items_schema
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "@id": f"{hub_url}#breadcrumbs",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Food Guides", "item": hub_url}
+                    ]
+                }
+            ]
+        }
+        
+        hub_fallback = f"""
+        {get_shared_header()}
+        <main style="max-width: 1100px; margin: 30px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <header style="text-align: center; max-width: 800px; margin: 0 auto 36px auto;">
+                <span style="background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase;">
+                    Menu Maps Editorial &amp; Decision Guides
+                </span>
+                <h1 style="font-size: 38px; font-weight: 900; color: #1C1917; margin: 12px 0 14px 0; line-height: 1.2;">
+                    Discover What to Eat at Real Counter Prices
+                </h1>
+                <p style="font-size: 16px; color: #57534E; line-height: 1.6; margin: 0;">
+                    Data-backed food decision guides powered by 770+ verified Delhi NCR cafes and 6,700+ authentic in-store menus. Zero delivery app markups.
+                </p>
+            </header>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-bottom: 48px;">
+                {hub_cards_html}
+            </div>
+        </main>
+        """
+        
+        hub_html = template
+        hub_html = re.sub(r'<title>.*?</title>', lambda _: f'<title>{hub_title}</title>', hub_html)
+        hub_html = re.sub(r'<meta name="description" content=".*?" />', lambda _: f'<meta name="description" content="{hub_desc}" />', hub_html)
+        hub_html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{hub_url}" />', hub_html)
+        hub_html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: f'<meta property="og:title" content="{hub_title}" />', hub_html)
+        hub_html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: f'<meta property="og:description" content="{hub_desc}" />', hub_html)
+        hub_html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{hub_url}" />', hub_html)
+        hub_html = hub_html.replace('</head>', f'<script type="application/ld+json">{json.dumps(hub_schema)}</script>\n  </head>')
+        hub_html = replace_root(hub_html, hub_fallback)
+        
+        hub_dir = os.path.join("dist", "guides")
+        os.makedirs(hub_dir, exist_ok=True)
+        with open(os.path.join(hub_dir, "index.html"), "w", encoding="utf-8") as f_out:
+            f_out.write(hub_html)
+            
+        # 5.2 Pre-render individual /guides/[slug]/index.html
+        for g in food_guides:
+            slug = g.get("slug")
+            if not slug:
+                continue
+            g_title = g.get("title", "")
+            meta_title = g.get("metaTitle") or f"{g_title} | Menu Maps"
+            meta_desc = g.get("metaDescription", "")
+            hero_img = g.get("heroImage", "https://menumaps.in/logo.jpg")
+            page_url = f"{DOMAIN}/guides/{slug}"
+            faqs = g.get("faqs", [])
+            intro_sections = g.get("introSections", [])
+            crit = g.get("queryCriteria", {})
+            keywords = crit.get("keywords", [])
+            max_p = crit.get("maxPrice", 500)
+            
+            # Find matching dishes for this guide
+            guide_dishes = []
+            for d in dishes:
+                p = d.get("price", 0)
+                if p > max_p:
+                    continue
+                d_name = d.get("name", "").lower()
+                d_desc = (d.get("description") or "").lower()
+                if keywords:
+                    if any(kw in d_name or kw in d_desc for kw in keywords):
+                        guide_dishes.append(d)
+                else:
+                    guide_dishes.append(d)
+                if len(guide_dishes) >= 12:
+                    break
+                    
+            guide_dishes_html = ""
+            guide_items_schema = []
+            for j, gd in enumerate(guide_dishes):
+                gd_name = gd.get("name", "")
+                gd_price = gd.get("price", 0)
+                gd_rest = gd.get("restaurant_name", "Delhi Cafe")
+                gd_rest_slug = gd.get("restaurant_slug", "")
+                gd_slug = gd.get("slug", "")
+                gd_desc = gd.get("description", "")
+                gd_img = gd.get("image_url") or gd.get("restaurant_cover_image") or "https://menumaps.in/logo.jpg"
+                delivery_est = int(gd_price * 1.32 + 25)
+                savings = delivery_est - gd_price
+                dish_link = f"/food/{gd_slug}" if gd_slug else f"/restaurant/{gd_rest_slug}"
+                
+                guide_items_schema.append({
+                    "@type": "ListItem",
+                    "position": j + 1,
+                    "name": f"{gd_name} at {gd_rest}",
+                    "url": f"{DOMAIN}{dish_link}"
+                })
+                
+                guide_dishes_html += f"""
+                <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                            <h3 style="font-size: 16px; font-weight: 800; color: #1C1917; margin: 0;">
+                                <a href="{dish_link}" style="color: inherit; text-decoration: none;">#{j+1} {escape_html(gd_name)}</a>
+                            </h3>
+                            <span style="font-weight: 900; color: #0F766E; font-size: 16px;">₹{gd_price}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #78716C; margin-bottom: 8px;">
+                            at <a href="/restaurant/{gd_rest_slug}" style="color: #FF5A36; font-weight: 700; text-decoration: none;">{escape_html(gd_rest)}</a>
+                        </div>
+                        {f'<p style="font-size: 13px; color: #57534E; margin: 0 0 10px 0; line-height: 1.4;">{escape_html(gd_desc)}</p>' if gd_desc else ''}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #F5F1EB; font-size: 12px;">
+                        <span style="color: #0F766E; font-weight: 700; background: #ECFDF5; padding: 2px 8px; border-radius: 9999px;">Save ₹{savings} vs apps</span>
+                        <a href="{dish_link}" style="color: #FF5A36; font-weight: 700; text-decoration: none;">View Counter Menu &rarr;</a>
+                    </div>
+                </div>
+                """
+                
+            # FAQs HTML
+            faqs_html = ""
+            faq_schema_items = []
+            for fq in faqs:
+                q = fq.get("q", "")
+                a = fq.get("a", "")
+                faq_schema_items.append({
+                    "@type": "Question",
+                    "name": q,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": a
+                    }
+                })
+                faqs_html += f"""
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #E7E2DA;">
+                    <h3 style="font-size: 16px; font-weight: 800; color: #1C1917; margin: 0 0 6px 0;">{escape_html(q)}</h3>
+                    <p style="font-size: 14px; color: #57534E; line-height: 1.6; margin: 0;">{escape_html(a)}</p>
+                </div>
+                """
+                
+            # Sections HTML
+            sections_html = ""
+            for sec in intro_sections:
+                sh = sec.get("heading", "")
+                sb = sec.get("body", "")
+                sections_html += f"""
+                <section style="margin-bottom: 24px;">
+                    <h2 style="font-size: 22px; font-weight: 800; color: #1C1917; margin: 0 0 8px 0;">{escape_html(sh)}</h2>
+                    <p style="font-size: 15px; color: #44403C; line-height: 1.7; margin: 0;">{escape_html(sb)}</p>
+                </section>
+                """
+                
+            guide_schema = {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Article",
+                        "@id": f"{page_url}#article",
+                        "headline": g_title,
+                        "description": meta_desc,
+                        "image": [hero_img],
+                        "datePublished": g.get("publishedDate", "2026-11-16"),
+                        "dateModified": g.get("updatedDate", "2026-11-16"),
+                        "author": {
+                            "@type": "Organization",
+                            "name": "Menu Maps Editorial Team",
+                            "url": f"{DOMAIN}/about"
+                        },
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Menu Maps",
+                            "url": DOMAIN,
+                            "logo": f"{DOMAIN}/logo.jpg"
+                        },
+                        "mainEntityOfPage": page_url
+                    },
+                    {
+                        "@type": "ItemList",
+                        "@id": f"{page_url}#items",
+                        "name": f"Top Real Dishes for {g.get('shortTitle', '')}",
+                        "itemListElement": guide_items_schema
+                    },
+                    {
+                        "@type": "FAQPage",
+                        "@id": f"{page_url}#faq",
+                        "mainEntity": faq_schema_items
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "@id": f"{page_url}#breadcrumbs",
+                        "itemListElement": [
+                            {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{DOMAIN}/"},
+                            {"@type": "ListItem", "position": 2, "name": "Food Guides", "item": f"{DOMAIN}/guides"},
+                            {"@type": "ListItem", "position": 3, "name": g.get("shortTitle", "Guide"), "item": page_url}
+                        ]
+                    }
+                ]
+            }
+            
+            guide_fallback = f"""
+            {get_shared_header()}
+            <main style="max-width: 900px; margin: 30px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <nav style="font-size: 13px; color: #78716C; margin-bottom: 16px;">
+                    <a href="/" style="color: #FF5A36; text-decoration: none;">Home</a> &gt; 
+                    <a href="/guides" style="color: #FF5A36; text-decoration: none;">Food Guides</a> &gt; 
+                    <span>{escape_html(g.get("shortTitle", "Guide"))}</span>
+                </nav>
+                <article>
+                    <header style="margin-bottom: 24px;">
+                        <span style="background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase;">
+                            {escape_html(g.get("badge", "Food Guide"))}
+                        </span>
+                        <h1 style="font-size: 34px; font-weight: 900; color: #1C1917; margin: 12px 0 10px 0; line-height: 1.25;">
+                            {escape_html(g_title)}
+                        </h1>
+                        <p style="font-size: 16px; color: #57534E; line-height: 1.6; margin: 0;">
+                            {escape_html(g.get("summary", ""))}
+                        </p>
+                    </header>
+                    
+                    <div style="margin-bottom: 30px; border-radius: 18px; overflow: hidden; max-height: 380px;">
+                        <img src="{escape_html(hero_img)}" alt="{escape_html(g_title)}" style="width: 100%; height: 100%; object-fit: cover;" />
+                    </div>
+                    
+                    {sections_html}
+                    
+                    <section style="margin: 36px 0;">
+                        <div style="margin-bottom: 18px;">
+                            <span style="color: #0F766E; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Ground Verified Menus</span>
+                            <h2 style="font-size: 24px; font-weight: 800; color: #1C1917; margin: 4px 0 0 0;">Recommended Dishes &amp; Real Counter Rates</h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                            {guide_dishes_html}
+                        </div>
+                    </section>
+                    
+                    <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 18px; padding: 24px; margin: 36px 0;">
+                        <h2 style="font-size: 22px; font-weight: 800; color: #1C1917; margin: 0 0 18px 0;">Frequently Asked Questions</h2>
+                        {faqs_html}
+                    </section>
+                </article>
+            </main>
+            """
+            
+            g_html = template
+            g_html = re.sub(r'<title>.*?</title>', lambda _: f'<title>{meta_title}</title>', g_html)
+            g_html = re.sub(r'<meta name="description" content=".*?" />', lambda _: f'<meta name="description" content="{meta_desc}" />', g_html)
+            g_html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{page_url}" />', g_html)
+            g_html = re.sub(r'<meta property="og:title" content=".*?" />', lambda _: f'<meta property="og:title" content="{meta_title}" />', g_html)
+            g_html = re.sub(r'<meta property="og:description" content=".*?" />', lambda _: f'<meta property="og:description" content="{meta_desc}" />', g_html)
+            g_html = re.sub(r'<meta property="og:url" content=".*?" />', lambda _: f'<meta property="og:url" content="{page_url}" />', g_html)
+            g_html = re.sub(r'<meta property="og:image" content=".*?" />', lambda _: f'<meta property="og:image" content="{hero_img}" />', g_html)
+            g_html = g_html.replace('</head>', f'<script type="application/ld+json">{json.dumps(guide_schema)}</script>\n  </head>')
+            g_html = replace_root(g_html, guide_fallback)
+            
+            out_guide_dir = os.path.join("dist", "guides", slug)
+            os.makedirs(out_guide_dir, exist_ok=True)
+            with open(os.path.join(out_guide_dir, "index.html"), "w", encoding="utf-8") as f_out:
+                f_out.write(g_html)
+                
+        print(f"Pre-rendered /guides hub and {len(food_guides)} individual food decision guides with Article + FAQ schema.")
+
     print("Static Pre-rendering complete! Generated static HTML snapshots for all verified restaurants, dishes, area guides, and directories.")
 
 if __name__ == "__main__":

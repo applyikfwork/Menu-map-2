@@ -1,4 +1,5 @@
 import { generateSeedData } from '../src/lib/seedData';
+import { FOOD_GUIDES } from '../src/data/foodGuidesData';
 import fs from 'fs';
 import path from 'path';
 
@@ -45,6 +46,7 @@ const payload = {
   restaurants: Array.from(restaurantsBySlug.values()),
   dishes: Array.from(dishesBySlug.values()),
   dishes_by_restaurant: Object.fromEntries(dishesByRestaurantId),
+  food_guides: FOOD_GUIDES,
   area_guides: [],
 };
 
@@ -54,3 +56,4 @@ fs.writeFileSync(outPath, JSON.stringify(payload));
 console.log(`Successfully exported data for pre-rendering:`);
 console.log(`  - Unique Restaurants: ${payload.restaurants.length}`);
 console.log(`  - Unique Dishes: ${payload.dishes.length}`);
+console.log(`  - Food Decision Guides: ${payload.food_guides.length}`);

@@ -28,6 +28,8 @@ const OwnerDashboard = lazyWithRetry(() => import('./pages/OwnerDashboard'), 'Ow
 const ListCafe = lazyWithRetry(() => import('./pages/ListCafe'), 'ListCafe', 'ListCafe');
 const ClaimVerify = lazyWithRetry(() => import('./pages/ClaimVerify'), 'ClaimVerify', 'ClaimVerify');
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound', 'NotFound');
+const FoodGuidesHub = lazyWithRetry(() => import('./pages/FoodGuidesHub'), 'FoodGuidesHub', 'FoodGuidesHub');
+const GuideDetail = lazyWithRetry(() => import('./pages/GuideDetail'), 'GuideDetail', 'GuideDetail');
 
 import { ADMIN_EMAIL, getCurrentAdminSession } from './lib/supabase';
 
@@ -188,12 +190,25 @@ function AppContent() {
       return <ClaimVerify navigate={navigate} searchParams={searchParams} />;
     }
 
+    // 11.6. High-Intent Food Decision Guides (/guides and /guides/:slug)
+    if (normPath === '/guides' || normPath === '/food-guides') {
+      return <FoodGuidesHub navigate={navigate} />;
+    }
+    if (normPath.startsWith('/guides/')) {
+      const slug = normPath.slice('/guides/'.length).split('/')[0].trim();
+      return <GuideDetail slug={slug} navigate={navigate} />;
+    }
+    if (normPath.startsWith('/food-guides/')) {
+      const slug = normPath.slice('/food-guides/'.length).split('/')[0].trim();
+      return <GuideDetail slug={slug} navigate={navigate} />;
+    }
+
     // 12. Direct Clean Restaurant Slug Route: /:slug (e.g. /the-pizza-family)
     const directSlug = normPath.replace(/^\/+/, '').split('/')[0].trim();
     const RESERVED_ROUTES = new Set([
       'admin-secure-panel2010', 'owner', 'list-cafe', 'create-cafe', 'search',
       'restaurants', 'restaurant', 'food', 'dish', 'dishes', 'dish-radar', 'cravings', 'nearby', 'bookmarks', 'about', 'contact',
-      'terms', 'privacy', 'claim-verify', 'api', 'assets', 'favicon.ico',
+      'terms', 'privacy', 'claim-verify', 'guides', 'food-guides', 'api', 'assets', 'favicon.ico',
       'manifest.json', 'robots.txt', 'sitemap.xml', 'index.html'
     ]);
 

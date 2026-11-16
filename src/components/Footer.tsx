@@ -83,6 +83,14 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
                   Restaurants & Cafes
                 </a>
                 <a
+                  href="/guides"
+                  onClick={(e) => { e.preventDefault(); navigate('/guides'); }}
+                  className="nl text-left transition-colors hover:text-[#FF8A6B] flex items-center gap-1.5"
+                >
+                  <span>Food Decision Guides</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-black uppercase">New</span>
+                </a>
+                <a
                   href="/nearby"
                   onClick={(e) => { e.preventDefault(); navigate('/nearby'); }}
                   className="nl text-left transition-colors hover:text-[#FF8A6B]"

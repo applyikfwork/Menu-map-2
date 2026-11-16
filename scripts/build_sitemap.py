@@ -10,6 +10,7 @@ PRERENDER_DATA = "dist/prerender_data.json"
 
 restaurant_slugs = set()
 dish_slugs = set()
+guide_slugs = set()
 
 # Prefer dist/prerender_data.json if present
 if os.path.exists(PRERENDER_DATA):
@@ -22,6 +23,9 @@ if os.path.exists(PRERENDER_DATA):
     for d in pdata.get("dishes", []):
         if d.get("slug"):
             dish_slugs.add(d["slug"])
+    for g in pdata.get("food_guides", []):
+        if g.get("slug"):
+            guide_slugs.add(g["slug"])
 else:
     venue_files = glob.glob('src/data/venues/*.ts')
 
@@ -61,9 +65,19 @@ else:
             for s in found:
                 dish_slugs.add(s)
 
+if not guide_slugs:
+    guide_slugs = {
+        "what-to-eat-today",
+        "food-ideas-for-dinner",
+        "best-food-near-me",
+        "best-food-under-200",
+        "late-night-food-delhi"
+    }
+
 core_pages = [
     ("", "daily", "1.0"),
     ("restaurants", "daily", "0.9"),
+    ("guides", "daily", "0.9"),
     ("nearby", "daily", "0.9"),
     ("list-cafe", "weekly", "0.85"),
     ("search", "daily", "0.8"),
@@ -107,6 +121,16 @@ for slug in sorted(list(dish_slugs)):
     lines.append('    <priority>0.70</priority>')
     lines.append('  </url>')
 
+# 4. Food Decision Guides (/guides/:slug)
+lines.append('\n  <!-- High-Intent Food Decision Guides -->')
+for slug in sorted(list(guide_slugs)):
+    lines.append('  <url>')
+    lines.append(f'    <loc>{DOMAIN}/guides/{slug}</loc>')
+    lines.append(f'    <lastmod>{TODAY}</lastmod>')
+    lines.append('    <changefreq>weekly</changefreq>')
+    lines.append('    <priority>0.85</priority>')
+    lines.append('  </url>')
+
 lines.append('</urlset>\n')
 
 output_path = 'public/sitemap.xml'
@@ -122,6 +146,7 @@ if os.path.exists('dist'):
 
 print(f"Sitemap successfully generated at {output_path}:")
 print(f"  - Core Pages: {len(core_pages)}")
+print(f"  - Food Decision Guides: {len(guide_slugs)}")
 print(f"  - Verified Restaurants: {len(restaurant_slugs)}")
 print(f"  - Verified Dishes: {len(dish_slugs)}")
-print(f"  - Total URLs: {len(core_pages) + len(restaurant_slugs) + len(dish_slugs)}")
+print(f"  - Total URLs: {len(core_pages) + len(guide_slugs) + len(restaurant_slugs) + len(dish_slugs)}")
