@@ -269,7 +269,7 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
             </span>
             <div>
               <h3 className="hd text-xl sm:text-2xl font-black text-[#1C1917]">
-                MenuMaps Price Transparency Meter
+                Menu Maps Price Transparency Meter
               </h3>
               <p className="text-xs text-stone-500 font-medium">
                 {cartTotalAmount > 0 ? 'Calculated on your selected order tray' : 'Estimated for 2 people dining in'}
@@ -284,12 +284,12 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
 
         {/* Visual Comparison Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
-          {/* MenuMaps Counter Price */}
+          {/* Menu Maps Counter Price */}
           <div className="bg-[#FAF8F5] border border-emerald-300/80 rounded-2xl p-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800">
-                  MenuMaps In-Store / Direct
+                  Menu Maps In-Store / Direct
                 </span>
                 <span className="text-emerald-700 font-bold text-xs bg-emerald-100 px-2 py-0.5 rounded-full">
                   Verified
@@ -345,7 +345,7 @@ export const RestaurantSuperWidgets: React.FC<RestaurantSuperWidgetsProps> = ({
                 Total Dine-In / Direct Savings
               </p>
               <p className="text-lg sm:text-xl font-black">
-                You save ₹{totalSavings} ({savingsPercent}%) with MenuMaps!
+                You save ₹{totalSavings} ({savingsPercent}%) with Menu Maps!
               </p>
             </div>
           </div>

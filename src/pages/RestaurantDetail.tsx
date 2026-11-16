@@ -884,7 +884,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 const rawPhone = restaurant.whatsapp_number || restaurant.phone;
                 if (rawPhone) {
                   const phone = rawPhone.replace(/[^0-9]/g, '');
-                  window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on MenuMap.`)}`, '_blank');
+                  window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on Menu Maps.`)}`, '_blank');
                 } else {
                   showToast('Direct counter WhatsApp active for orders below.', 'info');
                 }
@@ -1469,7 +1469,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                           const rawPhone = restaurant.whatsapp_number || restaurant.phone;
                           if (rawPhone) {
                             const phone = rawPhone.replace(/[^0-9]/g, '');
-                            window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your menu on MenuMaps. Could you please share today's menu card and prices?`)}`, '_blank');
+                            window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your menu on Menu Maps. Could you please share today's menu card and prices?`)}`, '_blank');
                           }
                         }}
                         className="btn bg-[#0F766E] hover:bg-[#0D9488] text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-2xl shadow-sm inline-flex items-center gap-2 cursor-pointer"
@@ -2827,7 +2827,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
             const rawPhone = restaurant.whatsapp_number || restaurant.phone;
             if (rawPhone) {
               const phone = rawPhone.replace(/[^0-9]/g, '');
-              window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on MenuMaps.`)}`, '_blank');
+              window.open(`https://wa.me/${phone.length === 10 ? `91${phone}` : phone}?text=${encodeURIComponent(`Hi ${restaurant.name}, I am exploring your counter menu on Menu Maps.`)}`, '_blank');
             } else {
               setShowOrderDrawer(true);
             }

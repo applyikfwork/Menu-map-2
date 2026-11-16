@@ -1,6 +1,6 @@
 {
   "name": "Menu Maps",
-  "short_name": "MenuMaps",
+  "short_name": "Menu Maps",
   "description": "Discover the best cafes, restaurants, and trending dishes near you with real menus, verified prices, and curated collections.",
   "start_url": "/",
   "display": "standalone",

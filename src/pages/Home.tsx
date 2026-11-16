@@ -31,7 +31,7 @@ import {
   Train
 } from 'lucide-react';
 import { Restaurant, MenuItem } from '../types/database';
-import { api } from '../lib/supabase';
+import { api, getMasterSeedData } from '../lib/supabase';
 import { 
   getUserLocation, 
   calculateDistanceKm, 
@@ -79,10 +79,24 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   // Search input & active states
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Database Data
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Database Data - Synchronously pre-hydrated with master seed data so there is 0ms empty state
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(() => {
+    try {
+      const seed = getMasterSeedData();
+      return seed.restaurants || [];
+    } catch {
+      return [];
+    }
+  });
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
+    try {
+      const seed = getMasterSeedData();
+      return (seed.menuItems || []).filter((i) => i.is_available);
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   // Centralized Global Location from Navbar
   const { currentLocation, openLocationModal, isLocating } = useLocationContext();
@@ -115,14 +129,17 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
   }, []);
 
   const loadHomeData = async () => {
-    setLoading(true);
     try {
       const [restData, itemData] = await Promise.all([
         api.getRestaurants(true),
         api.getMenuItems(),
       ]);
-      setRestaurants(restData);
-      setMenuItems(itemData.filter((i) => i.is_available));
+      if (restData && restData.length > 0) {
+        setRestaurants(restData);
+      }
+      if (itemData && itemData.length > 0) {
+        setMenuItems(itemData.filter((i) => i.is_available));
+      }
     } catch (e) {
       console.error('Error loading home data:', e);
     } finally {
@@ -448,7 +465,7 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
                   <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
                   </div>
-                  <span>{restaurants.length > 0 ? `${restaurants.length}+ Verified Delhi Cafes` : 'Verified Delhi NCR Cafes'}</span>
+                  <span>{restaurants.length > 0 ? `${restaurants.length}+ Verified Delhi Cafes` : '770+ Verified Delhi Cafes'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full bg-orange-100 text-[#D8350F] flex items-center justify-center shrink-0">
@@ -643,7 +660,16 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
         </div>
 
         {/* Restaurant Cards Grid */}
-        {areaRestaurants.length > 0 ? (
+        {loading && areaRestaurants.length === 0 ? (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-80 rounded-3xl bg-stone-100 animate-pulse border border-[#E7E2DA]"
+              />
+            ))}
+          </div>
+        ) : areaRestaurants.length > 0 ? (
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {areaRestaurants.slice(0, 9).map((restaurant) => {
               const userDist = userCoords
@@ -663,7 +689,11 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
           </div>
         ) : (
           <div className="mt-8 bg-stone-50 rounded-2xl p-8 text-center border border-[#E7E2DA]">
-            <p className="text-base font-bold text-stone-700">No {restaurantFilter} dining spots found in {activeAreaName}</p>
+            <p className="text-base font-bold text-stone-700">
+              {restaurantFilter === 'All'
+                ? `No dining spots currently mapped in ${activeAreaName}`
+                : `No ${restaurantFilter.toLowerCase()} dining spots found in ${activeAreaName}`}
+            </p>
             <p className="text-xs text-stone-500 mt-1">Try switching to &quot;All&quot; to see all verified menus in this area.</p>
             <button
               type="button"

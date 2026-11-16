@@ -3167,12 +3167,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ navigate }) => {
                       const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
                       const activationUrl = claim.activation_link || (typeof window !== 'undefined' ? `${window.location.origin}/claim-verify?token=${claim.activation_token}` : '');
 
-                      const mailtoUrl = `mailto:${claim.owner_email}?subject=${encodeURIComponent(`Approved: Claim your cafe ownership for ${claim.restaurant_name} on MenuMaps`)}&body=${encodeURIComponent(
-                        `Dear ${claim.owner_name},\n\nCongratulations! Your ownership claim for ${claim.restaurant_name} has been verified and approved by the MenuMaps team.\n\nClick your exclusive activation link below to set your password and access your verified cafe dashboard:\n${activationUrl}\n\nThis link is securely tied to ${claim.restaurant_name} and will allow you to update digital menus, manage live announcements, view customer order trays, and print QR codes.\n\nBest regards,\nMenuMaps Verification Team\nhttps://menumaps.in`
+                      const mailtoUrl = `mailto:${claim.owner_email}?subject=${encodeURIComponent(`Approved: Claim your cafe ownership for ${claim.restaurant_name} on Menu Maps`)}&body=${encodeURIComponent(
+                        `Dear ${claim.owner_name},\n\nCongratulations! Your ownership claim for ${claim.restaurant_name} has been verified and approved by the Menu Maps team.\n\nClick your exclusive activation link below to set your password and access your verified cafe dashboard:\n${activationUrl}\n\nThis link is securely tied to ${claim.restaurant_name} and will allow you to update digital menus, manage live announcements, view customer order trays, and print QR codes.\n\nBest regards,\nMenu Maps Verification Team\nhttps://menumaps.in`
                       )}`;
 
                       const waShareUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(
-                        `Hello ${claim.owner_name}! 🎉 Your ownership claim for *${claim.restaurant_name}* on MenuMaps has been approved!\n\nClick your exclusive link to set your password and take ownership of your cafe:\n${activationUrl}`
+                        `Hello ${claim.owner_name}! 🎉 Your ownership claim for *${claim.restaurant_name}* on Menu Maps has been approved!\n\nClick your exclusive link to set your password and take ownership of your cafe:\n${activationUrl}`
                       )}`;
 
                       return (

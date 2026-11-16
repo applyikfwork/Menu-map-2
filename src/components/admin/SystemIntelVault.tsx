@@ -203,9 +203,9 @@ const INITIAL_MASTER_TIMELINE: TimelineMilestone[] = [
     title: 'Multi-Zone Delhi NCR Core Venue Database & 0% Markup Ordering',
     category: 'Architecture',
     author: 'Founding Engineer',
-    summary: 'Established foundational Menu Maps architecture with 680+ verified venues and direct counter WhatsApp ordering.',
+    summary: 'Established foundational Menu Maps architecture with 770+ verified venues and direct counter WhatsApp ordering.',
     technicalDetails: [
-      'Aggregated and normalized 680+ authentic cafe menus across North Campus DU, Satya Niketan, Majnu Ka Tila, and South Delhi.',
+      'Aggregated and normalized 770+ authentic cafe menus across North Campus DU, Satya Niketan, Majnu Ka Tila, and South Delhi.',
       'Engineered 0% markup WhatsApp order drawer routing direct orders with zero aggregator commissions.',
       'Built honest bill calculator estimating total taxes and service charge transparently.'
     ]
@@ -670,7 +670,7 @@ Resilience: lazyWithRetry auto-refresh on deployment hash change + vite:preloadE
             </div>
 
             <div className="space-y-2.5 text-xs text-stone-700 leading-relaxed">
-              <p><strong>Platform Name:</strong> Menu Maps (MenuMap)</p>
+              <p><strong>Platform Name:</strong> Menu Maps</p>
               <p><strong>Production Domain:</strong> <a href="https://menumaps.in" target="_blank" rel="noreferrer" className="text-[#FF5A36] hover:underline font-bold">https://menumaps.in</a></p>
               <p><strong>Target Geographic Region:</strong> Delhi NCR, India (Coverage across North Campus DU, Satya Niketan, Hudson Lane, Majnu Ka Tila, Connaught Place, Hauz Khas, Saket)</p>
               <p><strong>Core Value Proposition:</strong> 100% genuine in-store printed counter menus, authentic pricing without aggregator markups (0% commission), and direct counter WhatsApp ordering.</p>

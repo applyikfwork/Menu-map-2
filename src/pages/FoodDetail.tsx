@@ -46,7 +46,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
 
   useEffect(() => {
     if (cachedInitialDish) {
-      document.title = `${cachedInitialDish.name} Price at ${cachedInitialRest?.name || 'Delhi Cafe'} - ₹${cachedInitialDish.price} Counter Rate | MenuMaps`;
+      document.title = `${cachedInitialDish.name} Price at ${cachedInitialRest?.name || 'Delhi Cafe'} - ₹${cachedInitialDish.price} Counter Rate | Menu Maps`;
     }
     loadDishData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -92,12 +92,12 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ slug, navigate }) => {
       // Dynamic Dish SEO & Schema
       const dishUrl = `https://menumaps.in/food/${item.slug}`;
       const dishSchema = buildDishSchema(item, rest, dishUrl);
-      const dishTitle = `${item.name} Price at ${rest?.name || 'Delhi Cafe'} - ₹${item.price} Counter Rate | MenuMaps`;
+      const dishTitle = `${item.name} Price at ${rest?.name || 'Delhi Cafe'} - ₹${item.price} Counter Rate | Menu Maps`;
 
       document.title = dishTitle;
       updatePageSeo({
         title: dishTitle,
-        description: `View verified counter price for ${item.name} at ${rest?.name || 'Delhi'}. Only ₹${item.price} with 0% delivery app markup. View ingredients, dietary details, and direct WhatsApp counter ordering on MenuMaps.`,
+        description: `View verified counter price for ${item.name} at ${rest?.name || 'Delhi'}. Only ₹${item.price} with 0% delivery app markup. View ingredients, dietary details, and direct WhatsApp counter ordering on Menu Maps.`,
         canonicalUrl: dishUrl,
         ogImage: item.image_url || rest?.cover_image_url,
         ogType: 'food',

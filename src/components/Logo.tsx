@@ -16,7 +16,7 @@ export const MenuMapLogo: React.FC<LogoProps> = ({
   return (
     <img
       src="/logo.webp"
-      alt="MenuMaps"
+      alt="Menu Maps"
       style={size ? { width: size, height: size } : undefined}
       className={`object-cover ${rounded} shadow-xs shrink-0 select-none ${className}`}
       loading="eager"

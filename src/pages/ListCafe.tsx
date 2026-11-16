@@ -349,7 +349,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
       });
 
       if (res.success && res.restaurant) {
-        showToast(`🎉 "${res.restaurant.name}" is now live on MenuMaps! Redirecting to your dashboard...`, 'success');
+        showToast(`🎉 "${res.restaurant.name}" is now live on Menu Maps! Redirecting to your dashboard...`, 'success');
         setTimeout(() => {
           navigate('/owner/dashboard');
         }, 800);
@@ -373,7 +373,7 @@ export const ListCafe: React.FC<ListCafeProps> = ({ navigate }) => {
             <span>0% Commission Cafe Onboarding</span>
           </div>
           <h1 className="font-heading font-black text-3xl sm:text-5xl text-[#1C1917] tracking-tight">
-            List Your Cafe on MenuMaps
+            List Your Cafe on Menu Maps
           </h1>
           <p className="text-sm sm:text-base text-stone-600 max-w-xl mx-auto leading-relaxed">
             Gain direct walk-in customers from Netaji Subhash Place, Hudson Lane, Satya Niketan, and across Delhi NCR with authentic counter prices.

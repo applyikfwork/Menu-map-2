@@ -130,11 +130,11 @@ export const StaticPage: React.FC<StaticPageProps> = ({ type, navigate }) => {
         {/* Counter Stats Strip */}
         <div className="bg-[#1C1917] text-white rounded-3xl p-8 sm:p-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center border border-stone-800 shadow-xl">
           <div className="space-y-1">
-            <div className="font-heading font-black text-3xl sm:text-4xl text-[#FF5A36]">50+</div>
+            <div className="font-heading font-black text-3xl sm:text-4xl text-[#FF5A36]">770+</div>
             <div className="text-xs text-stone-400 font-sans font-medium uppercase tracking-wider">Verified Delhi Cafes</div>
           </div>
           <div className="space-y-1">
-            <div className="font-heading font-black text-3xl sm:text-4xl text-emerald-400">1,200+</div>
+            <div className="font-heading font-black text-3xl sm:text-4xl text-emerald-400">6,700+</div>
             <div className="text-xs text-stone-400 font-sans font-medium uppercase tracking-wider">Dishes at Counter Rates</div>
           </div>
           <div className="space-y-1">

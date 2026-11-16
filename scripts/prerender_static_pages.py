@@ -270,9 +270,9 @@ def main():
 
         page_url = f"{DOMAIN}/food/{slug}"
         # Exact title format requested by user:
-        # [Dish Name] Price at [Restaurant Name] - ₹[Price] Counter Rate | MenuMaps
-        title = f"{name} Price at {rest_name} - ₹{price} Counter Rate | MenuMaps"
-        meta_desc = f"View verified counter price for {name} at {rest_name}, {addr}, {city}. Only ₹{price} with 0% delivery app markup. View ingredients, dietary details, and direct WhatsApp counter ordering on MenuMaps."
+        # [Dish Name] Price at [Restaurant Name] - ₹[Price] Counter Rate | Menu Maps
+        title = f"{name} Price at {rest_name} - ₹{price} Counter Rate | Menu Maps"
+        meta_desc = f"View verified counter price for {name} at {rest_name}, {addr}, {city}. Only ₹{price} with 0% delivery app markup. View ingredients, dietary details, and direct WhatsApp counter ordering on Menu Maps."
 
         dish_schema = {
             "@context": "https://schema.org",
@@ -466,6 +466,89 @@ def main():
         html = re.sub(r'<link rel="canonical" href=".*?" />', lambda _: f'<link rel="canonical" href="{page_url}" />', html)
         with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f_out:
             f_out.write(html)
+
+    # -------------------------------------------------------------
+    # 4. PRE-RENDER HOMEPAGE (dist/index.html) FOR GOOGLEBOT & CRAWLERS
+    # -------------------------------------------------------------
+    top_home_cafes_html = ""
+    for r in restaurants[:12]:
+        r_slug = r.get("slug", "")
+        r_name = r.get("name", "")
+        r_city = r.get("city_area") or r.get("city", "Delhi NCR")
+        r_addr = r.get("address_line1") or r_city
+        r_cost = r.get("average_cost_for_two", 400)
+        r_rating = round(r.get("rating_avg") or 4.5, 1)
+
+        # Top dishes for this cafe
+        r_dishes = dishes_by_rest.get(r.get("id"), [])
+        dishes_snippets = ""
+        for td in r_dishes[:3]:
+            td_name = td.get("name", "")
+            td_price = td.get("price", 0)
+            td_slug = td.get("slug", "")
+            dishes_snippets += f'<span style="background: #F5F1EB; border-radius: 6px; padding: 3px 8px; font-size: 12px; margin-right: 6px; margin-bottom: 4px; display: inline-block;"><a href="/food/{td_slug}" style="color: #1C1917; text-decoration: none;">{escape_html(td_name)} (₹{td_price})</a></span>'
+
+        top_home_cafes_html += f"""
+        <div style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 16px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                    <h3 style="font-size: 19px; font-weight: 800; margin: 0; color: #1C1917;">
+                        <a href="/restaurant/{r_slug}" style="color: inherit; text-decoration: none;">{escape_html(r_name)}</a>
+                    </h3>
+                    <span style="background: #E6F4F1; color: #0F766E; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">✓ Verified</span>
+                </div>
+                <p style="color: #78716C; font-size: 13px; margin: 0 0 12px 0;">📍 {escape_html(r_addr)}, {escape_html(r_city)} · ★ {r_rating} · ₹{r_cost} for two</p>
+                {f'<div style="margin-bottom: 14px;">{dishes_snippets}</div>' if dishes_snippets else ''}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-top: 1px dashed #E7E2DA; padding-top: 12px;">
+                <span style="color: #D8350F; font-weight: 700;">0% App Markup</span>
+                <a href="/restaurant/{r_slug}" style="color: #FF5A36; font-weight: 800; text-decoration: none;">View Counter Menu &rarr;</a>
+            </div>
+        </div>
+        """
+
+    home_fallback = f"""
+    {get_shared_header()}
+    <main style="max-width: 1200px; margin: 36px auto; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <header style="max-width: 820px; margin-bottom: 36px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;">
+                ✓ 770+ Verified Delhi NCR Cafes &amp; 6,700+ Counter Dishes
+            </div>
+            <h1 style="font-size: 42px; font-weight: 900; color: #1C1917; margin: 0 0 16px 0; line-height: 1.15; letter-spacing: -0.5px;">
+                Eat at <span style="color: #FF5A36;">exact counter prices.</span> Skip delivery app markups.
+            </h1>
+            <p style="font-size: 18px; color: #57534E; line-height: 1.6; margin: 0 0 24px 0;">
+                Menu Maps gives you direct access to 100% verified in-store counter menus across Delhi NCR. Check genuine physical menu prices before walking in, or place direct orders straight to the kitchen over WhatsApp with 0% delivery app markup.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 14px;">
+                <a href="/restaurants" style="display: inline-flex; align-items: center; gap: 8px; background: #D8350F; color: #FFFFFF; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 16px; text-decoration: none; box-shadow: 0 2px 8px rgba(216,53,15,0.25);">
+                    Explore 770+ Verified Menus &rarr;
+                </a>
+                <a href="/nearby" style="display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF; color: #1C1917; border: 1px solid #E7E2DA; font-weight: 700; font-size: 15px; padding: 14px 24px; border-radius: 16px; text-decoration: none;">
+                    Best Cafes Near Me
+                </a>
+            </div>
+        </header>
+
+        <section style="margin-bottom: 48px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+                <div>
+                    <span style="color: #0F766E; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;">Verified Counter Menus</span>
+                    <h2 style="font-size: 26px; font-weight: 800; color: #1C1917; margin: 4px 0 0 0;">Top Dining Spots &amp; Cafes in Delhi NCR</h2>
+                </div>
+                <a href="/restaurants" style="color: #FF5A36; font-weight: 700; font-size: 14px; text-decoration: none;">View All 770+ Cafes &rarr;</a>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+                {top_home_cafes_html}
+            </div>
+        </section>
+    </main>
+    """
+
+    home_html = replace_root(template, home_fallback)
+    with open(DIST_INDEX, "w", encoding="utf-8") as f_out:
+        f_out.write(home_html)
+    print("Pre-rendered homepage (dist/index.html) with top verified cafes and 770+ counter menus.")
 
     print("Static Pre-rendering complete! Generated static HTML snapshots for all verified restaurants, dishes, area guides, and directories.")
 

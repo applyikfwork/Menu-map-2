@@ -80,7 +80,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
     if (num) {
       const cleanNum = num.replace(/\D/g, '');
       const formattedNum = cleanNum.startsWith('91') ? cleanNum : `91${cleanNum}`;
-      const msg = encodeURIComponent(`Hi! I found ${restaurant.name} on MenuMaps. I would like to check counter prices and place an order.`);
+      const msg = encodeURIComponent(`Hi! I found ${restaurant.name} on Menu Maps. I would like to check counter prices and place an order.`);
       window.open(`https://wa.me/${formattedNum}?text=${msg}`, '_blank', 'noopener,noreferrer');
     } else if (navigate) {
       navigate(`/${restaurant.slug}`);

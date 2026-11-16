@@ -162,7 +162,7 @@ export const BillComparisonWidget: React.FC<{ navigate?: (path: string) => void 
           <div>
             <div className="flex items-center justify-between gap-2 pb-3 border-b border-teal-200/60">
               <span className="text-xs font-extrabold uppercase tracking-wider text-[#0F766E]">
-                MenuMaps Dine-In / Direct
+                Menu Maps Dine-In / Direct
               </span>
               <span className="text-[11px] font-extrabold text-[#0F766E] bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-lg">
                 Zero Middleman

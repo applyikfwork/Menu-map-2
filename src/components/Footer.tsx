@@ -18,7 +18,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
               <span>For Delhi NCR Cafe Owners</span>
             </div>
             <h3 className="font-heading font-bold text-base sm:text-lg text-white tracking-tight">
-              Own or Manage a Cafe in Delhi? List It on MenuMaps
+              Own or Manage a Cafe in Delhi? List It on Menu Maps
             </h3>
             <p className="text-xs text-stone-300 max-w-xl leading-relaxed">
               Showcase authentic counter prices, stop paying 35% commissions, and capture direct walk-in WhatsApp orders.
@@ -185,10 +185,10 @@ export const Footer: React.FC<FooterProps> = ({ navigate }) => {
               </div>
             </div>
 
-            {/* MenuMap Info */}
+            {/* Menu Maps Info */}
             <div>
               <div className="hd text-xs font-extrabold tracking-wider uppercase text-[#78716C]">
-                MenuMap
+                Menu Maps
               </div>
               <div className="mt-4 flex flex-col gap-2.5 text-[15px]">
                 <a

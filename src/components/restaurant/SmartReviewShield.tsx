@@ -25,7 +25,7 @@ export const SmartReviewShield: React.FC<SmartReviewShieldProps> = ({
     const text = `⚠️ *Direct Diner Feedback for ${restaurant.name}*\n` +
       `Rating: ${selectedRating} / 5 Stars\n` +
       `Issue: ${complaintText.trim() || 'Food / service concern during my walk-in visit.'}\n\n` +
-      `_Sent privately via MenuMaps Owner Shield so you can resolve this directly._`;
+      `_Sent privately via Menu Maps Owner Shield so you can resolve this directly._`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
@@ -136,7 +136,7 @@ export const SmartReviewShield: React.FC<SmartReviewShieldProps> = ({
                 onClick={onOpenInternalReview}
                 className="text-xs font-bold text-stone-600 hover:text-stone-900 hover:underline ml-auto"
               >
-                Also leave a MenuMaps review
+                Also leave a Menu Maps review
               </button>
             )}
           </div>
