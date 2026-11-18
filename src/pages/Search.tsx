@@ -19,6 +19,7 @@ import { useLocationContext } from '../context/LocationContext';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { FoodItemCard } from '../components/FoodItemCard';
 import { RestaurantCardSkeleton } from '../components/Skeleton';
+import { QuickFilterPills } from '../components/discovery/QuickFilterPills';
 
 interface SearchProps {
   navigate: (path: string) => void;
@@ -486,48 +487,67 @@ export const Search: React.FC<SearchProps> = ({ navigate, initialQuery = '', ini
         </div>
       </div>
 
-      {/* Quick Discovery Chips with prominent Near Me GPS */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mt-4">
-        <button
-          type="button"
-          onClick={handleTriggerNearMe}
-          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
-            sortBy === 'distance'
-              ? 'bg-[#FF5A36] text-white border border-[#FF5A36]'
-              : 'bg-white text-stone-800 border border-[#E7E2DA] hover:border-[#FF5A36]/60 hover:text-[#FF5A36]'
-          }`}
-        >
-          <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
-          <span>📍 Near Me (GPS)</span>
-        </button>
+      {/* Modern Quick-Filter Pills Strip */}
+      <div className="-mt-4 space-y-2">
+        <QuickFilterPills
+          filters={[
+            { id: 'near_me', label: 'Near Me (GPS)', icon: 'near', active: sortBy === 'distance' },
+            { id: 'pure_veg', label: 'Pure Veg', icon: 'veg', active: selectedDietary.includes('Pure Veg') },
+            { id: 'budget', label: 'Under ₹200', icon: 'budget', active: selectedPriceRanges.includes('₹') },
+            { id: 'rating_4', label: '4.0+ Rated', icon: 'rating', active: minRating >= 4.0 },
+            { id: 'open_now', label: 'Open Now', icon: 'open', active: onlyOpenNow },
+            { id: 'delivery', label: 'Delivery Available', icon: 'trending', active: onlyDelivery },
+          ]}
+          onToggle={(id) => {
+            if (id === 'near_me') {
+              handleTriggerNearMe();
+            } else if (id === 'pure_veg') {
+              setSelectedDietary((prev) =>
+                prev.includes('Pure Veg') ? prev.filter((d) => d !== 'Pure Veg') : [...prev, 'Pure Veg']
+              );
+            } else if (id === 'budget') {
+              setSelectedPriceRanges((prev) =>
+                prev.includes('₹') ? prev.filter((p) => p !== '₹') : [...prev, '₹']
+              );
+            } else if (id === 'rating_4') {
+              setMinRating((prev) => (prev >= 4.0 ? 0 : 4.0));
+            } else if (id === 'open_now') {
+              setOnlyOpenNow((prev) => !prev);
+            } else if (id === 'delivery') {
+              setOnlyDelivery((prev) => !prev);
+            }
+          }}
+        />
 
-        {[
-          { label: 'North Campus', q: 'North Campus' },
-          { label: 'Connaught Place', q: 'Connaught Place' },
-          { label: 'Hudson Lane', q: 'Hudson Lane' },
-          { label: 'Satya Niketan', q: 'Satya Niketan' },
-          { label: 'Cold Coffee', q: 'Cold Coffee' },
-          { label: 'Momos', q: 'Momos' },
-          { label: 'Pure Veg', filter: 'veg' },
-          { label: 'Budget Under ₹400', filter: 'budget' },
-        ].map((chip) => (
-          <button
-            key={chip.label}
-            type="button"
-            onClick={() => {
-              if (chip.q) {
-                setQuery(chip.q);
-              } else if (chip.filter === 'veg') {
-                setSelectedDietary((prev) => (prev.includes('Pure Veg') ? prev : [...prev, 'Pure Veg']));
-              } else if (chip.filter === 'budget') {
-                setSelectedPriceRanges(['₹']);
-              }
-            }}
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-stone-700 border border-[#E7E2DA] hover:border-stone-400 hover:text-stone-950 transition-all shrink-0 cursor-pointer shadow-xs"
-          >
-            {chip.label}
-          </button>
-        ))}
+        {/* Delhi Iconic Hubs Discovery Strip */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-1">
+          <span className="text-[10px] font-extrabold text-[#78716C] uppercase tracking-wider shrink-0 mr-1">
+            Top Hubs:
+          </span>
+          {[
+            'North Campus',
+            'Connaught Place',
+            'Hudson Lane',
+            'Satya Niketan',
+            'Hauz Khas',
+            'Old Delhi',
+            'South Campus',
+            'Dwarka'
+          ].map((hub) => (
+            <button
+              key={hub}
+              type="button"
+              onClick={() => setQuery(hub)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all shrink-0 cursor-pointer ${
+                query.toLowerCase() === hub.toLowerCase()
+                  ? 'bg-[#1C1917] text-white border-[#1C1917]'
+                  : 'bg-white text-[#57534E] border-[#E7E2DA] hover:border-stone-400'
+              }`}
+            >
+              {hub}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Main Layout: Filters sidebar + Results */}

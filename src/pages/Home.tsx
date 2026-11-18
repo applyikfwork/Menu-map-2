@@ -54,6 +54,8 @@ import { RestaurantCard } from '../components/RestaurantCard';
 import { VisualCravingsRow } from '../components/discovery/VisualCravingsRow';
 import { BillComparisonWidget } from '../components/discovery/BillComparisonWidget';
 import { CuratedPlaylistsSection } from '../components/discovery/CuratedPlaylistsSection';
+import { MealCravingStories } from '../components/discovery/MealCravingStories';
+import { QuickFilterPills, FilterOption } from '../components/discovery/QuickFilterPills';
 import { useToast } from '../components/Toast';
 import { toggleBookmark, isBookmarked } from '../lib/bookmarks';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
@@ -579,6 +581,32 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
       </section>
 
       {/* ========================================================
+          1.4. MEAL CRAVING STORIES (INSTANT TAP-TO-DISCOVER REEL)
+      ======================================================== */}
+      <section className="bg-white border-b border-[#E7E2DA] py-3.5 sm:py-5 px-4 sm:px-8">
+        <div className="max-w-[1280px] mx-auto">
+          <div className="flex items-center justify-between gap-3 mb-2 px-1">
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#78716C] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <span>Explore Top Cravings</span>
+            </span>
+            <button 
+              type="button" 
+              className="text-[11px] font-bold text-[#D8350F] hover:underline cursor-pointer bg-transparent border-none p-0" 
+              onClick={() => navigate('/search')}
+            >
+              View all &rarr;
+            </button>
+          </div>
+          <MealCravingStories
+            onSelectStory={(query) => {
+              navigate(`/search?q=${encodeURIComponent(query)}`);
+            }}
+          />
+        </div>
+      </section>
+
+      {/* ========================================================
           1.5. VISUAL CRAVINGS CAROUSEL (What are you craving today?)
       ======================================================== */}
       <VisualCravingsRow navigate={navigate} />
@@ -644,18 +672,18 @@ export const Home: React.FC<HomeProps> = ({ navigate }) => {
             )}
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap gap-2">
-            {(['All', 'Pure Veg', 'Rooftop', 'Late night', 'Budget'] as const).map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setRestaurantFilter(filter)}
-                className={`chipl ${restaurantFilter === filter ? 'on' : ''}`}
-              >
-                {filter}
-              </button>
-            ))}
+          {/* Quick Filter Pills (High-Contrast Touch Controls) */}
+          <div className="w-full sm:w-auto mt-2 sm:mt-0">
+            <QuickFilterPills
+              filters={[
+                { id: 'All', label: 'All Cafes', active: restaurantFilter === 'All' },
+                { id: 'Pure Veg', label: 'Pure Veg', icon: 'veg', active: restaurantFilter === 'Pure Veg' },
+                { id: 'Rooftop', label: 'Rooftop / Vibe', icon: 'trending', active: restaurantFilter === 'Rooftop' },
+                { id: 'Late night', label: 'Late Night', icon: 'open', active: restaurantFilter === 'Late night' },
+                { id: 'Budget', label: 'Under ₹400', icon: 'budget', active: restaurantFilter === 'Budget' },
+              ]}
+              onToggle={(id) => setRestaurantFilter(id as any)}
+            />
           </div>
         </div>
 

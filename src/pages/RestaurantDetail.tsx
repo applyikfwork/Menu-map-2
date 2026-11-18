@@ -78,6 +78,7 @@ import { UpsellPairingPrompt } from '../components/restaurant/UpsellPairingPromp
 import { NeighborStealBanner } from '../components/restaurant/NeighborStealBanner';
 import { SmartReviewShield } from '../components/restaurant/SmartReviewShield';
 import { getSmartDishImage } from '../lib/dishImageRegistry';
+import { StickyCategoryBar } from '../components/restaurant/StickyCategoryBar';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 
 const RestaurantQrModal = lazyWithRetry(
@@ -571,6 +572,15 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       return true;
     });
   }, [menuItems, categories, selectedCategoryTab, dietaryFilter, menuSearch]);
+
+  const categoryTabs = useMemo(() => {
+    const list = [{ id: 'all', name: 'All Items', count: menuItems.length }];
+    for (const cat of categories) {
+      const count = menuItems.filter((i) => i.category_id === cat.id).length;
+      list.push({ id: cat.name, name: cat.name, count });
+    }
+    return list;
+  }, [categories, menuItems]);
 
   const getSmartPairingForItem = (item: MenuItem, allItems: MenuItem[]): MenuItem | null => {
     if (!allItems || allItems.length <= 1) return null;
@@ -1325,27 +1335,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                 cartMap={cartMap}
               />
 
-              {/* Category Tabs (Horizontally Swipeable Strip) */}
-              <div className="sticky top-16 sm:top-20 z-30 py-2.5 bg-[#FAF8F5]/95 backdrop-blur-md flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap border-b border-[#E7E2DA]">
-                <button
-                  onClick={() => setSelectedCategoryTab('all')}
-                  className={`chipl ${selectedCategoryTab === 'all' ? 'on' : ''} text-xs font-bold shrink-0 min-h-[38px] cursor-pointer`}
-                >
-                  All Items ({menuItems.length})
-                </button>
-                {categories.map((cat) => {
-                  const on = selectedCategoryTab.toLowerCase() === cat.name.toLowerCase();
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategoryTab(on ? 'all' : cat.name)}
-                      className={`chipl ${on ? 'on' : ''} text-xs font-bold shrink-0 min-h-[38px] cursor-pointer`}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Category Tabs (Sticky Category Bar with Auto-Scroll & Counts) */}
+              <StickyCategoryBar
+                categories={categoryTabs}
+                activeCategoryId={selectedCategoryTab}
+                onSelectCategory={(id) => setSelectedCategoryTab(id)}
+                className="rounded-2xl shadow-xs"
+              />
 
               {/* Search Inside Menu & Dietary Filters + Bite Roulette Trigger */}
               <div className="flex flex-wrap gap-2.5 sm:gap-3 items-center">
@@ -2824,11 +2820,27 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
       <div className="md:hidden fixed bottom-16 inset-x-0 z-30 px-3 py-2 bg-white/95 backdrop-blur-md border-t border-[#E7E2DA] shadow-xl flex items-center gap-2">
         <button
           type="button"
+          onClick={() => {
+            if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
+              window.open(getGoogleMapsDirectionsUrl(restaurant.latitude, restaurant.longitude, restaurant.name, userCoords), '_blank', 'noopener,noreferrer');
+            } else {
+              window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name} ${restaurant.city}`)}`, '_blank', 'noopener,noreferrer');
+            }
+          }}
+          className="w-12 min-h-[46px] rounded-2xl bg-[#FAF8F5] hover:bg-stone-100 border border-[#E7E2DA] text-[#FF5A36] font-extrabold flex items-center justify-center shadow-xs cursor-pointer active:scale-95 transition-all shrink-0"
+          title="Open Directions in Google Maps"
+          aria-label="Directions in Google Maps"
+        >
+          <Navigation className="w-4 h-4 text-[#FF5A36]" />
+        </button>
+
+        <button
+          type="button"
           onClick={() => setShowPhysicalMenuModal(true)}
-          className="flex-1 min-h-[46px] px-3 rounded-2xl bg-[#FAF8F5] hover:bg-stone-100 border border-[#E7E2DA] text-[#1C1917] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+          className="flex-1 min-h-[46px] px-2.5 rounded-2xl bg-[#FAF8F5] hover:bg-stone-100 border border-[#E7E2DA] text-[#1C1917] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
         >
           <FileText className="w-4 h-4 text-emerald-600" />
-          <span>Real Counter Menu</span>
+          <span>Real Menu</span>
         </button>
 
         <button
@@ -2842,7 +2854,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
               setShowOrderDrawer(true);
             }
           }}
-          className="flex-1 min-h-[46px] px-3 rounded-2xl bg-[#0F766E] hover:bg-[#0d6962] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer active:scale-95 transition-all"
+          className="flex-1 min-h-[46px] px-2.5 rounded-2xl bg-[#0F766E] hover:bg-[#0d6962] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer active:scale-95 transition-all"
         >
           <MessageSquare className="w-4 h-4" />
           <span>WhatsApp Order</span>
