@@ -51,6 +51,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   }, [restaurant.latitude, restaurant.longitude]);
 
   const handleDirectionsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (typeof restaurant.latitude === 'number' && typeof restaurant.longitude === 'number') {
       const mode = travel?.primaryMode === 'walk' ? 'walking' : 'driving';
@@ -69,12 +70,14 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   };
 
   const handleBookmarkToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     const next = toggleBookmark('restaurant', restaurant.id);
     setBookmarked(next);
   };
 
   const handleWhatsAppClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     const num = restaurant.whatsapp_number || restaurant.phone;
     if (num) {
@@ -83,7 +86,17 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
       const msg = encodeURIComponent(`Hi! I found ${restaurant.name} on Menu Maps. I would like to check counter prices and place an order.`);
       window.open(`https://wa.me/${formattedNum}?text=${msg}`, '_blank', 'noopener,noreferrer');
     } else if (navigate) {
-      navigate(`/${restaurant.slug}`);
+      navigate(`/restaurant/${restaurant.slug}`);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    } else if (navigate) {
+      e.preventDefault();
+      navigate(`/restaurant/${restaurant.slug}`);
     }
   };
 
@@ -92,12 +105,10 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   const cost = restaurant.average_cost_for_two || 350;
 
   return (
-    <div
-      onClick={() => {
-        if (onClick) onClick();
-        else if (navigate) navigate(`/${restaurant.slug}`);
-      }}
-      className="lift group relative flex flex-col bg-white rounded-[26px] overflow-hidden border border-[#E7E2DA] hover:border-[#FF5A36]/40 shadow-xs hover:shadow-xl cursor-pointer text-left transition-all duration-300"
+    <a
+      href={`/restaurant/${restaurant.slug}`}
+      onClick={handleCardClick}
+      className="lift group relative flex flex-col bg-white rounded-[26px] overflow-hidden border border-[#E7E2DA] hover:border-[#FF5A36]/40 shadow-xs hover:shadow-xl cursor-pointer text-left transition-all duration-300 no-underline text-inherit block"
     >
       {/* Cover image container */}
       <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
@@ -261,6 +272,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </a>
   );
 };

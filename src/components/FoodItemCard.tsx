@@ -28,15 +28,24 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
   }, [item.id]);
 
   const handleBookmarkToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     const next = toggleBookmark('dish', item.id);
     setBookmarked(next);
   };
 
   const handleAddClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (onAddToOrder) {
       onAddToOrder(item);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (navigate) {
+      e.preventDefault();
+      navigate(`/food/${item.slug}`);
     }
   };
 
@@ -47,9 +56,10 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
   // Compact row representation (for search drawers, side lists, mini carts)
   if (compact) {
     return (
-      <div
-        onClick={() => navigate(`/food/${item.slug}`)}
-        className="group flex items-center justify-between p-3.5 bg-white rounded-2xl border border-[#EFEAE2] hover:border-[#FF5A36]/50 hover:shadow-md transition-all cursor-pointer gap-3"
+      <a
+        href={`/food/${item.slug}`}
+        onClick={handleCardClick}
+        className="group flex items-center justify-between p-3.5 bg-white rounded-2xl border border-[#EFEAE2] hover:border-[#FF5A36]/50 hover:shadow-md transition-all cursor-pointer gap-3 no-underline text-inherit"
       >
         <div className="flex items-center gap-3 min-w-0">
           {/* Dish Image Thumbnail */}
@@ -123,15 +133,16 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
             <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-[#FF5A36]' : ''}`} />
           </button>
         </div>
-      </div>
+      </a>
     );
   }
 
   // Standard Editorial Grid Card
   return (
-    <div
-      onClick={() => navigate(`/food/${item.slug}`)}
-      className="group relative bg-white rounded-3xl overflow-hidden border border-[#EFEAE2] shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col cursor-pointer lift"
+    <a
+      href={`/food/${item.slug}`}
+      onClick={handleCardClick}
+      className="group relative bg-white rounded-3xl overflow-hidden border border-[#EFEAE2] shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col cursor-pointer lift no-underline text-inherit block"
     >
       {/* Dish Image Hero Container */}
       <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
@@ -286,6 +297,6 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </a>
   );
 };

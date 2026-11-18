@@ -1506,9 +1506,13 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                           <div className="flex items-center justify-between gap-3 sm:gap-4 w-full">
                             <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
                               {/* Thumbnail Photo / Gradient */}
-                              <div
-                                onClick={() => setSelectedDishPreview(item)}
-                                className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 cursor-pointer hover:opacity-95 border border-stone-200/80 shadow-xs relative"
+                              <a
+                                href={item.slug ? `/food/${item.slug}` : undefined}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setSelectedDishPreview(item);
+                                }}
+                                className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl shrink-0 overflow-hidden bg-stone-100 cursor-pointer hover:opacity-95 border border-stone-200/80 shadow-xs relative block text-inherit"
                                 title={`View ${item.name} details & nutrition`}
                               >
                                 <img
@@ -1521,7 +1525,7 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                                       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
                                   }}
                                 />
-                              </div>
+                              </a>
 
                               {/* Dish Info */}
                               <div className="flex-1 min-w-0">
@@ -1553,12 +1557,18 @@ export const RestaurantDetail: React.FC<RestaurantDetailProps> = ({ slug, naviga
                                   )}
                                 </div>
 
-                                <h3
-                                  onClick={() => setSelectedDishPreview(item)}
-                                  className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-1 sm:line-clamp-2 cursor-pointer hover:text-[#0F766E] transition-colors"
-                                  title={`Click to view ${item.name} details`}
-                                >
-                                  {item.name}
+                                <h3 className="hd mt-1 text-base sm:text-xl font-black text-[#1C1917] leading-snug line-clamp-1 sm:line-clamp-2">
+                                  <a
+                                    href={item.slug ? `/food/${item.slug}` : undefined}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setSelectedDishPreview(item);
+                                    }}
+                                    className="cursor-pointer hover:text-[#0F766E] transition-colors no-underline text-inherit"
+                                    title={`Click to view ${item.name} details`}
+                                  >
+                                    {item.name}
+                                  </a>
                                 </h3>
                                 {item.description && (
                                   <p className="mt-1 text-xs sm:text-sm text-[#44403C] line-clamp-1 sm:line-clamp-2 leading-relaxed">

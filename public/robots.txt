@@ -6,6 +6,8 @@ Allow: /
 Allow: /restaurant/
 Allow: /restaurants
 Allow: /food/
+Allow: /guides/
+Allow: /guides
 Allow: /collections
 Allow: /collection/
 Allow: /iconic-area/
