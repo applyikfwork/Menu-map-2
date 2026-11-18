@@ -774,6 +774,139 @@ export async function runPrerender() {
     </main>
   `;
 
+  // Pre-render Core Pages so direct links NEVER 404 on any static host or direct browser navigation
+  function prerenderCorePage(
+    relPath: string,
+    title: string,
+    desc: string,
+    h1: string,
+    bodyContent: string
+  ) {
+    const pageUrl = `${DOMAIN}/${relPath}`;
+    let html = template;
+    html = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
+    html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${desc}" />`);
+    html = html.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="${pageUrl}" />`);
+    html = html.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`);
+    html = html.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${desc}" />`);
+    html = html.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${pageUrl}" />`);
+
+    const mainFallback = `
+      ${getSharedHeader()}
+      <main style="max-width: 1200px; margin: 0 auto; padding: 32px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <header style="margin-bottom: 32px;">
+          <h1 style="font-size: 34px; font-weight: 900; color: #1C1917; margin: 0 0 12px 0;">${h1}</h1>
+          <p style="font-size: 16px; color: #57534E; line-height: 1.6; margin: 0;">${desc}</p>
+        </header>
+        <section style="background: #FFFFFF; border: 1px solid #E7E2DA; border-radius: 20px; padding: 24px;">
+          ${bodyContent}
+        </section>
+      </main>
+    `;
+
+    html = replaceRoot(html, mainFallback);
+    writeHtmlSnapshot(relPath, html);
+  }
+
+  console.log('[SSG Engine] Pre-rendering core pages (/restaurants, /search, /nearby, /about, /contact, /terms, /privacy, /list-cafe, /bookmarks)...');
+
+  // 1. /restaurants
+  prerenderCorePage(
+    'restaurants',
+    'Verified Restaurants, Cafes & Menus in Delhi NCR | Menu Maps',
+    'Explore 770+ verified dining spots, student cafes, and iconic restaurants across Delhi NCR with authentic in-store pricing and 0% markup.',
+    'Verified Restaurants & Cafes in Delhi NCR',
+    `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">${topCafesHtml}</div>`
+  );
+
+  // 2. /search
+  prerenderCorePage(
+    'search',
+    'Search Cafes, Dishes & Real Counter Menus in Delhi NCR | Menu Maps',
+    'Search over 6,700+ dishes and 770+ cafes across Delhi NCR. Instant verified in-store counter prices with 0% delivery app markup.',
+    'Search Verified Menus & Dishes',
+    `<p style="font-size: 15px; color: #57534E;">Use Menu Maps to search for dishes, cafes, and localities across Delhi NCR with 100% verified counter pricing.</p>
+     <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+       <a href="/restaurants" style="background: #1C1917; color: #FFF; padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 700;">Browse All Cafes</a>
+       <a href="/guides" style="background: #FF5A36; color: #FFF; padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 700;">Food Decision Guides</a>
+     </div>`
+  );
+
+  // 3. /nearby
+  prerenderCorePage(
+    'nearby',
+    'Best Cafes & Restaurants Near Me in Delhi NCR | Menu Maps',
+    'Find verified cafes, dining spots, and digital menus near your live location in Delhi NCR with authentic counter pricing.',
+    'Best Cafes & Restaurants Near You',
+    `<p style="font-size: 15px; color: #57534E;">Discover verified dining spots closest to your live ground GPS coordinates in Delhi NCR with walking time and metro transit directions.</p>
+     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">${topCafesHtml}</div>`
+  );
+
+  // 4. /about
+  prerenderCorePage(
+    'about',
+    'About Menu Maps – 100% Real Counter Menus & Price Transparency',
+    'Learn how Menu Maps brings honest, verified in-store counter pricing and zero-commission dining to Delhi NCR.',
+    'About Menu Maps',
+    `<p style="font-size: 15px; color: #44403C; line-height: 1.8;">
+       Menu Maps is built to solve one core problem: <strong>delivery apps inflate food prices by 20% to 40%</strong> and keep diners in the dark about actual in-store rates.<br /><br />
+       We photograph, verify, and digitize official in-store counter menus across 770+ cafes in Delhi NCR. Whether you are dining in, taking away, or ordering directly over WhatsApp, you pay the authentic counter price with 0% middleman markup.
+     </p>`
+  );
+
+  // 5. /contact
+  prerenderCorePage(
+    'contact',
+    'Contact Menu Maps – Support, Cafe Partnerships & Inquiries',
+    'Get in touch with the Menu Maps team for cafe listings, partner support, menu corrections, and general inquiries.',
+    'Contact Menu Maps',
+    `<p style="font-size: 15px; color: #44403C; line-height: 1.8;">
+       Have a question, feedback, or want to list your cafe? Reach out to our Delhi NCR operations team at <a href="mailto:contact@menumaps.in" style="color: #FF5A36; font-weight: 700;">contact@menumaps.in</a>.
+     </p>`
+  );
+
+  // 6. /terms
+  prerenderCorePage(
+    'terms',
+    'Terms of Service | Menu Maps',
+    'Read the Terms of Service for using Menu Maps verified menu platform.',
+    'Terms of Service',
+    `<p style="font-size: 14px; color: #57534E; line-height: 1.8;">
+       By accessing and using Menu Maps (https://menumaps.in), you agree to these Terms of Service. Menu Maps provides informational directory access to verified restaurant menus and direct communication channels.
+     </p>`
+  );
+
+  // 7. /privacy
+  prerenderCorePage(
+    'privacy',
+    'Privacy Policy | Menu Maps',
+    'Privacy Policy and data practices for Menu Maps.',
+    'Privacy Policy',
+    `<p style="font-size: 14px; color: #57534E; line-height: 1.8;">
+       Menu Maps respects your privacy. We do not sell user data. Location access is requested solely to calculate real-world walking and driving distances to nearby verified dining venues.
+     </p>`
+  );
+
+  // 8. /list-cafe
+  prerenderCorePage(
+    'list-cafe',
+    'List & Claim Your Cafe on Menu Maps – 0% Commission Digital Menus',
+    'Add your cafe or restaurant to Menu Maps with 100% free digital menus and direct WhatsApp orders.',
+    'List & Claim Your Cafe on Menu Maps',
+    `<p style="font-size: 15px; color: #44403C; line-height: 1.8;">
+       Own a cafe or restaurant in Delhi NCR? Join the Menu Maps partner network with zero onboarding fees and 0% commission on orders. Reach local college students and food lovers directly.
+     </p>`
+  );
+
+  // 9. /bookmarks
+  prerenderCorePage(
+    'bookmarks',
+    'Saved Cafes & Bookmarked Dishes | Menu Maps',
+    'View your saved cafes and bookmarked dishes on Menu Maps.',
+    'Your Bookmarks & Saved Menus',
+    `<p style="font-size: 15px; color: #57534E;">Quickly access your favorite saved cafes, dishes, and curated dining spots across Delhi NCR.</p>`
+  );
+
   const homeHtml = replaceRoot(template, homeFallback);
   fs.writeFileSync(DIST_INDEX, homeHtml, 'utf-8');
   console.log(`[SSG Engine] Pre-rendered homepage (dist/index.html) with top verified cafes.`);
